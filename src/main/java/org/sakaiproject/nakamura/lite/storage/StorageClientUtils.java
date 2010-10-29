@@ -25,7 +25,9 @@ public class StorageClientUtils {
 
 	public static String toString(Object object) {
 		try {
-			if ( object instanceof byte[] ) {
+			if ( object == null ) {
+				return null;
+			} else if ( object instanceof byte[] ) {
 				return new String((byte[])object, UTF8);
 			} else if ( object instanceof String ) {
 				return (String) object;

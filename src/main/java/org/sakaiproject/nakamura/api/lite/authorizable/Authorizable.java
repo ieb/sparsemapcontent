@@ -40,7 +40,12 @@ public class Authorizable {
 
 	public Authorizable(Map<String, Object> autorizableMap) {
 		this.authorizableMap = autorizableMap;
-		this.principals = Sets.newHashSet(StringUtils.split(StorageClientUtils.toString((byte[]) authorizableMap.get(PRINCIPALS_FIELD)), ';'));
+		byte[] principalsB = (byte[]) authorizableMap.get(PRINCIPALS_FIELD);
+		if ( principalsB == null ) {
+			this.principals = Sets.newHashSet();
+		} else {
+			this.principals = Sets.newHashSet(StringUtils.split(StorageClientUtils.toString(principalsB), ';'));			
+		}
 		this.id = StorageClientUtils.toString((byte[]) authorizableMap.get(ID_FIELD));
 	}
 	

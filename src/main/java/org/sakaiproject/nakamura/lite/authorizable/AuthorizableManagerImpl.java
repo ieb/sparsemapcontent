@@ -3,6 +3,7 @@ package org.sakaiproject.nakamura.lite.authorizable;
 import java.util.Map;
 import java.util.Set;
 
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessControlManager;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
@@ -10,6 +11,7 @@ import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
+import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.Security;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
@@ -36,11 +38,13 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
 	
 	
 
-	public AuthorizableManagerImpl(User currentUser, StorageClient client, AccessControlManager accessControlManager) throws StorageClientException, AccessDeniedException {
+	public AuthorizableManagerImpl(User currentUser, StorageClient client, Configuration configuration, AccessControlManager accessControlManager) throws StorageClientException, AccessDeniedException {
 		this.currentUserId  = currentUser.getId();
 		this.thisUser = currentUser;
 		this.client = client;
 		this.accessControlManager = accessControlManager;
+		this.keySpace = configuration.getKeySpace();
+		this.authorizableColumnFamily = configuration.getAuthorizableColumnFamily();
 	}
 	
 	
@@ -53,7 +57,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
 			accessControlManager.check(Security.ZONE_AUTHORIZABLES, authorizableId, Permissions.CAN_READ);
 		}
 		Map<String, Object> authorizableMap = client.get(keySpace, authorizableColumnFamily, authorizableId);
-		if ( authorizableMap ==  null ) {
+		if ( authorizableMap ==  null || authorizableMap.isEmpty() ) {
 			return null;
 		}
 		if (Authorizable.isAGroup(authorizableMap) ) {

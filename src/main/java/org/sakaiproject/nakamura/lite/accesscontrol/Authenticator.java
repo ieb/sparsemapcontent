@@ -26,7 +26,11 @@ public class Authenticator {
 	public User authenticate(String userid, String password ) {
 		try {
 			Map<String, Object> userAuthMap = client.get(keySpace, authorizableColumnFamily, userid);
+			if ( userAuthMap == null) {
+				LOGGER.info("User was not found {}", userid);
+			}
 			String passwordHash = StorageClientUtils.secureHash(password);
+			
 			String storedPassword = StorageClientUtils.toString((byte[]) userAuthMap.get(User.PASSWORD_FIELD));
 			if ( passwordHash.equals(storedPassword)) {
 				return new User(userAuthMap);

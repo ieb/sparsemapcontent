@@ -26,7 +26,7 @@ public class AuthorizableActivator {
 
 	public void setup() throws StorageClientException {
 		Map<String, Object> authorizableMap = client.get(keySpace, authorizableColumnFamily, User.ADMIN_USER);
-		if ( authorizableMap == null ) {
+		if ( authorizableMap == null || authorizableMap.size() == 0) {
 			createAdminUser();
 			createAnonUser();
 		}
