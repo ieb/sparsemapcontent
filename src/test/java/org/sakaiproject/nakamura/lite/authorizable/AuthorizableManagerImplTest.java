@@ -125,6 +125,7 @@ public class AuthorizableManagerImplTest {
 		
 		AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser, client, configuration, accessControlManagerImpl);
 		
+		Assert.assertTrue(authorizableManager.createUser("user3", "TestUser", null,  ImmutableMap.of("testkey",(Object)"testvalue", "principals", "administrators;testers", "members", "user1;user2")));
 		Assert.assertTrue(authorizableManager.createGroup("testgroup", "Test Group",  ImmutableMap.of("testkey",(Object)"testvalue", "principals", "administrators;testers", "members", "user1;user2")));
 		Assert.assertFalse(authorizableManager.createGroup("testgroup", "Test Group",  ImmutableMap.of("testkey",(Object)"testvalue", "principals", "administrators;testers", "members", "user1;user2", Authorizable.GROUP_FIELD, Authorizable.GROUP_VALUE)));
 		
@@ -148,6 +149,8 @@ public class AuthorizableManagerImplTest {
 		g.addMember("user3");
 		g.removeMember("user2");
 		
+		
+		
 		authorizableManager.updateAuthorizable(g);
 		
 		Authorizable a2 = authorizableManager.findAuthorizable("testgroup");
@@ -161,7 +164,17 @@ public class AuthorizableManagerImplTest {
 		LOGGER.info("Members {} ", Arrays.toString(members));
 		Assert.assertArrayEquals(new String[] {"user1","user3"} , members);
 		Assert.assertNull(g2.getProperty(Authorizable.PASSWORD_FIELD));
+
 		
+		// Test that User3 no has testgroup as a principal.
+		Authorizable a3 = authorizableManager.findAuthorizable("user3");
+		Assert.assertNotNull(a3);
+		Assert.assertFalse(a3.isGroup());
+		User u3 = (User) a3;
+		principals = u3.getPrincipals();
+		LOGGER.info("Principals {} ", Arrays.toString(principals));
+		Assert.assertArrayEquals(new String[] {"administrators","testers","testgroup"} , principals);
+
 		
 	}
 

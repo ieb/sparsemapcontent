@@ -46,17 +46,20 @@ public class Authorizable {
 
 	protected String id;
 
+	protected boolean modified;
+
 	public Authorizable(Map<String, Object> autorizableMap) {
 		this.authorizableMap = autorizableMap;
-		byte[] principalsB = (byte[]) authorizableMap.get(PRINCIPALS_FIELD);
+		Object principalsB = authorizableMap.get(PRINCIPALS_FIELD);
 		if (principalsB == null) {
 			this.principals = Sets.newLinkedHashSet();
 		} else {
 			this.principals = Sets.newLinkedHashSet(Iterables.of(StringUtils.split(
 					StorageClientUtils.toString(principalsB), ';')));
 		}
-		this.id = StorageClientUtils.toString((byte[]) authorizableMap
+		this.id = StorageClientUtils.toString(authorizableMap
 				.get(ID_FIELD));
+		modified = false;
 	}
 
 	public String[] getPrincipals() {
@@ -87,7 +90,12 @@ public class Authorizable {
 
 	public void setProperty(String key, Object value) {
 		if (!FILTER_PROPERTIES.contains(key)) {
-			authorizableMap.put(key, value);
+			Object cv = authorizableMap.get(key);
+			if ( !value.equals(cv) ) {
+				authorizableMap.put(key, value);
+				modified = true;
+			}
+		
 		}
 	}
 	
@@ -100,7 +108,10 @@ public class Authorizable {
 	
 
 	public void removeProperty(String key) {
-		authorizableMap.remove(key);
+		if ( authorizableMap.containsKey(key)) {
+			authorizableMap.remove(key);
+			modified = true;
+		}
 	}
 
 
@@ -108,17 +119,29 @@ public class Authorizable {
 	public void addPrincipal(String principal) {
 		if (!principals.contains(principal)) {
 			principals.add(principal);
+			modified = true;
 		}
 	}
 
 	public void removePrincipal(String principal) {
-		principals.remove(principal);
+		if ( principals.contains(principal) ) {
+			principals.remove(principal);
+			modified = true;
+		}
 	}
 
 	public Map<String, Object> getPropertiesForUpdate() {
 		authorizableMap.put(PRINCIPALS_FIELD, StringUtils.join(principals,';'));
 		return StorageClientUtils.getFilterMap(authorizableMap,
 				FILTER_PROPERTIES);
+	}
+
+	public void reset() {
+		modified = false;
+	}
+
+	public boolean isModified() {
+		return modified;
 	}
 
 }
