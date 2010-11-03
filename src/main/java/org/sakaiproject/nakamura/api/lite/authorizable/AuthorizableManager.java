@@ -13,7 +13,13 @@ public interface AuthorizableManager {
 	void updateAuthorizable(Authorizable authorizable)
 			throws AccessDeniedException, StorageClientException;
 
-	boolean createAuthorizable(String authorizableId, String authorizableName,
-			String password, Map<String, Object> properties) throws AccessDeniedException, StorageClientException;
+
+	boolean createGroup(String authorizableId, String authorizableName,
+			Map<String, Object> properties) throws AccessDeniedException,
+			StorageClientException;
+
+	boolean createUser(String authorizableId, String authorizableName,
+			String password, Map<String, Object> properties)
+			throws AccessDeniedException, StorageClientException;
 
 }

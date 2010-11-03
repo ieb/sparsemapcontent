@@ -1,10 +1,12 @@
 package org.sakaiproject.nakamura.lite.storage.mem;
 
+import java.awt.Stroke;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
+import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +50,7 @@ public class MemoryStorageClient implements StorageClient {
 		Map<String, Object> row = get(keySpace, columnFamily, key);
 		
 		for ( Entry<String, Object> e : values.entrySet()) {
+			
 			row.put(e.getKey(), e.getValue());
 		}
 		LOGGER.info("Updated {} ",row);

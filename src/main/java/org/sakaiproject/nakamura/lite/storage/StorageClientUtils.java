@@ -207,7 +207,7 @@ public class StorageClientUtils {
 					filteredMap.put(e.getKey(),
 							 getFilteredAndEcodedMap((Map<String, Object>) e.getValue(), filter));
 				} else  {
-					filteredMap.put(e.getKey(), toBytes(String.valueOf(e.getValue())));
+					filteredMap.put(e.getKey(), toBytes(e.getValue()));
 				}
 			}
 		}
