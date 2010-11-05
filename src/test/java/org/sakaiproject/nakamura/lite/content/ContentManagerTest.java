@@ -2,10 +2,12 @@ package org.sakaiproject.nakamura.lite.content;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringUtils;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -47,7 +49,7 @@ public class ContentManagerTest {
 	}
 
 	@Test
-	public void test() throws StorageClientException, AccessDeniedException {
+	public void testCreateContent() throws StorageClientException, AccessDeniedException {
 		Authenticator authenticator = new Authenticator(client, configuration);
 		User currentUser = authenticator.authenticate("admin", "admin");
 
@@ -59,11 +61,73 @@ public class ContentManagerTest {
 		contentManager.update(new Content("/test", ImmutableMap.of("prop1", (Object)"value2")));
 		contentManager.update(new Content("/test/ing", ImmutableMap.of("prop1", (Object)"value3")));
 		
-		listContent(contentManager.get("/"));
-		
-
-		
+		Content content = contentManager.get("/");
+		Assert.assertEquals("/", content.getPath());
+		Map<String,Object> p = content.getProperties();
+		Assert.assertEquals("value1", StorageClientUtils.toString(p.get("prop1")));
+		Iterator<Content> children = content.listChildren().iterator();
+		Assert.assertTrue(children.hasNext());
+		Content child = children.next();
+        Assert.assertFalse(children.hasNext());
+        Assert.assertEquals("/test", child.getPath());
+        p = child.getProperties();
+        Assert.assertEquals("value2", StorageClientUtils.toString(p.get("prop1")));
+        children = child.listChildren().iterator();
+        Assert.assertTrue(children.hasNext());
+        child = children.next();
+        Assert.assertFalse(children.hasNext());
+        Assert.assertEquals("/test/ing", child.getPath());
+        p = child.getProperties();
+        Assert.assertEquals("value3", StorageClientUtils.toString(p.get("prop1")));
+        
 	}
+
+	   @Test
+	    public void testUpdateContent() throws StorageClientException, AccessDeniedException {
+	        Authenticator authenticator = new Authenticator(client, configuration);
+	        User currentUser = authenticator.authenticate("admin", "admin");
+
+	        AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(
+	                client, currentUser, configuration);
+	        
+	        ContentManager contentManager = new ContentManager(client, accessControlManager);
+	        contentManager.update(new Content("/", ImmutableMap.of("prop1", (Object)"value1")));
+	        contentManager.update(new Content("/test", ImmutableMap.of("prop1", (Object)"value2")));
+	        contentManager.update(new Content("/test/ing", ImmutableMap.of("prop1", (Object)"value3")));
+	        
+	        Content content = contentManager.get("/");
+	        Assert.assertEquals("/", content.getPath());
+	        Map<String,Object> p = content.getProperties();
+	        Assert.assertEquals("value1", StorageClientUtils.toString(p.get("prop1")));
+	        Iterator<Content> children = content.listChildren().iterator();
+	        Assert.assertTrue(children.hasNext());
+	        Content child = children.next();
+	        Assert.assertFalse(children.hasNext());
+	        Assert.assertEquals("/test", child.getPath());
+	        p = child.getProperties();
+	        Assert.assertEquals("value2", StorageClientUtils.toString(p.get("prop1")));
+	        children = child.listChildren().iterator();
+	        Assert.assertTrue(children.hasNext());
+	        child = children.next();
+	        Assert.assertFalse(children.hasNext());
+	        Assert.assertEquals("/test/ing", child.getPath());
+	        p = child.getProperties();
+	        Assert.assertEquals("value3", StorageClientUtils.toString(p.get("prop1")));
+
+            p = content.getProperties();
+	        Assert.assertNull(StorageClientUtils.toString(p.get("prop1update")));
+	        
+	        content.setProperty("prop1update","value4");
+	        contentManager.update(content);
+
+	        content = contentManager.get(content.getPath());
+            p = content.getProperties();
+            Assert.assertEquals("value4",StorageClientUtils.toString(p.get("prop1update")));
+	        
+	    }
+
+	
+	
 
 	private void listContent(Content content) {
 		System.err.println(content.getPath());

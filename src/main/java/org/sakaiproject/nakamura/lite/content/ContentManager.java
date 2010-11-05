@@ -1,6 +1,5 @@
 package org.sakaiproject.nakamura.lite.content;
 
-import java.awt.Stroke;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
@@ -222,28 +221,41 @@ public class ContentManager {
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_WRITE);
         String id = null;
         Object idStore = null;
-        Map<String, Object> toSave = Maps.newHashMap(content.getContent());
-        if (toSave.containsKey(UUID_FIELD)) {
-            id = StorageClientUtils.toString(toSave.get(UUID_FIELD));
-            idStore = StorageClientUtils.toStore(toSave.get(UUID_FIELD));
-        } else {
+        Map<String, Object> toSave = null;
+        Map<String, Object> contentPropertes = content.getContent();
+        if ( content.isNew() ) {
+            toSave = Maps.newHashMap(contentPropertes);            
             id = StorageClientUtils.getUuid();
             idStore = StorageClientUtils.toStore(id);
             toSave.put(UUID_FIELD, idStore);
+            toSave.put(PATH_FIELD, StorageClientUtils.toStore(path));
+        } else if ( content.isUpdated() ) {
+            toSave = Maps.newHashMap(content.getUpdated());
+            id = StorageClientUtils.toString(contentPropertes.get(UUID_FIELD));
+            idStore = StorageClientUtils.toStore(contentPropertes.get(UUID_FIELD));            
+        } else {
+            // if not new or updated, dont update.
+            return;
         }
+        
         Map<String, Object> checkContent = client.get(keySpace, contentColumnFamily, id);
         if (TRUE.equals(StorageClientUtils.toString(checkContent.get(READONLY_FIELD)))) {
             throw new AccessDeniedException(Security.ZONE_CONTENT, path, "Read only Content Item");
         }
-        toSave.put(PATH_FIELD, StorageClientUtils.toStore(path));
-        if ( !StorageClientUtils.isRoot(path)) {
-            client.insert(keySpace, contentColumnFamily, StorageClientUtils.getParentObjectPath(path),
-                ImmutableMap.of(StorageClientUtils.getObjectName(path), idStore));
+        if ( content.isNew() ) {
+            // only when new do we update the structure.
+            if ( !StorageClientUtils.isRoot(path)) {
+                client.insert(keySpace, contentColumnFamily, StorageClientUtils.getParentObjectPath(path),
+                    ImmutableMap.of(StorageClientUtils.getObjectName(path), idStore));
+            }
+            client.insert(keySpace, contentColumnFamily, path,
+                    ImmutableMap.of(STRUCTURE_UUID_FIELD, idStore));
         }
-        client.insert(keySpace, contentColumnFamily, path,
-                ImmutableMap.of(STRUCTURE_UUID_FIELD, idStore));
+        // save the content id.
         client.insert(keySpace, contentColumnFamily, id, toSave);
         LOGGER.info("Saved {} at {} as {} ", new Object[] { path, id, toSave });
+        // reset state to unmodified to take further modifications.
+        content.reset();
     }
 
     public void delete(String path) throws AccessDeniedException, StorageClientException {

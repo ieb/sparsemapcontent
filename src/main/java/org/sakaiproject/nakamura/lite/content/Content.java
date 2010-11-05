@@ -1,9 +1,7 @@
 package org.sakaiproject.nakamura.lite.content;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
@@ -12,10 +10,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Maps;
 import com.google.common.collect.UnmodifiableIterator;
 
 public class Content {
@@ -25,13 +22,26 @@ public class Content {
     private Map<String, Object> content;
     private String path;
     private ContentManager contentManager;
+    private Map<String, Object> updatedContent;
+    private boolean updated;
+    private boolean newcontent;
 
     Content(String path, Map<String, Object> structure, Map<String, Object> content,
             ContentManager contentManager) {
         this.structure = structure;
+        this.updatedContent = Maps.newHashMap();
         this.content = content;
         this.path = path;
         this.contentManager = contentManager;
+        updated = false;
+        newcontent = true;
+    }
+    public Content(String path, Map<String, Object> content) {
+        this.content = content;
+        this.updatedContent = Maps.newHashMap(content);
+        this.path = path;
+        updated = true;
+        newcontent = true;
     }
 
     void setStructure(Map<String, Object> structure) {
@@ -42,18 +52,43 @@ public class Content {
         this.contentManager = contentManager;
     }
 
-    public Content(String path, Map<String, Object> content) {
-        this.content = content;
-        this.path = path;
-    }
 
     Map<String, Object> getContent() {
         return content;
+    }
+    
+    Map<String, Object> getUpdated() {
+        return updatedContent;
+    }
+    
+    public void reset() {
+        updatedContent.clear();
+        updated = false;
+        newcontent = false;
+    }
+    
+    public boolean isNew() {
+        return newcontent;
+    }
+    
+    public boolean isUpdated() {
+        return updated;
     }
 
     public Map<String, Object> getProperties() {
         return ImmutableMap.copyOf(content);
     }
+    
+    public void setProperty(String key, Object value) {
+        Object o = content.get(key);
+        if ( o == null || !o.equals(value) ) {
+            content.put(key, value);
+            updatedContent.put(key,value);
+            updated = true;
+        }
+        
+    }
+
 
     public String getPath() {
         return path;
@@ -108,5 +143,6 @@ public class Content {
             }
         };
     }
+
 
 }

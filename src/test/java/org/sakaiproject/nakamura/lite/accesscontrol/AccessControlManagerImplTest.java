@@ -16,7 +16,6 @@ import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.Security;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
-import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImplTest;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
