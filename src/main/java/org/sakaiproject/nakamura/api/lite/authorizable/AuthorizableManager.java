@@ -7,19 +7,16 @@ import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 
 public interface AuthorizableManager {
 
-	Authorizable findAuthorizable(String authorizableId)
-			throws AccessDeniedException, StorageClientException;
+    Authorizable findAuthorizable(String authorizableId) throws AccessDeniedException,
+            StorageClientException;
 
-	void updateAuthorizable(Authorizable authorizable)
-			throws AccessDeniedException, StorageClientException;
+    void updateAuthorizable(Authorizable authorizable) throws AccessDeniedException,
+            StorageClientException;
 
+    boolean createGroup(String authorizableId, String authorizableName,
+            Map<String, Object> properties) throws AccessDeniedException, StorageClientException;
 
-	boolean createGroup(String authorizableId, String authorizableName,
-			Map<String, Object> properties) throws AccessDeniedException,
-			StorageClientException;
-
-	boolean createUser(String authorizableId, String authorizableName,
-			String password, Map<String, Object> properties)
-			throws AccessDeniedException, StorageClientException;
+    boolean createUser(String authorizableId, String authorizableName, String password,
+            Map<String, Object> properties) throws AccessDeniedException, StorageClientException;
 
 }

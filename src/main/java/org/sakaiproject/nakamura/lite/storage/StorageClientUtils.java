@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.sakaiproject.nakamura.api.lite.util.Type1UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,222 +17,250 @@ import com.google.common.collect.Maps;
 
 public class StorageClientUtils {
 
-	public final static String UTF8 = "UTF-8";
-	public final static String SECURE_HASH_DIGEST = "SHA-512";
-	public static final char[] URL_SAFE_ENCODING = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-			.toCharArray();
-	private static final Logger LOGGER = LoggerFactory
-			.getLogger(StorageClientUtils.class);
+    public final static String UTF8 = "UTF-8";
+    public final static String SECURE_HASH_DIGEST = "SHA-512";
+    public static final char[] URL_SAFE_ENCODING = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+            .toCharArray();
+    private static final Logger LOGGER = LoggerFactory.getLogger(StorageClientUtils.class);
 
-	public static String toString(Object object) {
-		try {
-			if ( object == null ) {
-				return null;
-			} else if ( object instanceof byte[] ) {
-				return new String((byte[])object, UTF8);
-			} else if ( object instanceof String ) {
-				return (String) object;
-			} else {
-				LOGGER.warn("Converting "+object.getClass()+" to String via toString");
-				return String.valueOf(object);
-			}
-		} catch (UnsupportedEncodingException e) {
-			return null; // no utf8.. get real!
-		}
-	}
+    public static String toString(Object object) {
+        try {
+            if (object == null) {
+                return null;
+            } else if (object instanceof byte[]) {
+                return new String((byte[]) object, UTF8);
+            } else if (object instanceof String) {
+                return (String) object;
+            } else {
+                LOGGER.warn("Converting " + object.getClass() + " to String via toString");
+                return String.valueOf(object);
+            }
+        } catch (UnsupportedEncodingException e) {
+            return null; // no utf8.. get real!
+        }
+    }
 
-	public static byte[] toBytes(Object object) {
-		try {
-			if ( object == null ) {
-				return null;
-			} else if ( object instanceof byte[] ) {
-				return (byte[]) object;
-			} else if ( object instanceof String ){
-				return ((String) object).getBytes(UTF8);
-			} else if ( object instanceof Long ) {
-				return Long.toHexString((Long) object).getBytes(UTF8);
-			} else if ( object instanceof Integer ) {
-				return Integer.toHexString((Integer) object).getBytes(UTF8);
-			} else {
-				LOGGER.warn("Converting "+object.getClass()+" to byte[] via string");
-				return String.valueOf(object).getBytes(UTF8);
-			}
-		} catch (UnsupportedEncodingException e) {
-			return null; // no utf8.. get real!
-		}
-	}
+    public static Object toStore(Object object) {
+        if (object == null) {
+            return null;
+        } else if (object instanceof byte[]) {
+            return (byte[]) object;
+        } else if (object instanceof String) {
+            return ((String) object);
+        } else if (object instanceof Long) {
+            return Long.toString((Long) object, 32);
+        } else if (object instanceof Integer) {
+            return Integer.toString((Integer) object, 32);
+        } else {
+            LOGGER.warn("Converting " + object.getClass() + " to byte[] via string");
+            return String.valueOf(object);
+        }
+    }
+    
+    public static byte[] toBytes(Object value) {
+        Object o = toStore(value);
+        if ( o instanceof byte[] ) {
+            return (byte[]) o;
+        } else {
+            try {
+                return ((String) o).getBytes("UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                return null; // no utf8.. get real!
+            }
+        }
+    }
 
-	public static boolean isRoot(String objectPath) {
-		return (objectPath == null) || "/".equals(objectPath)
-				|| "".equals(objectPath);
-	}
 
-	public static String getParentObjectPath(String objectPath) {
-		if ("/".equals(objectPath)) {
-			return "/";
-		}
-		int i = objectPath.lastIndexOf('/');
-		if (i == objectPath.length() - 1) {
-			i = objectPath.substring(0, i).lastIndexOf('/');
-		}
-		String res = objectPath;
-		if (i > 0) {
-			res = objectPath.substring(0, i);
-		}
-		return res;
-	}
+    public static boolean isRoot(String objectPath) {
+        return (objectPath == null) || "/".equals(objectPath) || "".equals(objectPath);
+    }
 
-	public static String getObjectName(String objectPath) {
-		if ("/".equals(objectPath)) {
-			return "/";
-		}
-		int i = objectPath.lastIndexOf('/');
-		if (i == objectPath.length() - 1) {
-			i = objectPath.substring(0, i).lastIndexOf('/');
-		}
-		String res = objectPath;
-		if (i > 0) {
-			res = objectPath.substring(i);
-		}
-		return res;
-	}
+    public static String getParentObjectPath(String objectPath) {
+        if ("/".equals(objectPath)) {
+            return "/";
+        }
+        int i = objectPath.lastIndexOf('/');
+        if (i == objectPath.length() - 1) {
+            i = objectPath.substring(0, i).lastIndexOf('/');
+        }
+        String res = objectPath;
+        if (i > 0) {
+            res = objectPath.substring(0, i);
+        } else if (i == 0) {
+            return "/";
+        }
+        return res;
+    }
 
-	public static String secureHash(String password) {
-		try {
-			MessageDigest md;
-			try {
-				md = MessageDigest.getInstance(SECURE_HASH_DIGEST);
-			} catch (NoSuchAlgorithmException e) {
-				try {
-					md = MessageDigest.getInstance("SHA-1");
-				} catch (NoSuchAlgorithmException e1) {
-					try {
-						md = MessageDigest.getInstance("MD5");
-					} catch (NoSuchAlgorithmException e2) {
-						LOGGER.error("You have no Message Digest Algorightms intalled in this JVM, secure Hashes are not availalbe, encoding bytes :"
-								+ e2.getMessage());
-						return encode(password.getBytes(UTF8),
-								URL_SAFE_ENCODING);
-					}
-				}
-			}
-			byte[] bytes = md.digest(password.getBytes(UTF8));
-			return encode(bytes, URL_SAFE_ENCODING);
-		} catch (UnsupportedEncodingException e3) {
-			LOGGER.error("no UTF-8 Envoding, get a real JVM, nothing will work here. NPE to come");
-			return null;
-		}
-	}
+    public static String getObjectName(String objectPath) {
+        if ("/".equals(objectPath)) {
+            return "/";
+        }
+        int i = objectPath.lastIndexOf('/');
+        int j = objectPath.length();
+        if (i == objectPath.length() - 1) {
+            j--;
+            i = objectPath.substring(0, i).lastIndexOf('/');
+        }
+        String res = objectPath;
+        if (i >= 0) {
+            res = objectPath.substring(i + 1, j);
+        }
+        return res;
+    }
 
-	/**
-	 * Generate an encoded array of chars using as few chars as possible
-	 * 
-	 * @param hash
-	 *            the hash to encode
-	 * @param encode
-	 *            a char array of encodings any length you lik but probably but
-	 *            the shorter it is the longer the result. Dont be dumb and use
-	 *            an encoding size of < 2.
-	 * @return
-	 */
-	public static String encode(byte[] hash, char[] encode) {
-		StringBuilder sb = new StringBuilder((hash.length * 15) / 10);
-		int x = (int) (hash[0] + 128);
-		int xt = 0;
-		int i = 0;
-		while (i < hash.length) {
-			if (x < encode.length) {
-				i++;
-				if (i < hash.length) {
-					if (x == 0) {
-						x = (int) (hash[i] + 128);
-					} else {
-						x = (x + 1) * (int) (hash[i] + 128);
-					}
-				} else {
-					sb.append(encode[x]);
-					break;
-				}
-			}
-			xt = x % encode.length;
-			x = x / encode.length;
-			sb.append(encode[xt]);
-		}
+    public static String secureHash(String password) {
+        try {
+            MessageDigest md;
+            try {
+                md = MessageDigest.getInstance(SECURE_HASH_DIGEST);
+            } catch (NoSuchAlgorithmException e) {
+                try {
+                    md = MessageDigest.getInstance("SHA-1");
+                } catch (NoSuchAlgorithmException e1) {
+                    try {
+                        md = MessageDigest.getInstance("MD5");
+                    } catch (NoSuchAlgorithmException e2) {
+                        LOGGER.error("You have no Message Digest Algorightms intalled in this JVM, secure Hashes are not availalbe, encoding bytes :"
+                                + e2.getMessage());
+                        return encode(password.getBytes(UTF8), URL_SAFE_ENCODING);
+                    }
+                }
+            }
+            byte[] bytes = md.digest(password.getBytes(UTF8));
+            return encode(bytes, URL_SAFE_ENCODING);
+        } catch (UnsupportedEncodingException e3) {
+            LOGGER.error("no UTF-8 Envoding, get a real JVM, nothing will work here. NPE to come");
+            return null;
+        }
+    }
 
-		return sb.toString();
-	}
+    /**
+     * Generate an encoded array of chars using as few chars as possible
+     * 
+     * @param hash
+     *            the hash to encode
+     * @param encode
+     *            a char array of encodings any length you lik but probably but
+     *            the shorter it is the longer the result. Dont be dumb and use
+     *            an encoding size of < 2.
+     * @return
+     */
+    public static String encode(byte[] hash, char[] encode) {
+        StringBuilder sb = new StringBuilder((hash.length * 15) / 10);
+        int x = (int) (hash[0] + 128);
+        int xt = 0;
+        int i = 0;
+        while (i < hash.length) {
+            if (x < encode.length) {
+                i++;
+                if (i < hash.length) {
+                    if (x == 0) {
+                        x = (int) (hash[i] + 128);
+                    } else {
+                        x = (x + 1) * (int) (hash[i] + 128);
+                    }
+                } else {
+                    sb.append(encode[x]);
+                    break;
+                }
+            }
+            xt = x % encode.length;
+            x = x / encode.length;
+            sb.append(encode[xt]);
+        }
 
-	/**
-	 * Converts to an Immutable map, with keys that are in the filter not transdered.
-	 * Nested maps are also transfered.
-	 * @param <K>
-	 * @param <V>
-	 * @param source
-	 * @param filter
-	 * @return
-	 */
-	@SuppressWarnings("unchecked")
-	public static <K, V> Map<K, V> getFilterMap(Map<K, V> source, Set<K> filter) {
-		Builder<K, V> filteredMap = new ImmutableMap.Builder<K, V>();
-		for (Entry<K, V> e : source.entrySet()) {
-			if (!filter.contains(e.getKey())) {
-				Object o = e.getValue();
-				if (o instanceof Map) {
-					filteredMap.put(e.getKey(),
-							(V) getFilterMap((Map<K, V>) e.getValue(), filter));
-				} else {
-					filteredMap.put(e.getKey(), e.getValue());
-				}
-			}
-		}
-		return filteredMap.build();
-	}
+        return sb.toString();
+    }
 
-	/**
-	 * Converts a map into Map or byte[] values with String keys.
-	 * No control over depth of nesting.
-	 * Keys in the filter set are not transfered
-	 * Resulting map is mutable.
-	 * @param source
-	 * @param filter
-	 * @return
-	 */
-	@SuppressWarnings("unchecked")
-	public static Map<String, Object> getFilteredAndEcodedMap(
-			Map<String, Object> source, Set<String> filter) {
-		Map<String, Object> filteredMap = Maps.newHashMap();
-		for (Entry<String, Object> e : source.entrySet()) {
-			if (!filter.contains(e.getKey())) {
-				Object o = e.getValue();
-				if (o instanceof Map) {
-					filteredMap.put(e.getKey(),
-							 getFilteredAndEcodedMap((Map<String, Object>) e.getValue(), filter));
-				} else  {
-					filteredMap.put(e.getKey(), toBytes(e.getValue()));
-				}
-			}
-		}
-		return filteredMap;
-	}
+    /**
+     * Converts to an Immutable map, with keys that are in the filter not
+     * transdered. Nested maps are also transfered.
+     * 
+     * @param <K>
+     * @param <V>
+     * @param source
+     * @param filter
+     * @return
+     */
+    @SuppressWarnings("unchecked")
+    public static <K, V> Map<K, V> getFilterMap(Map<K, V> source, Set<K> filter) {
+        Builder<K, V> filteredMap = new ImmutableMap.Builder<K, V>();
+        for (Entry<K, V> e : source.entrySet()) {
+            if (!filter.contains(e.getKey())) {
+                Object o = e.getValue();
+                if (o instanceof Map) {
+                    filteredMap.put(e.getKey(), (V) getFilterMap((Map<K, V>) e.getValue(), filter));
+                } else {
+                    filteredMap.put(e.getKey(), e.getValue());
+                }
+            }
+        }
+        return filteredMap.build();
+    }
 
-	public static String getUuid() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    /**
+     * Converts a map into Map or byte[] values with String keys. No control
+     * over depth of nesting. Keys in the filter set are not transfered
+     * Resulting map is mutable.
+     * 
+     * @param source
+     * @param filter
+     * @return
+     */
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> getFilteredAndEcodedMap(Map<String, Object> source,
+            Set<String> filter) {
+        Map<String, Object> filteredMap = Maps.newHashMap();
+        for (Entry<String, Object> e : source.entrySet()) {
+            if (!filter.contains(e.getKey())) {
+                Object o = e.getValue();
+                if (o instanceof Map) {
+                    filteredMap.put(e.getKey(),
+                            getFilteredAndEcodedMap((Map<String, Object>) e.getValue(), filter));
+                } else {
+                    filteredMap.put(e.getKey(), toStore(e.getValue()));
+                }
+            }
+        }
+        return filteredMap;
+    }
 
-	public static int toInt(Object object) {
-		if ( object instanceof Integer ) {
-			return ((Integer) object).intValue();
-		} else if ( object instanceof String ) {
-			return Integer.decode((String) object);
-		}
-		return Integer.decode(toString(object));
-	}
-	public static long toLong(Object object) {
-		if ( object instanceof Long ) {
-			return ((Long) object).longValue();
-		}
-		return Long.decode(toString(object));
-	}
+    public static String getUuid() {
+        return StorageClientUtils.encode(Type1UUID.next(), StorageClientUtils.URL_SAFE_ENCODING);
+    }
+
+    public static int toInt(Object object) {
+        if (object instanceof Integer) {
+            return ((Integer) object).intValue();
+        }
+        return Integer.parseInt(toString(object), 32);
+    }
+
+    public static long toLong(Object object) {
+        if (object instanceof Long) {
+            return ((Long) object).longValue();
+        }
+        return Long.parseLong(toString(object), 32);
+    }
+
+    public static String newPath(String path, String child) {
+        LOGGER.info("Building [{}][{}] ",path,child);
+        if (!path.endsWith("/")) {
+            if (!child.startsWith("/")) {
+                return path + "/" + child;
+            } else {
+                return path + child;
+
+            }
+        } else {
+            if (!child.startsWith("/")) {
+                return path + child;
+            } else {
+                return path + child.substring(1);
+            }
+        }
+    }
+
 
 }
