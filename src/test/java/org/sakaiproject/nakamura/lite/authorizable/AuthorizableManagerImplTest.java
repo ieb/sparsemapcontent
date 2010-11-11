@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,9 +15,11 @@ import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.Authenticator;
+import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
-import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClient;
+import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientConnectionPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,10 +31,13 @@ public class AuthorizableManagerImplTest {
 			.getLogger(AuthorizableManagerImplTest.class);
 	private StorageClient client;
 	private ConfigurationImpl configuration;
+    private ConnectionPool connectionPool;
 
 	@Before
-	public void before() throws StorageClientException, AccessDeniedException {
-		client = new MemoryStorageClient();
+	public void before() throws StorageClientException, AccessDeniedException, ConnectionPoolException {
+        connectionPool = new MemoryStorageClientConnectionPool();
+        ((MemoryStorageClientConnectionPool) connectionPool).activate(ImmutableMap.of("test",(Object)"test"));
+        client = connectionPool.openConnection();
 		configuration = new ConfigurationImpl();
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put("keyspace", "n");
@@ -43,6 +49,11 @@ public class AuthorizableManagerImplTest {
 		authorizableActivator.setup();
 		LOGGER.info("Setup Complete");
 	}
+
+    @After
+    public void after() throws ConnectionPoolException {
+        connectionPool.closeConnection();
+    }
 
 	@Test
 	public void testAuthorizableManager() throws StorageClientException,

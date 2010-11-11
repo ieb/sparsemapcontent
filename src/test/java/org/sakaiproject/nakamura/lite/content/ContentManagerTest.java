@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,10 +20,12 @@ import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImplTest;
 import org.sakaiproject.nakamura.lite.accesscontrol.Authenticator;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
+import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
-import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClient;
+import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientConnectionPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,10 +37,13 @@ public class ContentManagerTest {
             .getLogger(AccessControlManagerImplTest.class);
     private StorageClient client;
     private ConfigurationImpl configuration;
+    private ConnectionPool connectionPool;
 
     @Before
-    public void before() throws StorageClientException, AccessDeniedException {
-        client = new MemoryStorageClient();
+    public void before() throws StorageClientException, AccessDeniedException, ConnectionPoolException {
+        connectionPool = new MemoryStorageClientConnectionPool();
+        ((MemoryStorageClientConnectionPool) connectionPool).activate(ImmutableMap.of("test",(Object)"test"));
+        client = connectionPool.openConnection();
         configuration = new ConfigurationImpl();
         Dictionary<String, Object> properties = new Hashtable<String, Object>();
         properties.put("keyspace", "n");
@@ -49,6 +55,11 @@ public class ContentManagerTest {
                 configuration);
         authorizableActivator.setup();
         LOGGER.info("Setup Complete");
+    }
+    
+    @After
+    public void after() throws ConnectionPoolException {
+        connectionPool.closeConnection();
     }
 
     @Test
@@ -319,7 +330,7 @@ public class ContentManagerTest {
                 Assert.assertEquals((int)b[i] & 0xff, j);
                 i++;
                 if ( (i%100==0) && (i < b.length-20) ) {
-                    read.skip(10);
+                    Assert.assertEquals(10,read.skip(10));
                     i+=10;
                 }
                 j = read.read();

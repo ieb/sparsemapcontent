@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 
 import junit.framework.Assert;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -16,22 +17,29 @@ import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.Security;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
+import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
-import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClient;
+import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientConnectionPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.ImmutableMap;
 
 public class AccessControlManagerImplTest {
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(AccessControlManagerImplTest.class);
 	private StorageClient client;
 	private ConfigurationImpl configuration;
+    private ConnectionPool connectionPool;
 
 	@Before
-	public void before() throws StorageClientException, AccessDeniedException {
-		client = new MemoryStorageClient();
+	public void before() throws StorageClientException, AccessDeniedException, ConnectionPoolException {
+        connectionPool = new MemoryStorageClientConnectionPool();
+        ((MemoryStorageClientConnectionPool) connectionPool).activate(ImmutableMap.of("test",(Object)"test"));
+        client = connectionPool.openConnection();
 		configuration = new ConfigurationImpl();
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put("keyspace", "n");
@@ -43,6 +51,11 @@ public class AccessControlManagerImplTest {
 		authorizableActivator.setup();
 		LOGGER.info("Setup Complete");
 	}
+
+    @After
+    public void after() throws ConnectionPoolException {
+        connectionPool.closeConnection();
+    }
 
 	@Test
 	public void test() throws StorageClientException, AccessDeniedException {

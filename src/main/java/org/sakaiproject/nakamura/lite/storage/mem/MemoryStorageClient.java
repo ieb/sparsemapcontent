@@ -2,18 +2,25 @@ package org.sakaiproject.nakamura.lite.storage.mem;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Maps;
-
 public class MemoryStorageClient implements StorageClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MemoryStorageClient.class);
-    Map<String, Map<String, Object>> store = Maps.newHashMap();
+    Map<String, Map<String, Object>> store;
+    
+    
+    public MemoryStorageClient( Map<String, Map<String, Object>> store) {
+        this.store = store;
+    }
+    
+    public void destroy() {
+    }
 
     public Map<String, Object> get(String keySpace, String columnFamily, String key)
             throws StorageClientException {
@@ -24,7 +31,7 @@ public class MemoryStorageClient implements StorageClient {
         String keyName = getKey(keySpace, columnFamily, key);
 
         if (!store.containsKey(keyName)) {
-            Map<String, Object> row = Maps.newHashMap();
+            Map<String, Object> row = new ConcurrentHashMap<String, Object>();
             store.put(keyName, row);
             LOGGER.info("Created {}  as {} ", new Object[] { keyName,  row });
             return row;
@@ -50,7 +57,11 @@ public class MemoryStorageClient implements StorageClient {
                 System.arraycopy(bvalue, 0, nvalue, 0, bvalue.length);
                 value = nvalue;
             }
-            row.put(e.getKey(), value);
+            if ( value == null ) {
+                row.remove(e.getKey());
+            } else {
+                row.put(e.getKey(), value);
+            }
         }
         LOGGER.info("Updated {} {} ", key, row);
     }
@@ -62,5 +73,6 @@ public class MemoryStorageClient implements StorageClient {
             store.remove(keyName);
         }
     }
+
 
 }
