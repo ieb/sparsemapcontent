@@ -18,6 +18,8 @@ import com.google.common.collect.Maps;
 public class StorageClientUtils {
 
     public final static String UTF8 = "UTF-8";
+    /** how are numbers encoded, base ? */
+    public final static int ENCODING_BASE = 10;
     public final static String SECURE_HASH_DIGEST = "SHA-512";
     public static final char[] URL_SAFE_ENCODING = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
             .toCharArray();
@@ -48,9 +50,9 @@ public class StorageClientUtils {
         } else if (object instanceof String) {
             return ((String) object);
         } else if (object instanceof Long) {
-            return Long.toString((Long) object, 32);
+            return Long.toString((Long) object, ENCODING_BASE);
         } else if (object instanceof Integer) {
-            return Integer.toString((Integer) object, 32);
+            return Integer.toString((Integer) object, ENCODING_BASE);
         } else {
             LOGGER.warn("Converting " + object.getClass() + " to byte[] via string");
             return String.valueOf(object);
@@ -233,15 +235,17 @@ public class StorageClientUtils {
     public static int toInt(Object object) {
         if (object instanceof Integer) {
             return ((Integer) object).intValue();
+        } else if ( object == null ) {
+            return 0;
         }
-        return Integer.parseInt(toString(object), 32);
+        return Integer.parseInt(toString(object), ENCODING_BASE);
     }
 
     public static long toLong(Object object) {
         if (object instanceof Long) {
             return ((Long) object).longValue();
         }
-        return Long.parseLong(toString(object), 32);
+        return Long.parseLong(toString(object), ENCODING_BASE);
     }
 
     public static String newPath(String path, String child) {

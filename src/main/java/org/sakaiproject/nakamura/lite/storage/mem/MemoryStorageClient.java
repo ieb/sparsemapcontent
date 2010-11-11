@@ -26,11 +26,11 @@ public class MemoryStorageClient implements StorageClient {
         if (!store.containsKey(keyName)) {
             Map<String, Object> row = Maps.newHashMap();
             store.put(keyName, row);
-            LOGGER.info("Created {} in {} as {} ", new Object[] { keyName, store, row });
+            LOGGER.info("Created {}  as {} ", new Object[] { keyName,  row });
             return row;
         }
         Map<String, Object> row = store.get(keyName);
-        LOGGER.info("Got {} from {} ", new Object[] { keyName, store, row });
+        LOGGER.info("Got {} as {} ", new Object[] { keyName,  row });
         return row;
     }
 
@@ -43,10 +43,16 @@ public class MemoryStorageClient implements StorageClient {
         Map<String, Object> row = get(keySpace, columnFamily, key);
 
         for (Entry<String, Object> e : values.entrySet()) {
-
-            row.put(e.getKey(), e.getValue());
+            Object value = e.getValue();
+            if ( value instanceof byte[]) {
+                byte[] bvalue = (byte[]) e.getValue();
+                byte[] nvalue = new byte[bvalue.length];
+                System.arraycopy(bvalue, 0, nvalue, 0, bvalue.length);
+                value = nvalue;
+            }
+            row.put(e.getKey(), value);
         }
-        LOGGER.info("Updated {} ", row);
+        LOGGER.info("Updated {} {} ", key, row);
     }
 
     public void remove(String keySpace, String columnFamily, String key)

@@ -2,8 +2,10 @@ package org.sakaiproject.nakamura.lite.content;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessControlManager;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
@@ -156,10 +158,6 @@ public class ContentManager {
      * Block size (1MB)
      */
     private static final int BLOCK_SIZE = 1024 * 1024; // 1MB per block
-    /**
-     * Max block set size (64MB)
-     */
-    private static final int MAX_CHUNKS = 64; // 64MB per row
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentManager.class);
     private StorageClient client;
@@ -167,19 +165,25 @@ public class ContentManager {
     private String keySpace;
     private String contentColumnFamily;
 
-    public ContentManager(StorageClient client, AccessControlManager accessControlManager) {
+    private int maxChunksPerBlockSet = 64;
+
+    public ContentManager(StorageClient client, AccessControlManager accessControlManager,  Configuration config) {
         this.client = client;
         this.accessControlManager = accessControlManager;
+        keySpace = config.getKeySpace();
+        contentColumnFamily = config.getContentColumnFamily();
     }
 
     public Content get(String path) throws StorageClientException, AccessDeniedException {
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
         Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
-        String contentId = StorageClientUtils
-                .toString(structure.get(STRUCTURE_UUID_FIELD));
-        Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
-        if (content != null) {
-            return new Content(path, structure, content, this);
+        if ( structure != null && structure.size() > 0 ) {
+            String contentId = StorageClientUtils
+                    .toString(structure.get(STRUCTURE_UUID_FIELD));
+            Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
+            if (content != null && content.size() > 0 ) {
+                return new Content(path, structure, content, this);
+            }
         }
         return null;
 
@@ -202,17 +206,25 @@ public class ContentManager {
 
         newVersion.put(UUID_FIELD, newVersionIdS);
         newVersion.put(PREVIOUS_VERSION_UUID_FIELD, saveVersionIdS);
-        newVersion.put(PREVIOUS_BLOCKID_FIELD, saveBlockIdS);
+        if ( saveBlockId != null ) {
+            newVersion.put(PREVIOUS_BLOCKID_FIELD, saveBlockIdS);
+        }
 
         saveVersion.put(NEXT_VERSION_FIELD, newVersionIdS);
-        saveVersion.put(READONLY_FIELD, TRUE_B);
+        saveVersion.put(READONLY_FIELD, TRUE);
 
         client.insert(keySpace, contentColumnFamily, saveVersionId, saveVersion);
         client.insert(keySpace, contentColumnFamily, newVersionId, newVersion);
         client.insert(keySpace, contentColumnFamily, path,
                 ImmutableMap.of(STRUCTURE_UUID_FIELD, newVersionIdS));
-        client.insert(keySpace, contentColumnFamily, StorageClientUtils.getParentObjectPath(path),
+        if ( !path.equals("/") ) {
+            client.insert(keySpace, contentColumnFamily, StorageClientUtils.getParentObjectPath(path),
                 ImmutableMap.of(StorageClientUtils.getObjectName(path), newVersionIdS));
+        }
+        LOGGER.info("Saved Version [{}] {}", saveVersionId, saveVersion);
+        LOGGER.info("New Version [{}] {}", newVersionId, newVersion);
+        LOGGER.info("Structure {} ",client.get(keySpace, contentColumnFamily, path));
+        LOGGER.info("Parent Structure {} ",client.get(keySpace, contentColumnFamily, StorageClientUtils.getParentObjectPath(path)));
 
     }
 
@@ -229,10 +241,12 @@ public class ContentManager {
             idStore = StorageClientUtils.toStore(id);
             toSave.put(UUID_FIELD, idStore);
             toSave.put(PATH_FIELD, StorageClientUtils.toStore(path));
+            LOGGER.info("New Content with {} {} ", id, toSave);
         } else if ( content.isUpdated() ) {
             toSave = Maps.newHashMap(content.getUpdated());
             id = StorageClientUtils.toString(contentPropertes.get(UUID_FIELD));
             idStore = StorageClientUtils.toStore(contentPropertes.get(UUID_FIELD));            
+            LOGGER.info("Updating Content with {} {} ", id, toSave);
         } else {
             // if not new or updated, dont update.
             return;
@@ -240,7 +254,7 @@ public class ContentManager {
         
         Map<String, Object> checkContent = client.get(keySpace, contentColumnFamily, id);
         if (TRUE.equals(StorageClientUtils.toString(checkContent.get(READONLY_FIELD)))) {
-            throw new AccessDeniedException(Security.ZONE_CONTENT, path, "Read only Content Item");
+            throw new AccessDeniedException(Security.ZONE_CONTENT, path, "update on read only Content Item (possibly a previous version of the item)");
         }
         if ( content.isNew() ) {
             // only when new do we update the structure.
@@ -263,8 +277,9 @@ public class ContentManager {
         Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
         String uuid = StorageClientUtils.toString(structure.get(STRUCTURE_UUID_FIELD));
         client.remove(keySpace, contentColumnFamily, path);
-        client.insert(keySpace, contentColumnFamily, StorageClientUtils.getParentObjectPath(path),
-                ImmutableMap.of(StorageClientUtils.getObjectName(path), null));
+        Map<String, Object> m = new HashMap<String, Object>();
+        m.put(StorageClientUtils.getObjectName(path), null);
+        client.insert(keySpace, contentColumnFamily, StorageClientUtils.getParentObjectPath(path), m);
         client.insert(keySpace, contentColumnFamily, uuid,
                 ImmutableMap.of(DELETED_FIELD, (Object) TRUE_B));
         client.insert(keySpace, contentColumnFamily, DELETEDITEMS_KEY,
@@ -296,10 +311,13 @@ public class ContentManager {
             while (offset < buffer.length) {
                 nread = in.read(buffer, offset, buffer.length - offset);
                 if (nread < 0) {
+                    LOGGER.info("Got to end of stream ");
                     break; // end of input stream, in a block read
                 }
                 offset += nread;
             }
+            LOGGER.info("Read {} bytes ", offset);
+            
             if (offset == 0 && nread < 0) {
                 break; // end of the input stream and the block was empty.
             }
@@ -318,10 +336,10 @@ public class ContentManager {
             lastBlockWrite = i;
             client.insert(keySpace, contentColumnFamily, key, ImmutableMap.of(UUID_FIELD,
                     StorageClientUtils.toStore(contentId), NUMBLOCKS_FIELD,
-                    StorageClientUtils.toStore(bodyNum), blockLengthKey,
+                    StorageClientUtils.toStore(bodyNum+1), blockLengthKey,
                     StorageClientUtils.toStore(bufferLength), bodyKey, saveBuffer));
             bodyNum++;
-            if (bodyNum > MAX_CHUNKS) {
+            if (bodyNum > maxChunksPerBlockSet) {
                 bodyNum = 0;
                 i++;
             }
@@ -329,11 +347,16 @@ public class ContentManager {
 
         client.insert(keySpace, contentColumnFamily, contentId, ImmutableMap.of(BLOCKID_FIELD,
                 StorageClientUtils.toStore(contentBlockId), NBLOCKS_FIELD,
-                StorageClientUtils.toStore(lastBlockWrite), LENGTH_FIELD,
+                StorageClientUtils.toStore(lastBlockWrite+1), LENGTH_FIELD,
                 StorageClientUtils.toStore(length), BLOCKSIZE_FIELD,
                 StorageClientUtils.toStore(BLOCK_SIZE)));
+        LOGGER.info("Saved Last block ContentID {} BlockID {} Nblocks {}  length {}  blocksize {} ",new Object[] {contentId,contentBlockId, lastBlockWrite+1, length, BLOCK_SIZE});
         return length;
 
+    }
+    
+    public void setMaxChunksPerBlockSet(int maxChunksPerBlockSet) {
+        this.maxChunksPerBlockSet = maxChunksPerBlockSet;
     }
 
     public InputStream getInputStream(String path) throws StorageClientException,
@@ -355,11 +378,17 @@ public class ContentManager {
 
         ContentInputStream(String path) throws StorageClientException, AccessDeniedException {
             accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
-            Map<String, Object> content = client.get(keySpace, contentColumnFamily, path);
-            blockId = StorageClientUtils.toString(content.get(BLOCKID_FIELD));
+            Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
+            LOGGER.info("Structure Loaded {} {} ", path, structure);
+            String contentId = StorageClientUtils
+                .toString(structure.get(STRUCTURE_UUID_FIELD));
+            Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
+            LOGGER.info("Content Loaded {} {} ", contentId, content);
+                   blockId = StorageClientUtils.toString(content.get(BLOCKID_FIELD));
             nBlocks = StorageClientUtils.toInt(content.get(NBLOCKS_FIELD));
+            
             currentBlockSet = -1;
-            currentBlockNumber = 0;
+            currentBlockNumber = -1;
             blocksInSet = -1;
 
         }
@@ -371,32 +400,46 @@ public class ContentManager {
                     return -1;
                 }
             }
-            if (offset > blockLength) {
+            if (offset >= buffer.length) {
                 if (!readBuffer()) {
                     return -1;
                 }
             }
-            return buffer[offset++];
+            int v = (int) buffer[offset] & 0xff;
+            offset++;
+            return v;
         }
+        
+        
 
         private boolean readBuffer() throws IOException {
-            if (currentBlockNumber > blocksInSet) {
+            currentBlockNumber++;
+            if (currentBlockNumber >= blocksInSet) {
+                LOGGER.info("No more blocks In set, next set ? blocks {} {} ", currentBlockSet, nBlocks);
                 if (currentBlockSet + 1 == nBlocks) {
+                    LOGGER.info("No more blocks {} {} ", currentBlockSet, nBlocks);
                     return false;
                 }
                 currentBlockSet++;
                 String blockKey = blockId + ":" + currentBlockSet;
                 try {
                     block = client.get(keySpace, contentColumnFamily, blockKey);
+                    LOGGER.info("New Block Loaded {} {} ", blockKey, block);
                 } catch (StorageClientException e) {
                     throw new IOException(e.getMessage(), e);
                 }
                 currentBlockNumber = 0;
                 blocksInSet = StorageClientUtils.toInt(block.get(NUMBLOCKS_FIELD));
+                LOGGER.info("Loaded New Block Set {}  containing {} blocks ", currentBlockSet, blocksInSet);
+                
             }
+            
+            LOGGER.info("Loading block {} {} ",  currentBlockNumber, blocksInSet);
             blockLength = StorageClientUtils.toInt(block.get(BLOCK_LENGTH_FIELD_STUB
                     + currentBlockNumber));
             buffer = (byte[]) block.get(BODY_FIELD_STUB + currentBlockNumber);
+            offset = 0;
+            LOGGER.info("Loaded Buffer {} {} size {} ", new Object[] {currentBlockSet, currentBlockNumber, buffer.length});
             return true;
         }
 
@@ -417,10 +460,13 @@ public class ContentManager {
                     n = n - (blockLength - offset);
                     skipped += (blockLength - offset);
                     if (!readBuffer()) {
+                        LOGGER.info("Skipped over EOF {} ",skipped);
                         return skipped;
                     }
+                    LOGGER.info("Skipped Partial {} ",skipped);
                 }
             }
+            LOGGER.debug("Skipped Final {} ",skipped);
             return skipped;
         }
 

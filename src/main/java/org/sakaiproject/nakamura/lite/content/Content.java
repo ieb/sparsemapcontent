@@ -34,8 +34,9 @@ public class Content {
         this.path = path;
         this.contentManager = contentManager;
         updated = false;
-        newcontent = true;
+        newcontent = false;
     }
+
     public Content(String path, Map<String, Object> content) {
         this.content = content;
         this.updatedContent = Maps.newHashMap(content);
@@ -44,13 +45,6 @@ public class Content {
         newcontent = true;
     }
 
-    void setStructure(Map<String, Object> structure) {
-        this.structure = structure;
-    }
-
-    void setContentManager(ContentManager contentManager) {
-        this.contentManager = contentManager;
-    }
 
 
     Map<String, Object> getContent() {
@@ -76,6 +70,7 @@ public class Content {
     }
 
     public Map<String, Object> getProperties() {
+        LOGGER.info("getting properties map {}",content);
         return ImmutableMap.copyOf(content);
     }
     

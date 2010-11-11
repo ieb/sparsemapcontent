@@ -56,8 +56,8 @@ public class StorageClientUtilsTest {
 	public void testToBytes() {
 		Assert.assertEquals(null, StorageClientUtils.toStore(null));
 		Assert.assertEquals("test", StorageClientUtils.toStore("test"));
-		Assert.assertEquals(Long.toString(100,32), StorageClientUtils.toStore((long)100));
-		Assert.assertEquals(Integer.toString(100,32), StorageClientUtils.toStore((int)100));
+		Assert.assertEquals(Long.toString(100,StorageClientUtils.ENCODING_BASE), StorageClientUtils.toStore((long)100));
+		Assert.assertEquals(Integer.toString(100,StorageClientUtils.ENCODING_BASE), StorageClientUtils.toStore((int)100));
 		Object o = new Object();
 		Assert.assertEquals(String.valueOf(o), StorageClientUtils.toStore(o));
 	}

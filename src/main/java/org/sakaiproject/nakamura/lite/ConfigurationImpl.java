@@ -19,9 +19,11 @@ public class ConfigurationImpl implements Configuration {
     private static final String KEYSPACE = "keyspace";
     @Property(value = "Authorizable")
     private static final String AUTHORIZABLE_COLUMN_FAMILY = "authorizable-column-family";
+    private static final String CONTENT_COLUMN_FAMILY = "content-column-family";
     private String aclColumnFamily;
     private String keySpace;
     private String authorizableColumnFamily;
+    private String contentColumnFamily;
 
     @Activate
     public void activate(ComponentContext componentContext) {
@@ -34,6 +36,7 @@ public class ConfigurationImpl implements Configuration {
         aclColumnFamily = (String) properties.get(ACL_COLUMN_FAMILY);
         keySpace = (String) properties.get(KEYSPACE);
         authorizableColumnFamily = (String) properties.get(AUTHORIZABLE_COLUMN_FAMILY);
+        contentColumnFamily = (String) properties.get(CONTENT_COLUMN_FAMILY);
     }
 
     public String getAclColumnFamily() {
@@ -47,5 +50,11 @@ public class ConfigurationImpl implements Configuration {
     public String getAuthorizableColumnFamily() {
         return authorizableColumnFamily;
     }
+
+    public String getContentColumnFamily() {
+        return contentColumnFamily;
+    }
+    
+    
 
 }

@@ -8,4 +8,6 @@ public interface Configuration {
 
     String getAuthorizableColumnFamily();
 
+    String getContentColumnFamily();
+
 }
