@@ -1,8 +1,7 @@
 package org.sakaiproject.nakamura.lite.authorizable;
 
 import java.util.Arrays;
-import java.util.Dictionary;
-import java.util.Hashtable;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -23,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 public abstract class AbstractAuthorizableManagerImplTest {
 
@@ -37,7 +37,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
         connectionPool = getConnectionPool();
         client = connectionPool.openConnection();
 		configuration = new ConfigurationImpl();
-		Dictionary<String, Object> properties = new Hashtable<String, Object>();
+		Map<String, Object> properties = Maps.newHashMap();
 		properties.put("keyspace", "n");
 		properties.put("acl-column-family", "ac");
 		properties.put("authorizable-column-family", "au");

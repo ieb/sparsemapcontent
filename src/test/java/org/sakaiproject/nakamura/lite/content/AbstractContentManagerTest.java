@@ -3,8 +3,6 @@ package org.sakaiproject.nakamura.lite.content;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Dictionary;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
@@ -28,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 public abstract class AbstractContentManagerTest {
 
@@ -42,7 +41,7 @@ public abstract class AbstractContentManagerTest {
         connectionPool = getConnectionPool();
         client = connectionPool.openConnection();
         configuration = new ConfigurationImpl();
-        Dictionary<String, Object> properties = new Hashtable<String, Object>();
+        Map<String, Object> properties = Maps.newHashMap();
         properties.put("keyspace", "n");
         properties.put("acl-column-family", "ac");
         properties.put("authorizable-column-family", "au");

@@ -87,14 +87,6 @@
     <!--  Since we will be running in OSGi we also include the following -->
     <dependency>
       <groupId>org.apache.felix</groupId>
-      <artifactId>org.osgi.core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.felix</groupId>
-      <artifactId>org.osgi.compendium</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.felix</groupId>
       <artifactId>org.apache.felix.scr.annotations</artifactId>
     </dependency>
     <dependency>

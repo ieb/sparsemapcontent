@@ -1,12 +1,11 @@
 package org.sakaiproject.nakamura.lite;
 
-import java.util.Dictionary;
+import java.util.Map;
 
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
-import org.osgi.service.component.ComponentContext;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 
 @Component(immediate = true, metatype = true)
@@ -26,13 +25,7 @@ public class ConfigurationImpl implements Configuration {
     private String contentColumnFamily;
 
     @Activate
-    public void activate(ComponentContext componentContext) {
-        @SuppressWarnings("unchecked")
-        Dictionary<String, Object> properties = componentContext.getProperties();
-        activate(properties);
-    }
-
-    public void activate(Dictionary<String, Object> properties) {
+    public void activate(Map<String, Object> properties) {
         aclColumnFamily = (String) properties.get(ACL_COLUMN_FAMILY);
         keySpace = (String) properties.get(KEYSPACE);
         authorizableColumnFamily = (String) properties.get(AUTHORIZABLE_COLUMN_FAMILY);
