@@ -22,23 +22,19 @@ import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
-import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientConnectionPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableMap;
-
-public class AccessControlManagerImplTest {
+public abstract class AbstractAccessControlManagerImplTest {
 	private static final Logger LOGGER = LoggerFactory
-			.getLogger(AccessControlManagerImplTest.class);
+			.getLogger(AbstractAccessControlManagerImplTest.class);
 	private StorageClient client;
 	private ConfigurationImpl configuration;
     private ConnectionPool connectionPool;
 
 	@Before
 	public void before() throws StorageClientException, AccessDeniedException, ConnectionPoolException {
-        connectionPool = new MemoryStorageClientConnectionPool();
-        ((MemoryStorageClientConnectionPool) connectionPool).activate(ImmutableMap.of("test",(Object)"test"));
+        connectionPool = getConnectionPool();
         client = connectionPool.openConnection();
 		configuration = new ConfigurationImpl();
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -51,6 +47,8 @@ public class AccessControlManagerImplTest {
 		authorizableActivator.setup();
 		LOGGER.info("Setup Complete");
 	}
+
+    protected abstract ConnectionPool getConnectionPool();
 
     @After
     public void after() throws ConnectionPoolException {

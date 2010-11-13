@@ -6,6 +6,10 @@ public class StorageClientException extends Exception {
         super(message, t);
     }
 
+    public StorageClientException(String message) {
+        super(message);
+    }
+
     /**
 	 * 
 	 */

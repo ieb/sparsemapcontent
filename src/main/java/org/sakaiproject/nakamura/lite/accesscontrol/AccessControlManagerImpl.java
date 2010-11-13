@@ -33,7 +33,7 @@ public class AccessControlManagerImpl implements AccessControlManager {
         this.keySpace = config.getKeySpace();
     }
 
-    public int toBitmap(byte[] value) {
+    public int toBitmap(Object value) {
         if (value != null) {
             return Integer.valueOf(StorageClientUtils.toString(value), 16);
         }
@@ -59,7 +59,7 @@ public class AccessControlManagerImpl implements AccessControlManager {
                 modifications.put(name, null);
             } else {
 
-                int bitmap = toBitmap((byte[]) currentAcl.get(name));
+                int bitmap = toBitmap(currentAcl.get(name));
                 bitmap = m.modify(bitmap);
                 modifications.put(name, StorageClientUtils.toStore(bitmap));
             }
@@ -102,8 +102,8 @@ public class AccessControlManagerImpl implements AccessControlManager {
         int denies = 0;
         if (acl != null) {
             for (String principal : user.getPrincipals()) {
-                grants = grants | toBitmap((byte[]) acl.get(principal + GRANTED_MARKER));
-                denies = denies | toBitmap((byte[]) acl.get(principal + DENIED_MARKER));
+                grants = grants | toBitmap(acl.get(principal + GRANTED_MARKER));
+                denies = denies | toBitmap(acl.get(principal + DENIED_MARKER));
             }
             /*
              * grants contains the granted permissions in a bitmap denies

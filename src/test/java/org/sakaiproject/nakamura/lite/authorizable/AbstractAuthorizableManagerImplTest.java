@@ -19,24 +19,22 @@ import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
-import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientConnectionPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
 
-public class AuthorizableManagerImplTest {
+public abstract class AbstractAuthorizableManagerImplTest {
 
 	private static final Logger LOGGER = LoggerFactory
-			.getLogger(AuthorizableManagerImplTest.class);
+			.getLogger(AbstractAuthorizableManagerImplTest.class);
 	private StorageClient client;
 	private ConfigurationImpl configuration;
     private ConnectionPool connectionPool;
 
 	@Before
 	public void before() throws StorageClientException, AccessDeniedException, ConnectionPoolException {
-        connectionPool = new MemoryStorageClientConnectionPool();
-        ((MemoryStorageClientConnectionPool) connectionPool).activate(ImmutableMap.of("test",(Object)"test"));
+        connectionPool = getConnectionPool();
         client = connectionPool.openConnection();
 		configuration = new ConfigurationImpl();
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -49,6 +47,9 @@ public class AuthorizableManagerImplTest {
 		authorizableActivator.setup();
 		LOGGER.info("Setup Complete");
 	}
+	
+    protected abstract ConnectionPool getConnectionPool();
+
 
     @After
     public void after() throws ConnectionPoolException {
@@ -173,16 +174,16 @@ public class AuthorizableManagerImplTest {
 		AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(
 				currentUser, client, configuration, accessControlManagerImpl);
 
-		Assert.assertTrue(authorizableManager.createUser("testuser",
+		Assert.assertTrue(authorizableManager.createUser("testuser2",
 				"Test User", "test", ImmutableMap.of("testkey",
 						(Object) "testvalue", "principals", "testers",
 						Authorizable.GROUP_FIELD, Authorizable.GROUP_VALUE)));
-		Assert.assertFalse(authorizableManager.createUser("testuser",
+		Assert.assertFalse(authorizableManager.createUser("testuser2",
 				"Test User", "test", ImmutableMap.of("testkey",
 						(Object) "testvalue", "principals",
 						"administrators;testers")));
 
-		Authorizable a = authorizableManager.findAuthorizable("testuser");
+		Authorizable a = authorizableManager.findAuthorizable("testuser2");
 		Assert.assertNotNull(a);
 		Assert.assertFalse(a instanceof Group);
 		User user = (User) a;
@@ -200,7 +201,7 @@ public class AuthorizableManagerImplTest {
 
 		try {
 			userAuthorizableManager
-					.createUser("testuser2", "Test User", "test", ImmutableMap
+					.createUser("testuser3", "Test User", "test", ImmutableMap
 							.of("testkey", (Object) "testvalue", "principals",
 									"administrators;testers",
 									Authorizable.GROUP_FIELD,
@@ -211,7 +212,7 @@ public class AuthorizableManagerImplTest {
 		}
 
 		try {
-			userAuthorizableManager.createUser("testuser", "Test User", "test",
+			userAuthorizableManager.createUser("testuser4", "Test User", "test",
 					ImmutableMap.of("testkey", (Object) "testvalue",
 							"principals", "administrators;testers"));
 			Assert.fail();
@@ -264,10 +265,13 @@ public class AuthorizableManagerImplTest {
 		g.removeProperty("testkey");
 		g.addPrincipal("tester2");
 		g.removePrincipal("testers");
+		// adding user 3 should make it a member of testgroup and give it the pricipal testgroup
 		g.addMember("user3");
 		g.removeMember("user2");
 
+		LOGGER.info("Updating Group with changed membership ----------------------");
 		authorizableManager.updateAuthorizable(g);
+        LOGGER.info("Done Updating Group with changed membership ----------------------");
 
 		Authorizable a2 = authorizableManager.findAuthorizable("testgroup");
 		Assert.assertNotNull(a2);
@@ -293,5 +297,6 @@ public class AuthorizableManagerImplTest {
 				"testgroup" }, principals);
 
 	}
+
 
 }

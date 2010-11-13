@@ -97,7 +97,6 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
             Group group = (Group) authorizable;
             String[] membersAdded = group.getMembersAdded();
             Authorizable[] newMembers = new Authorizable[membersAdded.length];
-            String[] membersRemoved = group.getMembersRemoved();
             Authorizable[] retiredMembers = new Authorizable[membersAdded.length];
             int i = 0;
             for (String newMember : membersAdded) {
@@ -117,6 +116,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
                 i++;
             }
             i = 0;
+            String[] membersRemoved = group.getMembersRemoved();
             for (String retiredMember : membersRemoved) {
                 try {
                     // members that dont exist require no action
@@ -129,6 +129,8 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
                 i++;
 
             }
+
+            LOGGER.info("Membership Change added [{}] removed [{}] ", newMembers, retiredMembers);
             // there is now a sparse list of authorizables, that need changing
             for (Authorizable newMember : newMembers) {
                 if (newMember != null) {
@@ -137,8 +139,11 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
                         Map<String, Object> encodedProperties = StorageClientUtils
                                 .getFilteredAndEcodedMap(newMember.getPropertiesForUpdate(),
                                         FILTER_ON_UPDATE);
-                        client.insert(keySpace, authorizableColumnFamily, authorizable.getId(),
+                        client.insert(keySpace, authorizableColumnFamily, newMember.getId(),
                                 encodedProperties);
+                    } else {
+                        LOGGER.info("New Member {} already had group principal {} ",
+                                newMember.getId(), authorizable.getId());
                     }
                 }
             }
@@ -149,8 +154,11 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
                         Map<String, Object> encodedProperties = StorageClientUtils
                                 .getFilteredAndEcodedMap(retiredMember.getPropertiesForUpdate(),
                                         FILTER_ON_UPDATE);
-                        client.insert(keySpace, authorizableColumnFamily, authorizable.getId(),
+                        client.insert(keySpace, authorizableColumnFamily, retiredMember.getId(),
                                 encodedProperties);
+                    } else {
+                        LOGGER.info("Retired Member {} didnt have group principal {} ",
+                                retiredMember.getId(), authorizable.getId());
                     }
                 }
             }
