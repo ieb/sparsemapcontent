@@ -1,6 +1,6 @@
-Map Content System.
+# Map Content System.
 
-Rational:
+## Rational
   In the Q1 release of Nakamura we had major scalability and concurrency problems caused mainly by our use cases for a content
 store not being closely aligned with those of Jackrabbit. We were not able to work around those problems and although we did manage
 to release the code, its quite clear that in certain areas Jackrabbit wont work for us. This should not reflect badly on Jackrabbit, 
@@ -31,15 +31,15 @@ At this stage its pre-alpha, untested for performance and scalability and incomp
 
 
 
-Backlog:
+## Backlog
 
-Provide Read Cache implementation of StorageClient that chains to a real storage client.
-Provide Write Through Cache implementation of StorageClient that chains to a real storage client.
-Provide Scoped (as in Transaction Scoped) implementation of StorageClient that chains to a real storage client.
-Check all byte[] usage and limit to only real bodies.
-Replace all byte[] usage with InputStreams or a resetable holder, pushing down into the StorageClient.
-Do scalability testing on MySQL and Cassandra
-Implement Infinispan StorageClient cache (Read or Write Through)
+1. Provide Read Cache implementation of StorageClient that chains to a real storage client.
+1. Provide Write Through Cache implementation of StorageClient that chains to a real storage client.
+1. Provide Scoped (as in Transaction Scoped) implementation of StorageClient that chains to a real storage client.
+1. Check all byte[] usage and limit to only real bodies.
+1. Replace all byte[] usage with InputStreams or a resetable holder, pushing down into the StorageClient.
+1. Do scalability testing on MySQL and Cassandra
+1. Implement Infinispan StorageClient cache (Read or Write Through)
 
 
 
