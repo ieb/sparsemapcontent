@@ -31,8 +31,10 @@ public class ClientConnectionPool extends AbstractClientConnectionPool {
         private String[] hosts;
         private int[] ports;
         private int savedLastHost = 0;
+        private Map<String, Object> properties;
 
-        public ClientConnectionPoolFactory(String[] connections) {
+        public ClientConnectionPoolFactory(String[] connections, Map<String, Object> properties) {
+            this.properties = properties;
             hosts = new String[connections.length];
             ports = new int[connections.length];
             int i = 0;
@@ -74,7 +76,7 @@ public class ClientConnectionPool extends AbstractClientConnectionPool {
             }
             savedLastHost = lastHost;
             TProtocol tProtocol = new TBinaryProtocol(tSocket);
-            ClientConnection clientConnection = new ClientConnection(tProtocol, tSocket);
+            ClientConnection clientConnection = new ClientConnection(tProtocol, tSocket, properties);
             return clientConnection;
         }
 
@@ -113,6 +115,7 @@ public class ClientConnectionPool extends AbstractClientConnectionPool {
     }
 
     private String[] connections;
+    private Map<String, Object> properties;
 
     public ClientConnectionPool() {
     }
@@ -120,6 +123,7 @@ public class ClientConnectionPool extends AbstractClientConnectionPool {
     @Activate
     public void activate(Map<String, Object> properties) {
         connections = (String[]) properties.get(CONNECTION_POOL);
+        this.properties = properties;
         super.activate(properties);
 
     }
@@ -128,6 +132,6 @@ public class ClientConnectionPool extends AbstractClientConnectionPool {
 
     @Override
     protected PoolableObjectFactory getConnectionPoolFactory() {
-        return new ClientConnectionPoolFactory(connections);
+        return new ClientConnectionPoolFactory(connections, properties);
     }
 }

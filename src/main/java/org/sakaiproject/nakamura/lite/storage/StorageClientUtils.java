@@ -266,5 +266,14 @@ public class StorageClientUtils {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> T getSetting(Object setting, T defaultValue) {
+        if ( setting != null ) {
+            return (T) setting;
+        }
+        return defaultValue;
+    }
 
+    
+    
 }

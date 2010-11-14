@@ -88,7 +88,7 @@ public class ContentManager {
     /**
      * The ID of a content item
      */
-    private static final String UUID_FIELD = "id";
+    public static final String UUID_FIELD = "id";
     /**
      * The path of the content item
      */
@@ -100,7 +100,7 @@ public class ContentManager {
     /**
      * BlockID where the body of this content item is stored, if there is a body
      */
-    private static final String BLOCKID_FIELD = "blockId";
+    public static final String BLOCKID_FIELD = "blockId";
     /**
      * ID of the previous version
      */
@@ -125,39 +125,19 @@ public class ContentManager {
     /**
      * The block size in bytes in each block in a block set
      */
-    private static final String BLOCKSIZE_FIELD = "blocksize";
+    public static final String BLOCKSIZE_FIELD = "blocksize";
     /**
      * Total length of the content body
      */
-    private static final String LENGTH_FIELD = "length";
+    public static final String LENGTH_FIELD = "length";
     /**
      * The number of block sets in a body
      */
-    private static final String NBLOCKS_FIELD = "nblocks";
-    /**
-     * The number of blocks in this block set
-     */
-    private static final String NUMBLOCKS_FIELD = "numblocks";
-    /**
-     * the stub of all bodies 0..numblocks
-     */
-    private static final String BODY_FIELD_STUB = "body:";
-    /**
-     * The length of this block
-     */
-    private static final String BLOCK_LENGTH_FIELD_STUB = "blockLength:";
+    public static final String NBLOCKS_FIELD = "nblocks";
     /**
      * Yes, True, etc
      */
     private static final String TRUE = "Y";
-    /**
-     * Yes, True etc in byte form
-     */
-    private static final byte[] TRUE_B = TRUE.getBytes();
-    /**
-     * Block size (1MB)
-     */
-    private static final int BLOCK_SIZE = 1024 * 1024; // 1MB per block
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentManager.class);
     private StorageClient client;
@@ -165,7 +145,6 @@ public class ContentManager {
     private String keySpace;
     private String contentColumnFamily;
 
-    private int maxChunksPerBlockSet = 64;
 
     public ContentManager(StorageClient client, AccessControlManager accessControlManager,  Configuration config) {
         this.client = client;
@@ -281,194 +260,44 @@ public class ContentManager {
         m.put(StorageClientUtils.getObjectName(path), null);
         client.insert(keySpace, contentColumnFamily, StorageClientUtils.getParentObjectPath(path), m);
         client.insert(keySpace, contentColumnFamily, uuid,
-                ImmutableMap.of(DELETED_FIELD, (Object) TRUE_B));
+                ImmutableMap.of(DELETED_FIELD, (Object) TRUE));
         client.insert(keySpace, contentColumnFamily, DELETEDITEMS_KEY,
                 ImmutableMap.of(uuid, StorageClientUtils.toStore(path)));
     }
-
-    public long writeBody(String path, InputStream in) throws StorageClientException,
-            AccessDeniedException, IOException {
+    
+    public long writeBody(String path, InputStream in) throws StorageClientException, AccessDeniedException, IOException {
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_WRITE);
         Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
         String contentId = StorageClientUtils
                 .toString(structure.get(STRUCTURE_UUID_FIELD));
         Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
-
         String contentBlockId = null;
         if (content.containsKey(BLOCKID_FIELD)) {
             contentBlockId = StorageClientUtils.toString(content.get(BLOCKID_FIELD));
         } else {
             contentBlockId = StorageClientUtils.getUuid();
         }
-        int i = 0;
-        int lastBlockWrite = 0;
-        long length = 0;
-        int bodyNum = 0;
-        byte[] buffer = new byte[BLOCK_SIZE];
-        for (;;) {
-            int offset = 0;
-            int nread = 0;
-            while (offset < buffer.length) {
-                nread = in.read(buffer, offset, buffer.length - offset);
-                if (nread < 0) {
-                    LOGGER.info("Got to end of stream ");
-                    break; // end of input stream, in a block read
-                }
-                offset += nread;
-            }
-            LOGGER.info("Read {} bytes ", offset);
-            
-            if (offset == 0 && nread < 0) {
-                break; // end of the input stream and the block was empty.
-            }
-            byte[] saveBuffer = buffer;
-
-            if (offset < buffer.length) {
-                saveBuffer = new byte[offset];
-                System.arraycopy(buffer, 0, saveBuffer, 0, saveBuffer.length);
-            }
-
-            String key = contentBlockId + ":" + i;
-            String blockLengthKey = BLOCK_LENGTH_FIELD_STUB + bodyNum;
-            String bodyKey = BODY_FIELD_STUB + bodyNum;
-            int bufferLength = saveBuffer.length;
-            length = length + bufferLength;
-            lastBlockWrite = i;
-            client.insert(keySpace, contentColumnFamily, key, ImmutableMap.of(UUID_FIELD,
-                    StorageClientUtils.toStore(contentId), NUMBLOCKS_FIELD,
-                    StorageClientUtils.toStore(bodyNum+1), blockLengthKey,
-                    StorageClientUtils.toStore(bufferLength), bodyKey, saveBuffer));
-            bodyNum++;
-            if (bodyNum > maxChunksPerBlockSet) {
-                bodyNum = 0;
-                i++;
-            }
-        }
-
-        client.insert(keySpace, contentColumnFamily, contentId, ImmutableMap.of(BLOCKID_FIELD,
-                StorageClientUtils.toStore(contentBlockId), NBLOCKS_FIELD,
-                StorageClientUtils.toStore(lastBlockWrite+1), LENGTH_FIELD,
-                StorageClientUtils.toStore(length), BLOCKSIZE_FIELD,
-                StorageClientUtils.toStore(BLOCK_SIZE)));
-        LOGGER.info("Saved Last block ContentID {} BlockID {} Nblocks {}  length {}  blocksize {} ",new Object[] {contentId,contentBlockId, lastBlockWrite+1, length, BLOCK_SIZE});
+        Map<String, Object> metadata = client.streamBodyIn(keySpace, contentColumnFamily, contentId, contentBlockId, in);
+        client.insert(keySpace, contentColumnFamily, contentId, metadata);
+        long length = StorageClientUtils.toLong(metadata.get(LENGTH_FIELD));
         return length;
-
+        
     }
     
-    public void setMaxChunksPerBlockSet(int maxChunksPerBlockSet) {
-        this.maxChunksPerBlockSet = maxChunksPerBlockSet;
-    }
+
+    
 
     public InputStream getInputStream(String path) throws StorageClientException,
-            AccessDeniedException {
-        return new ContentInputStream(path);
+            AccessDeniedException, IOException {
+        accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
+        Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
+        LOGGER.info("Structure Loaded {} {} ", path, structure);
+        String contentId = StorageClientUtils
+            .toString(structure.get(STRUCTURE_UUID_FIELD));
+        Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
+        String contentBlockId = StorageClientUtils.toString(content.get(BLOCKID_FIELD));
+        return client.streamBodyOut(keySpace, contentColumnFamily, contentId, contentBlockId, content);
     }
 
-    public class ContentInputStream extends InputStream {
 
-        private byte[] buffer;
-        private String blockId;
-        private int nBlocks;
-        private int blockLength;
-        private int offset;
-        private int currentBlockSet;
-        private int currentBlockNumber;
-        private int blocksInSet;
-        private Map<String, Object> block;
-
-        ContentInputStream(String path) throws StorageClientException, AccessDeniedException {
-            accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
-            Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
-            LOGGER.info("Structure Loaded {} {} ", path, structure);
-            String contentId = StorageClientUtils
-                .toString(structure.get(STRUCTURE_UUID_FIELD));
-            Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
-            LOGGER.info("Content Loaded {} {} ", contentId, content);
-                   blockId = StorageClientUtils.toString(content.get(BLOCKID_FIELD));
-            nBlocks = StorageClientUtils.toInt(content.get(NBLOCKS_FIELD));
-            
-            currentBlockSet = -1;
-            currentBlockNumber = -1;
-            blocksInSet = -1;
-
-        }
-
-        @Override
-        public int read() throws IOException {
-            if (buffer == null) {
-                if (!readBuffer()) {
-                    return -1;
-                }
-            }
-            if (offset >= buffer.length) {
-                if (!readBuffer()) {
-                    return -1;
-                }
-            }
-            int v = (int) buffer[offset] & 0xff;
-            offset++;
-            return v;
-        }
-        
-        
-
-        private boolean readBuffer() throws IOException {
-            currentBlockNumber++;
-            if (currentBlockNumber >= blocksInSet) {
-                LOGGER.info("No more blocks In set, next set ? blocks {} {} ", currentBlockSet, nBlocks);
-                if (currentBlockSet + 1 == nBlocks) {
-                    LOGGER.info("No more blocks {} {} ", currentBlockSet, nBlocks);
-                    return false;
-                }
-                currentBlockSet++;
-                String blockKey = blockId + ":" + currentBlockSet;
-                try {
-                    block = client.get(keySpace, contentColumnFamily, blockKey);
-                    LOGGER.info("New Block Loaded {} {} ", blockKey, block);
-                } catch (StorageClientException e) {
-                    throw new IOException(e.getMessage(), e);
-                }
-                currentBlockNumber = 0;
-                blocksInSet = StorageClientUtils.toInt(block.get(NUMBLOCKS_FIELD));
-                LOGGER.info("Loaded New Block Set {}  containing {} blocks ", currentBlockSet, blocksInSet);
-                
-            }
-            
-            LOGGER.info("Loading block {} {} ",  currentBlockNumber, blocksInSet);
-            blockLength = StorageClientUtils.toInt(block.get(BLOCK_LENGTH_FIELD_STUB
-                    + currentBlockNumber));
-            buffer = (byte[]) block.get(BODY_FIELD_STUB + currentBlockNumber);
-            offset = 0;
-            LOGGER.info("Loaded Buffer {} {} size {} ", new Object[] {currentBlockSet, currentBlockNumber, buffer.length});
-            return true;
-        }
-
-        @Override
-        public boolean markSupported() {
-            return false;
-        }
-
-        @Override
-        public long skip(long n) throws IOException {
-            long skipped = 0;
-            while (n > 0) {
-                if (n < blockLength - offset) {
-                    offset += n;
-                    skipped += n;
-                    n = 0;
-                } else {
-                    n = n - (blockLength - offset);
-                    skipped += (blockLength - offset);
-                    if (!readBuffer()) {
-                        LOGGER.info("Skipped over EOF {} ",skipped);
-                        return skipped;
-                    }
-                    LOGGER.info("Skipped Partial {} ",skipped);
-                }
-            }
-            LOGGER.debug("Skipped Final {} ",skipped);
-            return skipped;
-        }
-
-    }
 }

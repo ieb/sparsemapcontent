@@ -18,7 +18,10 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
+import org.sakaiproject.nakamura.lite.storage.RowHasher;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
@@ -29,7 +32,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Maps;
 
-public class JDBCStorageClient implements StorageClient {
+public class JDBCStorageClient implements StorageClient, RowHasher {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JDBCStorageClient.class);
     private static final String BASESQLPATH = "org/sakaiproject/nakamura/lite/storage/jdbc/config/client";
@@ -37,37 +40,29 @@ public class JDBCStorageClient implements StorageClient {
     private static final String SQL_CHECKSCHEMA = "check-schema";
     private static final String SQL_COMMENT = "#";
     private static final String SQL_EOL = ";";
-    private static final String SQL_DELETE_BINARY_ROW = "delete-binary-row";
     private static final String SQL_DELETE_STRING_ROW = "delete-string-row";
     private static final String SQL_SELECT_STRING_ROW = "select-string-row";
-    private static final String SQL_SELECT_BINARY_ROW = "select-binary-row";
     private static final String SQL_INSERT_STRING_COLUMN = "insert-string-column";
-    private static final String SQL_INSERT_BINARY_COLUMN = "insert-binary-column";
     private static final String SQL_UPDATE_STRING_COLUMN = "update-string-column";
-    private static final String SQL_UPDATE_BINARY_COLUMN = "update-binary-column";
     private static final String PROP_HASH_ALG = "rowid-hash";
-    private static final String SQL_REMOVE_BINARY_COLUMN = "remove-binary-column";
     private static final String SQL_REMOVE_STRING_COLUMN = "remove-string-column";
     private Connection connection;
     private String[] clientSQLLocations;
     private Map<String, Object> sqlConfig;
     private boolean active;
     private PreparedStatement deleteStringRow;
-    private PreparedStatement deleteBinaryRow;
     private PreparedStatement selectStringRow;
-    private PreparedStatement selectBinaryRow;
     private PreparedStatement insertStringColumn;
     private PreparedStatement updateStringColumn;
-    private PreparedStatement updateBinaryColumn;
-    private PreparedStatement insertBinaryColumn;
     private PreparedStatement removeStringColumn;
-    private PreparedStatement removeBinaryColumn;
     private MessageDigest hasher;
     private boolean alive;
+    private StreamedContentHelper streamedContentHelper;
 
     public JDBCStorageClient(Connection connection, Map<String, Object> properties)
             throws SQLException, NoSuchAlgorithmException, StorageClientException {
         this.connection = connection;
+        streamedContentHelper = new FileStreamContentHelper(this, properties);
         String dbProductName = connection.getMetaData().getDatabaseProductName()
                 .replaceAll(" ", "");
         int dbProductMajorVersion = connection.getMetaData().getDatabaseMajorVersion();
@@ -130,15 +125,6 @@ public class JDBCStorageClient implements StorageClient {
             while (strings.next()) {
                 result.put(strings.getString(1), strings.getString(2));
             }
-
-            // FIXME: this is inefficient, but will do for the moment.
-            selectBinaryRow.clearWarnings();
-            selectBinaryRow.clearParameters();
-            selectBinaryRow.setString(1, rid);
-            blobs = selectBinaryRow.executeQuery();
-            while (blobs.next()) {
-                result.put(blobs.getString(1), blobs.getBytes(2));
-            }
         } catch (SQLException e) {
             LOGGER.warn("Failed to perform get operation on {}:{}:{} ", new Object[] { keySpace,
                     columnFamily, key }, e);
@@ -162,7 +148,7 @@ public class JDBCStorageClient implements StorageClient {
         return result;
     }
 
-    private String rowHash(String keySpace, String columnFamily, String key) {
+    public String rowHash(String keySpace, String columnFamily, String key) {
         hasher.reset();
         String keystring = keySpace + ":" + columnFamily + ":" + key;
         byte[] ridkey;
@@ -180,6 +166,13 @@ public class JDBCStorageClient implements StorageClient {
         try {
             startUpConnection();
             String rid = rowHash(keySpace, columnFamily, key);
+            for (Entry<String, Object> e : values.entrySet()) {
+                String k = e.getKey();
+                Object o = e.getValue();
+                if (o instanceof byte[]) {
+                    throw new RuntimeException("Invalid content in "+k+", storing byte[] rather than streaming it");
+                }
+            }
             for (Entry<String, Object> e : values.entrySet()) {
                 String k = e.getKey();
                 Object o = e.getValue();
@@ -215,44 +208,6 @@ public class JDBCStorageClient implements StorageClient {
                         LOGGER.info("Column Not present did not remove {} {} Current Column:{} ", new Object[]{getRowId(keySpace, columnFamily, key), k, m}); 
                     } else {
                         LOGGER.info("Removed {} {} ", getRowId(keySpace, columnFamily, key), k); 
-                    }
-                }
-            }
-            for (Entry<String, Object> e : values.entrySet()) {
-                String k = e.getKey();
-                Object o = e.getValue();
-                if (o instanceof byte[]) {
-                    updateBinaryColumn.clearWarnings();
-                    updateBinaryColumn.clearParameters();
-                    updateBinaryColumn.setBytes(1, (byte[]) o);
-                    updateBinaryColumn.setString(2, rid);
-                    updateBinaryColumn.setString(3, k);
-                    if (updateBinaryColumn.executeUpdate() == 0) {
-                        insertBinaryColumn.clearParameters();
-                        insertBinaryColumn.clearWarnings();
-                        insertBinaryColumn.clearParameters();
-                        insertBinaryColumn.setBytes(1, (byte[]) o);
-                        insertBinaryColumn.setString(2, rid);
-                        insertBinaryColumn.setString(3, k);
-                        if (insertBinaryColumn.executeUpdate() == 0) {
-                            throw new StorageClientException("Failed to save binary " + keySpace
-                                    + ":" + columnFamily + ":" + key + "  column:[" + k + "] ");
-                        } else {
-                            LOGGER.info("Inserted Binary {} {} ", getRowId(keySpace, columnFamily, key), k);
-                        }
-                    } else {
-                        LOGGER.info("Updated Binary {} {} ", getRowId(keySpace, columnFamily, key), k);
-                    }
-                } else if (o == null) {
-                    removeBinaryColumn.clearWarnings();
-                    removeBinaryColumn.clearParameters();
-                    removeBinaryColumn.setString(1, rid);
-                    removeBinaryColumn.setString(2, k);
-                    if (removeBinaryColumn.executeUpdate() == 0) {
-                        Map<String, Object> m = get(keySpace, columnFamily, key);
-                        LOGGER.info("Binary Column Not present did not remove {} {} Current Column:{} ", new Object[]{getRowId(keySpace, columnFamily, key), k, m}); 
-                    } else {
-                        LOGGER.info("Removed Binary {} {} ", getRowId(keySpace, columnFamily, key), k); 
                     }
                 }
             }
@@ -301,15 +256,10 @@ public class JDBCStorageClient implements StorageClient {
         if (!active && alive) {
             LOGGER.info("Activating {}", this);
             deleteStringRow = openPreparedStatement(SQL_DELETE_STRING_ROW);
-            deleteBinaryRow = openPreparedStatement(SQL_DELETE_BINARY_ROW);
             selectStringRow = openPreparedStatement(SQL_SELECT_STRING_ROW);
-            selectBinaryRow = openPreparedStatement(SQL_SELECT_BINARY_ROW);
             insertStringColumn = openPreparedStatement(SQL_INSERT_STRING_COLUMN);
-            insertBinaryColumn = openPreparedStatement(SQL_INSERT_BINARY_COLUMN);
             updateStringColumn = openPreparedStatement(SQL_UPDATE_STRING_COLUMN);
-            updateBinaryColumn = openPreparedStatement(SQL_UPDATE_BINARY_COLUMN);
             removeStringColumn = openPreparedStatement(SQL_REMOVE_STRING_COLUMN);
-            removeBinaryColumn = openPreparedStatement(SQL_REMOVE_BINARY_COLUMN);
 
             active = true;
         }
@@ -323,15 +273,10 @@ public class JDBCStorageClient implements StorageClient {
         if (active) {
             LOGGER.info("Passivating {}", this);
             deleteStringRow = closePreparedStatement(deleteStringRow);
-            deleteBinaryRow = closePreparedStatement(deleteBinaryRow);
             selectStringRow = closePreparedStatement(selectStringRow);
-            selectBinaryRow = closePreparedStatement(selectBinaryRow);
             insertStringColumn = closePreparedStatement(insertStringColumn);
-            insertBinaryColumn = closePreparedStatement(insertBinaryColumn);
             updateStringColumn = closePreparedStatement(updateStringColumn);
-            updateBinaryColumn = closePreparedStatement(updateBinaryColumn);
             removeStringColumn = closePreparedStatement(removeStringColumn);
-            removeBinaryColumn = closePreparedStatement(removeBinaryColumn);
             active = false;
         }
     }
@@ -444,5 +389,19 @@ public class JDBCStorageClient implements StorageClient {
     }
 
     public void passivate() {
+    }
+
+    @Override
+    public Map<String, Object> streamBodyIn(String keySpace, String columnFamily, String contentId,
+            String contentBlockId, InputStream in) throws StorageClientException,
+            AccessDeniedException, IOException {
+       return streamedContentHelper.writeBody(keySpace, columnFamily, contentId, contentBlockId, in);
+    }
+
+    @Override
+    public InputStream streamBodyOut(String keySpace, String columnFamily, String contentId,
+            String contentBlockId, Map<String, Object> content) throws StorageClientException,
+            AccessDeniedException, IOException {
+        return streamedContentHelper.readBody(keySpace, columnFamily, contentBlockId);
     }
 }

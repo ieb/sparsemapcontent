@@ -36,11 +36,11 @@ At this stage its pre-alpha, untested for performance and scalability and incomp
 1. Provide Read Cache implementation of StorageClient that chains to a real storage client.
 1. Provide Write Through Cache implementation of StorageClient that chains to a real storage client.
 1. Provide Scoped (as in Transaction Scoped) implementation of StorageClient that chains to a real storage client.
-1. Check all byte[] usage and limit to only real bodies.
-1. Replace all byte[] usage with InputStreams or a resetable holder, pushing down into the StorageClient.
 1. Do scalability testing on MySQL and Cassandra
 1. Implement Infinispan StorageClient cache (Read or Write Through)
 
 
-
+## Completed Backlog
+1. Check all byte[] usage and limit to only real bodies. (14/11/2010) no byte[] are used for content bodies.
+1. Replace all byte[] usage with InputStreams or a resetable holder, pushing down into the StorageClient. (14/11/2010)
 

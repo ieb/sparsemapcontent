@@ -20,14 +20,16 @@ public class MemoryStorageClientConnectionPool extends AbstractClientConnectionP
 
 
         private Map<String, Map<String, Object>> store;
+        private Map<String, Object> properties;
 
-        public ClientConnectionPoolFactory(Map<String, Map<String, Object>> store) {
+        public ClientConnectionPoolFactory(Map<String, Map<String, Object>> store, Map<String, Object> properties) {
            this.store = store;
+           this.properties = properties;
         }
 
         @Override
         public Object makeObject() throws Exception {
-            MemoryStorageClient client = new MemoryStorageClient(store);
+            MemoryStorageClient client = new MemoryStorageClient(store, properties);
             return client;
         }
 
@@ -55,12 +57,14 @@ public class MemoryStorageClientConnectionPool extends AbstractClientConnectionP
     }
 
     private Map<String, Map<String, Object>> store;
+    private Map<String, Object> properties;
 
     public MemoryStorageClientConnectionPool() {
     }
 
     @Activate
     public void activate(Map<String, Object> properties) {
+        this.properties = properties;
         store = new ConcurrentHashMap<String, Map<String,Object>>();
         super.activate(properties);
     }
@@ -73,7 +77,7 @@ public class MemoryStorageClientConnectionPool extends AbstractClientConnectionP
 
     @Override
     protected PoolableObjectFactory getConnectionPoolFactory() {
-        return new ClientConnectionPoolFactory(store);
+        return new ClientConnectionPoolFactory(store, properties);
     }
 
 }

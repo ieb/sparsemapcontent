@@ -22,6 +22,7 @@ import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
+import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -284,7 +285,6 @@ public abstract class AbstractContentManagerTest {
         p = content.getProperties();
         Assert.assertEquals("value4", StorageClientUtils.toString(p.get("prop1update")));
         
-        contentManager.setMaxChunksPerBlockSet(9);
 
         final byte[] b = new byte[20*1024*1024+1231];
         Random r = new Random();

@@ -1,5 +1,7 @@
 package org.sakaiproject.nakamura.lite.storage.cassandra;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +26,10 @@ import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransportException;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
+import org.sakaiproject.nakamura.lite.content.BlockSetContentHelper;
+import org.sakaiproject.nakamura.lite.content.ContentManager;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
@@ -33,12 +39,28 @@ import org.slf4j.LoggerFactory;
 public class ClientConnection extends Client implements StorageClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientConnection.class);
-    private TSocket tSocket;
+    public static final String CONFIG_BLOCK_SIZE = "block-size";
+    public static final String CONFIG_MAX_CHUNKS_PER_BLOCK = "chunks-per-block";
 
-    public ClientConnection(TProtocol tProtocol, TSocket tSocket) {
+    private static final int DEFAULT_BLOCK_SIZE = 1024 * 1024;
+    private static final int DEFAULT_MAX_CHUNKS_PER_BLOCK = 64;
+
+    private TSocket tSocket;
+    private BlockContentHelper contentHelper;
+    private int blockSize;
+    private int maxChunksPerBlockSet;
+
+    public ClientConnection(TProtocol tProtocol, TSocket tSocket, Map<String, Object> properties) {
         super(tProtocol);
         this.tSocket = tSocket;
+        contentHelper = new BlockSetContentHelper(this);
+        blockSize = StorageClientUtils.getSetting(properties.get(CONFIG_BLOCK_SIZE), DEFAULT_BLOCK_SIZE);
+        maxChunksPerBlockSet = StorageClientUtils.getSetting(properties.get(CONFIG_MAX_CHUNKS_PER_BLOCK),
+                DEFAULT_MAX_CHUNKS_PER_BLOCK);
+
     }
+    
+
 
     public void destroy() {
         try {
@@ -130,8 +152,8 @@ public class ClientConnection extends Client implements StorageClient {
                     for (Entry<String, byte[]> sce : sc.entrySet()) {
                         String cname = sce.getKey();
                         byte[] bcname = StorageClientUtils.toBytes(cname);
-                        Column column = new Column(bcname, StorageClientUtils.toBytes(sce.getValue()),
-                                System.currentTimeMillis());
+                        Column column = new Column(bcname, StorageClientUtils.toBytes(sce
+                                .getValue()), System.currentTimeMillis());
                         columns.add(column);
                     }
 
@@ -178,6 +200,24 @@ public class ClientConnection extends Client implements StorageClient {
             columnMutations.put(key, m);
         }
         return m;
+    }
+
+    @Override
+    public Map<String, Object> streamBodyIn(String keySpace, String contentColumnFamily,
+            String contentId, String contentBlockId, InputStream in) throws StorageClientException,
+            AccessDeniedException, IOException {
+        return contentHelper.writeBody(keySpace, contentColumnFamily, contentId, contentBlockId,
+                blockSize, maxChunksPerBlockSet, in);
+    }
+
+    @Override
+    public InputStream streamBodyOut(String keySpace, String contentColumnFamily, String contentId,
+            String contentBlockId, Map<String, Object> content) throws StorageClientException,
+            AccessDeniedException {
+
+        int nBlocks = StorageClientUtils.toInt(content.get(ContentManager.NBLOCKS_FIELD));
+        return contentHelper.readBody(keySpace, contentColumnFamily, contentBlockId,
+                nBlocks);
     }
 
 }
