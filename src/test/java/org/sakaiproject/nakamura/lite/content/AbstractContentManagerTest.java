@@ -1,5 +1,6 @@
 package org.sakaiproject.nakamura.lite.content;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -301,13 +302,15 @@ public abstract class AbstractContentManagerTest {
             InputStream read = contentManager.getInputStream("/test/ing/testfile.txt");
             
             int i = 0;
-            int j = read.read();
+            byte[] buffer = new byte[8192];
+            int j = read.read(buffer);
             Assert.assertNotSame(-1, j);
             while ( j != -1 ) {
                 // Assert.assertEquals((int)b[i] & 0xff, j);
-                i++;
-                j = read.read();
+                i = i + j;
+                j = read.read(buffer);
             }
+            read.close();
             Assert.assertEquals(b.length,i);
             long ee = System.currentTimeMillis();
             LOGGER.info("Write rate {} MB/s  Read Rate {} MB/s ",(1000*(double)b.length/(1024*1024*(double)(eu-su))),(1000*(double)b.length/(1024*1024*(double)(ee-eu))));
@@ -322,22 +325,27 @@ public abstract class AbstractContentManagerTest {
             read = contentManager.getInputStream("/test/ing/testfile.txt");
             
             i = 0;
-            j = read.read();
+            j = read.read(buffer);
             Assert.assertNotSame(-1, j);
             while ( j != -1 ) {
-                Assert.assertEquals((int)b[i] & 0xff, j);
-                i++;
+                for ( int k = 0; k < j; k++) {
+                    Assert.assertEquals(b[i], buffer[k]);
+                    i++;
+                }
                 if ( (i%100==0) && (i < b.length-20) ) {
                     Assert.assertEquals(10,read.skip(10));
                     i+=10;
                 }
-                j = read.read();
+                j = read.read(buffer);
             }
+            read.close();
             Assert.assertEquals(b.length,i);
 
         } catch (IOException e) {
+            
             // TODO Auto-generated catch block
             e.printStackTrace();
+            Assert.fail();
         }
 
     }

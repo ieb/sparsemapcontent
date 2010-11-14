@@ -10,6 +10,7 @@ import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.felix.scr.annotations.Activate;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
+import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,9 +25,13 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
 
         private String url;
         private Properties connectionProperties;
+        private String username;
+        private String password;
 
         public JCBCStorageClientConnection(Map<String, Object> config) {
             connectionProperties = getConnectionProperties(config);
+            username = StorageClientUtils.getSetting(config.get("username"), "");
+            password = StorageClientUtils.getSetting(config.get("password"), "");
             url = getConnectionUrl(config);
         }
 
@@ -42,8 +47,13 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
         }
 
         public Object makeObject() throws Exception {
-            Connection connection = DriverManager.getConnection(url, connectionProperties);
-            return new JDBCStorageClient(connection, properties);
+            if ("".equals(username) ) {
+                Connection connection = DriverManager.getConnection(url, connectionProperties);
+                return new JDBCStorageClient(connection, properties);                
+            } else {
+                Connection connection = DriverManager.getConnection(url, username, password);
+                return new JDBCStorageClient(connection, properties);
+            }
         }
 
         public void passivateObject(Object obj) throws Exception {

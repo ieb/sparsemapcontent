@@ -12,6 +12,8 @@ import org.sakaiproject.nakamura.lite.content.ContentManager;
 import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
 import org.sakaiproject.nakamura.lite.storage.RowHasher;
 import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
 
@@ -19,6 +21,7 @@ public class FileStreamContentHelper implements StreamedContentHelper {
 
     private static final String DEFAULT_FILE_STORE = "store";
     private static final String CONFIG_STOREBASE = "store-base-dir";
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileStreamContentHelper.class);
     private String fileStore;
     private RowHasher rowHasher;
 
@@ -36,8 +39,10 @@ public class FileStreamContentHelper implements StreamedContentHelper {
         FileOutputStream out = new FileOutputStream(file);
         long length = IOUtils.copyLarge(in, out);
         out.close();
+        LOGGER.info("Wrote {} bytes to {} as body of {}:{}:{} ",new Object[] {length,path, keySpace, columnFamily, contentBlockId});
         Map<String, Object> metadata = Maps.newHashMap();
         metadata.put(ContentManager.LENGTH_FIELD, StorageClientUtils.toStore(length));
+        metadata.put(ContentManager.BLOCKID_FIELD, StorageClientUtils.toStore(contentBlockId));
         return metadata;
     }
 
@@ -49,6 +54,7 @@ public class FileStreamContentHelper implements StreamedContentHelper {
     @Override
     public InputStream readBody(String keySpace, String columnFamily, String contentBlockId) throws IOException {
         String path = getPath(keySpace, columnFamily, contentBlockId);
+        LOGGER.info("Reading from {} as body of {}:{}:{} ",new Object[] {path, keySpace, columnFamily, contentBlockId});
         File file = new File(path);
         return new FileInputStream(file);
     }

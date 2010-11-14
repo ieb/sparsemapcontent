@@ -3,5 +3,5 @@ select-string-row = select cid, v from css where rid = ?
 insert-string-column = insert into css ( v, rid, cid) values ( ?, ?, ? )
 update-string-column = update css set v = ?  where rid = ? and cid = ?
 remove-string-column = delete from css where rid = ? and cid = ?
-validate = values(1)
+validate = select 1
 rowid-hash = SHA1
