@@ -139,6 +139,8 @@ public abstract class AbstractAuthorizableManagerImplTest {
 
 		AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(
 				currentUser, client, configuration, accessControlManagerImpl);
+		
+		authorizableManager.delete("testuser");
 
 		Assert.assertTrue(authorizableManager.createUser("testuser",
 				"Test User", "test", ImmutableMap.of("testkey",
@@ -173,6 +175,8 @@ public abstract class AbstractAuthorizableManagerImplTest {
 
 		AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(
 				currentUser, client, configuration, accessControlManagerImpl);
+		
+		authorizableManager.delete("testuser2");
 
 		Assert.assertTrue(authorizableManager.createUser("testuser2",
 				"Test User", "test", ImmutableMap.of("testkey",
@@ -233,6 +237,9 @@ public abstract class AbstractAuthorizableManagerImplTest {
 
 		AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(
 				currentUser, client, configuration, accessControlManagerImpl);
+		
+		authorizableManager.delete("user3");
+		authorizableManager.delete("testgroup");
 
 		Assert.assertTrue(authorizableManager.createUser("user3", "TestUser",
 				null, ImmutableMap.of("testkey", (Object) "testvalue",

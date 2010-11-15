@@ -19,4 +19,6 @@ public interface AuthorizableManager {
     boolean createUser(String authorizableId, String authorizableName, String password,
             Map<String, Object> properties) throws AccessDeniedException, StorageClientException;
 
+    void delete(String authorizableId) throws AccessDeniedException, StorageClientException;
+
 }

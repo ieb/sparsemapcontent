@@ -224,4 +224,11 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
         return createAuthorizable(authorizableId, authorizableName, null, properties);
     }
 
+    public void delete(String authorizableId) throws AccessDeniedException, StorageClientException {
+        accessControlManager.check(Security.ZONE_ADMIN, authorizableId,
+                Permissions.CAN_DELETE);
+        client.remove(keySpace, authorizableColumnFamily, authorizableId);
+        
+    }
+
 }
