@@ -15,4 +15,6 @@ public interface AccessControlManager {
     void check(String objectType, String objectPath, Permission permission)
             throws AccessDeniedException;
 
+    String getCurrentUserId();
+
 }

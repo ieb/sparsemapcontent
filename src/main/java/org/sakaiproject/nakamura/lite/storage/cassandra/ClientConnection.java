@@ -29,7 +29,7 @@ import org.apache.thrift.transport.TTransportException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
 import org.sakaiproject.nakamura.lite.content.BlockSetContentHelper;
-import org.sakaiproject.nakamura.lite.content.ContentManager;
+import org.sakaiproject.nakamura.lite.content.Content;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
@@ -215,7 +215,7 @@ public class ClientConnection extends Client implements StorageClient {
             String contentBlockId, Map<String, Object> content) throws StorageClientException,
             AccessDeniedException {
 
-        int nBlocks = StorageClientUtils.toInt(content.get(ContentManager.NBLOCKS_FIELD));
+        int nBlocks = StorageClientUtils.toInt(content.get(Content.NBLOCKS_FIELD));
         return contentHelper.readBody(keySpace, contentColumnFamily, contentBlockId,
                 nBlocks);
     }

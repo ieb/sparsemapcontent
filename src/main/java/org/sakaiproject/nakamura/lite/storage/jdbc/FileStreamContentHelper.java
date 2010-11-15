@@ -8,7 +8,7 @@ import java.io.InputStream;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
-import org.sakaiproject.nakamura.lite.content.ContentManager;
+import org.sakaiproject.nakamura.lite.content.Content;
 import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
 import org.sakaiproject.nakamura.lite.storage.RowHasher;
 import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
@@ -41,8 +41,8 @@ public class FileStreamContentHelper implements StreamedContentHelper {
         out.close();
         LOGGER.info("Wrote {} bytes to {} as body of {}:{}:{} ",new Object[] {length,path, keySpace, columnFamily, contentBlockId});
         Map<String, Object> metadata = Maps.newHashMap();
-        metadata.put(ContentManager.LENGTH_FIELD, StorageClientUtils.toStore(length));
-        metadata.put(ContentManager.BLOCKID_FIELD, StorageClientUtils.toStore(contentBlockId));
+        metadata.put(Content.LENGTH_FIELD, StorageClientUtils.toStore(length));
+        metadata.put(Content.BLOCKID_FIELD, StorageClientUtils.toStore(contentBlockId));
         return metadata;
     }
 

@@ -1,5 +1,25 @@
 package org.sakaiproject.nakamura.lite.content;
 
+import static org.sakaiproject.nakamura.lite.content.Content.BLOCKID_FIELD;
+import static org.sakaiproject.nakamura.lite.content.Content.BODY_CREATED;
+import static org.sakaiproject.nakamura.lite.content.Content.BODY_CREATED_BY;
+import static org.sakaiproject.nakamura.lite.content.Content.BODY_LAST_MODIFIED;
+import static org.sakaiproject.nakamura.lite.content.Content.BODY_LAST_MODIFIED_BY;
+import static org.sakaiproject.nakamura.lite.content.Content.CREATED;
+import static org.sakaiproject.nakamura.lite.content.Content.CREATED_BY;
+import static org.sakaiproject.nakamura.lite.content.Content.DELETED_FIELD;
+import static org.sakaiproject.nakamura.lite.content.Content.LASTMODIFIED;
+import static org.sakaiproject.nakamura.lite.content.Content.LASTMODIFIED_BY;
+import static org.sakaiproject.nakamura.lite.content.Content.LENGTH_FIELD;
+import static org.sakaiproject.nakamura.lite.content.Content.NEXT_VERSION_FIELD;
+import static org.sakaiproject.nakamura.lite.content.Content.PATH_FIELD;
+import static org.sakaiproject.nakamura.lite.content.Content.PREVIOUS_BLOCKID_FIELD;
+import static org.sakaiproject.nakamura.lite.content.Content.PREVIOUS_VERSION_UUID_FIELD;
+import static org.sakaiproject.nakamura.lite.content.Content.READONLY_FIELD;
+import static org.sakaiproject.nakamura.lite.content.Content.STRUCTURE_UUID_FIELD;
+import static org.sakaiproject.nakamura.lite.content.Content.TRUE;
+import static org.sakaiproject.nakamura.lite.content.Content.UUID_FIELD;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -80,69 +100,28 @@ import com.google.common.collect.Maps;
  */
 public class ContentManager {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ContentManager.class);
+
     /**
      * Key containing deleted items.
      */
     private static final String DELETEDITEMS_KEY = ":deleteditems";
 
     /**
-     * The ID of a content item
+     * Storage Client
      */
-    public static final String UUID_FIELD = "id";
-    /**
-     * The path of the content item
-     */
-    private static final String PATH_FIELD = "path";
-    /**
-     * content item ID referenced by a Strucutre item
-     */
-    private static final String STRUCTURE_UUID_FIELD = ":cid";
-    /**
-     * BlockID where the body of this content item is stored, if there is a body
-     */
-    public static final String BLOCKID_FIELD = "blockId";
-    /**
-     * ID of the previous version
-     */
-    private static final String PREVIOUS_VERSION_UUID_FIELD = "previousVersion";
-    /**
-     * Previous Block ID.
-     */
-    private static final String PREVIOUS_BLOCKID_FIELD = "previousBlockId";
-    /**
-     * The ID of the next version
-     */
-    private static final String NEXT_VERSION_FIELD = "nextVersion";
-    /**
-     * Set to "Y" if the content item is read only.
-     */
-    private static final String READONLY_FIELD = "readOnly";
-    /**
-     * set to "Y" if deleted.
-     */
-    private static final String DELETED_FIELD = "deleted";
-
-    /**
-     * The block size in bytes in each block in a block set
-     */
-    public static final String BLOCKSIZE_FIELD = "blocksize";
-    /**
-     * Total length of the content body
-     */
-    public static final String LENGTH_FIELD = "length";
-    /**
-     * The number of block sets in a body
-     */
-    public static final String NBLOCKS_FIELD = "nblocks";
-    /**
-     * Yes, True, etc
-     */
-    private static final String TRUE = "Y";
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ContentManager.class);
     private StorageClient client;
+    /**
+     * The access control manager in use.
+     */
     private AccessControlManager accessControlManager;
+    /**
+     * Key space for this content.
+     */
     private String keySpace;
+    /**
+     * Column Family for this content.
+     */
     private String contentColumnFamily;
 
 
@@ -220,11 +199,15 @@ public class ContentManager {
             idStore = StorageClientUtils.toStore(id);
             toSave.put(UUID_FIELD, idStore);
             toSave.put(PATH_FIELD, StorageClientUtils.toStore(path));
+            toSave.put(CREATED, StorageClientUtils.toStore(System.currentTimeMillis()));
+            toSave.put(CREATED_BY, StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
             LOGGER.info("New Content with {} {} ", id, toSave);
         } else if ( content.isUpdated() ) {
             toSave = Maps.newHashMap(content.getUpdated());
             id = StorageClientUtils.toString(contentPropertes.get(UUID_FIELD));
             idStore = StorageClientUtils.toStore(contentPropertes.get(UUID_FIELD));            
+            toSave.put(LASTMODIFIED, StorageClientUtils.toStore(System.currentTimeMillis()));
+            toSave.put(LASTMODIFIED_BY, StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
             LOGGER.info("Updating Content with {} {} ", id, toSave);
         } else {
             // if not new or updated, dont update.
@@ -272,12 +255,20 @@ public class ContentManager {
                 .toString(structure.get(STRUCTURE_UUID_FIELD));
         Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
         String contentBlockId = null;
+        boolean isnew = false;
         if (content.containsKey(BLOCKID_FIELD)) {
             contentBlockId = StorageClientUtils.toString(content.get(BLOCKID_FIELD));
         } else {
             contentBlockId = StorageClientUtils.getUuid();
+            isnew = true;
         }
         Map<String, Object> metadata = client.streamBodyIn(keySpace, contentColumnFamily, contentId, contentBlockId, in);
+        metadata.put(BODY_LAST_MODIFIED, StorageClientUtils.toString(System.currentTimeMillis()));
+        metadata.put(BODY_LAST_MODIFIED_BY, StorageClientUtils.toString(accessControlManager.getCurrentUserId()));
+        if ( isnew ) {
+            metadata.put(BODY_CREATED, StorageClientUtils.toString(System.currentTimeMillis()));
+            metadata.put(BODY_CREATED_BY, StorageClientUtils.toString(accessControlManager.getCurrentUserId()));
+        }
         client.insert(keySpace, contentColumnFamily, contentId, metadata);
         long length = StorageClientUtils.toLong(metadata.get(LENGTH_FIELD));
         return length;

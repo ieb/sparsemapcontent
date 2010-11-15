@@ -140,4 +140,9 @@ public class AccessControlManagerImpl implements AccessControlManager {
         }
         return new int[] { 0, 0 };
     }
+
+    @Override
+    public String getCurrentUserId() {
+        return user.getId();
+    }
 }

@@ -75,7 +75,7 @@ public class BlockSetContentHelper implements BlockContentHelper {
             length = length + bufferLength;
             lastBlockWrite = i;
             client.insert(keySpace, contentColumnFamily, key, ImmutableMap.of(
-                    ContentManager.UUID_FIELD, StorageClientUtils.toStore(contentId),
+                    Content.UUID_FIELD, StorageClientUtils.toStore(contentId),
                     NUMBLOCKS_FIELD, StorageClientUtils.toStore(bodyNum + 1), blockLengthKey,
                     StorageClientUtils.toStore(bufferLength), bodyKey, saveBuffer));
             bodyNum++;
@@ -86,10 +86,10 @@ public class BlockSetContentHelper implements BlockContentHelper {
         }
         Map<String, Object> metadata = Maps.newHashMap();
 
-        metadata.put(ContentManager.BLOCKID_FIELD, StorageClientUtils.toStore(contentBlockId));
-        metadata.put(ContentManager.NBLOCKS_FIELD, StorageClientUtils.toStore(lastBlockWrite + 1));
-        metadata.put(ContentManager.LENGTH_FIELD, StorageClientUtils.toStore(length));
-        metadata.put(ContentManager.BLOCKSIZE_FIELD, StorageClientUtils.toStore(blockSize));
+        metadata.put(Content.BLOCKID_FIELD, StorageClientUtils.toStore(contentBlockId));
+        metadata.put(Content.NBLOCKS_FIELD, StorageClientUtils.toStore(lastBlockWrite + 1));
+        metadata.put(Content.LENGTH_FIELD, StorageClientUtils.toStore(length));
+        metadata.put(Content.BLOCKSIZE_FIELD, StorageClientUtils.toStore(blockSize));
         
         LOGGER.info("Saved Last block ContentID {} BlockID {} Nblocks {}  length {}  blocksize {} ",new Object[] {contentId,contentBlockId, lastBlockWrite+1, length, blockSize});
         return metadata;
