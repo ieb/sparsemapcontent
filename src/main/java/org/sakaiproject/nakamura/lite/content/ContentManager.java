@@ -263,11 +263,11 @@ public class ContentManager {
             isnew = true;
         }
         Map<String, Object> metadata = client.streamBodyIn(keySpace, contentColumnFamily, contentId, contentBlockId, in);
-        metadata.put(BODY_LAST_MODIFIED, StorageClientUtils.toString(System.currentTimeMillis()));
-        metadata.put(BODY_LAST_MODIFIED_BY, StorageClientUtils.toString(accessControlManager.getCurrentUserId()));
+        metadata.put(BODY_LAST_MODIFIED, StorageClientUtils.toStore(System.currentTimeMillis()));
+        metadata.put(BODY_LAST_MODIFIED_BY, StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
         if ( isnew ) {
-            metadata.put(BODY_CREATED, StorageClientUtils.toString(System.currentTimeMillis()));
-            metadata.put(BODY_CREATED_BY, StorageClientUtils.toString(accessControlManager.getCurrentUserId()));
+            metadata.put(BODY_CREATED, StorageClientUtils.toStore(System.currentTimeMillis()));
+            metadata.put(BODY_CREATED_BY, StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
         }
         client.insert(keySpace, contentColumnFamily, contentId, metadata);
         long length = StorageClientUtils.toLong(metadata.get(LENGTH_FIELD));

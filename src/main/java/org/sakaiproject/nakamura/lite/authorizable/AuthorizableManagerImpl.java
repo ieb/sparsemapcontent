@@ -165,6 +165,8 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
         }
         Map<String, Object> encodedProperties = StorageClientUtils.getFilteredAndEcodedMap(
                 authorizable.getPropertiesForUpdate(), FILTER_ON_UPDATE);
+        encodedProperties.put(Authorizable.LASTMODIFIED, StorageClientUtils.toStore(System.currentTimeMillis()));
+        encodedProperties.put(Authorizable.LASTMODIFIED_BY, StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
         client.insert(keySpace, authorizableColumnFamily, id, encodedProperties);
         authorizable.reset();
 
@@ -196,6 +198,8 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
             encodedProperties.put(Authorizable.PASSWORD_FIELD,
                     StorageClientUtils.toStore(Authorizable.NO_PASSWORD));
         }
+        encodedProperties.put(Authorizable.CREATED, StorageClientUtils.toStore(System.currentTimeMillis()));
+        encodedProperties.put(Authorizable.CREATED_BY, StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
         client.insert(keySpace, authorizableColumnFamily, authorizableId, encodedProperties);
         return true;
     }

@@ -31,6 +31,12 @@ public class Authorizable {
     public static final String GROUP_VALUE = "y";
 
     public static final String ADMINISTRATORS_GROUP = "administrators";
+    
+    public static final String LASTMODIFIED = "lastModified";
+    public static final String LASTMODIFIED_BY = "lastModifiedBy";
+    public static final String CREATED = "create";
+    public static final String CREATED_BY = "createdBy";
+
 
     private static final Set<String> FILTER_PROPERTIES = ImmutableSet.of(PASSWORD_FIELD, ID_FIELD);
 
