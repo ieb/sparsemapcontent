@@ -44,3 +44,50 @@ At this stage its pre-alpha, untested for performance and scalability and incomp
 1. Check all byte[] usage and limit to only real bodies. (14/11/2010) no byte[] are used for content bodies.
 1. Replace all byte[] usage with InputStreams or a resetable holder, pushing down into the StorageClient. (14/11/2010)
 
+
+
+
+## Tests
+
+
+### Memory
+All performed on a MackBook Pro which is believed to have 4 cores.
+Add a user, 1 - 10 threads. Storage is a Concurrent Hash Map. This tests the code base for concurrency.
+`
+Threads,Time(s),Throughput, Throughput per thread
+      1,  0.402,   2487.56,      2487.56 
+      2,  0.144,   6944.44,      3472.22
+      3,  0.051,  19607.84,      6535.94 
+      4,  0.129,   7751.93,      1937.98 
+      5,  0.05,   20000.0,       4000.0 
+      6,  0.215,   4651.16,       775.19 
+      7,  0.025,  40000.0,       5714.28 
+      8,  0.026,  38461.53,      4807.69 
+      9,  0.078,  12820.51,      1424.50 
+     10,  0.037,  27027.02,      2702.70
+` 
+Throughput is users added per second.
+
+
+### JDBC
+Same as above, using a local MySQL Instance.
+
+`
+Threads,Time(s),Throughput, Throughput per thread
+      1, 12.186,     82.06,        82.06 
+      2,  9.646,    103.66,        51.83 
+      3, 11.177,     89.46,        29.82 
+      4, 15.894,     62.91,        15.72 
+      5,  9.652,    103.60,        20.72 
+      6, 16.734,     59.75,         9.95 
+      7, 21.761,     45.95,         6.56 
+      8, 13.962,     71.62,         8.95 
+      9, 10.173,     98.29,        10.92 
+     10, 11.466,     87.21,         8.72      
+`    
+Throughput is users added per second.
+
+
+So far it looks like the code is concurrent, but MySQL is not.
+
+

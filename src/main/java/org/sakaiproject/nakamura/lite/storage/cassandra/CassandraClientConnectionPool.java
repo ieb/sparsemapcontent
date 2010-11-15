@@ -15,6 +15,7 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,10 +58,12 @@ public class CassandraClientConnectionPool extends AbstractClientConnectionPool 
                 try {
                     tSocket = new TSocket(hosts[i], ports[i]);
                     tSocket.open();
+                    LOGGER.info("Opened connction to {} {} ",hosts[i], ports[i]);
                     lastHost = i;
                     break;
                 } catch (Exception ex) {
-
+                    LOGGER.warn("Failed to open connection to host "+hosts[i]+" on port "+ports[i]+" cause:"+ex.getMessage());
+                    tSocket = null;
                 }
             }
             if (startHost == lastHost) {
@@ -68,15 +71,22 @@ public class CassandraClientConnectionPool extends AbstractClientConnectionPool 
                     try {
                         tSocket = new TSocket(hosts[i], ports[i]);
                         tSocket.open();
+                        LOGGER.info("Opened connction to {} {} ",hosts[i], ports[i]);
                         lastHost = i;
                         break;
                     } catch (Exception ex) {
-
+                        LOGGER.warn("Failed to open connection to host "+hosts[i]+" on port "+ports[i]+" cause:"+ex.getMessage());
+                        tSocket = null;
                     }
                 }
             }
+            if ( tSocket == null ) {
+                LOGGER.error("Unable to connect to any Cassandra Hosts");
+                throw new StorageClientException("Unable to connect to any Cassandra Clients, tried all known locations");
+            }
             savedLastHost = lastHost;
             TProtocol tProtocol = new TBinaryProtocol(tSocket);
+            LOGGER.info("Opened Connection {} isOpen {} Host {} Port {}",tSocket, tSocket.isOpen());
             CassandraClientConnection clientConnection = new CassandraClientConnection(tProtocol, tSocket, properties);
             return clientConnection;
         }
@@ -123,7 +133,7 @@ public class CassandraClientConnectionPool extends AbstractClientConnectionPool 
 
     @Activate
     public void activate(Map<String, Object> properties) {
-        connections = StorageClientUtils.getSetting(properties.get(CONNECTION_POOL), new String[] { "localhost:9610" });
+        connections = StorageClientUtils.getSetting(properties.get(CONNECTION_POOL), new String[] { "localhost:9160" });
         this.properties = properties;
         super.activate(properties);
 

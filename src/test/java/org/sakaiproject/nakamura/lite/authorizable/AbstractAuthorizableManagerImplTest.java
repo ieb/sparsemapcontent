@@ -61,6 +61,9 @@ public abstract class AbstractAuthorizableManagerImplTest {
 			AccessDeniedException {
 		Authenticator authenticator = new Authenticator(client, configuration);
 		User currentUser = authenticator.authenticate("admin", "admin");
+		
+		Assert.assertNotNull(currentUser);
+	
 
 		AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
 				client, currentUser, configuration);
