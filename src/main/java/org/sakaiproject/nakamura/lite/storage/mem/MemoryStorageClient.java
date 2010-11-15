@@ -19,11 +19,6 @@ import org.slf4j.LoggerFactory;
 public class MemoryStorageClient implements StorageClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MemoryStorageClient.class);
-    public static final String CONFIG_BLOCK_SIZE = "block-size";
-    public static final String CONFIG_MAX_CHUNKS_PER_BLOCK = "chunks-per-block";
-
-    private static final int DEFAULT_BLOCK_SIZE = 1024 * 1024;
-    private static final int DEFAULT_MAX_CHUNKS_PER_BLOCK = 64;
     Map<String, Map<String, Object>> store;
     private int blockSize;
     private int maxChunksPerBlockSet;
@@ -33,10 +28,10 @@ public class MemoryStorageClient implements StorageClient {
             Map<String, Object> properties) {
         this.store = store;
         contentHelper = new BlockSetContentHelper(this);
-        blockSize = StorageClientUtils.getSetting(properties.get(CONFIG_BLOCK_SIZE),
-                DEFAULT_BLOCK_SIZE);
+        blockSize = StorageClientUtils.getSetting(properties.get(BlockSetContentHelper.CONFIG_BLOCK_SIZE),
+                BlockSetContentHelper.DEFAULT_BLOCK_SIZE);
         maxChunksPerBlockSet = StorageClientUtils.getSetting(
-                properties.get(CONFIG_MAX_CHUNKS_PER_BLOCK), DEFAULT_MAX_CHUNKS_PER_BLOCK);
+                properties.get(BlockSetContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK), BlockSetContentHelper.DEFAULT_MAX_CHUNKS_PER_BLOCK);
 
     }
 
@@ -54,11 +49,11 @@ public class MemoryStorageClient implements StorageClient {
         if (!store.containsKey(keyName)) {
             Map<String, Object> row = new ConcurrentHashMap<String, Object>();
             store.put(keyName, row);
-            LOGGER.info("Created {}  as {} ", new Object[] { keyName, row });
+            LOGGER.debug("Created {}  as {} ", new Object[] { keyName, row });
             return row;
         }
         Map<String, Object> row = store.get(keyName);
-        LOGGER.info("Got {} as {} ", new Object[] { keyName, row });
+        LOGGER.debug("Got {} as {} ", new Object[] { keyName, row });
         return row;
     }
 
@@ -84,7 +79,7 @@ public class MemoryStorageClient implements StorageClient {
                 row.put(e.getKey(), value);
             }
         }
-        LOGGER.info("Updated {} {} ", key, row);
+        LOGGER.debug("Updated {} {} ", key, row);
     }
 
     public void remove(String keySpace, String columnFamily, String key)

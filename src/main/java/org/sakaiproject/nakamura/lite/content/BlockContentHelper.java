@@ -9,6 +9,10 @@ import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 
 public interface BlockContentHelper {
 
+    public static final String CONFIG_BLOCK_SIZE = "block-size";
+    public static final String CONFIG_MAX_CHUNKS_PER_BLOCK = "chunks-per-block";
+
+
     Map<String, Object> writeBody(String keySpace, String contentColumnFamily, String contentId,
             String contentBlockId, int blockSize, int maxChunksPerBlockSet, InputStream in)
             throws StorageClientException, AccessDeniedException, IOException;

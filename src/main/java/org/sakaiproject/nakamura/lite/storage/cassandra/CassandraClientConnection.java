@@ -36,9 +36,9 @@ import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ClientConnection extends Client implements StorageClient {
+public class CassandraClientConnection extends Client implements StorageClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClientConnection.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CassandraClientConnection.class);
     public static final String CONFIG_BLOCK_SIZE = "block-size";
     public static final String CONFIG_MAX_CHUNKS_PER_BLOCK = "chunks-per-block";
 
@@ -50,7 +50,7 @@ public class ClientConnection extends Client implements StorageClient {
     private int blockSize;
     private int maxChunksPerBlockSet;
 
-    public ClientConnection(TProtocol tProtocol, TSocket tSocket, Map<String, Object> properties) {
+    public CassandraClientConnection(TProtocol tProtocol, TSocket tSocket, Map<String, Object> properties) {
         super(tProtocol);
         this.tSocket = tSocket;
         contentHelper = new BlockSetContentHelper(this);

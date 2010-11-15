@@ -30,6 +30,9 @@ public class BlockSetContentHelper implements BlockContentHelper {
      */
     public static final String NUMBLOCKS_FIELD = "numblocks";
 
+    public static final int DEFAULT_BLOCK_SIZE = 1024 * 1024;
+    public static final int DEFAULT_MAX_CHUNKS_PER_BLOCK = 64;
+
     private StorageClient client;
 
     public BlockSetContentHelper(StorageClient client) {

@@ -25,7 +25,7 @@ public class AuthorizableActivator {
         this.keySpace = configuration.getKeySpace();
     }
 
-    public void setup() throws StorageClientException {
+    public synchronized void setup() throws StorageClientException {
         Map<String, Object> authorizableMap = client.get(keySpace, authorizableColumnFamily,
                 User.ADMIN_USER);
         if (authorizableMap == null || authorizableMap.size() == 0) {

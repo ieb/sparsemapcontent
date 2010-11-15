@@ -1,6 +1,5 @@
 package org.sakaiproject.nakamura.lite.content;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,7 +22,6 @@ import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
-import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

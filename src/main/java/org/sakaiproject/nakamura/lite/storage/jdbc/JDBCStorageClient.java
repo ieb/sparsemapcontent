@@ -12,10 +12,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
@@ -29,15 +27,12 @@ import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 
 public class JDBCStorageClient implements StorageClient, RowHasher {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JDBCStorageClient.class);
-    private static final String BASESQLPATH = "org/sakaiproject/nakamura/lite/storage/jdbc/config/client";
     private static final String SQL_VALIDATE = "validate";
     private static final String SQL_CHECKSCHEMA = "check-schema";
     private static final String SQL_COMMENT = "#";
@@ -52,7 +47,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             SQL_SELECT_STRING_ROW, SQL_INSERT_STRING_COLUMN, SQL_UPDATE_STRING_COLUMN,
             SQL_REMOVE_STRING_COLUMN);
     private Connection connection;
-    private String[] clientSQLLocations;
     private Map<String, Object> sqlConfig;
     private boolean active;
     private MessageDigest hasher;
@@ -60,49 +54,12 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     private StreamedContentHelper streamedContentHelper;
     private Map<String, PreparedStatement> preparedStatements = Maps.newHashMap();
 
-    public JDBCStorageClient(Connection connection, Map<String, Object> properties)
+    public JDBCStorageClient(Connection connection, Map<String, Object> properties, Map<String, Object> sqlConfig)
             throws SQLException, NoSuchAlgorithmException, StorageClientException {
         this.connection = connection;
         streamedContentHelper = new FileStreamContentHelper(this, properties);
-        String dbProductName = connection.getMetaData().getDatabaseProductName()
-                .replaceAll(" ", "");
-        int dbProductMajorVersion = connection.getMetaData().getDatabaseMajorVersion();
-        int dbProductMinorVersion = connection.getMetaData().getDatabaseMinorVersion();
-
-        clientSQLLocations = new String[] {
-                BASESQLPATH + "." + dbProductName + "." + dbProductMajorVersion + "."
-                        + dbProductMinorVersion,
-                BASESQLPATH + "." + dbProductName + "." + dbProductMajorVersion,
-                BASESQLPATH + "." + dbProductName, BASESQLPATH };
-
-        for (String clientSQLLocation : clientSQLLocations) {
-            String clientConfig = clientSQLLocation + ".sql";
-            InputStream in = this.getClass().getClassLoader().getResourceAsStream(clientConfig);
-            if (in != null) {
-                try {
-                    Properties p = new Properties();
-                    p.load(in);
-                    in.close();
-                    Builder<String, Object> b = ImmutableMap.builder();
-                    for (Entry<Object, Object> e : p.entrySet()) {
-                        b.put(String.valueOf(e.getKey()), e.getValue());
-                    }
-                    sqlConfig = b.build();
-                    LOGGER.info("Using SQL configuation from {} ", clientConfig);
-                    break;
-                } catch (IOException e) {
-                    LOGGER.info("Failed to read {} ", clientConfig, e);
-                }
-            } else {
-                LOGGER.info("No SQL configuation at {} ", clientConfig);
-            }
-        }
-        if (sqlConfig == null) {
-            LOGGER.info("Tried all the following locations and failed for SQL confiuration {} ",
-                    Arrays.toString(clientSQLLocations));
-            throw new StorageClientException("No SQL Configuration for client ");
-        }
-
+        
+        this.sqlConfig = sqlConfig;
         String rowidHash = getSql(PROP_HASH_ALG);
         if (rowidHash == null) {
             rowidHash = "MD5";
@@ -203,11 +160,11 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                                     + getRowId(keySpace, columnFamily, key) + "  column:[" + k
                                     + "] ");
                         } else {
-                            LOGGER.info("Inserted {} {} [{}]",
+                            LOGGER.debug("Inserted {} {} [{}]",
                                     new Object[] { getRowId(keySpace, columnFamily, key), k, o });
                         }
                     } else {
-                        LOGGER.info("Updated {} {} [{}]",
+                        LOGGER.debug("Updated {} {} [{}]",
                                 new Object[] { getRowId(keySpace, columnFamily, key), k, o });
                     }
                 } else if (o == null) {
@@ -217,10 +174,10 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     removeStringColumn.setString(2, k);
                     if (removeStringColumn.executeUpdate() == 0) {
                         Map<String, Object> m = get(keySpace, columnFamily, key);
-                        LOGGER.info("Column Not present did not remove {} {} Current Column:{} ",
+                        LOGGER.debug("Column Not present did not remove {} {} Current Column:{} ",
                                 new Object[] { getRowId(keySpace, columnFamily, key), k, m });
                     } else {
-                        LOGGER.info("Removed {} {} ", getRowId(keySpace, columnFamily, key), k);
+                        LOGGER.debug("Removed {} {} ", getRowId(keySpace, columnFamily, key), k);
                     }
                 }
             }
@@ -297,10 +254,12 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
 
     public void startUpConnection() throws SQLException {
         if (!active && alive) {
-            LOGGER.info("Activating {}", this);
+            LOGGER.debug("Activating {}", this);
             openPreparedStatements();
 
             active = true;
+        } else if ( !alive ){
+            LOGGER.info("Delaying Activation, connection not alive ");
         }
     }
 
@@ -354,7 +313,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         return (String) sqlConfig.get(statementName);
     }
 
-    public void checkSchema() throws ConnectionPoolException {
+    public void checkSchema(String[] clientConfigLocations) throws ConnectionPoolException {
         Statement statement = null;
         try {
             statement = connection.createStatement();
@@ -367,7 +326,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 LOGGER.debug("Schema does not exist ", e);
             }
 
-            for (String clientSQLLocation : clientSQLLocations) {
+            for (String clientSQLLocation : clientConfigLocations) {
                 String clientDDL = clientSQLLocation + ".ddl";
                 InputStream in = this.getClass().getClassLoader().getResourceAsStream(clientDDL);
                 if (in != null) {
@@ -411,14 +370,17 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                         } catch (IOException e) {
                             LOGGER.error("Failed to close stream from {}", clientDDL, e);
                         }
+                        
                     }
                 }
 
             }
 
         } catch (SQLException e) {
+            LOGGER.info("Failed to create schema ",e);
             throw new ConnectionPoolException("Failed to create schema ", e);
         } finally {
+            LOGGER.info("Check Schema finished ");
             try {
                 statement.close();
             } catch (Throwable e) {
@@ -446,5 +408,13 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             String contentBlockId, Map<String, Object> content) throws StorageClientException,
             AccessDeniedException, IOException {
         return streamedContentHelper.readBody(keySpace, columnFamily, contentBlockId, content);
+    }
+
+    public void setAlive() {
+        alive = true;
+    }
+
+    protected Connection getConnection() {
+        return connection;
     }
 }

@@ -6,15 +6,11 @@ import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.util.Iterables;
 import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 public class Authorizable {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(Authorizable.class);
 
     public static final String PASSWORD_FIELD = "pwd";
 
@@ -78,8 +74,6 @@ public class Authorizable {
     }
 
     public static boolean isAGroup(Map<String, Object> authProperties) {
-        LOGGER.info("Group Values is {} {} ", authProperties.get(GROUP_FIELD),
-                StorageClientUtils.toString(authProperties.get(GROUP_FIELD)));
         return GROUP_VALUE.equals(StorageClientUtils.toString(authProperties.get(GROUP_FIELD)));
     }
 

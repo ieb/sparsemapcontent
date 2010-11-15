@@ -15,14 +15,15 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component(immediate = true, metatype = true)
 @Service(value = ConnectionPool.class)
-public class ClientConnectionPool extends AbstractClientConnectionPool {
+public class CassandraClientConnectionPool extends AbstractClientConnectionPool {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClientConnectionPool.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CassandraClientConnectionPool.class);
     @Property(value = { "localhost:9610" })
     private static final String CONNECTION_POOL = "conection-pool";
 
@@ -76,37 +77,37 @@ public class ClientConnectionPool extends AbstractClientConnectionPool {
             }
             savedLastHost = lastHost;
             TProtocol tProtocol = new TBinaryProtocol(tSocket);
-            ClientConnection clientConnection = new ClientConnection(tProtocol, tSocket, properties);
+            CassandraClientConnection clientConnection = new CassandraClientConnection(tProtocol, tSocket, properties);
             return clientConnection;
         }
 
         @Override
         public void passivateObject(Object obj) throws Exception {
-            ClientConnection clientConnection = (ClientConnection) obj;
+            CassandraClientConnection clientConnection = (CassandraClientConnection) obj;
             clientConnection.passivate();
             super.passivateObject(obj);
         }
 
         @Override
         public void activateObject(Object obj) throws Exception {
-            ClientConnection clientConnection = (ClientConnection) obj;
+            CassandraClientConnection clientConnection = (CassandraClientConnection) obj;
             clientConnection.activate();
             super.activateObject(obj);
         }
 
         @Override
         public void destroyObject(Object obj) throws Exception {
-            ClientConnection clientConnection = (ClientConnection) obj;
+            CassandraClientConnection clientConnection = (CassandraClientConnection) obj;
             clientConnection.destroy();
         }
 
         @Override
         public boolean validateObject(Object obj) {
-            ClientConnection clientConnection = (ClientConnection) obj;
+            CassandraClientConnection clientConnection = (CassandraClientConnection) obj;
             try {
                 clientConnection.validate();
             } catch (TException e) {
-                LOGGER.debug("Failed to validate connection " + e.getMessage(), e);
+                LOGGER.error("Failed to validate connection " + e.getMessage(), e);
                 return false;
             }
             return super.validateObject(obj);
@@ -117,12 +118,12 @@ public class ClientConnectionPool extends AbstractClientConnectionPool {
     private String[] connections;
     private Map<String, Object> properties;
 
-    public ClientConnectionPool() {
+    public CassandraClientConnectionPool() {
     }
 
     @Activate
     public void activate(Map<String, Object> properties) {
-        connections = (String[]) properties.get(CONNECTION_POOL);
+        connections = StorageClientUtils.getSetting(properties.get(CONNECTION_POOL), new String[] { "localhost:9610" });
         this.properties = properties;
         super.activate(properties);
 
