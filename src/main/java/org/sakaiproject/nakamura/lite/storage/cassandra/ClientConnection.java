@@ -204,7 +204,7 @@ public class ClientConnection extends Client implements StorageClient {
 
     @Override
     public Map<String, Object> streamBodyIn(String keySpace, String contentColumnFamily,
-            String contentId, String contentBlockId, InputStream in) throws StorageClientException,
+            String contentId, String contentBlockId, Map<String, Object> content, InputStream in) throws StorageClientException,
             AccessDeniedException, IOException {
         return contentHelper.writeBody(keySpace, contentColumnFamily, contentId, contentBlockId,
                 blockSize, maxChunksPerBlockSet, in);

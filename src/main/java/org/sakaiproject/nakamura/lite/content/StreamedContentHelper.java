@@ -6,10 +6,12 @@ import java.util.Map;
 
 public interface StreamedContentHelper {
 
-    Map<String, Object> writeBody(String keySpace, String columnFamily, String contentId,
-            String contentBlockId, InputStream in) throws IOException;
 
-    InputStream readBody(String keySpace, String columnFamily,
-            String contentBlockId) throws IOException;
+
+    Map<String, Object> writeBody(String keySpace, String columnFamily, String contentId,
+            String contentBlockId, Map<String, Object> content, InputStream in) throws IOException;
+
+    InputStream readBody(String keySpace, String columnFamily, String contentBlockId,
+            Map<String, Object> content) throws IOException;
 
 }

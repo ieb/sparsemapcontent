@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -30,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 
 public class JDBCStorageClient implements StorageClient, RowHasher {
@@ -46,18 +48,17 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     private static final String SQL_UPDATE_STRING_COLUMN = "update-string-column";
     private static final String PROP_HASH_ALG = "rowid-hash";
     private static final String SQL_REMOVE_STRING_COLUMN = "remove-string-column";
+    private static final Set<String> preparedStatementKeys = ImmutableSet.of(SQL_DELETE_STRING_ROW,
+            SQL_SELECT_STRING_ROW, SQL_INSERT_STRING_COLUMN, SQL_UPDATE_STRING_COLUMN,
+            SQL_REMOVE_STRING_COLUMN);
     private Connection connection;
     private String[] clientSQLLocations;
     private Map<String, Object> sqlConfig;
     private boolean active;
-    private PreparedStatement deleteStringRow;
-    private PreparedStatement selectStringRow;
-    private PreparedStatement insertStringColumn;
-    private PreparedStatement updateStringColumn;
-    private PreparedStatement removeStringColumn;
     private MessageDigest hasher;
     private boolean alive;
     private StreamedContentHelper streamedContentHelper;
+    private Map<String, PreparedStatement> preparedStatements = Maps.newHashMap();
 
     public JDBCStorageClient(Connection connection, Map<String, Object> properties)
             throws SQLException, NoSuchAlgorithmException, StorageClientException {
@@ -118,6 +119,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         String rid = rowHash(keySpace, columnFamily, key);
         try {
             startUpConnection();
+            PreparedStatement selectStringRow = getStatement(keySpace, columnFamily,
+                    SQL_SELECT_STRING_ROW, rid);
             selectStringRow.clearWarnings();
             selectStringRow.clearParameters();
             selectStringRow.setString(1, rid);
@@ -170,9 +173,16 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 String k = e.getKey();
                 Object o = e.getValue();
                 if (o instanceof byte[]) {
-                    throw new RuntimeException("Invalid content in "+k+", storing byte[] rather than streaming it");
+                    throw new RuntimeException("Invalid content in " + k
+                            + ", storing byte[] rather than streaming it");
                 }
             }
+            PreparedStatement updateStringColumn = getStatement(keySpace, columnFamily,
+                    SQL_UPDATE_STRING_COLUMN, rid);
+            PreparedStatement insertStringColumn = getStatement(keySpace, columnFamily,
+                    SQL_INSERT_STRING_COLUMN, rid);
+            PreparedStatement removeStringColumn = getStatement(keySpace, columnFamily,
+                    SQL_REMOVE_STRING_COLUMN, rid);
             for (Entry<String, Object> e : values.entrySet()) {
                 String k = e.getKey();
                 Object o = e.getValue();
@@ -193,10 +203,12 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                                     + getRowId(keySpace, columnFamily, key) + "  column:[" + k
                                     + "] ");
                         } else {
-                            LOGGER.info("Inserted {} {} [{}]", new Object[]{getRowId(keySpace, columnFamily, key), k, o});
+                            LOGGER.info("Inserted {} {} [{}]",
+                                    new Object[] { getRowId(keySpace, columnFamily, key), k, o });
                         }
                     } else {
-                        LOGGER.info("Updated {} {} [{}]", new Object[]{getRowId(keySpace, columnFamily, key), k, o});
+                        LOGGER.info("Updated {} {} [{}]",
+                                new Object[] { getRowId(keySpace, columnFamily, key), k, o });
                     }
                 } else if (o == null) {
                     removeStringColumn.clearWarnings();
@@ -205,9 +217,10 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     removeStringColumn.setString(2, k);
                     if (removeStringColumn.executeUpdate() == 0) {
                         Map<String, Object> m = get(keySpace, columnFamily, key);
-                        LOGGER.info("Column Not present did not remove {} {} Current Column:{} ", new Object[]{getRowId(keySpace, columnFamily, key), k, m}); 
+                        LOGGER.info("Column Not present did not remove {} {} Current Column:{} ",
+                                new Object[] { getRowId(keySpace, columnFamily, key), k, m });
                     } else {
-                        LOGGER.info("Removed {} {} ", getRowId(keySpace, columnFamily, key), k); 
+                        LOGGER.info("Removed {} {} ", getRowId(keySpace, columnFamily, key), k);
                     }
                 }
             }
@@ -227,6 +240,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         String rid = rowHash(keySpace, columnFamily, key);
         try {
             startUpConnection();
+            PreparedStatement deleteStringRow = getStatement(keySpace, columnFamily,
+                    SQL_DELETE_STRING_ROW, rid);
             deleteStringRow.clearWarnings();
             deleteStringRow.clearParameters();
             deleteStringRow.setString(1, rid);
@@ -252,42 +267,69 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         }
     }
 
+    /**
+     * Get a prepared statement, potentially optimized and sharded.
+     * @param keySpace
+     * @param columnFamily
+     * @param sqlSelectStringRow
+     * @param rid
+     * @return
+     */
+    private PreparedStatement getStatement(String keySpace, String columnFamily,
+            String sqlSelectStringRow, String rid) {
+        String shard = rid.substring(0,1);
+        String[] keys = new String[]{
+                sqlSelectStringRow+"."+keySpace+"."+columnFamily+"._"+shard,
+                sqlSelectStringRow+"."+columnFamily+"._"+shard,
+                sqlSelectStringRow+"."+keySpace+"._"+shard,
+                sqlSelectStringRow+"._"+shard,
+                sqlSelectStringRow+"."+keySpace+"."+columnFamily,
+                sqlSelectStringRow+"."+columnFamily,
+                sqlSelectStringRow+"."+keySpace,
+                sqlSelectStringRow};
+        for ( String k : keys ) {
+            if ( preparedStatements.containsKey(k)) {
+                return preparedStatements.get(k);
+            }
+        }
+        return null;
+    }
+
     public void startUpConnection() throws SQLException {
         if (!active && alive) {
             LOGGER.info("Activating {}", this);
-            deleteStringRow = openPreparedStatement(SQL_DELETE_STRING_ROW);
-            selectStringRow = openPreparedStatement(SQL_SELECT_STRING_ROW);
-            insertStringColumn = openPreparedStatement(SQL_INSERT_STRING_COLUMN);
-            updateStringColumn = openPreparedStatement(SQL_UPDATE_STRING_COLUMN);
-            removeStringColumn = openPreparedStatement(SQL_REMOVE_STRING_COLUMN);
+            openPreparedStatements();
 
             active = true;
         }
     }
 
-    private PreparedStatement openPreparedStatement(String statementKey) throws SQLException {
-        return connection.prepareStatement(getSql(statementKey));
+    private void openPreparedStatements() throws SQLException {
+        for (Entry<String, Object> sql : sqlConfig.entrySet()) {
+            String[] sqlSpec = StringUtils.split(sql.getKey(), '.');
+            if ( preparedStatementKeys.contains(sqlSpec[0])) {
+                preparedStatements.put(sql.getKey(), connection.prepareStatement((String) sql.getValue()));
+            }
+        }
     }
 
     public void shutdownConnection() {
         if (active) {
             LOGGER.info("Passivating {}", this);
-            deleteStringRow = closePreparedStatement(deleteStringRow);
-            selectStringRow = closePreparedStatement(selectStringRow);
-            insertStringColumn = closePreparedStatement(insertStringColumn);
-            updateStringColumn = closePreparedStatement(updateStringColumn);
-            removeStringColumn = closePreparedStatement(removeStringColumn);
+            closePreparedStatements();
             active = false;
         }
     }
 
-    private PreparedStatement closePreparedStatement(PreparedStatement pst) {
-        try {
-            pst.close();
-        } catch (Throwable t) {
+    private void closePreparedStatements() {
+        for ( PreparedStatement p : preparedStatements.values()) {
+            try {
+                p.close();
+            } catch (Throwable t) {
 
+            } 
         }
-        return null;
+        preparedStatements.clear();
     }
 
     public boolean validate() {
@@ -393,15 +435,16 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
 
     @Override
     public Map<String, Object> streamBodyIn(String keySpace, String columnFamily, String contentId,
-            String contentBlockId, InputStream in) throws StorageClientException,
-            AccessDeniedException, IOException {
-       return streamedContentHelper.writeBody(keySpace, columnFamily, contentId, contentBlockId, in);
+            String contentBlockId, Map<String, Object> content, InputStream in)
+            throws StorageClientException, AccessDeniedException, IOException {
+        return streamedContentHelper.writeBody(keySpace, columnFamily, contentId, contentBlockId,
+                content, in);
     }
 
     @Override
     public InputStream streamBodyOut(String keySpace, String columnFamily, String contentId,
             String contentBlockId, Map<String, Object> content) throws StorageClientException,
             AccessDeniedException, IOException {
-        return streamedContentHelper.readBody(keySpace, columnFamily, contentBlockId);
+        return streamedContentHelper.readBody(keySpace, columnFamily, contentBlockId, content);
     }
 }

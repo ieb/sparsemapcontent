@@ -262,7 +262,7 @@ public class ContentManager {
             contentBlockId = StorageClientUtils.getUuid();
             isnew = true;
         }
-        Map<String, Object> metadata = client.streamBodyIn(keySpace, contentColumnFamily, contentId, contentBlockId, in);
+        Map<String, Object> metadata = client.streamBodyIn(keySpace, contentColumnFamily, contentId, contentBlockId, content, in);
         metadata.put(BODY_LAST_MODIFIED, StorageClientUtils.toStore(System.currentTimeMillis()));
         metadata.put(BODY_LAST_MODIFIED_BY, StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
         if ( isnew ) {

@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
@@ -22,6 +24,7 @@ public class FileStreamContentHelper implements StreamedContentHelper {
     private static final String DEFAULT_FILE_STORE = "store";
     private static final String CONFIG_STOREBASE = "store-base-dir";
     private static final Logger LOGGER = LoggerFactory.getLogger(FileStreamContentHelper.class);
+    private static final String STORE_LOCATION = "bodyLocation";
     private String fileStore;
     private RowHasher rowHasher;
 
@@ -32,9 +35,9 @@ public class FileStreamContentHelper implements StreamedContentHelper {
     
     @Override
     public Map<String, Object> writeBody(String keySpace, String columnFamily, String contentId,
-            String contentBlockId, InputStream in) throws IOException {
+            String contentBlockId, Map<String, Object> content, InputStream in) throws IOException {
         String path = getPath(keySpace, columnFamily, contentBlockId);
-        File file = new File(path);
+        File file = new File(fileStore+"/"+path);
         file.getParentFile().mkdirs();
         FileOutputStream out = new FileOutputStream(file);
         long length = IOUtils.copyLarge(in, out);
@@ -43,19 +46,24 @@ public class FileStreamContentHelper implements StreamedContentHelper {
         Map<String, Object> metadata = Maps.newHashMap();
         metadata.put(Content.LENGTH_FIELD, StorageClientUtils.toStore(length));
         metadata.put(Content.BLOCKID_FIELD, StorageClientUtils.toStore(contentBlockId));
+        metadata.put(STORE_LOCATION, StorageClientUtils.toStore(path));
         return metadata;
     }
 
     private String getPath(String keySpace, String columnFamily, String contentBlockId) {
+        Calendar c = new GregorianCalendar();
+        c.setTimeInMillis(System.currentTimeMillis());
+        int year = c.get(Calendar.YEAR);
+        int month = c.get(Calendar.MONTH);
         String rowHash = rowHasher.rowHash(keySpace, columnFamily, contentBlockId);
-        return fileStore+"/"+rowHash.substring(0,2)+"/"+rowHash.substring(2,4)+"/"+rowHash.substring(4,6)+"/"+rowHash;
+        return year+"/"+month+"/"+rowHash.substring(0,2)+"/"+rowHash.substring(2,4)+"/"+rowHash.substring(4,6)+"/"+rowHash;
     }
 
     @Override
-    public InputStream readBody(String keySpace, String columnFamily, String contentBlockId) throws IOException {
-        String path = getPath(keySpace, columnFamily, contentBlockId);
+    public InputStream readBody(String keySpace, String columnFamily, String contentBlockId, Map<String, Object> content) throws IOException {
+        String path = StorageClientUtils.toString(content.get(STORE_LOCATION));
         LOGGER.info("Reading from {} as body of {}:{}:{} ",new Object[] {path, keySpace, columnFamily, contentBlockId});
-        File file = new File(path);
+        File file = new File(fileStore+"/"+path);
         return new FileInputStream(file);
     }
 

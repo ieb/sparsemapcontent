@@ -16,9 +16,11 @@ public interface StorageClient {
 
     void remove(String keySpace, String columnFamily, String key) throws StorageClientException;
 
-    Map<String, Object> streamBodyIn(String keySpace, String columnFamily, String contentId, String contentBlockId, InputStream in) throws StorageClientException, AccessDeniedException, IOException;
-
     InputStream streamBodyOut(String keySpace, String columnFamily, String contentId,
             String contentBlockId, Map<String, Object> content) throws StorageClientException, AccessDeniedException, IOException;
+
+    Map<String, Object> streamBodyIn(String keySpace, String columnFamily, String contentId,
+            String contentBlockId, Map<String, Object> content, InputStream in)
+            throws StorageClientException, AccessDeniedException, IOException;
 
 }
