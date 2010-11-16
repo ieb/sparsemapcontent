@@ -115,13 +115,13 @@ public class Content {
     private Map<String, Object> structure;
     private Map<String, Object> content;
     private String path;
-    private ContentManager contentManager;
+    private ContentManagerImpl contentManager;
     private Map<String, Object> updatedContent;
     private boolean updated;
     private boolean newcontent;
 
     Content(String path, Map<String, Object> structure, Map<String, Object> content,
-            ContentManager contentManager) {
+            ContentManagerImpl contentManager) {
         this.structure = structure;
         this.updatedContent = Maps.newHashMap();
         this.content = content;

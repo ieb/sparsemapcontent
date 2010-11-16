@@ -25,12 +25,14 @@ public class AccessControlManagerImpl implements AccessControlManager {
     private String keySpace;
     private String aclColumnFamily;
     private Map<String, int[]> cache = new ConcurrentHashMap<String, int[]>();
+    private boolean closed;
 
     public AccessControlManagerImpl(StorageClient client, User currentUser, Configuration config) {
         this.user = currentUser;
         this.client = client;
         this.aclColumnFamily = config.getAclColumnFamily();
         this.keySpace = config.getKeySpace();
+        closed = false;
     }
 
     public int toBitmap(Object value) {
@@ -42,6 +44,7 @@ public class AccessControlManagerImpl implements AccessControlManager {
 
     public Map<String, Object> getAcl(String objectType, String objectPath)
             throws StorageClientException, AccessDeniedException {
+        checkOpen();
         check(objectType, objectPath, Permissions.CAN_READ_ACL);
         String key = this.getAclKey(objectType, objectPath);
         return client.get(keySpace, aclColumnFamily, key);
@@ -49,6 +52,7 @@ public class AccessControlManagerImpl implements AccessControlManager {
 
     public void setAcl(String objectType, String objectPath, AclModification[] aclModifications)
             throws StorageClientException, AccessDeniedException {
+        checkOpen();
         check(objectType, objectPath, Permissions.CAN_WRITE_ACL);
         String key = this.getAclKey(objectType, objectPath);
         Map<String, Object> currentAcl = getAcl(objectType, objectPath);
@@ -145,4 +149,15 @@ public class AccessControlManagerImpl implements AccessControlManager {
     public String getCurrentUserId() {
         return user.getId();
     }
+
+    public void close() {
+        closed = true;
+    }
+    
+    private void checkOpen() throws StorageClientException {
+        if ( closed ) {
+            throw new StorageClientException("Access Control Manager is closed");
+        }
+    }
+
 }

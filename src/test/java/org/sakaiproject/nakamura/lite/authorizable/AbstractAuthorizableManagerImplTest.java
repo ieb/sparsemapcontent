@@ -13,7 +13,7 @@ import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
-import org.sakaiproject.nakamura.lite.accesscontrol.Authenticator;
+import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
@@ -59,8 +59,8 @@ public abstract class AbstractAuthorizableManagerImplTest {
 	@Test
 	public void testAuthorizableManager() throws StorageClientException,
 			AccessDeniedException {
-		Authenticator authenticator = new Authenticator(client, configuration);
-		User currentUser = authenticator.authenticate("admin", "admin");
+		AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+		User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 		
 		Assert.assertNotNull(currentUser);
 	
@@ -81,8 +81,8 @@ public abstract class AbstractAuthorizableManagerImplTest {
 	@Test
 	public void testAuthorizableManagerAccessDenied() throws StorageClientException,
 			AccessDeniedException {
-		Authenticator authenticator = new Authenticator(client, configuration);
-		User currentUser = authenticator.authenticate("admin", "wrong-password");
+		AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+		User currentUser = AuthenticatorImpl.authenticate("admin", "wrong-password");
 		
 		Assert.assertNull(currentUser);
 	}
@@ -90,8 +90,8 @@ public abstract class AbstractAuthorizableManagerImplTest {
 	@Test
 	public void testAuthorizableManagerUserNotFound() throws StorageClientException,
 			AccessDeniedException {
-		Authenticator authenticator = new Authenticator(client, configuration);
-		User currentUser = authenticator.authenticate("nonuser", "wrong-password");
+		AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+		User currentUser = AuthenticatorImpl.authenticate("nonuser", "wrong-password");
 		
 		Assert.assertNull(currentUser);
 	}
@@ -99,8 +99,8 @@ public abstract class AbstractAuthorizableManagerImplTest {
 	@Test
 	public void testAuthorizableManagerCheckUser()
 			throws StorageClientException, AccessDeniedException {
-		Authenticator authenticator = new Authenticator(client, configuration);
-		User currentUser = authenticator.authenticate("admin", "admin");
+		AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+		User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
 		AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
 				client, currentUser, configuration);
@@ -134,8 +134,8 @@ public abstract class AbstractAuthorizableManagerImplTest {
 	@Test
 	public void testAuthorizableManagerCreateUser()
 			throws StorageClientException, AccessDeniedException {
-		Authenticator authenticator = new Authenticator(client, configuration);
-		User currentUser = authenticator.authenticate("admin", "admin");
+		AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+		User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
 		AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
 				client, currentUser, configuration);
@@ -170,8 +170,8 @@ public abstract class AbstractAuthorizableManagerImplTest {
 	@Test
 	public void testAuthorizableManagerCreateUserDenied()
 			throws StorageClientException, AccessDeniedException {
-		Authenticator authenticator = new Authenticator(client, configuration);
-		User currentUser = authenticator.authenticate("admin", "admin");
+		AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+		User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
 		AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
 				client, currentUser, configuration);
@@ -232,8 +232,8 @@ public abstract class AbstractAuthorizableManagerImplTest {
 	@Test
 	public void testAuthorizableManagerCreateGroup()
 			throws StorageClientException, AccessDeniedException {
-		Authenticator authenticator = new Authenticator(client, configuration);
-		User currentUser = authenticator.authenticate("admin", "admin");
+		AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+		User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
 		AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
 				client, currentUser, configuration);

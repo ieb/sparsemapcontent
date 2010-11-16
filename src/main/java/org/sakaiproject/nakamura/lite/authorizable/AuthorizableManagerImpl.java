@@ -41,6 +41,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
     private String keySpace;
     private String authorizableColumnFamily;
     private User thisUser;
+    private boolean closed;
 
     public AuthorizableManagerImpl(User currentUser, StorageClient client,
             Configuration configuration, AccessControlManager accessControlManager)
@@ -51,6 +52,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
         this.accessControlManager = accessControlManager;
         this.keySpace = configuration.getKeySpace();
         this.authorizableColumnFamily = configuration.getAuthorizableColumnFamily();
+        this.closed = false;
     }
 
     public User getUser() {
@@ -59,6 +61,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
 
     public Authorizable findAuthorizable(String authorizableId) throws AccessDeniedException,
             StorageClientException {
+        checkOpen();
         if (!this.currentUserId.equals(authorizableId)) {
             accessControlManager.check(Security.ZONE_AUTHORIZABLES, authorizableId,
                     Permissions.CAN_READ);
@@ -76,8 +79,10 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
         }
     }
 
+
     public void updateAuthorizable(Authorizable authorizable) throws AccessDeniedException,
             StorageClientException {
+        checkOpen();
         String id = authorizable.getId();
         accessControlManager.check(Security.ZONE_AUTHORIZABLES, id, Permissions.CAN_WRITE);
         /*
@@ -175,6 +180,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
     public boolean createAuthorizable(String authorizableId, String authorizableName,
             String password, Map<String, Object> properties) throws AccessDeniedException,
             StorageClientException {
+        checkOpen();
         if (Authorizable.isAGroup(properties)) {
             accessControlManager.check(Security.ZONE_ADMIN, Security.ADMIN_GROUPS,
                     Permissions.CAN_WRITE);
@@ -206,6 +212,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
 
     public boolean createUser(String authorizableId, String authorizableName, String password,
             Map<String, Object> properties) throws AccessDeniedException, StorageClientException {
+        checkOpen();
         if (Authorizable.isAGroup(properties)) {
             Map<String, Object> m = Maps.newHashMap(properties);
             m.remove(Authorizable.GROUP_FIELD);
@@ -216,6 +223,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
 
     public boolean createGroup(String authorizableId, String authorizableName,
             Map<String, Object> properties) throws AccessDeniedException, StorageClientException {
+        checkOpen();
         if (!Authorizable.isAGroup(properties)) {
             Map<String, Object> m = Maps.newHashMap(properties);
             m.put(Authorizable.GROUP_FIELD, Authorizable.GROUP_VALUE);
@@ -225,10 +233,22 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
     }
 
     public void delete(String authorizableId) throws AccessDeniedException, StorageClientException {
+        checkOpen();
         accessControlManager.check(Security.ZONE_ADMIN, authorizableId,
                 Permissions.CAN_DELETE);
         client.remove(keySpace, authorizableColumnFamily, authorizableId);
         
     }
+
+    public void close() {
+        closed = true;
+    }
+    
+    private void checkOpen() throws StorageClientException {
+        if ( closed ) {
+            throw new StorageClientException("Authorizable Manager is closed");
+        }
+    }
+
 
 }

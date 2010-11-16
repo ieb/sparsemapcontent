@@ -20,7 +20,7 @@ import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Component(immediate = true, metatype = true)
+@Component(enabled=false, metatype = true)
 @Service(value = ConnectionPool.class)
 public class CassandraClientConnectionPool extends AbstractClientConnectionPool {
 

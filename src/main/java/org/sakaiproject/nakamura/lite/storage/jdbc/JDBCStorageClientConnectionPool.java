@@ -11,7 +11,11 @@ import java.util.Properties;
 
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Service;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
 import org.slf4j.Logger;
@@ -20,12 +24,24 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
+@Component(immediate = true, metatype = true)
+@Service(value = ConnectionPool.class)
 public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPool {
 
-    public static final String CONNECTION_URL = "jdbc-url";
     private static final Logger LOGGER = LoggerFactory
-            .getLogger(JDBCStorageClientConnectionPool.class);
+    .getLogger(JDBCStorageClientConnectionPool.class);
+
+    @Property(value = { "jdbc:derby:sparsemap/db;create=true" })
+    public static final String CONNECTION_URL = "jdbc-url";
+    @Property(value = { "org.apache.derby.jdbc.EmbeddedDriver" })
     public static final String JDBC_DRIVER = "jdbc-driver";
+    
+    @Property(value = { "sa" })
+    private static final String USERNAME = "username";
+    @Property(value = { "" })
+    private static final String PASSWORD = "password";
+
+    
     private static final String BASESQLPATH = "org/sakaiproject/nakamura/lite/storage/jdbc/config/client";
 
     public class JCBCStorageClientConnection implements PoolableObjectFactory {
@@ -37,8 +53,8 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
 
         public JCBCStorageClientConnection(Map<String, Object> config) {
             connectionProperties = getConnectionProperties(config);
-            username = StorageClientUtils.getSetting(config.get("username"), "");
-            password = StorageClientUtils.getSetting(config.get("password"), "");
+            username = StorageClientUtils.getSetting(config.get(USERNAME), "");
+            password = StorageClientUtils.getSetting(config.get(PASSWORD), "");
             url = getConnectionUrl(config);
         }
 

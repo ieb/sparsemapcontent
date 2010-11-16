@@ -6,7 +6,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
-import org.sakaiproject.nakamura.lite.accesscontrol.Authenticator;
+import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.soak.AbstractScalingClient;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
@@ -34,8 +34,8 @@ public class CreateUsersAndGroupsWithMembersClient extends AbstractScalingClient
             super.setup();
             String tname = String.valueOf(Thread.currentThread().getId())
                     + String.valueOf(System.currentTimeMillis());
-            Authenticator authenticator = new Authenticator(client, configuration);
-            User currentUser = authenticator.authenticate("admin", "admin");
+            AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+            User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
             AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
                     client, currentUser, configuration);

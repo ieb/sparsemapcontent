@@ -12,13 +12,16 @@ import org.sakaiproject.nakamura.api.lite.Configuration;
 @Service(value = Configuration.class)
 public class ConfigurationImpl implements Configuration {
 
-    @Property(value = "Acl")
+    @Property(value = "ac")
     private static final String ACL_COLUMN_FAMILY = "acl-column-family";
-    @Property(value = "Nakamura")
+    @Property(value = "n")
     private static final String KEYSPACE = "keyspace";
-    @Property(value = "Authorizable")
+    @Property(value = "au")
     private static final String AUTHORIZABLE_COLUMN_FAMILY = "authorizable-column-family";
+    @Property(value = "cn")
     private static final String CONTENT_COLUMN_FAMILY = "content-column-family";
+    
+    
     private String aclColumnFamily;
     private String keySpace;
     private String authorizableColumnFamily;

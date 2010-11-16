@@ -29,6 +29,7 @@ import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessControlManager;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
+import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.lite.Security;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
@@ -98,9 +99,9 @@ import com.google.common.collect.Maps;
  * @author ieb
  * 
  */
-public class ContentManager {
+public class ContentManagerImpl implements ContentManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ContentManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ContentManagerImpl.class);
 
     /**
      * Key containing deleted items.
@@ -124,15 +125,19 @@ public class ContentManager {
      */
     private String contentColumnFamily;
 
+    private boolean closed;
 
-    public ContentManager(StorageClient client, AccessControlManager accessControlManager,  Configuration config) {
+
+    public ContentManagerImpl(StorageClient client, AccessControlManager accessControlManager,  Configuration config) {
         this.client = client;
         this.accessControlManager = accessControlManager;
         keySpace = config.getKeySpace();
         contentColumnFamily = config.getContentColumnFamily();
+        closed = false;
     }
 
     public Content get(String path) throws StorageClientException, AccessDeniedException {
+        checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
         Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
         if ( structure != null && structure.size() > 0 ) {
@@ -148,6 +153,7 @@ public class ContentManager {
     }
 
     public void saveVersion(String path) throws StorageClientException, AccessDeniedException {
+        checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_WRITE);
         Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
         String contentId = StorageClientUtils
@@ -187,6 +193,7 @@ public class ContentManager {
     }
 
     public void update(Content content) throws AccessDeniedException, StorageClientException {
+        checkOpen();
         String path = content.getPath();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_WRITE);
         String id = null;
@@ -235,6 +242,7 @@ public class ContentManager {
     }
 
     public void delete(String path) throws AccessDeniedException, StorageClientException {
+        checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_DELETE);
         Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
         String uuid = StorageClientUtils.toString(structure.get(STRUCTURE_UUID_FIELD));
@@ -249,6 +257,7 @@ public class ContentManager {
     }
     
     public long writeBody(String path, InputStream in) throws StorageClientException, AccessDeniedException, IOException {
+        checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_WRITE);
         Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
         String contentId = StorageClientUtils
@@ -280,6 +289,7 @@ public class ContentManager {
 
     public InputStream getInputStream(String path) throws StorageClientException,
             AccessDeniedException, IOException {
+        checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
         Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
         LOGGER.info("Structure Loaded {} {} ", path, structure);
@@ -288,6 +298,16 @@ public class ContentManager {
         Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
         String contentBlockId = StorageClientUtils.toString(content.get(BLOCKID_FIELD));
         return client.streamBodyOut(keySpace, contentColumnFamily, contentId, contentBlockId, content);
+    }
+
+    public void close() {
+        closed = true;
+    }
+    
+    private void checkOpen() throws StorageClientException {
+        if ( closed ) {
+            throw new StorageClientException("Content Manager is closed");
+        }
     }
 
 

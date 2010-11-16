@@ -57,7 +57,7 @@ public abstract class AbstractAccessControlManagerImplTest {
 
 	@Test
 	public void test() throws StorageClientException, AccessDeniedException {
-		Authenticator authenticator = new Authenticator(client, configuration);
+		AuthenticatorImpl authenticator = new AuthenticatorImpl(client, configuration);
 		User currentUser = authenticator.authenticate("admin", "admin");
 
 		AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
