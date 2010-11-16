@@ -7,7 +7,7 @@ import org.sakaiproject.nakamura.lite.storage.cassandra.CassandraClientConnectio
 
 import com.google.common.collect.ImmutableMap;
 
-public class ContentManagerImplTest extends AbstractContentManagerTest {
+public class ContentManagerImplMan extends AbstractContentManagerTest {
 
     @Override
     protected ConnectionPool getConnectionPool() {

@@ -27,9 +27,13 @@
           <instructions>
             <Bundle-Category>sakai-nakamura</Bundle-Category>
             <Export-Package>
-              org.sakaiproject.nakamura.eventexplorer.api.lite.*
+              org.sakaiproject.nakamura.api.lite.*
 			</Export-Package>
-            <Private-Package>org.sakaiproject.nakamura.eventexplorer.lite.*</Private-Package>
+			<Import-Package>
+			   !org.apache.commons.cli.*,
+			   *
+			</Import-Package>
+            <Private-Package>org.sakaiproject.nakamura.lite.*</Private-Package>
             <Embed-Dependency>libthrift,apache-cassandra,mysql-connector-java,derby</Embed-Dependency>
           </instructions>
         </configuration>
