@@ -3,6 +3,8 @@ package org.sakaiproject.nakamura.lite.soak;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A controller for a multi threaded test.
@@ -12,8 +14,18 @@ import org.sakaiproject.nakamura.lite.storage.StorageClientException;
  */
 public abstract class AbstractSoakController {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSoakController.class);
+    private double singleThreadRate;
+    private int totalOperations;
+
+    public AbstractSoakController(int totalOperations) {
+        this.totalOperations = totalOperations;
+    }
+
     public void launchSoak(int nthreads) throws ConnectionPoolException, StorageClientException,
             AccessDeniedException {
+        LOGGER.info(
+        "|Threads|Time s|Throughput|Throughput per thread| Concurrency| Efficiency|");
         for (int tr = 1; tr <= nthreads; tr++) {
             long s = System.currentTimeMillis();
             Thread[] threads = new Thread[tr];
@@ -36,8 +48,19 @@ public abstract class AbstractSoakController {
         }
 
     }
-
-    protected abstract void logRate(double t, int currentThreads);
+    
+    protected void logRate(double t, int currentThreads) {
+        double rate = ((double) totalOperations) / t;
+        double ratePerThread = ((double) totalOperations) / (((double) currentThreads) * t);
+        if ( currentThreads == 1 ) {
+            singleThreadRate = rate;
+        }
+        double speedup = rate/singleThreadRate;
+        double efficiency = 100*speedup/((double)currentThreads);
+        LOGGER.info(
+                "| {}| {}| {}| {}| {}| {}%|",
+                new Object[] { currentThreads, t, rate, ratePerThread, speedup, efficiency});
+    }
 
     protected abstract Runnable getRunnable(int tr) throws ConnectionPoolException,
             StorageClientException, AccessDeniedException;

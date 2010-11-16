@@ -8,27 +8,18 @@ import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class CreateUsersAndGroupsSoak extends AbstractSoakController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CreateUsersAndGroupsSoak.class);
     private int totalUsers;
     private ConnectionPool connectionPool;
 
     public CreateUsersAndGroupsSoak(int totalUsers, ConnectionPool connectionPool) {
+        super(totalUsers);
         this.connectionPool = connectionPool;
         this.totalUsers = totalUsers;
     }
 
-    protected void logRate(double t, int currentThreads) {
-        double rate = ((double) totalUsers) / t;
-        double ratePerThread = ((double) totalUsers) / (((double) currentThreads) * t);
-        LOGGER.info(
-                "Test complete, Threads {} time taken {} Users Per Second {} Users Per Second Per Thread {} ",
-                new Object[] { currentThreads, t, rate, ratePerThread });
-    }
 
     protected Runnable getRunnable(int nthreads) throws ConnectionPoolException,
             StorageClientException, AccessDeniedException {
@@ -43,10 +34,10 @@ public class CreateUsersAndGroupsSoak extends AbstractSoakController {
         int nthreads = 10;
 
         if (argv.length > 0) {
-            totalUsers = StorageClientUtils.getSetting(Integer.valueOf(argv[0]), totalUsers);
+            nthreads = StorageClientUtils.getSetting(Integer.valueOf(argv[0]), nthreads);
         }
         if (argv.length > 1) {
-            nthreads = StorageClientUtils.getSetting(Integer.valueOf(argv[1]), nthreads);
+            totalUsers = StorageClientUtils.getSetting(Integer.valueOf(argv[1]), totalUsers);
         }
 
         CreateUsersAndGroupsSoak createUsersAndGroupsSoak = new CreateUsersAndGroupsSoak(

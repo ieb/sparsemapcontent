@@ -4,7 +4,7 @@ DROP TABLE `css`;
 CREATE TABLE  `css` (
   `id` int(11) NOT NULL auto_increment,
   `rid` varchar(32) NOT NULL,
-  `cid` varchar(20) NOT NULL,
+  `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
   PRIMARY KEY  (`id`),
   UNIQUE KEY `rowkey` USING BTREE (`rid`,`cid`),
@@ -17,7 +17,7 @@ DROP TABLE `au_css`;
 CREATE TABLE  `au_css` (
   `id` int(11) NOT NULL auto_increment,
   `rid` varchar(32) NOT NULL,
-  `cid` varchar(20) NOT NULL,
+  `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
   PRIMARY KEY  (`id`),
   UNIQUE KEY `rowkey` USING BTREE (`rid`,`cid`),
@@ -29,7 +29,7 @@ DROP TABLE `cn_css`;
 CREATE TABLE  `cn_css` (
   `id` int(11) NOT NULL auto_increment,
   `rid` varchar(32) NOT NULL,
-  `cid` varchar(20) NOT NULL,
+  `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
   PRIMARY KEY  (`id`),
   UNIQUE KEY `rowkey` USING BTREE (`rid`,`cid`),
@@ -42,7 +42,7 @@ DROP TABLE `ac_css`;
 CREATE TABLE  `ac_css` (
   `id` int(11) NOT NULL auto_increment,
   `rid` varchar(32) NOT NULL,
-  `cid` varchar(20) NOT NULL,
+  `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
   PRIMARY KEY  (`id`),
   UNIQUE KEY `rowkey` USING BTREE (`rid`,`cid`),

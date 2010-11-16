@@ -74,6 +74,7 @@ Throughput is users added per second.
 
 
 h3. JDBC
+
 Same as above, using a local MySQL Instance.
 
 |Threads|Time(s)|Throughput|Throughput per thread|Speedup|Concurrent Efficiency|

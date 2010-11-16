@@ -1,48 +1,43 @@
-package org.sakaiproject.nakamura.lite.soak.cassandra;
+package org.sakaiproject.nakamura.lite.soak.memory;
 
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
 import org.sakaiproject.nakamura.lite.soak.AbstractSoakController;
-import org.sakaiproject.nakamura.lite.soak.authorizable.CreateUsersAndGroupsClient;
+import org.sakaiproject.nakamura.lite.soak.authorizable.CreateUsersAndGroupsWithMembersClient;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
-import org.sakaiproject.nakamura.lite.storage.cassandra.CassandraClientConnectionPool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientConnectionPool;
 
 import com.google.common.collect.ImmutableMap;
 
-public class CreateUsersAndGroupsSoak extends AbstractSoakController {
+public class CreateUsersAndGroupsWithMembersSoak extends AbstractSoakController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CreateUsersAndGroupsSoak.class);
     private int totalUsers;
     private ConnectionPool connectionPool;
+    private int totalGroups;
 
-    public CreateUsersAndGroupsSoak(int totalUsers, ConnectionPool connectionPool) {
-        super(totalUsers);
+    public CreateUsersAndGroupsWithMembersSoak(int totalUsers, int totalGroups, ConnectionPool connectionPool) {
+        super(totalUsers+(totalGroups*5));
         this.connectionPool = connectionPool;
         this.totalUsers = totalUsers;
+        this.totalGroups = totalGroups;
     }
 
-    protected void logRate(double t, int currentThreads) {
-        double rate = ((double) totalUsers) / t;
-        double ratePerThread = ((double) totalUsers) / (((double) currentThreads) * t);
-        LOGGER.info(
-                "Test complete, Threads {} time taken {} Users Per Second {} Users Per Second Per Thread {} ",
-                new Object[] { currentThreads, t, rate, ratePerThread });
-    }
 
     protected Runnable getRunnable(int nthreads) throws ConnectionPoolException,
             StorageClientException, AccessDeniedException {
         int usersPerThread = totalUsers / nthreads;
-        return new CreateUsersAndGroupsClient(usersPerThread, connectionPool);
+        int groupsPerThread = totalGroups / nthreads;
+        return new CreateUsersAndGroupsWithMembersClient(usersPerThread, groupsPerThread, connectionPool);
     }
 
     public static void main(String[] argv) throws ConnectionPoolException, StorageClientException,
             AccessDeniedException {
 
         int totalUsers = 1000;
+        int totalGroups = 100;
         int nthreads = 10;
 
         if (argv.length > 0) {
@@ -51,15 +46,19 @@ public class CreateUsersAndGroupsSoak extends AbstractSoakController {
         if (argv.length > 1) {
             totalUsers = StorageClientUtils.getSetting(Integer.valueOf(argv[1]), totalUsers);
         }
+        if (argv.length > 2) {
+            totalGroups = StorageClientUtils.getSetting(Integer.valueOf(argv[2]), totalUsers);
+        }
 
-        CreateUsersAndGroupsSoak createUsersAndGroupsSoak = new CreateUsersAndGroupsSoak(
-                totalUsers, getConnectionPool());
+        CreateUsersAndGroupsWithMembersSoak createUsersAndGroupsSoak = new CreateUsersAndGroupsWithMembersSoak(
+                totalUsers, totalGroups, getConnectionPool());
         createUsersAndGroupsSoak.launchSoak(nthreads);
     }
     
     protected static ConnectionPool getConnectionPool() {
-        CassandraClientConnectionPool cp = new CassandraClientConnectionPool();
-        cp.activate(ImmutableMap.of("test", (Object) "test"));
+        MemoryStorageClientConnectionPool cp = new MemoryStorageClientConnectionPool();
+        cp.activate(ImmutableMap.of("test", (Object) "test",
+                BlockContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK, 9));
         return cp;
     }
 
