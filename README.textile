@@ -1,6 +1,7 @@
 h1. Map Content System.
 
 h2. Rational
+
   In the Q1 release of Nakamura we had major scalability and concurrency problems caused mainly by our use cases for a content
 store not being closely aligned with those of Jackrabbit. We were not able to work around those problems and although we did manage
 to release the code, its quite clear that in certain areas Jackrabbit wont work for us. This should not reflect badly on Jackrabbit, 
