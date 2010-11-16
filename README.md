@@ -52,19 +52,26 @@ At this stage its pre-alpha, untested for performance and scalability and incomp
 
 ### Memory
 All performed on a MackBook Pro which is believed to have 4 cores.
-Add a user, 1 - 10 threads. Storage is a Concurrent Hash Map. This tests the code base for concurrency.
+Add a user, 1 - 10 threads. Storage is a Concurrent Hash Map. Assuming the Concurrent Hash Map is 100% concurrent, this test
+tests the code base for concurrent efficiency.
 `
-Threads,Time(s),Throughput, Throughput per thread
-      1,  0.402,   2487.56,      2487.56 
-      2,  0.144,   6944.44,      3472.22
-      3,  0.051,  19607.84,      6535.94 
-      4,  0.129,   7751.93,      1937.98 
-      5,  0.05,   20000.0,       4000.0 
-      6,  0.215,   4651.16,       775.19 
-      7,  0.025,  40000.0,       5714.28 
-      8,  0.026,  38461.53,      4807.69 
-      9,  0.078,  12820.51,      1424.50 
-     10,  0.037,  27027.02,      2702.70
+Threads,
+     Time(s),
+            Throughput, 
+                      Throughput per thread
+                                 Speedup
+                                            Concurrent Efficiency
+  1  0.46     2188    2188          1       100%
+  2  0.18     5495    2747       2.51       126%
+  3  0.05    21739    7246       9.93       331%
+  4  0.14     7143    1786       3.26        82%
+  5   0.1    10309    2062       4.71        94%
+  6  0.25     4049     675       1.85        31%
+  7  0.05    20408    2915       9.33       133%
+  8  0.03    33333    4167      15.23       190%
+  ------------------------------------------------ Fighting for cores.
+  9  0.25     4082     454       1.87        21%
+ 10  0.14     7042     704       3.22        32%
 ` 
 Throughput is users added per second.
 
@@ -73,21 +80,54 @@ Throughput is users added per second.
 Same as above, using a local MySQL Instance.
 
 `
-Threads,Time(s),Throughput, Throughput per thread
-      1, 12.186,     82.06,        82.06 
-      2,  9.646,    103.66,        51.83 
-      3, 11.177,     89.46,        29.82 
-      4, 15.894,     62.91,        15.72 
-      5,  9.652,    103.60,        20.72 
-      6, 16.734,     59.75,         9.95 
-      7, 21.761,     45.95,         6.56 
-      8, 13.962,     71.62,         8.95 
-      9, 10.173,     98.29,        10.92 
-     10, 11.466,     87.21,         8.72      
+Threads,
+     Time(s),
+            Throughput, 
+                      Throughput per thread
+                                 Speedup
+                                            Concurrent Efficiency
+  1 12.19       82      82          1       100%
+  2  9.65      104      52       1.26        63%
+  3 11.18       89      30       1.09        36%
+  4 15.89       63      16       0.77        19%
+  ------------------------------------------------ Fighting for cores.
+  5  9.65      104      21       1.26        25%
+  6 16.73       60      10       0.73        12%
+  7 21.76       46       7       0.56         8%
+  8 13.96       72       9       0.87        11%
+  9 10.17       98      11        1.2        13%
+ 10 11.47       87       9       1.06        11%
 `    
+### Cassandra
+
+Using an untuned OOTB Cassandra instance running on the same box as the test, fighting for processor Cores.
+
+                                     
+                                     
+`
+Threads,
+     Time(s),
+            Throughput, 
+                      Throughput per thread
+                                 Speedup
+                                            Concurrent Efficiency                                     
+  1  1.14      873     873          1       100%
+  2  0.65     1520     760       1.74        87%
+  3  0.44     2227     742       2.55        85%
+  4  0.46     2146     536       2.46        61%
+  ------------------------------------------------ Fighting for cores.
+  5  0.43     2320     464       2.66        53%
+  6   0.3     3257     543       3.73        62%
+  7  0.28     3521     503       4.03        58%
+  8  0.28     3546     443       4.06        51%
+  9  0.34     2890     321       3.31        37%
+ 10  0.37     2703     270       3.09        31%
+'
+
 Throughput is users added per second.
 
 
-So far it looks like the code is concurrent, but MySQL is not.
+So far it looks like the code is concurrent, but MySQL is considerably slower than Cassandra or Memory. Below the Fighting for cores
+the box doesn't have enough CPUs to support the DB if present and the code.
 
 

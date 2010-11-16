@@ -127,7 +127,7 @@ public class CassandraClientConnection extends Client implements StorageClient {
         try {
             Map<String, Map<String, List<Mutation>>> mutation = new HashMap<String, Map<String, List<Mutation>>>();
             Map<String, List<Mutation>> columnMutations = new HashMap<String, List<Mutation>>();
-            LOGGER.info("Saving changes to {}:{}:{} ", new Object[]{keySpace,columnFamily,key});
+            LOGGER.debug("Saving changes to {}:{}:{} ", new Object[]{keySpace,columnFamily,key});
             List<Mutation> keyMutations = Lists.newArrayList();    
             columnMutations.put(columnFamily, keyMutations);
             mutation.put(key, columnMutations);
@@ -179,7 +179,7 @@ public class CassandraClientConnection extends Client implements StorageClient {
                     keyMutations.add(mu);
                 }
             }
-            LOGGER.info("Mutation {} ",mutation);
+            LOGGER.debug("Mutation {} ",mutation);
             batch_mutate(keySpace, mutation, ConsistencyLevel.ONE);
         } catch (InvalidRequestException e) {
             throw new StorageClientException(e.getMessage(), e);

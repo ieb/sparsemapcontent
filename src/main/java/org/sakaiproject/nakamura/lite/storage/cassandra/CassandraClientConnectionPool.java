@@ -58,7 +58,7 @@ public class CassandraClientConnectionPool extends AbstractClientConnectionPool 
                 try {
                     tSocket = new TSocket(hosts[i], ports[i]);
                     tSocket.open();
-                    LOGGER.info("Opened connction to {} {} ",hosts[i], ports[i]);
+                    LOGGER.debug("Opened connction to {} {} ",hosts[i], ports[i]);
                     lastHost = i;
                     break;
                 } catch (Exception ex) {
@@ -71,7 +71,7 @@ public class CassandraClientConnectionPool extends AbstractClientConnectionPool 
                     try {
                         tSocket = new TSocket(hosts[i], ports[i]);
                         tSocket.open();
-                        LOGGER.info("Opened connction to {} {} ",hosts[i], ports[i]);
+                        LOGGER.debug("Opened connction to {} {} ",hosts[i], ports[i]);
                         lastHost = i;
                         break;
                     } catch (Exception ex) {
@@ -86,7 +86,7 @@ public class CassandraClientConnectionPool extends AbstractClientConnectionPool 
             }
             savedLastHost = lastHost;
             TProtocol tProtocol = new TBinaryProtocol(tSocket);
-            LOGGER.info("Opened Connection {} isOpen {} Host {} Port {}",tSocket, tSocket.isOpen());
+            LOGGER.debug("Opened Connection {} isOpen {} Host {} Port {}",tSocket, tSocket.isOpen());
             CassandraClientConnection clientConnection = new CassandraClientConnection(tProtocol, tSocket, properties);
             return clientConnection;
         }
