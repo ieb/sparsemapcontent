@@ -99,9 +99,12 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
     private Object sqlConfigLock = new Object();
 
     @Activate
-    public void activate(Map<String, Object> properties) {
+    public void activate(Map<String, Object> properties) throws ClassNotFoundException {
         this.properties = properties;
         super.activate(properties);
+        
+        String jdbcDriver = (String) properties.get(JDBC_DRIVER);
+        this.getClass().getClassLoader().loadClass(jdbcDriver);
         try {
             @SuppressWarnings("unused")
             JDBCStorageClient client = (JDBCStorageClient) openConnection();

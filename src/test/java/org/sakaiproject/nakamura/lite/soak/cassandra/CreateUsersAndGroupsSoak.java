@@ -40,7 +40,7 @@ public class CreateUsersAndGroupsSoak extends AbstractSoakController {
     }
 
     public static void main(String[] argv) throws ConnectionPoolException, StorageClientException,
-            AccessDeniedException {
+            AccessDeniedException, ClassNotFoundException {
 
         int totalUsers = 1000;
         int nthreads = 10;
@@ -57,7 +57,7 @@ public class CreateUsersAndGroupsSoak extends AbstractSoakController {
         createUsersAndGroupsSoak.launchSoak(nthreads);
     }
     
-    protected static ConnectionPool getConnectionPool() {
+    protected static ConnectionPool getConnectionPool() throws ClassNotFoundException {
         CassandraClientConnectionPool cp = new CassandraClientConnectionPool();
         cp.activate(ImmutableMap.of("test", (Object) "test"));
         return cp;

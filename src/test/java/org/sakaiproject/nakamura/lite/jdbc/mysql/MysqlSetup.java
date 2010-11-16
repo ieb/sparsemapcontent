@@ -9,7 +9,7 @@ public class MysqlSetup {
 
     private static JDBCStorageClientConnectionPool connectionPool;
 
-    public synchronized static ConnectionPool getConnectionPool() {
+    public synchronized static ConnectionPool getConnectionPool() throws ClassNotFoundException {
         if (connectionPool == null) {
             connectionPool = new JDBCStorageClientConnectionPool();
             connectionPool.activate(ImmutableMap.of(JDBCStorageClientConnectionPool.CONNECTION_URL,

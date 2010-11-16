@@ -132,7 +132,7 @@ public class CassandraClientConnectionPool extends AbstractClientConnectionPool 
     }
 
     @Activate
-    public void activate(Map<String, Object> properties) {
+    public void activate(Map<String, Object> properties) throws ClassNotFoundException {
         connections = StorageClientUtils.getSetting(properties.get(CONNECTION_POOL), new String[] { "localhost:9160" });
         this.properties = properties;
         super.activate(properties);

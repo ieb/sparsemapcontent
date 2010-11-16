@@ -28,7 +28,7 @@ public class CreateUsersAndGroupsSoak extends AbstractSoakController {
     }
 
     public static void main(String[] argv) throws ConnectionPoolException, StorageClientException,
-            AccessDeniedException {
+            AccessDeniedException, ClassNotFoundException {
 
         int totalUsers = 1000;
         int nthreads = 10;

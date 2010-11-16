@@ -9,7 +9,7 @@ public class DerbySetup {
 
     private static JDBCStorageClientConnectionPool connectionPool;
 
-    public static ConnectionPool getConnectionPool() {
+    public static ConnectionPool getConnectionPool() throws ClassNotFoundException {
         if (connectionPool == null) {
             connectionPool = new JDBCStorageClientConnectionPool();
             connectionPool.activate(ImmutableMap.of(JDBCStorageClientConnectionPool.CONNECTION_URL,

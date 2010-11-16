@@ -39,7 +39,7 @@ public abstract class AbstractClientConnectionPool implements ConnectionPool {
     }
 
     @Activate
-    public void activate(Map<String, Object> properties) {
+    public void activate(Map<String, Object> properties) throws ClassNotFoundException {
         int maxActive = getProperty(properties.get(MAX_ACTIVE),200);
         byte whenExhaustedAction = GenericObjectPool.DEFAULT_WHEN_EXHAUSTED_ACTION;
         String whenExhausted = (String) properties.get(WHEN_EHAUSTED);

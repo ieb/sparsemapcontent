@@ -2,8 +2,8 @@ package org.sakaiproject.nakamura.lite;
 
 import java.util.Map;
 
-import junit.framework.Assert;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.sakaiproject.nakamura.api.lite.Session;
@@ -32,7 +32,7 @@ public class RepositoryImplTest {
 
     @Before
     public void before() throws StorageClientException, AccessDeniedException,
-            ConnectionPoolException {
+            ConnectionPoolException, ClassNotFoundException {
         connectionPool = getConnectionPool();
         client = connectionPool.openConnection();
         configuration = new ConfigurationImpl();
@@ -79,7 +79,7 @@ public class RepositoryImplTest {
 
     }
     
-    protected ConnectionPool getConnectionPool() {
+    protected ConnectionPool getConnectionPool() throws ClassNotFoundException {
         MemoryStorageClientConnectionPool cp = new MemoryStorageClientConnectionPool();
         cp.activate(ImmutableMap.of("test", (Object) "test",
                 BlockContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK, 9));

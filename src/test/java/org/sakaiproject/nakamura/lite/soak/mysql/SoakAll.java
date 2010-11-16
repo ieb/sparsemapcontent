@@ -6,7 +6,7 @@ import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 
 public class SoakAll {
 
-    public static void main(String[] argv) throws ConnectionPoolException, StorageClientException, AccessDeniedException {
+    public static void main(String[] argv) throws ConnectionPoolException, StorageClientException, AccessDeniedException, ClassNotFoundException {
         CreateUsersAndGroupsSoak.main(argv);
         CreateUsersAndGroupsWithMembersSoak.main(argv);
     }

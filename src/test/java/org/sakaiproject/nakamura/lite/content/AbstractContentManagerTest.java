@@ -37,7 +37,7 @@ public abstract class AbstractContentManagerTest {
     private ConnectionPool connectionPool;
 
     @Before
-    public void before() throws StorageClientException, AccessDeniedException, ConnectionPoolException {
+    public void before() throws StorageClientException, AccessDeniedException, ConnectionPoolException, ClassNotFoundException {
         connectionPool = getConnectionPool();
         client = connectionPool.openConnection();
         configuration = new ConfigurationImpl();
@@ -53,7 +53,7 @@ public abstract class AbstractContentManagerTest {
         LOGGER.info("Setup Complete");
     }
     
-    protected abstract ConnectionPool getConnectionPool();
+    protected abstract ConnectionPool getConnectionPool() throws ClassNotFoundException;
 
     @After
     public void after() throws ConnectionPoolException {

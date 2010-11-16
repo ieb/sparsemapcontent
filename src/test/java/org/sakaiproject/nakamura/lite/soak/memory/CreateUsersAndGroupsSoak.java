@@ -31,7 +31,7 @@ public class CreateUsersAndGroupsSoak extends AbstractSoakController {
     }
 
     public static void main(String[] argv) throws ConnectionPoolException, StorageClientException,
-            AccessDeniedException {
+            AccessDeniedException, ClassNotFoundException {
 
         int totalUsers = 1000;
         int nthreads = 10;
@@ -48,7 +48,7 @@ public class CreateUsersAndGroupsSoak extends AbstractSoakController {
         createUsersAndGroupsSoak.launchSoak(nthreads);
     }
     
-    protected static ConnectionPool getConnectionPool() {
+    protected static ConnectionPool getConnectionPool() throws ClassNotFoundException {
         MemoryStorageClientConnectionPool cp = new MemoryStorageClientConnectionPool();
         cp.activate(ImmutableMap.of("test", (Object) "test",
                 BlockContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK, 9));

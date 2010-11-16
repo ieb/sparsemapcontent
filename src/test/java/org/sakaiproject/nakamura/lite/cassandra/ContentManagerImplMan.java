@@ -10,7 +10,7 @@ import com.google.common.collect.ImmutableMap;
 public class ContentManagerImplMan extends AbstractContentManagerTest {
 
     @Override
-    protected ConnectionPool getConnectionPool() {
+    protected ConnectionPool getConnectionPool() throws ClassNotFoundException {
         CassandraClientConnectionPool cp = new CassandraClientConnectionPool();
         cp.activate(ImmutableMap.of("test", (Object) "test",
                 BlockContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK, 9));

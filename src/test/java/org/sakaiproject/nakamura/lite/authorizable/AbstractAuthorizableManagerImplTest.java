@@ -33,7 +33,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
     private ConnectionPool connectionPool;
 
 	@Before
-	public void before() throws StorageClientException, AccessDeniedException, ConnectionPoolException {
+	public void before() throws StorageClientException, AccessDeniedException, ConnectionPoolException, ClassNotFoundException {
         connectionPool = getConnectionPool();
         client = connectionPool.openConnection();
 		configuration = new ConfigurationImpl();
@@ -48,7 +48,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
 		LOGGER.info("Setup Complete");
 	}
 	
-    protected abstract ConnectionPool getConnectionPool();
+    protected abstract ConnectionPool getConnectionPool() throws ClassNotFoundException;
 
 
     @After

@@ -3,9 +3,9 @@ package org.sakaiproject.nakamura.lite.accesscontrol;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import junit.framework.Assert;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -33,7 +33,7 @@ public abstract class AbstractAccessControlManagerImplTest {
     private ConnectionPool connectionPool;
 
 	@Before
-	public void before() throws StorageClientException, AccessDeniedException, ConnectionPoolException {
+	public void before() throws StorageClientException, AccessDeniedException, ConnectionPoolException, ClassNotFoundException {
         connectionPool = getConnectionPool();
         client = connectionPool.openConnection();
 		configuration = new ConfigurationImpl();
@@ -48,7 +48,7 @@ public abstract class AbstractAccessControlManagerImplTest {
 		LOGGER.info("Setup Complete");
 	}
 
-    protected abstract ConnectionPool getConnectionPool();
+    protected abstract ConnectionPool getConnectionPool() throws ClassNotFoundException;
 
     @After
     public void after() throws ConnectionPoolException {

@@ -30,11 +30,25 @@
               org.sakaiproject.nakamura.api.lite.*
 			</Export-Package>
 			<Import-Package>
+			   !org.jboss.resource.adapter.jdbc.*,
+			   !com.mchange.v2.c3p0.*,
+			   !org.apache.xpath.*,
+			   !org.apache.xalan.*,
+			   !org.apache.xml.utils.*,
+			   !org.apache.derby.impl.drda.*,
 			   !org.apache.commons.cli.*,
-			   *
+			   !org.json.simple.*,
+			   !com.reardencommerce.*,
+			   !jline,
+			   !org.apache.hadoop.*,
+			   !org.antlr.runtime.*,
+			   !org.cliffc.high_scale_lib.*,
+			   !com.sun.jna.*,
+			   !org.junit.*,
+               *
 			</Import-Package>
             <Private-Package>org.sakaiproject.nakamura.lite.*</Private-Package>
-            <Embed-Dependency>libthrift,apache-cassandra,mysql-connector-java,derby</Embed-Dependency>
+            <Embed-Dependency>libthrift,apache-cassandra,mysql-connector-java,derby,commons-pool,google-collections,commons-io</Embed-Dependency>
           </instructions>
         </configuration>
       </plugin>
