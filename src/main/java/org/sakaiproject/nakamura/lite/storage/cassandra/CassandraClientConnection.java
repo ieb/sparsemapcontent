@@ -36,6 +36,8 @@ import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Lists;
+
 public class CassandraClientConnection extends Client implements StorageClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CassandraClientConnection.class);
@@ -126,15 +128,18 @@ public class CassandraClientConnection extends Client implements StorageClient {
             Map<String, Map<String, List<Mutation>>> mutation = new HashMap<String, Map<String, List<Mutation>>>();
             Map<String, List<Mutation>> columnMutations = new HashMap<String, List<Mutation>>();
             LOGGER.info("Saving changes to {}:{}:{} ", new Object[]{keySpace,columnFamily,key});
-            mutation.put(columnFamily, columnMutations);
+            List<Mutation> keyMutations = Lists.newArrayList();    
+            columnMutations.put(columnFamily, keyMutations);
+            mutation.put(key, columnMutations);
             for (Entry<String, Object> value : values.entrySet()) {
                 String name = value.getKey();
                 byte[] bname = StorageClientUtils.toBytes(name);
-                List<Mutation> keyMutations = getMutationList(columnMutations, name);
                 Object v = value.getValue();
                 if (v == null) {
                     Deletion deletion = new Deletion();
-                    deletion.setSuper_column(bname);
+                    SlicePredicate deletionPredicate = new SlicePredicate();
+                    deletionPredicate.addToColumn_names(bname);
+                    deletion.setPredicate(deletionPredicate);
                     Mutation mu = new Mutation();
                     mu.setDeletion(deletion);
                     keyMutations.add(mu);
@@ -203,14 +208,6 @@ public class CassandraClientConnection extends Client implements StorageClient {
         }
     }
 
-    private List<Mutation> getMutationList(Map<String, List<Mutation>> columnMutations, String key) {
-        List<Mutation> m = columnMutations.get(key);
-        if (m == null) {
-            m = new ArrayList<Mutation>();
-            columnMutations.put(key, m);
-        }
-        return m;
-    }
 
     @Override
     public Map<String, Object> streamBodyIn(String keySpace, String contentColumnFamily,
