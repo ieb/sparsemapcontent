@@ -48,7 +48,7 @@
                *
 			</Import-Package>
             <Private-Package>org.sakaiproject.nakamura.lite.*</Private-Package>
-            <Embed-Dependency>libthrift,apache-cassandra,mysql-connector-java,derby,commons-pool,google-collections,commons-io</Embed-Dependency>
+            <Embed-Dependency>libthrift,apache-cassandra,mysql-connector-java,derby</Embed-Dependency>
           </instructions>
         </configuration>
       </plugin>
@@ -86,14 +86,14 @@
     <dependency>
        <groupId>commons-io</groupId>
        <artifactId>commons-io</artifactId>
-       <version>2.0</version>
+       <version>1.4</version>
     </dependency>
     
     
     <dependency>
       <groupId>com.google.collections</groupId>
       <artifactId>google-collections</artifactId>
-      <version>1.0</version>
+      <version>0.8</version>
     </dependency>
 
     <!-- We also need slf4j -->
