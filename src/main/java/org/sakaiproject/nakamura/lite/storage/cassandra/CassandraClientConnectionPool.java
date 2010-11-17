@@ -7,6 +7,7 @@ import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.thrift.TException;
@@ -20,7 +21,7 @@ import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Component(enabled=false, metatype = true)
+@Component(enabled=false, metatype = true, inherit=true)
 @Service(value = ConnectionPool.class)
 public class CassandraClientConnectionPool extends AbstractClientConnectionPool {
 
@@ -137,6 +138,11 @@ public class CassandraClientConnectionPool extends AbstractClientConnectionPool 
         this.properties = properties;
         super.activate(properties);
 
+    }
+
+    @Deactivate
+    public void deactivate(Map<String, Object> properties) {
+        super.deactivate(properties);
     }
 
 

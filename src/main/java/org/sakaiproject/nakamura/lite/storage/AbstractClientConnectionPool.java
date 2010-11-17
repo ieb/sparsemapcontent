@@ -5,14 +5,20 @@ import java.util.Map;
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+@Component(componentAbstract=true)
 public abstract class AbstractClientConnectionPool implements ConnectionPool {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractClientConnectionPool.class);
 
     @Property(intValue = 200)
     private static final String MAX_ACTIVE = "max-active";
-    @Property(intValue = 10)
+    @Property(longValue = 10)
     private static final String MAX_WAIT = "max-wait";
     @Property(intValue = 5)
     private static final String MAX_IDLE = "max-idle";
@@ -20,11 +26,11 @@ public abstract class AbstractClientConnectionPool implements ConnectionPool {
     private static final String TEST_ON_BORROW = "test-on-borrow";
     @Property(boolValue = true)
     private static final String TEST_ON_RETURN = "test-on-return";
-    @Property(intValue = 60000)
+    @Property(longValue = 60000)
     private static final String TIME_BETWEEN_EVICTION_RUNS_MILLIS = "time-between-eviction-run";
     @Property(intValue = 1000)
     private static final String NUM_TESTS_PER_EVICTION_RUN = "num-tests-per-eviction-run";
-    @Property(intValue = 10000)
+    @Property(longValue = 10000)
     private static final String MIN_EVICTABLE_IDLE_TIME_MILLIS = "min-evictable-idle-time-millis";
     @Property(boolValue = false)
     private static final String TEST_WHILE_IDLE = "test-while-idle";
@@ -55,9 +61,9 @@ public abstract class AbstractClientConnectionPool implements ConnectionPool {
         boolean testOnBorrow = getProperty(properties.get(TEST_ON_BORROW), true);
         boolean testOnReturn = getProperty(properties.get(TEST_ON_RETURN), true);
         long timeBetweenEvictionRunsMillis = getProperty(
-                properties.get(TIME_BETWEEN_EVICTION_RUNS_MILLIS), 60000);
+                properties.get(TIME_BETWEEN_EVICTION_RUNS_MILLIS), 60000L);
         int numTestsPerEvictionRun = getProperty(properties.get(NUM_TESTS_PER_EVICTION_RUN), 1000);
-        long minEvictableIdleTimeMillis = getProperty(properties.get(MIN_EVICTABLE_IDLE_TIME_MILLIS), 10000);
+        long minEvictableIdleTimeMillis = getProperty(properties.get(MIN_EVICTABLE_IDLE_TIME_MILLIS), 10000L);
         boolean testWhileIdle = getProperty(properties.get(TEST_WHILE_IDLE), false);
 
         pool = new GenericObjectPool(getConnectionPoolFactory(), maxActive, whenExhaustedAction,
@@ -79,11 +85,11 @@ public abstract class AbstractClientConnectionPool implements ConnectionPool {
     @Deactivate
     public void deactivate(Map<String, Object> properties) {
         try {
+            pool.clear();
             pool.close();
+            LOGGER.info("Sparse Map Content client pool closed ");
         } catch (Exception e) {
-
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOGGER.error("Failed to close pool ",e);
         }
     }
 

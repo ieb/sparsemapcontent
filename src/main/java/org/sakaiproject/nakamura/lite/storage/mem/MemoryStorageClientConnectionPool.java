@@ -12,7 +12,7 @@ import org.apache.felix.scr.annotations.Service;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
 
-@Component(enabled=false, metatype = true)
+@Component(enabled=false, metatype = true, inherit=true)
 @Service(value = ConnectionPool.class)
 public class MemoryStorageClientConnectionPool extends AbstractClientConnectionPool {
 

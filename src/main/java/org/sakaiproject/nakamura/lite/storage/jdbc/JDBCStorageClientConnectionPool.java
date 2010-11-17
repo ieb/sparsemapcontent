@@ -3,15 +3,18 @@ package org.sakaiproject.nakamura.lite.storage.jdbc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
@@ -24,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
-@Component(immediate = true, metatype = true)
+@Component(immediate = true, metatype = true, inherit=true)
 @Service(value = ConnectionPool.class)
 public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPool {
 
@@ -43,6 +46,7 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
 
     
     private static final String BASESQLPATH = "org/sakaiproject/nakamura/lite/storage/jdbc/config/client";
+
 
     public class JCBCStorageClientConnection implements PoolableObjectFactory {
 
@@ -104,7 +108,10 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
         super.activate(properties);
         
         String jdbcDriver = (String) properties.get(JDBC_DRIVER);
-        this.getClass().getClassLoader().loadClass(jdbcDriver);
+        Class<?> clazz = Class.forName(jdbcDriver);
+        
+        LOGGER.info("Loaded Database Driver {} as {}  ",jdbcDriver, clazz);
+        
         try {
             @SuppressWarnings("unused")
             JDBCStorageClient client = (JDBCStorageClient) openConnection();
@@ -119,15 +126,43 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
         }
 
     }
+    
+    @Deactivate
+    public void deactivate(Map<String, Object> properties) {
+        super.deactivate(properties);
+        
+        String connectionUrl = (String) this.properties.get(CONNECTION_URL);
+        String jdbcDriver = (String) properties.get(JDBC_DRIVER);
+        if ( "org.apache.derby.jdbc.EmbeddedDriver".equals(jdbcDriver) && connectionUrl != null) {
+            // need to shutdown this instance.
+            String[] parts = StringUtils.split(connectionUrl,';');
+            try {
+                DriverManager.getConnection(parts[0]+";shutdown=true");
+            } catch (SQLException e ) {
+                // yes really see http://db.apache.org/derby/manuals/develop/develop15.html#HDRSII-DEVELOP-40464
+                LOGGER.info("Sparse Map Content Derby Embedded instance shutdown sucessfully {}",e.getMessage());
+            }
+        }
+    }
 
     protected JDBCStorageClient checkSchema(Object o) {
         JDBCStorageClient client = (JDBCStorageClient) o;
         if (!schemaHasBeenChecked) {
-            try {
-                client.checkSchema(getClientConfigLocations(client.getConnection()));
-                schemaHasBeenChecked = true;
-            } catch (Throwable e) {
-                LOGGER.warn("Failed to check Schema", e);
+            synchronized (sqlConfigLock) {
+                if (!schemaHasBeenChecked) {
+                    try {
+                        Connection connection = client.getConnection();
+                        DatabaseMetaData metadata = connection.getMetaData();
+                        LOGGER.info("Starting Sparse Map Content database ");
+                        LOGGER.info("   Database Vendor: {} {}", metadata.getDatabaseProductName(), metadata.getDatabaseProductVersion());
+                        LOGGER.info("   Database Driver: {} ", properties.get(JDBC_DRIVER));
+                        LOGGER.info("   Database URL   : {} ", properties.get(CONNECTION_URL));
+                        client.checkSchema(getClientConfigLocations(client.getConnection()));
+                        schemaHasBeenChecked = true;
+                    } catch (Throwable e) {
+                        LOGGER.warn("Failed to check Schema", e);
+                    }
+                }
             }
         } else {
             client.setAlive();

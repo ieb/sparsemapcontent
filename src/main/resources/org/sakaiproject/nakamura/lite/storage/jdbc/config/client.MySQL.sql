@@ -20,6 +20,6 @@ remove-string-column.n.au = delete from au_css where rid = ? and cid = ?
 remove-string-column.n.cn = delete from cn_css where rid = ? and cid = ?
 # Example of a sharded query, rowIDs starting with x will use this
 ### remove-string-column.n.cn._X = delete from cn_css_X where rid = ? and cid = ?
-check-schema = select count(*) from css;
+check-schema = select count(*) from css
 validate = select 1
 rowid-hash = SHA1

@@ -217,10 +217,11 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
 
     public void close() {
         try {
-            shutdownConnection();
+            shutdownConnection();            
             connection.close();
+            LOGGER.info("Sparse Content Map Database Connection closed.");
         } catch (Throwable t) {
-            LOGGER.debug("Failed to close connection ", t);
+            LOGGER.error("Failed to close connection ", t);
         }
     }
 
@@ -316,14 +317,15 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     public void checkSchema(String[] clientConfigLocations) throws ConnectionPoolException {
         Statement statement = null;
         try {
+                        
             statement = connection.createStatement();
             try {
-                if (statement.execute(getSql(SQL_CHECKSCHEMA))) {
-                    alive = true;
-                    return;
-                }
+                statement.execute(getSql(SQL_CHECKSCHEMA));
+                LOGGER.info("Schema Exists");
+                alive = true;
+                return;
             } catch (SQLException e) {
-                LOGGER.debug("Schema does not exist ", e);
+                LOGGER.info("Schema does not exist {}", e.getMessage());
             }
 
             for (String clientSQLLocation : clientConfigLocations) {
@@ -361,6 +363,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                         }
                         br.close();
                         alive = true;
+                        LOGGER.info("Schema Created from {} ",clientDDL);
+                         
                         break;
                     } catch (Throwable e) {
                         LOGGER.error("Failed to load Schema from {}", clientDDL, e);
@@ -372,6 +376,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                         }
                         
                     }
+                } else {
+                    LOGGER.info("No Schema found at {} ",clientDDL);
                 }
 
             }
@@ -380,7 +386,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             LOGGER.info("Failed to create schema ",e);
             throw new ConnectionPoolException("Failed to create schema ", e);
         } finally {
-            LOGGER.info("Check Schema finished ");
             try {
                 statement.close();
             } catch (Throwable e) {
