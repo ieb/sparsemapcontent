@@ -4,8 +4,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.util.Iterables;
-import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
 
 import com.google.common.collect.Sets;
 

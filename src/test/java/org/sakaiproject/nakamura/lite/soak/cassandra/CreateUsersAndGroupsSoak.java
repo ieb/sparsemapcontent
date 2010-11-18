@@ -1,12 +1,12 @@
 package org.sakaiproject.nakamura.lite.soak.cassandra;
 
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.lite.soak.AbstractSoakController;
 import org.sakaiproject.nakamura.lite.soak.authorizable.CreateUsersAndGroupsClient;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
-import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
 import org.sakaiproject.nakamura.lite.storage.cassandra.CassandraClientConnectionPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

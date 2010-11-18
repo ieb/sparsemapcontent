@@ -4,8 +4,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.util.Iterables;
-import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -127,6 +127,10 @@ public class Authorizable {
 
     public boolean isModified() {
         return modified;
+    }
+
+    public boolean hasProperty(String name) {
+        return authorizableMap.containsKey(name);
     }
 
 }

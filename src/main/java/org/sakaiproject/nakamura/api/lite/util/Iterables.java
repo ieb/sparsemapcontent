@@ -14,7 +14,7 @@ public class Iterables {
                     int p = 0;
 
                     public boolean hasNext() {
-                        return p < array.length;
+                        return array != null && p < array.length;
                     }
 
                     public T next() {

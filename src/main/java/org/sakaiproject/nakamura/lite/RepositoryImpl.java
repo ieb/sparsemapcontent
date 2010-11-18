@@ -10,6 +10,7 @@ import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.Authenticator;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
@@ -46,6 +47,9 @@ public class RepositoryImpl implements Repository {
         StorageClient client = connectionPool.openConnection();
         AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration);
         User currentUser = authenticatorImpl.systemAuthenticate(username);
+        if ( currentUser == null ) {
+            throw new StorageClientException("User "+username+" does not exist, cant login as this user");
+        }
         return new SessionImpl(currentUser, connectionPool, configuration);
     }
 
@@ -53,6 +57,9 @@ public class RepositoryImpl implements Repository {
         StorageClient client = connectionPool.openConnection();
         AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration);
         User currentUser = authenticatorImpl.systemAuthenticate(User.ANON_USER);
+        if ( currentUser == null ) {
+            throw new StorageClientException("User "+User.ANON_USER+" does not exist, cant login as this user");
+        }
         return new SessionImpl(currentUser, connectionPool, configuration);
     }
 
@@ -60,12 +67,35 @@ public class RepositoryImpl implements Repository {
         StorageClient client = connectionPool.openConnection();
         AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration);
         User currentUser = authenticatorImpl.systemAuthenticate(User.ADMIN_USER);
+        if ( currentUser == null ) {
+            throw new StorageClientException("User "+User.ADMIN_USER+" does not exist, cant login asministratively as this user");
+        }
         return new SessionImpl(currentUser, connectionPool, configuration);
     }
     
+    public Session loginAdministrative(String username) throws ConnectionPoolException, StorageClientException, AccessDeniedException {
+        StorageClient client = connectionPool.openConnection();
+        AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = authenticatorImpl.systemAuthenticate(username);
+        if ( currentUser == null ) {
+            throw new StorageClientException("User "+username+" does not exist, cant login asministratively as this user");
+        }
+        return new SessionImpl(currentUser, connectionPool, configuration);
+    }
+
     
-        
+    public Authenticator getAuthenticator() throws ConnectionPoolException {
+        StorageClient client = connectionPool.openConnection();
+        return new AuthenticatorImpl(client, configuration);
+    }
     
+    public void setConfiguration(Configuration configuration) {
+        this.configuration = configuration;
+    }
+    
+    public void setConnectionPool(ConnectionPool connectionPool) {
+        this.connectionPool = connectionPool;
+    }
    
     
 }

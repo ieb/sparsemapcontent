@@ -1,4 +1,4 @@
-package org.sakaiproject.nakamura.lite.storage;
+package org.sakaiproject.nakamura.api.lite;
 
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
@@ -272,6 +272,27 @@ public class StorageClientUtils {
             return (T) setting;
         }
         return defaultValue;
+    }
+
+    public static String shardPath(String id) {
+        String hash;
+        try {
+            hash = encode(id.getBytes(UTF8), URL_SAFE_ENCODING);
+        } catch (UnsupportedEncodingException e) {
+            hash = encode(id.getBytes(), URL_SAFE_ENCODING);
+        }
+        return hash.substring(0,2)+"/"+hash.substring(2,4)+"/"+hash.substring(4,6)+"/"+hash;
+    }
+
+    public static String arrayEscape(String string) {
+        string = string.replaceAll("/","//");
+        string = string.replaceAll(",", "/,");
+        return string;
+    }
+    public static String arrayUnEscape(String string) {
+        string = string.replaceAll("/,", ",");
+        string = string.replaceAll("//","/");
+        return string;
     }
 
     

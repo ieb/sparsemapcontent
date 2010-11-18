@@ -1,13 +1,15 @@
 package org.sakaiproject.nakamura.lite.accesscontrol;
 
+import java.security.Principal;
 import java.util.Map;
 
 import org.sakaiproject.nakamura.api.lite.Configuration;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Authenticator;
+import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
-import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,14 +52,16 @@ public class AuthenticatorImpl implements Authenticator {
     public User systemAuthenticate(String userid) {
         try {
             Map<String, Object> userAuthMap = client.get(keySpace, authorizableColumnFamily, userid);
-            if (userAuthMap == null) {
+            if (userAuthMap == null || userAuthMap.size() == 0) {
                 LOGGER.info("User was not found {}", userid);
                 return null;
             }
+            System.err.println("Loaded "+userAuthMap);
             return new User(userAuthMap);
         } catch (StorageClientException e) {
             LOGGER.debug("Failed To system authenticate user " + e.getMessage(), e);
         }
         return null;
     }
+
 }

@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.sakaiproject.nakamura.api.lite.Configuration;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessControlManager;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
@@ -14,10 +15,10 @@ import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.Security;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
-import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 
@@ -47,6 +48,9 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
             Configuration configuration, AccessControlManager accessControlManager)
             throws StorageClientException, AccessDeniedException {
         this.currentUserId = currentUser.getId();
+        if ( currentUserId == null ) {
+            throw new RuntimeException("Current User ID shoud not be null");
+        }
         this.thisUser = currentUser;
         this.client = client;
         this.accessControlManager = accessControlManager;
@@ -209,6 +213,8 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
         client.insert(keySpace, authorizableColumnFamily, authorizableId, encodedProperties);
         return true;
     }
+    
+    
 
     public boolean createUser(String authorizableId, String authorizableName, String password,
             Map<String, Object> properties) throws AccessDeniedException, StorageClientException {
@@ -247,6 +253,20 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
     private void checkOpen() throws StorageClientException {
         if ( closed ) {
             throw new StorageClientException("Authorizable Manager is closed");
+        }
+    }
+
+    @Override
+    public void changePassword(Authorizable authorizable, String password) throws StorageClientException, AccessDeniedException {
+        String id = authorizable.getId();
+        if ( thisUser.isAdmin() || currentUserId.equals(id) ) {
+            client.insert(keySpace, authorizableColumnFamily, id, ImmutableMap.of(
+                    Authorizable.LASTMODIFIED, StorageClientUtils.toStore(System.currentTimeMillis()),
+                    Authorizable.LASTMODIFIED_BY, StorageClientUtils.toStore(accessControlManager.getCurrentUserId()),
+                    Authorizable.PASSWORD_FIELD,
+                    StorageClientUtils.toStore(StorageClientUtils.secureHash(password))));
+        } else {
+            throw new AccessDeniedException(Security.ZONE_ADMIN, id, "Not allowed to change the password, must be the user or an admin user");
         }
     }
 

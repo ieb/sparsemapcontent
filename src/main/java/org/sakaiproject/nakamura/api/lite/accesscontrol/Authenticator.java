@@ -6,4 +6,7 @@ public interface Authenticator {
 
     User authenticate(String userid, String password);
 
+    User systemAuthenticate(String userid);
+
+
 }

@@ -1,5 +1,6 @@
 package org.sakaiproject.nakamura.lite.soak.memory;
 
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
 import org.sakaiproject.nakamura.lite.soak.AbstractSoakController;
@@ -7,7 +8,6 @@ import org.sakaiproject.nakamura.lite.soak.authorizable.CreateUsersAndGroupsWith
 import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
-import org.sakaiproject.nakamura.lite.storage.StorageClientUtils;
 import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientConnectionPool;
 
 import com.google.common.collect.ImmutableMap;
