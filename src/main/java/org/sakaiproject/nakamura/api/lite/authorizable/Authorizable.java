@@ -74,7 +74,7 @@ public class Authorizable {
     }
 
     public static boolean isAGroup(Map<String, Object> authProperties) {
-        return GROUP_VALUE.equals(StorageClientUtils.toString(authProperties.get(GROUP_FIELD)));
+        return (authProperties != null) && GROUP_VALUE.equals(StorageClientUtils.toString(authProperties.get(GROUP_FIELD)));
     }
 
     public void setProperty(String key, Object value) {
