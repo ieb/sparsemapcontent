@@ -1,4 +1,4 @@
-package org.sakaiproject.nakamura.lite.storage;
+package org.sakaiproject.nakamura.api.lite;
 
 public class StorageClientException extends Exception {
 

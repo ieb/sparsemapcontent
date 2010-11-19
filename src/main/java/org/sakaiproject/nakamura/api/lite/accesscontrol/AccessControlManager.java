@@ -2,7 +2,7 @@ package org.sakaiproject.nakamura.api.lite.accesscontrol;
 
 import java.util.Map;
 
-import org.sakaiproject.nakamura.lite.storage.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.StorageClientException;
 
 public interface AccessControlManager {
 

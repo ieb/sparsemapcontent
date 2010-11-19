@@ -11,7 +11,7 @@ import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
-import org.sakaiproject.nakamura.lite.content.Content;
+import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
 import org.sakaiproject.nakamura.lite.storage.RowHasher;
 import org.slf4j.Logger;

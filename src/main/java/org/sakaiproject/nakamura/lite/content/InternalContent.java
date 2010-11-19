@@ -3,9 +3,10 @@ package org.sakaiproject.nakamura.lite.content;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
-import org.sakaiproject.nakamura.lite.storage.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +16,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.UnmodifiableIterator;
 
-public class Content {
+public class InternalContent  {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Content.class);
     /**
@@ -120,23 +121,24 @@ public class Content {
     private boolean updated;
     private boolean newcontent;
 
-    Content(String path, Map<String, Object> structure, Map<String, Object> content,
+    InternalContent(String path, Map<String, Object> structure, Map<String, Object> content,
             ContentManagerImpl contentManager) {
-        this.structure = structure;
-        this.updatedContent = Maps.newHashMap();
-        this.content = content;
-        this.path = path;
-        this.contentManager = contentManager;
-        updated = false;
-        newcontent = false;
     }
 
-    public Content(String path, Map<String, Object> content) {
+    public InternalContent(String path, Map<String, Object> content) {
         this.content = content;
         this.updatedContent = Maps.newHashMap(content);
         this.path = path;
         updated = true;
         newcontent = true;
+    }
+    
+    void internalize(Map<String, Object> structure,
+            ContentManagerImpl contentManager) {
+        this.structure = structure;
+        this.contentManager = contentManager;
+        updated = false;
+        newcontent = false;        
     }
 
 

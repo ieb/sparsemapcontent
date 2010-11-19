@@ -1,24 +1,24 @@
 package org.sakaiproject.nakamura.lite.content;
 
-import static org.sakaiproject.nakamura.lite.content.Content.BLOCKID_FIELD;
-import static org.sakaiproject.nakamura.lite.content.Content.BODY_CREATED;
-import static org.sakaiproject.nakamura.lite.content.Content.BODY_CREATED_BY;
-import static org.sakaiproject.nakamura.lite.content.Content.BODY_LAST_MODIFIED;
-import static org.sakaiproject.nakamura.lite.content.Content.BODY_LAST_MODIFIED_BY;
-import static org.sakaiproject.nakamura.lite.content.Content.CREATED;
-import static org.sakaiproject.nakamura.lite.content.Content.CREATED_BY;
-import static org.sakaiproject.nakamura.lite.content.Content.DELETED_FIELD;
-import static org.sakaiproject.nakamura.lite.content.Content.LASTMODIFIED;
-import static org.sakaiproject.nakamura.lite.content.Content.LASTMODIFIED_BY;
-import static org.sakaiproject.nakamura.lite.content.Content.LENGTH_FIELD;
-import static org.sakaiproject.nakamura.lite.content.Content.NEXT_VERSION_FIELD;
-import static org.sakaiproject.nakamura.lite.content.Content.PATH_FIELD;
-import static org.sakaiproject.nakamura.lite.content.Content.PREVIOUS_BLOCKID_FIELD;
-import static org.sakaiproject.nakamura.lite.content.Content.PREVIOUS_VERSION_UUID_FIELD;
-import static org.sakaiproject.nakamura.lite.content.Content.READONLY_FIELD;
-import static org.sakaiproject.nakamura.lite.content.Content.STRUCTURE_UUID_FIELD;
-import static org.sakaiproject.nakamura.lite.content.Content.TRUE;
-import static org.sakaiproject.nakamura.lite.content.Content.UUID_FIELD;
+import static org.sakaiproject.nakamura.api.lite.content.Content.BLOCKID_FIELD;
+import static org.sakaiproject.nakamura.api.lite.content.Content.BODY_CREATED;
+import static org.sakaiproject.nakamura.api.lite.content.Content.BODY_CREATED_BY;
+import static org.sakaiproject.nakamura.api.lite.content.Content.BODY_LAST_MODIFIED;
+import static org.sakaiproject.nakamura.api.lite.content.Content.BODY_LAST_MODIFIED_BY;
+import static org.sakaiproject.nakamura.api.lite.content.Content.CREATED;
+import static org.sakaiproject.nakamura.api.lite.content.Content.CREATED_BY;
+import static org.sakaiproject.nakamura.api.lite.content.Content.DELETED_FIELD;
+import static org.sakaiproject.nakamura.api.lite.content.Content.LASTMODIFIED;
+import static org.sakaiproject.nakamura.api.lite.content.Content.LASTMODIFIED_BY;
+import static org.sakaiproject.nakamura.api.lite.content.Content.LENGTH_FIELD;
+import static org.sakaiproject.nakamura.api.lite.content.Content.NEXT_VERSION_FIELD;
+import static org.sakaiproject.nakamura.api.lite.content.Content.PATH_FIELD;
+import static org.sakaiproject.nakamura.api.lite.content.Content.PREVIOUS_BLOCKID_FIELD;
+import static org.sakaiproject.nakamura.api.lite.content.Content.PREVIOUS_VERSION_UUID_FIELD;
+import static org.sakaiproject.nakamura.api.lite.content.Content.READONLY_FIELD;
+import static org.sakaiproject.nakamura.api.lite.content.Content.STRUCTURE_UUID_FIELD;
+import static org.sakaiproject.nakamura.api.lite.content.Content.TRUE;
+import static org.sakaiproject.nakamura.api.lite.content.Content.UUID_FIELD;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,14 +26,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.sakaiproject.nakamura.api.lite.Configuration;
+import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessControlManager;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
+import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.lite.Security;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
-import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -145,7 +146,9 @@ public class ContentManagerImpl implements ContentManager {
                     .toString(structure.get(STRUCTURE_UUID_FIELD));
             Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
             if (content != null && content.size() > 0 ) {
-                return new Content(path, structure, content, this);
+                Content contentObject =  new Content(path, content);
+                ((InternalContent)contentObject).internalize(structure, this);
+                return contentObject;
             }
         }
         return null;
@@ -192,8 +195,9 @@ public class ContentManagerImpl implements ContentManager {
 
     }
 
-    public void update(Content content) throws AccessDeniedException, StorageClientException {
+    public void update(Content excontent) throws AccessDeniedException, StorageClientException {
         checkOpen();
+        InternalContent content = (InternalContent) excontent;
         String path = content.getPath();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_WRITE);
         String id = null;

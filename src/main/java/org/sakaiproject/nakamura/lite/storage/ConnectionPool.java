@@ -2,6 +2,7 @@ package org.sakaiproject.nakamura.lite.storage;
 
 import java.util.Map;
 
+import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
 import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 
 public interface ConnectionPool {

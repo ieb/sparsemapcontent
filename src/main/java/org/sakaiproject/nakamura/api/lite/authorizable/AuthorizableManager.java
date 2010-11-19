@@ -2,8 +2,8 @@ package org.sakaiproject.nakamura.api.lite.authorizable;
 
 import java.util.Map;
 
+import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
-import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 
 public interface AuthorizableManager {
 

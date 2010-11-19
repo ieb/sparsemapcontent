@@ -16,8 +16,7 @@ public class User extends Authorizable {
     public static final String ADMIN_USER = "admin";
     public static final String ANON_USER = "anonymous";
     public static final String SYSTEM_USER = "system";
-    private static final String IMPERSONATORS = "impersonators";
-    private static final Set<String> DEFAULT_IMPERSONATORS = ImmutableSet.of( ADMIN_USER, ADMINISTRATORS_GROUP);
+    public static final String IMPERSONATORS_FIELD = "impersonators";
 
     public User(Map<String, Object> userMap) {
         super(userMap);
@@ -27,14 +26,17 @@ public class User extends Authorizable {
         return SYSTEM_USER.equals(id) || ADMIN_USER.equals(id) || principals.contains(ADMINISTRATORS_GROUP);
     }
 
-    public boolean allowsImpersonactionBy(Subject impersSubject) {
-        String impersonators = StorageClientUtils.toString(getProperty(IMPERSONATORS));
-        Set<String> impersonatorSet = DEFAULT_IMPERSONATORS;
-        if ( impersonators != null ) {
-            impersonatorSet = ImmutableSet.of(StringUtils.split(impersonators,';'));
+    public boolean allowImpersonate(Subject impersSubject) {
+        
+        
+        String impersonators = StorageClientUtils.toString(getProperty(IMPERSONATORS_FIELD));
+        if ( impersonators == null ) {
+            return false;
         }
+        Set<String> impersonatorSet = ImmutableSet.of(StringUtils.split(impersonators,';'));
         for ( Principal p : impersSubject.getPrincipals() ) {
-            if ( impersonatorSet.contains(p.getName()) ) {
+            
+            if ( ADMIN_USER.equals(p.getName()) || SYSTEM_USER.equals(p.getName()) || impersonatorSet.contains(p.getName()) ) {
                 return true;
             }
         }
