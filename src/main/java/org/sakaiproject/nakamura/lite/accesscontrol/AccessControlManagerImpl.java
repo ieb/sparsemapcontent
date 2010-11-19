@@ -10,44 +10,44 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AclModification;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permission;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
+import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
+import org.sakaiproject.nakamura.lite.Security;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
 
 public class AccessControlManagerImpl implements AccessControlManager {
 
-    private static final String GRANTED_MARKER = "@g";
-    private static final String DENIED_MARKER = "@d";
+    private static final Logger LOGGER = LoggerFactory.getLogger(AccessControlManagerImpl.class);
     private StorageClient client;
     private User user;
     private String keySpace;
     private String aclColumnFamily;
     private Map<String, int[]> cache = new ConcurrentHashMap<String, int[]>();
     private boolean closed;
+    private Map<String, CacheHolder> aclCache;
 
-    public AccessControlManagerImpl(StorageClient client, User currentUser, Configuration config) {
+    public AccessControlManagerImpl(StorageClient client, User currentUser, Configuration config, Map<String, CacheHolder> aclCache) {
         this.user = currentUser;
         this.client = client;
         this.aclColumnFamily = config.getAclColumnFamily();
         this.keySpace = config.getKeySpace();
+        this.aclCache = aclCache;
         closed = false;
     }
 
-    public int toBitmap(Object value) {
-        if (value != null) {
-            return Integer.valueOf(StorageClientUtils.toString(value), 16);
-        }
-        return 0x00;
-    }
 
     public Map<String, Object> getAcl(String objectType, String objectPath)
             throws StorageClientException, AccessDeniedException {
         checkOpen();
         check(objectType, objectPath, Permissions.CAN_READ_ACL);
+        
         String key = this.getAclKey(objectType, objectPath);
-        return client.get(keySpace, aclColumnFamily, key);
+        return getCachedAcl(key);
     }
 
     public void setAcl(String objectType, String objectPath, AclModification[] aclModifications)
@@ -63,22 +63,28 @@ public class AccessControlManagerImpl implements AccessControlManager {
                 modifications.put(name, null);
             } else {
 
-                int bitmap = toBitmap(currentAcl.get(name));
+                int bitmap = StorageClientUtils.toInt(currentAcl.get(name));
                 bitmap = m.modify(bitmap);
                 modifications.put(name, StorageClientUtils.toStore(bitmap));
             }
         }
+        LOGGER.info("Updating ACL {} {} ", key,modifications);
+        clearCachedAcl(key);
         client.insert(keySpace, aclColumnFamily, key, modifications);
     }
 
     public void check(String objectType, String objectPath, Permission permission)
-            throws AccessDeniedException {
+            throws AccessDeniedException, StorageClientException {
         if (user.isAdmin()) {
+            return;
+        }
+        // users can always operate on their own user object.
+        if (Security.ZONE_AUTHORIZABLES.equals(objectType) && user.getId().equals(objectPath)) {
             return;
         }
         int[] privileges = compilePermission(objectType, objectPath, 0);
         if (!((permission.getPermission() & privileges[0]) == permission.getPermission())) {
-            throw new AccessDeniedException(objectType, objectPath, permission.getDescription());
+            throw new AccessDeniedException(objectType, objectPath, permission.getDescription(), user.getId());
         }
     }
 
@@ -89,25 +95,46 @@ public class AccessControlManagerImpl implements AccessControlManager {
         return objectType + "/" + objectPath;
     }
 
-    private int[] compilePermission(String objectType, String objectPath, int recursion) {
+    private int[] compilePermission(String objectType, String objectPath, int recursion) throws StorageClientException {
         String key = getAclKey(objectType, objectPath);
         if (cache.containsKey(key)) {
             return cache.get(key);
+        } else {
+            LOGGER.info("Cache Miss {} [{}] ",cache,key);
         }
 
-        Map<String, Object> acl = null;
-        try {
-            acl = client.get(keySpace, aclColumnFamily, key);
-        } catch (StorageClientException e) {
-
-        }
+        Map<String, Object> acl = getCachedAcl(key);
+        LOGGER.info("ACL on {} is {} ",key,acl);
 
         int grants = 0;
         int denies = 0;
         if (acl != null) {
+
+            {
+                String principal = user.getId();
+                int tg = StorageClientUtils.toInt(acl.get(principal + AclModification.GRANTED_MARKER));
+                int td = StorageClientUtils.toInt(acl.get(principal + AclModification.DENIED_MARKER));
+                grants = grants | tg;
+                denies = denies | td;
+//                LOGGER.info("Added Permissions for {} {}   result {} {}",new Object[]{tg,td,grants,denies});
+
+            }
             for (String principal : user.getPrincipals()) {
-                grants = grants | toBitmap(acl.get(principal + GRANTED_MARKER));
-                denies = denies | toBitmap(acl.get(principal + DENIED_MARKER));
+                int tg = StorageClientUtils.toInt(acl.get(principal + AclModification.GRANTED_MARKER));
+                int td = StorageClientUtils.toInt(acl.get(principal + AclModification.DENIED_MARKER));
+                grants = grants | tg;
+                denies = denies | td;
+//                LOGGER.info("Added Permissions for {} {}   result {} {}",new Object[]{tg,td,grants,denies});
+            }
+            if ( !User.ANON_USER.equals(user.getId()) ) {
+                // all users except anon are in the group everyone, by default but only if not already denied or granted by a more specific
+                // permission.
+                int tg = (StorageClientUtils.toInt(acl.get(Group.EVERYONE + AclModification.GRANTED_MARKER)) & ~denies);
+                int td = (StorageClientUtils.toInt(acl.get(Group.EVERYONE + AclModification.DENIED_MARKER)) & ~grants);
+//                LOGGER.info("Adding Permissions for Everyone {} {} ",tg,td);
+                grants = grants | tg;
+                denies = denies | td;
+                
             }
             /*
              * grants contains the granted permissions in a bitmap denies
@@ -127,23 +154,60 @@ public class AccessControlManagerImpl implements AccessControlManager {
                         StorageClientUtils.getParentObjectPath(objectPath), recursion);
                 if (parentPriv != null) {
                     /*
-                     * Grant things not denied at this level
+                     * Grant permission not denied at this level
+                     * parentPriv[0] is permissions granted by the parent
+                     * ~denies is permissions not denied here
+                     * parentPriv[0] & ~denies is permissions granted by the parent that have not been denied here.
+                     * we need to add those to things granted here. ie |
                      */
-                    granted = grants & (parentPriv[0] & ~denies);
+                    granted = grants | (parentPriv[0] & ~denies);
                     /*
-                     * Deny things not granted at this level
+                     * Deny permissions not granted at this level
                      */
-                    denied = denies & (parentPriv[1] & ~grants);
-                    /*
-                     * Keep a cached copy
-                     */
-                    cache.put(key, new int[] { granted, denied });
-                    return new int[] { granted, denied };
+                    denied = denies | (parentPriv[1] & ~grants);
                 }
             }
+            // If not denied all users and groups can read other users and groups and all content can be read
+            if ( ((denied & Permissions.CAN_READ.getPermission()) == 0)  && (Security.ZONE_AUTHORIZABLES.equals(objectType) || Security.ZONE_CONTENT.equals(objectType))) {
+                granted = granted | Permissions.CAN_READ.getPermission();
+//                LOGGER.info("Default Read Permission set {} {} ",key,denied);
+            } else {
+//                LOGGER.info("Default Read has been denied {} {} ",key, denied);
+            }
+//            LOGGER.info("Permissions on {} for {} is {} {} ",new Object[]{key,user.getId(),granted,denied});
+            /*
+             * Keep a cached copy
+             */
+            cache.put(key, new int[] { granted, denied });
+            return new int[]{ granted, denied };
+
+        }
+        if ( Security.ZONE_AUTHORIZABLES.equals(objectType) || Security.ZONE_CONTENT.equals(objectType)) {
+            // unless explicitly denied all users can read other users.
+            return new int[] { Permissions.CAN_READ.getPermission(), 0 };
         }
         return new int[] { 0, 0 };
     }
+
+    private Map<String, Object> getCachedAcl(String key) throws StorageClientException {
+        Map<String, Object> acl;
+        if ( aclCache != null && aclCache.containsKey(key)) {
+            CacheHolder aclCacheHolder = aclCache.get(key);
+            acl = aclCacheHolder.get();
+        } else {
+            acl = client.get(keySpace, aclColumnFamily, key);
+            if ( aclCache != null ) {
+                aclCache.put(key, new CacheHolder(acl));
+            }
+        }    
+        return acl;
+    }
+    private void clearCachedAcl(String key) {
+        if (aclCache != null ) {
+            aclCache.remove(key);
+        }
+    }
+
 
     @Override
     public String getCurrentUserId() {

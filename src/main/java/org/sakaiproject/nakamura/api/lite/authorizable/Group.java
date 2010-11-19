@@ -19,6 +19,7 @@ import com.google.common.collect.Sets;
  */
 public class Group extends Authorizable {
 
+    public static final String EVERYONE = "everyone";
     private Set<String> members;
     private Set<String> membersAdded;
     private Set<String> membersRemoved;

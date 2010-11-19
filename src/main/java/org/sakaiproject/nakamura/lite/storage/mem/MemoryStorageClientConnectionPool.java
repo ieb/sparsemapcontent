@@ -9,6 +9,7 @@ import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Service;
+import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
 
@@ -78,6 +79,12 @@ public class MemoryStorageClientConnectionPool extends AbstractClientConnectionP
     @Override
     protected PoolableObjectFactory getConnectionPoolFactory() {
         return new ClientConnectionPoolFactory(store, properties);
+    }
+
+    @Override
+    public Map<String, CacheHolder> getSharedCache() {
+        // no point in having a L2 cache for memory.
+        return null;
     }
 
 }

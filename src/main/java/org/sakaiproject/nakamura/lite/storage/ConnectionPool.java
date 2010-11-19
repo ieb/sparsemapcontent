@@ -1,5 +1,9 @@
 package org.sakaiproject.nakamura.lite.storage;
 
+import java.util.Map;
+
+import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
+
 public interface ConnectionPool {
 
     /**
@@ -14,5 +18,7 @@ public interface ConnectionPool {
      * @throws ConnectionPoolException
      */
     void closeConnection() throws ConnectionPoolException;
+
+    Map<String, CacheHolder> getSharedCache();
 
 }

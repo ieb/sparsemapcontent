@@ -15,7 +15,9 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
+import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 import org.slf4j.Logger;
@@ -128,6 +130,7 @@ public class CassandraClientConnectionPool extends AbstractClientConnectionPool 
 
     private String[] connections;
     private Map<String, Object> properties;
+    private Map<String, CacheHolder> sharedCache;
 
     public CassandraClientConnectionPool() {
     }
@@ -137,6 +140,9 @@ public class CassandraClientConnectionPool extends AbstractClientConnectionPool 
         connections = StorageClientUtils.getSetting(properties.get(CONNECTION_POOL), new String[] { "localhost:9160" });
         this.properties = properties;
         super.activate(properties);
+        // this should come from the memory service ultimately.
+        sharedCache = new ConcurrentLRUMap<String, CacheHolder>(10000);
+
 
     }
 
@@ -150,5 +156,10 @@ public class CassandraClientConnectionPool extends AbstractClientConnectionPool 
     @Override
     protected PoolableObjectFactory getConnectionPoolFactory() {
         return new ClientConnectionPoolFactory(connections, properties);
+    }
+
+    @Override
+    public Map<String, CacheHolder> getSharedCache() {
+        return sharedCache;
     }
 }

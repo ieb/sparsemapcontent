@@ -1,12 +1,15 @@
 package org.sakaiproject.nakamura.lite.soak.authorizable;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
+import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.soak.AbstractScalingClient;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
@@ -20,6 +23,7 @@ public class CreateUsersAndGroupsWithMembersClient extends AbstractScalingClient
 
     private int nusers;
     private int ngroups;
+    private Map<String, CacheHolder> sharedCache = new ConcurrentHashMap<String, CacheHolder>(1000);
 
     public CreateUsersAndGroupsWithMembersClient(int totalUsers,  int totalGroups, ConnectionPool connectionPool) throws ConnectionPoolException,
             StorageClientException, AccessDeniedException {
@@ -38,7 +42,7 @@ public class CreateUsersAndGroupsWithMembersClient extends AbstractScalingClient
             User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
             AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
-                    client, currentUser, configuration);
+                    client, currentUser, configuration, sharedCache);
 
             AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
                     client, configuration, accessControlManagerImpl);

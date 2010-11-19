@@ -9,16 +9,18 @@ public class AccessDeniedException extends Exception {
     private String objectPath;
     private String objectType;
     private String description;
+    private String user;
 
-    public AccessDeniedException(String objectType, String objectPath, String description) {
+    public AccessDeniedException(String objectType, String objectPath, String description, String user) {
         this.objectType = objectType;
         this.objectPath = objectPath;
         this.description = description;
+        this.user = user;
     }
 
     @Override
     public String getMessage() {
-        return "Denied for " + objectType + ":" + objectPath + "  performing " + description;
+        return "Denied "+user+" on " + objectType + ":" + objectPath + "  performing " + description;
     }
 
 }

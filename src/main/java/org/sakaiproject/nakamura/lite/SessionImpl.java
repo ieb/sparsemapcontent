@@ -1,10 +1,13 @@
 package org.sakaiproject.nakamura.lite;
 
+import java.util.Map;
+
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
+import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.content.ContentManagerImpl;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
@@ -20,12 +23,12 @@ public class SessionImpl implements Session {
     private ConnectionPool connectionPool;
     private User currentUser;
 
-    public SessionImpl(User currentUser, ConnectionPool connectionPool, Configuration configuration)
+    public SessionImpl(User currentUser, ConnectionPool connectionPool, Configuration configuration, Map<String, CacheHolder> sharedCache)
             throws ConnectionPoolException, StorageClientException, AccessDeniedException {
         this.connectionPool = connectionPool;
         this.currentUser = currentUser;
         StorageClient client = connectionPool.openConnection();
-        accessControlManager = new AccessControlManagerImpl(client, currentUser, configuration);
+        accessControlManager = new AccessControlManagerImpl(client, currentUser, configuration, sharedCache);
         authorizableManager = new AuthorizableManagerImpl(currentUser, client, configuration,
                 accessControlManager);
 

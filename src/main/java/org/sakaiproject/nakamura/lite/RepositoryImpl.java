@@ -13,6 +13,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Authenticator;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
+import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
@@ -27,6 +28,8 @@ public class RepositoryImpl implements Repository {
     
     @Reference
     protected ConnectionPool connectionPool;
+
+    private Map<String, CacheHolder> sharedCache;
     
     public RepositoryImpl() {
     }
@@ -38,6 +41,7 @@ public class RepositoryImpl implements Repository {
                 client, configuration);
         authorizableActivator.setup();
         connectionPool.closeConnection();
+        sharedCache = connectionPool.getSharedCache();
     }
     
     
@@ -50,7 +54,7 @@ public class RepositoryImpl implements Repository {
         if ( currentUser == null ) {
             throw new StorageClientException("User "+username+" does not exist, cant login as this user");
         }
-        return new SessionImpl(currentUser, connectionPool, configuration);
+        return new SessionImpl(currentUser, connectionPool, configuration, sharedCache);
     }
 
     public Session login() throws ConnectionPoolException, StorageClientException, AccessDeniedException {
@@ -60,7 +64,7 @@ public class RepositoryImpl implements Repository {
         if ( currentUser == null ) {
             throw new StorageClientException("User "+User.ANON_USER+" does not exist, cant login as this user");
         }
-        return new SessionImpl(currentUser, connectionPool, configuration);
+        return new SessionImpl(currentUser, connectionPool, configuration, sharedCache);
     }
 
     public Session loginAdministrative() throws ConnectionPoolException, StorageClientException, AccessDeniedException {
@@ -70,7 +74,7 @@ public class RepositoryImpl implements Repository {
         if ( currentUser == null ) {
             throw new StorageClientException("User "+User.ADMIN_USER+" does not exist, cant login asministratively as this user");
         }
-        return new SessionImpl(currentUser, connectionPool, configuration);
+        return new SessionImpl(currentUser, connectionPool, configuration, sharedCache);
     }
     
     public Session loginAdministrative(String username) throws ConnectionPoolException, StorageClientException, AccessDeniedException {
@@ -80,7 +84,7 @@ public class RepositoryImpl implements Repository {
         if ( currentUser == null ) {
             throw new StorageClientException("User "+username+" does not exist, cant login asministratively as this user");
         }
-        return new SessionImpl(currentUser, connectionPool, configuration);
+        return new SessionImpl(currentUser, connectionPool, configuration, sharedCache);
     }
 
     

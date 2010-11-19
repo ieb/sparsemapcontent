@@ -223,7 +223,7 @@ public class ContentManagerImpl implements ContentManager {
         
         Map<String, Object> checkContent = client.get(keySpace, contentColumnFamily, id);
         if (TRUE.equals(StorageClientUtils.toString(checkContent.get(READONLY_FIELD)))) {
-            throw new AccessDeniedException(Security.ZONE_CONTENT, path, "update on read only Content Item (possibly a previous version of the item)");
+            throw new AccessDeniedException(Security.ZONE_CONTENT, path, "update on read only Content Item (possibly a previous version of the item)", accessControlManager.getCurrentUserId());
         }
         if ( content.isNew() ) {
             // only when new do we update the structure.

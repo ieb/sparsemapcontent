@@ -13,7 +13,7 @@ public interface AccessControlManager {
             throws StorageClientException, AccessDeniedException;
 
     void check(String objectType, String objectPath, Permission permission)
-            throws AccessDeniedException;
+            throws AccessDeniedException, StorageClientException;
 
     String getCurrentUserId();
 

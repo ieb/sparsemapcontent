@@ -266,7 +266,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
                     Authorizable.PASSWORD_FIELD,
                     StorageClientUtils.toStore(StorageClientUtils.secureHash(password))));
         } else {
-            throw new AccessDeniedException(Security.ZONE_ADMIN, id, "Not allowed to change the password, must be the user or an admin user");
+            throw new AccessDeniedException(Security.ZONE_ADMIN, id, "Not allowed to change the password, must be the user or an admin user", currentUserId);
         }
     }
 

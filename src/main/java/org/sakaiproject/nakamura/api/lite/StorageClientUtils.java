@@ -74,7 +74,7 @@ public class StorageClientUtils {
 
 
     public static boolean isRoot(String objectPath) {
-        return (objectPath == null) || "/".equals(objectPath) || "".equals(objectPath);
+        return (objectPath == null) || "/".equals(objectPath) || "".equals(objectPath) || (objectPath.indexOf("/") < 0);
     }
 
     public static String getParentObjectPath(String objectPath) {

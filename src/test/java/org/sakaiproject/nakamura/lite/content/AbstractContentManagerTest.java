@@ -17,7 +17,9 @@ import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
+import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
+import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
@@ -35,6 +37,7 @@ public abstract class AbstractContentManagerTest {
     private StorageClient client;
     private ConfigurationImpl configuration;
     private ConnectionPool connectionPool;
+    private Map<String, CacheHolder> sharedCache = new ConcurrentLRUMap<String, CacheHolder>(1000);
 
     @Before
     public void before() throws StorageClientException, AccessDeniedException, ConnectionPoolException, ClassNotFoundException {
@@ -66,7 +69,7 @@ public abstract class AbstractContentManagerTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration);
+                currentUser, configuration, null);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager, configuration);
         contentManager.update(new Content("/", ImmutableMap.of("prop1", (Object) "value1")));
@@ -102,7 +105,7 @@ public abstract class AbstractContentManagerTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration);
+                currentUser, configuration, sharedCache);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager, configuration);
         contentManager.update(new Content("/", ImmutableMap.of("prop1", (Object) "value1")));
@@ -144,7 +147,7 @@ public abstract class AbstractContentManagerTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration);
+                currentUser, configuration, sharedCache);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager, configuration);
         contentManager.update(new Content("/", ImmutableMap.of("prop1", (Object) "value1")));
@@ -189,7 +192,7 @@ public abstract class AbstractContentManagerTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration);
+                currentUser, configuration, sharedCache);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager, configuration);
         contentManager.update(new Content("/", ImmutableMap.of("prop1", (Object) "value1")));
@@ -241,7 +244,7 @@ public abstract class AbstractContentManagerTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration);
+                currentUser, configuration, sharedCache);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager, configuration);
         contentManager.update(new Content("/", ImmutableMap.of("prop1", (Object) "value1")));

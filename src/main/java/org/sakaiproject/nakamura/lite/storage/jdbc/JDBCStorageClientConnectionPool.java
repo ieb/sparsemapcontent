@@ -18,7 +18,9 @@ import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
+import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
 import org.slf4j.Logger;
@@ -102,10 +104,14 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
     private Map<String, Object> sqlConfig;
     private Object sqlConfigLock = new Object();
 
+    private Map<String, CacheHolder> sharedCache;
+
     @Activate
     public void activate(Map<String, Object> properties) throws ClassNotFoundException {
         this.properties = properties;
         super.activate(properties);
+        
+        sharedCache = new ConcurrentLRUMap<String, CacheHolder>(10000);
         
         String jdbcDriver = (String) properties.get(JDBC_DRIVER);
         Class<?> clazz = Class.forName(jdbcDriver);
@@ -236,6 +242,11 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
     @Override
     protected PoolableObjectFactory getConnectionPoolFactory() {
         return new JCBCStorageClientConnection(properties);
+    }
+
+    @Override
+    public Map<String, CacheHolder> getSharedCache() {
+        return sharedCache;
     }
 
 }

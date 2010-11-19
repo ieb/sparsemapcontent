@@ -61,7 +61,7 @@ public abstract class AbstractAccessControlManagerImplTest {
 		User currentUser = authenticator.authenticate("admin", "admin");
 
 		AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
-				client, currentUser, configuration);
+				client, currentUser, configuration, null);
 		AclModification user1 = new AclModification("user1",
 				Permissions.CAN_ANYTHING.combine(Permissions.CAN_ANYTHING_ACL)
 						.getPermission(), AclModification.Operation.OP_REPLACE);
