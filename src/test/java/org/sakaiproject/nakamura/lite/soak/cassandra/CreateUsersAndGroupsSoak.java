@@ -8,14 +8,10 @@ import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConnectionPoolException;
 import org.sakaiproject.nakamura.lite.storage.StorageClientException;
 import org.sakaiproject.nakamura.lite.storage.cassandra.CassandraClientConnectionPool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
 
 public class CreateUsersAndGroupsSoak extends AbstractSoakController {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(CreateUsersAndGroupsSoak.class);
     private int totalUsers;
     private ConnectionPool connectionPool;
 
@@ -25,13 +21,6 @@ public class CreateUsersAndGroupsSoak extends AbstractSoakController {
         this.totalUsers = totalUsers;
     }
 
-    protected void logRate(double t, int currentThreads) {
-        double rate = ((double) totalUsers) / t;
-        double ratePerThread = ((double) totalUsers) / (((double) currentThreads) * t);
-        LOGGER.info(
-                "Test complete, Threads {} time taken {} Users Per Second {} Users Per Second Per Thread {} ",
-                new Object[] { currentThreads, t, rate, ratePerThread });
-    }
 
     protected Runnable getRunnable(int nthreads) throws ConnectionPoolException,
             StorageClientException, AccessDeniedException {
