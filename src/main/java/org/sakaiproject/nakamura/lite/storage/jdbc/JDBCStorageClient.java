@@ -471,28 +471,40 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             throw new StorageClientException("Failed to locate SQL statement for any of  "
                     + Arrays.toString(keys));
         }
+        
+        String[] statementParts = StringUtils.split(sql,';');
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder tables = new StringBuilder();
+        StringBuilder where = new StringBuilder();
         List<Object> parameters = Lists.newArrayList();
+        int set = 0;
         for (Entry<String, Object> e : properties.entrySet()) {
-            sb.append(e.getKey()).append(" = ? ");
+            String k = "a"+set;
+            tables.append(MessageFormat.format(statementParts[1], k));
+            where.append(MessageFormat.format(statementParts[2], k));
+            parameters.add(e.getKey());
             parameters.add(e.getValue());
+            set++;
         }
 
-        String sqlStatement = MessageFormat.format(sql, sb.toString());
+        final String sqlStatement = MessageFormat.format(statementParts[0], tables.toString(), where.toString());
 
         PreparedStatement tpst = null;
         ResultSet trs = null;
         try {
+            LOGGER.info("Preparing {} ",sqlStatement);
             tpst = connection.prepareStatement(sqlStatement);
             tpst.clearParameters();
             int i = 1;
             for (Object params : parameters) {
                 tpst.setObject(i, StorageClientUtils.toStore(params));
+                LOGGER.info("Setting {} ",StorageClientUtils.toStore(params));
+                
                 i++;
             }
 
             trs = tpst.executeQuery();
+            LOGGER.info("Executed ");
 
             // pass control to the iterator.
             final PreparedStatement pst = tpst;
@@ -532,8 +544,13 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                                     lastrow = row;
                                     return true;
                                 }
+                            } else {
+                                lastrow = row;
                             }
                             for (;;) {
+                                if ( map.containsKey(row[1])) {
+                                    LOGGER.warn("Query {} generated same property more than once {} ", sqlStatement, Arrays.toString(row));
+                                }
                                 map.put(row[1], row[2]);
                                 if (rs.next()) {
                                     row = nextRow(rs);
@@ -551,6 +568,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                                 }
                             }
                         }
+                        LOGGER.info("No More Records ");
                         close();
                         map = null;
                         return false;
@@ -563,7 +581,9 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 }
 
                 private String[] nextRow(ResultSet rs) throws SQLException {
-                    return new String[] { rs.getString(1), rs.getString(2), rs.getString(2) };
+                    String[] s =  new String[] { rs.getString(1), rs.getString(2), rs.getString(3) };
+                    LOGGER.info("Got Row {} ",Arrays.toString(s));
+                    return s;
                 }
 
                 @Override
@@ -590,7 +610,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             });
         } catch (SQLException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new StorageClientException(e.getMessage(), e);
+            throw new StorageClientException(e.getMessage()+" SQL Statement was "+sqlStatement, e);
         } finally {
             // trs and tpst will only be non null if control has not been passed
             // to the iterator.

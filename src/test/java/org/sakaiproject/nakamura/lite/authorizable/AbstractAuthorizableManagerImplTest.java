@@ -1,6 +1,7 @@
 package org.sakaiproject.nakamura.lite.authorizable;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.junit.After;
@@ -308,6 +309,78 @@ public abstract class AbstractAuthorizableManagerImplTest {
 		LOGGER.info("Principals {} ", Arrays.toString(principals));
 		Assert.assertArrayEquals(new String[] { "administrators", "testers",
 				"testgroup" }, principals);
+
+	}
+	
+	
+	@Test
+	public void testFindAuthorizable() throws StorageClientException, AccessDeniedException {
+	    try {
+	       AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+	        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+	        AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
+	                client, currentUser, configuration, sharedCache);
+
+	        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(
+	                currentUser, client, configuration, accessControlManagerImpl);
+	        
+	        for ( int i = 0; i < 10; i++ ) {
+	            authorizableManager.delete("testfinduser"+i);
+	            Assert.assertTrue(authorizableManager.createUser("testfinduser"+i, "TestUser",
+	                    null, ImmutableMap.of(
+	                            "rep:principalName", (Object)("principal"+i),
+	                            "sakai:groupproperty", "groupprop",
+	                            "sakai:userprop", "userprop")));
+	            authorizableManager.delete("testgroup"+i);
+	        Assert.assertTrue(authorizableManager.createGroup("testgroup"+i,
+	                "Test Group"+i, ImmutableMap.of(
+	                        "rep:principalName", (Object)("principal"+i),
+	                        "sakai:groupproperty", "groupprop",
+	                        "sakai:grprop", "grprop")));
+	        }
+	        for ( int i = 0; i < 10; i++ ) {
+	            Iterator<Authorizable> userIterator = authorizableManager.findAuthorizable("rep:principalName","principal"+i, User.class);
+	            Assert.assertNotNull(userIterator);
+	            Assert.assertTrue(userIterator.hasNext());
+	            Authorizable a = userIterator.next();
+                Assert.assertFalse(userIterator.hasNext());
+                Assert.assertTrue(a instanceof User);
+                User u = (User) a;
+                Assert.assertEquals("testfinduser"+i, u.getId());
+	        }
+            for ( int i = 0; i < 10; i++ ) {
+                Iterator<Authorizable> groupIterator = authorizableManager.findAuthorizable("rep:principalName","principal"+i, Group.class);
+                Assert.assertNotNull(groupIterator);
+                Assert.assertTrue(groupIterator.hasNext());
+                Authorizable a = groupIterator.next();
+                Assert.assertFalse(groupIterator.hasNext());
+                Assert.assertTrue(a instanceof Group);
+                Group u = (Group) a;
+                Assert.assertEquals("testgroup"+i, u.getId());
+            }
+            for ( int i = 0; i < 10; i++ ) {
+                Iterator<Authorizable> groupIterator = authorizableManager.findAuthorizable("rep:principalName","principal"+i, Authorizable.class);
+                Assert.assertNotNull(groupIterator);
+                Assert.assertTrue(groupIterator.hasNext());
+                Authorizable a = groupIterator.next();
+                if ( a instanceof Group ) {
+                    Assert.assertEquals("testgroup"+i, a.getId());
+                } else {
+                    Assert.assertEquals("testfinduser"+i, a.getId());
+                }
+                Assert.assertTrue(groupIterator.hasNext());
+                a = groupIterator.next();
+                if ( a instanceof Group ) {
+                    Assert.assertEquals("testgroup"+i, a.getId());
+                } else {
+                    Assert.assertEquals("testfinduser"+i, a.getId());
+                }
+                Assert.assertFalse(groupIterator.hasNext());
+            }
+	    } catch ( UnsupportedOperationException e) {
+	        LOGGER.warn("Finder methods not implemented, FIXME");
+	    }
 
 	}
 
