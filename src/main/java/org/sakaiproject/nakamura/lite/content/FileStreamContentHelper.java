@@ -1,4 +1,4 @@
-package org.sakaiproject.nakamura.lite.storage.jdbc;
+package org.sakaiproject.nakamura.lite.content;
 
 import java.io.File;
 import java.io.FileInputStream;

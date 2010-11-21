@@ -27,7 +27,7 @@ public interface AuthorizableManager {
     void changePassword(Authorizable authorizable, String password) throws StorageClientException, AccessDeniedException;
 
     Iterator<Authorizable> findAuthorizable(String propertyName, String value,
-            Class<? extends Authorizable> authorizableType);
+            Class<? extends Authorizable> authorizableType) throws StorageClientException;
     
     
 

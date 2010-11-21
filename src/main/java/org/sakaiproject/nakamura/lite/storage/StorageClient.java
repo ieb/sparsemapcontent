@@ -26,6 +26,6 @@ public interface StorageClient {
             throws StorageClientException, AccessDeniedException, IOException;
 
     Iterator<Map<String, Object>> find(String keySpace, String authorizableColumnFamily,
-            Map<String, Object> properties);
+            Map<String, Object> properties) throws StorageClientException;
     
 }

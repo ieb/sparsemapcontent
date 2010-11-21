@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -33,6 +32,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
 import org.sakaiproject.nakamura.lite.content.BlockSetContentHelper;
+import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -231,7 +231,7 @@ public class CassandraClientConnection extends Client implements StorageClient {
 
 
     @Override
-    public Iterator<Map<String, Object>> find(String keySpace, String authorizableColumnFamily,
+    public DisposableIterator<Map<String, Object>> find(String keySpace, String authorizableColumnFamily,
             Map<String, Object> properties) {
         //TODO: Implement
         throw new UnsupportedOperationException();

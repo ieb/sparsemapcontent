@@ -12,7 +12,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Iterator;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -22,13 +24,17 @@ import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.lite.content.FileStreamContentHelper;
 import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
+import org.sakaiproject.nakamura.lite.storage.Disposable;
+import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
 import org.sakaiproject.nakamura.lite.storage.RowHasher;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 public class JDBCStorageClient implements StorageClient, RowHasher {
@@ -54,12 +60,14 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     private boolean alive;
     private StreamedContentHelper streamedContentHelper;
     private Map<String, PreparedStatement> preparedStatements = Maps.newHashMap();
+    private List<Disposable> toDispose = Lists.newArrayList();
 
-    public JDBCStorageClient(Connection connection, Map<String, Object> properties, Map<String, Object> sqlConfig)
-            throws SQLException, NoSuchAlgorithmException, StorageClientException {
+    public JDBCStorageClient(Connection connection, Map<String, Object> properties,
+            Map<String, Object> sqlConfig) throws SQLException, NoSuchAlgorithmException,
+            StorageClientException {
         this.connection = connection;
         streamedContentHelper = new FileStreamContentHelper(this, properties);
-        
+
         this.sqlConfig = sqlConfig;
         String rowidHash = getSql(PROP_HASH_ALG);
         if (rowidHash == null) {
@@ -210,7 +218,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
 
     public void close() {
         try {
-            shutdownConnection();            
+            shutdownConnection();
             connection.close();
             LOGGER.info("Sparse Content Map Database Connection closed.");
         } catch (Throwable t) {
@@ -220,6 +228,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
 
     /**
      * Get a prepared statement, potentially optimized and sharded.
+     * 
      * @param keySpace
      * @param columnFamily
      * @param sqlSelectStringRow
@@ -228,18 +237,17 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
      */
     private PreparedStatement getStatement(String keySpace, String columnFamily,
             String sqlSelectStringRow, String rid) {
-        String shard = rid.substring(0,1);
-        String[] keys = new String[]{
-                sqlSelectStringRow+"."+keySpace+"."+columnFamily+"._"+shard,
-                sqlSelectStringRow+"."+columnFamily+"._"+shard,
-                sqlSelectStringRow+"."+keySpace+"._"+shard,
-                sqlSelectStringRow+"._"+shard,
-                sqlSelectStringRow+"."+keySpace+"."+columnFamily,
-                sqlSelectStringRow+"."+columnFamily,
-                sqlSelectStringRow+"."+keySpace,
-                sqlSelectStringRow};
-        for ( String k : keys ) {
-            if ( preparedStatements.containsKey(k)) {
+        String shard = rid.substring(0, 1);
+        String[] keys = new String[] {
+                sqlSelectStringRow + "." + keySpace + "." + columnFamily + "._" + shard,
+                sqlSelectStringRow + "." + columnFamily + "._" + shard,
+                sqlSelectStringRow + "." + keySpace + "._" + shard,
+                sqlSelectStringRow + "._" + shard,
+                sqlSelectStringRow + "." + keySpace + "." + columnFamily,
+                sqlSelectStringRow + "." + columnFamily, sqlSelectStringRow + "." + keySpace,
+                sqlSelectStringRow };
+        for (String k : keys) {
+            if (preparedStatements.containsKey(k)) {
                 return preparedStatements.get(k);
             }
         }
@@ -252,7 +260,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             openPreparedStatements();
 
             active = true;
-        } else if ( !alive ){
+        } else if (!alive) {
             LOGGER.info("Delaying Activation, connection not alive ");
         }
     }
@@ -260,8 +268,9 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     private void openPreparedStatements() throws SQLException {
         for (Entry<String, Object> sql : sqlConfig.entrySet()) {
             String[] sqlSpec = StringUtils.split(sql.getKey(), '.');
-            if ( preparedStatementKeys.contains(sqlSpec[0])) {
-                preparedStatements.put(sql.getKey(), connection.prepareStatement((String) sql.getValue()));
+            if (preparedStatementKeys.contains(sqlSpec[0])) {
+                preparedStatements.put(sql.getKey(),
+                        connection.prepareStatement((String) sql.getValue()));
             }
         }
     }
@@ -270,19 +279,27 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         if (active) {
             LOGGER.info("Passivating {}", this);
             closePreparedStatements();
+            for (Disposable d : toDispose) {
+                d.close();
+            }
             active = false;
         }
     }
 
     private void closePreparedStatements() {
-        for ( PreparedStatement p : preparedStatements.values()) {
+        for (PreparedStatement p : preparedStatements.values()) {
             try {
                 p.close();
             } catch (Throwable t) {
 
-            } 
+            }
         }
         preparedStatements.clear();
+    }
+
+    private <T extends Disposable> T registerDisposable(T disposable) {
+        toDispose.add(disposable);
+        return disposable;
     }
 
     public boolean validate() {
@@ -310,7 +327,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     public void checkSchema(String[] clientConfigLocations) throws ConnectionPoolException {
         Statement statement = null;
         try {
-                        
+
             statement = connection.createStatement();
             try {
                 statement.execute(getSql(SQL_CHECKSCHEMA));
@@ -356,8 +373,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                         }
                         br.close();
                         alive = true;
-                        LOGGER.info("Schema Created from {} ",clientDDL);
-                         
+                        LOGGER.info("Schema Created from {} ", clientDDL);
+
                         break;
                     } catch (Throwable e) {
                         LOGGER.error("Failed to load Schema from {}", clientDDL, e);
@@ -367,16 +384,16 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                         } catch (IOException e) {
                             LOGGER.error("Failed to close stream from {}", clientDDL, e);
                         }
-                        
+
                     }
                 } else {
-                    LOGGER.info("No Schema found at {} ",clientDDL);
+                    LOGGER.info("No Schema found at {} ", clientDDL);
                 }
 
             }
 
         } catch (SQLException e) {
-            LOGGER.info("Failed to create schema ",e);
+            LOGGER.info("Failed to create schema ", e);
             throw new ConnectionPoolException("Failed to create schema ", e);
         } finally {
             try {
@@ -405,10 +422,28 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     public InputStream streamBodyOut(String keySpace, String columnFamily, String contentId,
             String contentBlockId, Map<String, Object> content) throws StorageClientException,
             AccessDeniedException, IOException {
-        return streamedContentHelper.readBody(keySpace, columnFamily, contentBlockId, content);
+
+        final InputStream in = streamedContentHelper.readBody(keySpace, columnFamily,
+                contentBlockId, content);
+        registerDisposable(new Disposable() {
+
+            private boolean open = true;
+
+            @Override
+            public void close() {
+                if (open && in != null) {
+                    try {
+                        in.close();
+                    } catch (IOException e) {
+                        LOGGER.warn(e.getMessage(), e);
+                    }
+                    open = false;
+                }
+
+            }
+        });
+        return in;
     }
-    
-  
 
     public void setAlive() {
         alive = true;
@@ -419,11 +454,162 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     }
 
     @Override
-    public Iterator<Map<String, Object>> find(String keySpace, String authorizableColumnFamily,
-            Map<String, Object> properties) {
-        //TODO: Implement
-        throw new UnsupportedOperationException();
+    public DisposableIterator<Map<String, Object>> find(String keySpace, String columnFamily,
+            Map<String, Object> properties) throws StorageClientException {
+
+        String[] keys = new String[] { "find." + keySpace + "." + columnFamily,
+                "find." + columnFamily, "find" };
+
+        String sql = null;
+        for (String statementKey : keys) {
+            sql = getSql(statementKey);
+            if (sql != null) {
+                break;
+            }
+        }
+        if (sql == null) {
+            throw new StorageClientException("Failed to locate SQL statement for any of  "
+                    + Arrays.toString(keys));
+        }
+
+        StringBuilder sb = new StringBuilder();
+        List<Object> parameters = Lists.newArrayList();
+        for (Entry<String, Object> e : properties.entrySet()) {
+            sb.append(e.getKey()).append(" = ? ");
+            parameters.add(e.getValue());
+        }
+
+        String sqlStatement = MessageFormat.format(sql, sb.toString());
+
+        PreparedStatement tpst = null;
+        ResultSet trs = null;
+        try {
+            tpst = connection.prepareStatement(sqlStatement);
+            tpst.clearParameters();
+            int i = 1;
+            for (Object params : parameters) {
+                tpst.setObject(i, StorageClientUtils.toStore(params));
+                i++;
+            }
+
+            trs = tpst.executeQuery();
+
+            // pass control to the iterator.
+            final PreparedStatement pst = tpst;
+            final ResultSet rs = trs;
+            tpst = null;
+            trs = null;
+            return registerDisposable(new DisposableIterator<Map<String, Object>>() {
+
+                private Map<String, Object> map = Maps.newHashMap();
+                private boolean open = true;
+                private String[] lastrow;
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public Map<String, Object> next() {
+                    return map;
+                }
+
+                @Override
+                public boolean hasNext() {
+                    try {
+                        if (open && rs.next()) {
+                            String[] row = nextRow(rs);
+                            if (lastrow != null) {
+                                // second entry, clear the map and save the last
+                                // row
+                                map.clear();
+                                map.put(lastrow[1], lastrow[2]);
+                                if (!row[0].equals(lastrow[0])) {
+                                    // next row is not the same, new object,
+                                    // save
+                                    // last row and exit
+                                    lastrow = row;
+                                    return true;
+                                }
+                            }
+                            for (;;) {
+                                map.put(row[1], row[2]);
+                                if (rs.next()) {
+                                    row = nextRow(rs);
+                                    if (!row[0].equals(lastrow[0])) {
+                                        // new object
+                                        lastrow = row;
+                                        return true;
+                                    } else {
+                                        // same object
+                                        lastrow = row;
+                                    }
+                                } else {
+                                    close();
+                                    return true;
+                                }
+                            }
+                        }
+                        close();
+                        map = null;
+                        return false;
+                    } catch (SQLException e) {
+                        LOGGER.error(e.getMessage(), e);
+                        close();
+                        map = null;
+                        return false;
+                    }
+                }
+
+                private String[] nextRow(ResultSet rs) throws SQLException {
+                    return new String[] { rs.getString(1), rs.getString(2), rs.getString(2) };
+                }
+
+                @Override
+                public void close() {
+                    if (open) {
+                        open = false;
+                        try {
+                            if (rs != null) {
+                                rs.close();
+                            }
+                        } catch (SQLException e) {
+                            LOGGER.warn(e.getMessage(), e);
+                        }
+                        try {
+                            if (pst != null) {
+                                pst.close();
+                            }
+                        } catch (SQLException e) {
+                            LOGGER.warn(e.getMessage(), e);
+                        }
+                    }
+
+                }
+            });
+        } catch (SQLException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new StorageClientException(e.getMessage(), e);
+        } finally {
+            // trs and tpst will only be non null if control has not been passed
+            // to the iterator.
+            try {
+                if (trs != null) {
+                    trs.close();
+                }
+            } catch (SQLException e) {
+                LOGGER.warn(e.getMessage(), e);
+            }
+            try {
+                if (tpst != null) {
+                    tpst.close();
+                }
+            } catch (SQLException e) {
+                LOGGER.warn(e.getMessage(), e);
+            }
+        }
+
     }
 
-    
 }

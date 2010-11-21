@@ -8,7 +8,7 @@ public class DerbySetup {
 
     private static JDBCStorageClientConnectionPool connectionPool = createConnectionPool();
 
-    private static JDBCStorageClientConnectionPool createConnectionPool() {
+    private synchronized static JDBCStorageClientConnectionPool createConnectionPool() {
         try {
             JDBCStorageClientConnectionPool connectionPool = new JDBCStorageClientConnectionPool();
             connectionPool.activate(ImmutableMap

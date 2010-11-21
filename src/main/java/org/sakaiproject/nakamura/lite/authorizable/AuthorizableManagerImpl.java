@@ -15,6 +15,7 @@ import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.Security;
+import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -284,7 +285,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
 
     @Override
     public Iterator<Authorizable> findAuthorizable(String propertyName, String value,
-            Class<? extends Authorizable> authorizableType) {
+            Class<? extends Authorizable> authorizableType) throws StorageClientException {
         Builder<String, Object> builder = ImmutableMap.builder();
         builder.put(propertyName, StorageClientUtils.toStore(value));
         if (authorizableType.equals(User.class)) {
@@ -294,8 +295,8 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
         }
         final Iterator<Map<String, Object>> authMaps = client.find(keySpace,
                 authorizableColumnFamily, builder.build());
-        
-        return new Iterator<Authorizable>() {
+
+        return  new Iterator<Authorizable>() {
 
             private Authorizable authorizable;
 
@@ -304,12 +305,29 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
                 while (authMaps.hasNext()) {
                     Map<String, Object> authMap = authMaps.next();
                     if (authMap != null) {
-                        if (Authorizable.isAUser(authMap)) {
-                            authorizable = new User(authMap);
+                        try {
+                            // filter any authorizables from the list that user
+                            // cant
+                            // see, this is not the way we want to do it as it
+                            // will generate a sparse search problem.
+                            // FIXME: put this in the query.
+                            accessControlManager
+                                    .check(Security.ZONE_AUTHORIZABLES, StorageClientUtils
+                                            .toString(authMap.get(Authorizable.ID_FIELD)),
+                                            Permissions.CAN_READ);
+                            if (Authorizable.isAUser(authMap)) {
+                                authorizable = new User(authMap);
+                                return true;
+                            } else if (Authorizable.isAGroup(authMap))
+                                authorizable = new Group(authMap);
                             return true;
-                        } else if (Authorizable.isAGroup(authMap))
-                            authorizable = new Group(authMap);
-                        return true;
+                        } catch (AccessDeniedException e) {
+                            LOGGER.debug("Search result filtered ", e.getMessage());
+                        } catch (StorageClientException e) {
+                            LOGGER.error("Failed to check ACLs ", e.getMessage());
+                            return false;
+                        }
+
                     }
                 }
 
