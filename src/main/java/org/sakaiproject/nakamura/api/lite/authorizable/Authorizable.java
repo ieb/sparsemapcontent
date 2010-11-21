@@ -22,9 +22,10 @@ public class Authorizable {
 
     public static final String NAME_FIELD = "name";
 
-    public static final String GROUP_FIELD = "group";
+    public static final String AUTHORIZABLE_TYPE_FIELD = "type";
 
-    public static final String GROUP_VALUE = "y";
+    public static final String GROUP_VALUE = "g";
+    public static final Object USER_VALUE = "u";
 
     public static final String ADMINISTRATORS_GROUP = "administrators";
     
@@ -39,6 +40,8 @@ public class Authorizable {
     private static final Set<String> PRIVATE_PROPERTIES = ImmutableSet.of(PASSWORD_FIELD);
 
     public static final String NO_PASSWORD = "--none--";
+
+
 
     protected Map<String, Object> authorizableMap;
     protected Set<String> principals;
@@ -74,7 +77,15 @@ public class Authorizable {
     }
 
     public static boolean isAGroup(Map<String, Object> authProperties) {
-        return (authProperties != null) && GROUP_VALUE.equals(StorageClientUtils.toString(authProperties.get(GROUP_FIELD)));
+        return (authProperties != null) && GROUP_VALUE.equals(StorageClientUtils.toString(authProperties.get(AUTHORIZABLE_TYPE_FIELD)));
+    }
+
+    public static boolean isAUser(Map<String, Object> authProperties) {
+        return (authProperties != null) && USER_VALUE.equals(StorageClientUtils.toString(authProperties.get(AUTHORIZABLE_TYPE_FIELD)));
+    }
+
+    public static boolean isAuthorizable(Map<String, Object> authProperties) {
+        return (authProperties != null) && !authProperties.containsKey(AUTHORIZABLE_TYPE_FIELD);
     }
 
     public void setProperty(String key, Object value) {

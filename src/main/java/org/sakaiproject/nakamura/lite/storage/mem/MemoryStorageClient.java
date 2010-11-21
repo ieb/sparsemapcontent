@@ -2,6 +2,7 @@ package org.sakaiproject.nakamura.lite.storage.mem;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -106,5 +107,13 @@ public class MemoryStorageClient implements StorageClient {
         int nBlocks = StorageClientUtils.toInt(content.get(Content.NBLOCKS_FIELD));
         return contentHelper.readBody(keySpace, contentColumnFamily, contentBlockId, nBlocks);
     }
+
+    @Override
+    public Iterator<Map<String, Object>> find(String keySpace, String authorizableColumnFamily,
+            Map<String, Object> properties) {
+        //TODO: Implement
+        throw new UnsupportedOperationException();
+    }
+
 
 }

@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -71,7 +72,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     public Map<String, Object> get(String keySpace, String columnFamily, String key)
             throws StorageClientException {
         ResultSet strings = null;
-        ResultSet blobs = null;
         Map<String, Object> result = Maps.newHashMap();
         String rid = rowHash(keySpace, columnFamily, key);
         try {
@@ -93,13 +93,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             try {
                 if (strings != null) {
                     strings.close();
-                }
-            } catch (Throwable e) {
-                LOGGER.debug("Failed to close result set, ok to ignore this message ", e);
-            }
-            try {
-                if (blobs != null) {
-                    blobs.close();
                 }
             } catch (Throwable e) {
                 LOGGER.debug("Failed to close result set, ok to ignore this message ", e);
@@ -414,6 +407,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             AccessDeniedException, IOException {
         return streamedContentHelper.readBody(keySpace, columnFamily, contentBlockId, content);
     }
+    
+  
 
     public void setAlive() {
         alive = true;
@@ -422,4 +417,13 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     protected Connection getConnection() {
         return connection;
     }
+
+    @Override
+    public Iterator<Map<String, Object>> find(String keySpace, String authorizableColumnFamily,
+            Map<String, Object> properties) {
+        //TODO: Implement
+        throw new UnsupportedOperationException();
+    }
+
+    
 }

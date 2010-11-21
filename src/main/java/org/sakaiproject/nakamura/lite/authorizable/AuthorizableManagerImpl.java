@@ -1,5 +1,6 @@
 package org.sakaiproject.nakamura.lite.authorizable;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 
@@ -48,7 +50,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
             Configuration configuration, AccessControlManager accessControlManager)
             throws StorageClientException, AccessDeniedException {
         this.currentUserId = currentUser.getId();
-        if ( currentUserId == null ) {
+        if (currentUserId == null) {
             throw new RuntimeException("Current User ID shoud not be null");
         }
         this.thisUser = currentUser;
@@ -76,13 +78,13 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
             return null;
         }
         LOGGER.info("Found Map {} ", authorizableMap);
-        if (Authorizable.isAGroup(authorizableMap)) {
-            return new Group(authorizableMap);
-        } else {
+        if (Authorizable.isAUser(authorizableMap)) {
             return new User(authorizableMap);
+        } else if (Authorizable.isAGroup(authorizableMap)) {
+            return new Group(authorizableMap);
         }
+        return null;
     }
-
 
     public void updateAuthorizable(Authorizable authorizable) throws AccessDeniedException,
             StorageClientException {
@@ -174,8 +176,10 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
         }
         Map<String, Object> encodedProperties = StorageClientUtils.getFilteredAndEcodedMap(
                 authorizable.getPropertiesForUpdate(), FILTER_ON_UPDATE);
-        encodedProperties.put(Authorizable.LASTMODIFIED, StorageClientUtils.toStore(System.currentTimeMillis()));
-        encodedProperties.put(Authorizable.LASTMODIFIED_BY, StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
+        encodedProperties.put(Authorizable.LASTMODIFIED,
+                StorageClientUtils.toStore(System.currentTimeMillis()));
+        encodedProperties.put(Authorizable.LASTMODIFIED_BY,
+                StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
         client.insert(keySpace, authorizableColumnFamily, id, encodedProperties);
         authorizable.reset();
 
@@ -185,12 +189,16 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
             String password, Map<String, Object> properties) throws AccessDeniedException,
             StorageClientException {
         checkOpen();
-        if (Authorizable.isAGroup(properties)) {
+        if (Authorizable.isAUser(properties)) {
+            accessControlManager.check(Security.ZONE_ADMIN, Security.ADMIN_USERS,
+                    Permissions.CAN_WRITE);
+        } else if (Authorizable.isAGroup(properties)) {
             accessControlManager.check(Security.ZONE_ADMIN, Security.ADMIN_GROUPS,
                     Permissions.CAN_WRITE);
         } else {
-            accessControlManager.check(Security.ZONE_ADMIN, Security.ADMIN_USERS,
-                    Permissions.CAN_WRITE);
+            throw new AccessDeniedException(Security.ZONE_ADMIN, Security.ADMIN_AUTHORIZABLES,
+                    "denied create on unidentified authorizable",
+                    accessControlManager.getCurrentUserId());
         }
         Authorizable a = findAuthorizable(authorizableId);
         if (a != null) {
@@ -208,20 +216,20 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
             encodedProperties.put(Authorizable.PASSWORD_FIELD,
                     StorageClientUtils.toStore(Authorizable.NO_PASSWORD));
         }
-        encodedProperties.put(Authorizable.CREATED, StorageClientUtils.toStore(System.currentTimeMillis()));
-        encodedProperties.put(Authorizable.CREATED_BY, StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
+        encodedProperties.put(Authorizable.CREATED,
+                StorageClientUtils.toStore(System.currentTimeMillis()));
+        encodedProperties.put(Authorizable.CREATED_BY,
+                StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
         client.insert(keySpace, authorizableColumnFamily, authorizableId, encodedProperties);
         return true;
     }
-    
-    
 
     public boolean createUser(String authorizableId, String authorizableName, String password,
             Map<String, Object> properties) throws AccessDeniedException, StorageClientException {
         checkOpen();
-        if (Authorizable.isAGroup(properties)) {
+        if (!Authorizable.isAUser(properties)) {
             Map<String, Object> m = Maps.newHashMap(properties);
-            m.remove(Authorizable.GROUP_FIELD);
+            m.put(Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.USER_VALUE);
             properties = m;
         }
         return createAuthorizable(authorizableId, authorizableName, password, properties);
@@ -232,7 +240,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
         checkOpen();
         if (!Authorizable.isAGroup(properties)) {
             Map<String, Object> m = Maps.newHashMap(properties);
-            m.put(Authorizable.GROUP_FIELD, Authorizable.GROUP_VALUE);
+            m.put(Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.GROUP_VALUE);
             properties = m;
         }
         return createAuthorizable(authorizableId, authorizableName, null, properties);
@@ -240,35 +248,86 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
 
     public void delete(String authorizableId) throws AccessDeniedException, StorageClientException {
         checkOpen();
-        accessControlManager.check(Security.ZONE_ADMIN, authorizableId,
-                Permissions.CAN_DELETE);
+        accessControlManager.check(Security.ZONE_ADMIN, authorizableId, Permissions.CAN_DELETE);
         client.remove(keySpace, authorizableColumnFamily, authorizableId);
-        
+
     }
 
     public void close() {
         closed = true;
     }
-    
+
     private void checkOpen() throws StorageClientException {
-        if ( closed ) {
+        if (closed) {
             throw new StorageClientException("Authorizable Manager is closed");
         }
     }
 
     @Override
-    public void changePassword(Authorizable authorizable, String password) throws StorageClientException, AccessDeniedException {
+    public void changePassword(Authorizable authorizable, String password)
+            throws StorageClientException, AccessDeniedException {
         String id = authorizable.getId();
-        if ( thisUser.isAdmin() || currentUserId.equals(id) ) {
+        if (thisUser.isAdmin() || currentUserId.equals(id)) {
             client.insert(keySpace, authorizableColumnFamily, id, ImmutableMap.of(
-                    Authorizable.LASTMODIFIED, StorageClientUtils.toStore(System.currentTimeMillis()),
-                    Authorizable.LASTMODIFIED_BY, StorageClientUtils.toStore(accessControlManager.getCurrentUserId()),
+                    Authorizable.LASTMODIFIED,
+                    StorageClientUtils.toStore(System.currentTimeMillis()),
+                    Authorizable.LASTMODIFIED_BY,
+                    StorageClientUtils.toStore(accessControlManager.getCurrentUserId()),
                     Authorizable.PASSWORD_FIELD,
                     StorageClientUtils.toStore(StorageClientUtils.secureHash(password))));
         } else {
-            throw new AccessDeniedException(Security.ZONE_ADMIN, id, "Not allowed to change the password, must be the user or an admin user", currentUserId);
+            throw new AccessDeniedException(Security.ZONE_ADMIN, id,
+                    "Not allowed to change the password, must be the user or an admin user",
+                    currentUserId);
         }
     }
 
+    @Override
+    public Iterator<Authorizable> findAuthorizable(String propertyName, String value,
+            Class<? extends Authorizable> authorizableType) {
+        Builder<String, Object> builder = ImmutableMap.builder();
+        builder.put(propertyName, StorageClientUtils.toStore(value));
+        if (authorizableType.equals(User.class)) {
+            builder.put(Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.USER_VALUE);
+        } else if (authorizableType.equals(Group.class)) {
+            builder.put(Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.GROUP_VALUE);
+        }
+        final Iterator<Map<String, Object>> authMaps = client.find(keySpace,
+                authorizableColumnFamily, builder.build());
+        
+        return new Iterator<Authorizable>() {
+
+            private Authorizable authorizable;
+
+            @Override
+            public boolean hasNext() {
+                while (authMaps.hasNext()) {
+                    Map<String, Object> authMap = authMaps.next();
+                    if (authMap != null) {
+                        if (Authorizable.isAUser(authMap)) {
+                            authorizable = new User(authMap);
+                            return true;
+                        } else if (Authorizable.isAGroup(authMap))
+                            authorizable = new Group(authMap);
+                        return true;
+                    }
+                }
+
+                authorizable = null;
+                return false;
+            }
+
+            @Override
+            public Authorizable next() {
+                return authorizable;
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+
+        };
+    }
 
 }

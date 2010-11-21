@@ -29,26 +29,24 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
-@Component(immediate = true, metatype = true, inherit=true)
+@Component(immediate = true, metatype = true, inherit = true)
 @Service(value = ConnectionPool.class)
 public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPool {
 
     private static final Logger LOGGER = LoggerFactory
-    .getLogger(JDBCStorageClientConnectionPool.class);
+            .getLogger(JDBCStorageClientConnectionPool.class);
 
     @Property(value = { "jdbc:derby:sparsemap/db;create=true" })
     public static final String CONNECTION_URL = "jdbc-url";
     @Property(value = { "org.apache.derby.jdbc.EmbeddedDriver" })
     public static final String JDBC_DRIVER = "jdbc-driver";
-    
+
     @Property(value = { "sa" })
     private static final String USERNAME = "username";
     @Property(value = { "" })
     private static final String PASSWORD = "password";
 
-    
     private static final String BASESQLPATH = "org/sakaiproject/nakamura/lite/storage/jdbc/config/client";
-
 
     public class JCBCStorageClientConnection implements PoolableObjectFactory {
 
@@ -110,17 +108,19 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
     public void activate(Map<String, Object> properties) throws ClassNotFoundException {
         this.properties = properties;
         super.activate(properties);
-        
+
         sharedCache = new ConcurrentLRUMap<String, CacheHolder>(10000);
-        
+
         String jdbcDriver = (String) properties.get(JDBC_DRIVER);
         Class<?> clazz = Class.forName(jdbcDriver);
-        
-        LOGGER.info("Loaded Database Driver {} as {}  ",jdbcDriver, clazz);
-        
+
+        LOGGER.info("Loaded Database Driver {} as {}  ", jdbcDriver, clazz);
+
         try {
-            @SuppressWarnings("unused")
             JDBCStorageClient client = (JDBCStorageClient) openConnection();
+            if ( client == null ) {
+                LOGGER.warn("Failed to check Schema, no connection");                
+            }
         } catch (ConnectionPoolException e) {
             LOGGER.warn("Failed to check Schema", e);
         } finally {
@@ -132,82 +132,93 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
         }
 
     }
-    
+
     @Deactivate
     public void deactivate(Map<String, Object> properties) {
         super.deactivate(properties);
-        
+
         String connectionUrl = (String) this.properties.get(CONNECTION_URL);
         String jdbcDriver = (String) properties.get(JDBC_DRIVER);
-        if ( "org.apache.derby.jdbc.EmbeddedDriver".equals(jdbcDriver) && connectionUrl != null) {
+        if ("org.apache.derby.jdbc.EmbeddedDriver".equals(jdbcDriver) && connectionUrl != null) {
             // need to shutdown this instance.
-            String[] parts = StringUtils.split(connectionUrl,';');
+            String[] parts = StringUtils.split(connectionUrl, ';');
+            Connection connection = null;
             try {
-                DriverManager.getConnection(parts[0]+";shutdown=true");
-            } catch (SQLException e ) {
-                // yes really see http://db.apache.org/derby/manuals/develop/develop15.html#HDRSII-DEVELOP-40464
-                LOGGER.info("Sparse Map Content Derby Embedded instance shutdown sucessfully {}",e.getMessage());
+                connection = DriverManager.getConnection(parts[0] + ";shutdown=true");
+            } catch (SQLException e) {
+                // yes really see
+                // http://db.apache.org/derby/manuals/develop/develop15.html#HDRSII-DEVELOP-40464
+                LOGGER.info("Sparse Map Content Derby Embedded instance shutdown sucessfully {}",
+                        e.getMessage());
+            } finally {
+                if (connection != null) {
+                    try {
+                        connection.close();
+                    } catch (SQLException e) {
+                        LOGGER.debug(
+                                "Very Odd, the getConnection should not have opened a connection (see DerbyDocs),"
+                                        + " but it did, and when we tried to close it we got  "
+                                        + e.getMessage(), e);
+                    }
+                }
             }
         }
     }
 
     protected JDBCStorageClient checkSchema(Object o) {
         JDBCStorageClient client = (JDBCStorageClient) o;
-        if (!schemaHasBeenChecked) {
-            synchronized (sqlConfigLock) {
-                if (!schemaHasBeenChecked) {
-                    try {
-                        Connection connection = client.getConnection();
-                        DatabaseMetaData metadata = connection.getMetaData();
-                        LOGGER.info("Starting Sparse Map Content database ");
-                        LOGGER.info("   Database Vendor: {} {}", metadata.getDatabaseProductName(), metadata.getDatabaseProductVersion());
-                        LOGGER.info("   Database Driver: {} ", properties.get(JDBC_DRIVER));
-                        LOGGER.info("   Database URL   : {} ", properties.get(CONNECTION_URL));
-                        client.checkSchema(getClientConfigLocations(client.getConnection()));
-                        schemaHasBeenChecked = true;
-                    } catch (Throwable e) {
-                        LOGGER.warn("Failed to check Schema", e);
-                    }
+        synchronized (sqlConfigLock) {
+            if (!schemaHasBeenChecked) {
+                try {
+                    Connection connection = client.getConnection();
+                    DatabaseMetaData metadata = connection.getMetaData();
+                    LOGGER.info("Starting Sparse Map Content database ");
+                    LOGGER.info("   Database Vendor: {} {}", metadata.getDatabaseProductName(),
+                            metadata.getDatabaseProductVersion());
+                    LOGGER.info("   Database Driver: {} ", properties.get(JDBC_DRIVER));
+                    LOGGER.info("   Database URL   : {} ", properties.get(CONNECTION_URL));
+                    client.checkSchema(getClientConfigLocations(client.getConnection()));
+                    schemaHasBeenChecked = true;
+                } catch (Throwable e) {
+                    LOGGER.warn("Failed to check Schema", e);
                 }
+            } else {
+                client.setAlive();
             }
-        } else {
-            client.setAlive();
         }
         return client;
     }
 
     public Map<String, Object> getSqlConfig(Connection connection) {
-        if (sqlConfig == null) {
-            synchronized (sqlConfigLock) {
-                if (sqlConfig == null) {
-                    try {
+        synchronized (sqlConfigLock) {
+            if (sqlConfig == null) {
+                try {
 
-                        for (String clientSQLLocation : getClientConfigLocations(connection)) {
-                            String clientConfig = clientSQLLocation + ".sql";
-                            InputStream in = this.getClass().getClassLoader()
-                                    .getResourceAsStream(clientConfig);
-                            if (in != null) {
-                                try {
-                                    Properties p = new Properties();
-                                    p.load(in);
-                                    in.close();
-                                    Builder<String, Object> b = ImmutableMap.builder();
-                                    for (Entry<Object, Object> e : p.entrySet()) {
-                                        b.put(String.valueOf(e.getKey()), e.getValue());
-                                    }
-                                    sqlConfig = b.build();
-                                    LOGGER.info("Using SQL configuation from {} ", clientConfig);
-                                    break;
-                                } catch (IOException e) {
-                                    LOGGER.info("Failed to read {} ", clientConfig, e);
+                    for (String clientSQLLocation : getClientConfigLocations(connection)) {
+                        String clientConfig = clientSQLLocation + ".sql";
+                        InputStream in = this.getClass().getClassLoader()
+                                .getResourceAsStream(clientConfig);
+                        if (in != null) {
+                            try {
+                                Properties p = new Properties();
+                                p.load(in);
+                                in.close();
+                                Builder<String, Object> b = ImmutableMap.builder();
+                                for (Entry<Object, Object> e : p.entrySet()) {
+                                    b.put(String.valueOf(e.getKey()), e.getValue());
                                 }
-                            } else {
-                                LOGGER.info("No SQL configuation at {} ", clientConfig);
+                                sqlConfig = b.build();
+                                LOGGER.info("Using SQL configuation from {} ", clientConfig);
+                                break;
+                            } catch (IOException e) {
+                                LOGGER.info("Failed to read {} ", clientConfig, e);
                             }
+                        } else {
+                            LOGGER.info("No SQL configuation at {} ", clientConfig);
                         }
-                    } catch (SQLException e) {
-                        LOGGER.error("Failed to locate SQL configuration");
                     }
+                } catch (SQLException e) {
+                    LOGGER.error("Failed to locate SQL configuration");
                 }
             }
         }

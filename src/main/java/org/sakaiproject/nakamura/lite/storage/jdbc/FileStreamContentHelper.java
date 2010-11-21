@@ -38,7 +38,12 @@ public class FileStreamContentHelper implements StreamedContentHelper {
             String contentBlockId, Map<String, Object> content, InputStream in) throws IOException {
         String path = getPath(keySpace, columnFamily, contentBlockId);
         File file = new File(fileStore+"/"+path);
-        file.getParentFile().mkdirs();
+        File parentFile = file.getParentFile() );
+        if ( !parentFile.exists() ) {
+            if ( !parentFile.mkdirs() ) {
+                throw new IOException("Unable to create directory "+parentFile.getAbsolutePath());
+            }
+        }
         FileOutputStream out = new FileOutputStream(file);
         long length = IOUtils.copyLarge(in, out);
         out.close();

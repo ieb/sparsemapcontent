@@ -36,12 +36,20 @@ public class ConcurrentLRUMap<K, V> implements Map<K, V> {
     @Override
     public boolean equals(Object obj) {
       try {
+        if ( obj == null ) {
+           return false;
+        }
         @SuppressWarnings("unchecked")
         Holder<T> t = (Holder<T>) obj;
         return value.equals(t.value);
       } catch (ClassCastException e) {
         return false;
       }
+    }
+    
+    @Override
+    public int hashCode() {
+        return value.hashCode();
     }
 
   }

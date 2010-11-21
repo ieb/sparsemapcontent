@@ -47,7 +47,7 @@ public class CreateUsersAndGroupsClient extends AbstractScalingClient {
                 String userId = tname + "_" + i;
                 authorizableManager.createUser(userId, userId, "test", ImmutableMap.of(userId,
                         (Object) "testvalue", "principals", "administrators;testers",
-                        Authorizable.GROUP_FIELD, Authorizable.GROUP_VALUE));
+                        Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.GROUP_VALUE));
             }
 
         } catch (StorageClientException e) {

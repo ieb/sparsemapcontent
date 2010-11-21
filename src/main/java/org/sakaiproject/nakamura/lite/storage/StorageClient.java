@@ -2,6 +2,7 @@ package org.sakaiproject.nakamura.lite.storage;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -24,4 +25,7 @@ public interface StorageClient {
             String contentBlockId, Map<String, Object> content, InputStream in)
             throws StorageClientException, AccessDeniedException, IOException;
 
+    Iterator<Map<String, Object>> find(String keySpace, String authorizableColumnFamily,
+            Map<String, Object> properties);
+    
 }

@@ -151,7 +151,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
 		Assert.assertTrue(authorizableManager.createUser("testuser",
 				"Test User", "test", ImmutableMap.of("testkey",
 						(Object) "testvalue", "principals",
-						"administrators;testers", Authorizable.GROUP_FIELD,
+						"administrators;testers", Authorizable.AUTHORIZABLE_TYPE_FIELD,
 						Authorizable.GROUP_VALUE)));
 		Assert.assertFalse(authorizableManager.createUser("testuser",
 				"Test User", "test", ImmutableMap.of("testkey",
@@ -187,7 +187,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
 		Assert.assertTrue(authorizableManager.createUser("testuser2",
 				"Test User", "test", ImmutableMap.of("testkey",
 						(Object) "testvalue", "principals", "testers",
-						Authorizable.GROUP_FIELD, Authorizable.GROUP_VALUE)));
+						Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.GROUP_VALUE)));
 		Assert.assertFalse(authorizableManager.createUser("testuser2",
 				"Test User", "test", ImmutableMap.of("testkey",
 						(Object) "testvalue", "principals",
@@ -214,7 +214,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
 					.createUser("testuser3", "Test User", "test", ImmutableMap
 							.of("testkey", (Object) "testvalue", "principals",
 									"administrators;testers",
-									Authorizable.GROUP_FIELD,
+									Authorizable.AUTHORIZABLE_TYPE_FIELD,
 									Authorizable.GROUP_VALUE));
 			Assert.fail();
 		} catch (AccessDeniedException e) {
@@ -258,7 +258,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
 		Assert.assertFalse(authorizableManager.createGroup("testgroup",
 				"Test Group", ImmutableMap.of("testkey", (Object) "testvalue",
 						"principals", "administrators;testers", "members",
-						"user1;user2", Authorizable.GROUP_FIELD,
+						"user1;user2", Authorizable.AUTHORIZABLE_TYPE_FIELD,
 						Authorizable.GROUP_VALUE)));
 
 		Authorizable a = authorizableManager.findAuthorizable("testgroup");
