@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.util.Type1UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,10 +59,10 @@ public class StorageClientUtils {
             return String.valueOf(object);
         }
     }
-    
+
     public static byte[] toBytes(Object value) {
         Object o = toStore(value);
-        if ( o instanceof byte[] ) {
+        if (o instanceof byte[]) {
             return (byte[]) o;
         } else {
             try {
@@ -72,9 +73,9 @@ public class StorageClientUtils {
         }
     }
 
-
     public static boolean isRoot(String objectPath) {
-        return (objectPath == null) || "/".equals(objectPath) || "".equals(objectPath) || (objectPath.indexOf("/") < 0);
+        return (objectPath == null) || "/".equals(objectPath) || "".equals(objectPath)
+                || (objectPath.indexOf("/") < 0);
     }
 
     public static String getParentObjectPath(String objectPath) {
@@ -109,6 +110,29 @@ public class StorageClientUtils {
             res = objectPath.substring(i + 1, j);
         }
         return res;
+
+    }
+
+    public static String insecureHash(String naked) {
+        try {
+            MessageDigest md;
+            try {
+                md = MessageDigest.getInstance("SHA-1");
+            } catch (NoSuchAlgorithmException e1) {
+                try {
+                    md = MessageDigest.getInstance("MD5");
+                } catch (NoSuchAlgorithmException e2) {
+                    LOGGER.error("You have no Message Digest Algorightms intalled in this JVM, secure Hashes are not availalbe, encoding bytes :"
+                            + e2.getMessage());
+                    return encode(StringUtils.leftPad(naked,10,'_').getBytes(UTF8), URL_SAFE_ENCODING);
+                }
+            }
+            byte[] bytes = md.digest(naked.getBytes(UTF8));
+            return encode(bytes, URL_SAFE_ENCODING);
+        } catch (UnsupportedEncodingException e3) {
+            LOGGER.error("no UTF-8 Envoding, get a real JVM, nothing will work here. NPE to come");
+            return null;
+        }
     }
 
     public static String secureHash(String password) {
@@ -125,12 +149,14 @@ public class StorageClientUtils {
                     } catch (NoSuchAlgorithmException e2) {
                         LOGGER.error("You have no Message Digest Algorightms intalled in this JVM, secure Hashes are not availalbe, encoding bytes :"
                                 + e2.getMessage());
-                        return encode(password.getBytes(UTF8), URL_SAFE_ENCODING);
+                        return encode(StringUtils.leftPad(password,10,'_').getBytes(UTF8), URL_SAFE_ENCODING);
                     }
                 }
             }
             byte[] bytes = md.digest(password.getBytes(UTF8));
-            return encode(bytes, URL_SAFE_ENCODING);
+            String hashed = encode(bytes, URL_SAFE_ENCODING);
+            LOGGER.info("Hashed {} to {} using {} ",new Object[] {password,hashed, md.getAlgorithm()});
+            return hashed;
         } catch (UnsupportedEncodingException e3) {
             LOGGER.error("no UTF-8 Envoding, get a real JVM, nothing will work here. NPE to come");
             return null;
@@ -235,7 +261,7 @@ public class StorageClientUtils {
     public static int toInt(Object object) {
         if (object instanceof Integer) {
             return ((Integer) object).intValue();
-        } else if ( object == null ) {
+        } else if (object == null) {
             return 0;
         }
         return Integer.parseInt(toString(object), ENCODING_BASE);
@@ -249,7 +275,7 @@ public class StorageClientUtils {
     }
 
     public static String newPath(String path, String child) {
-        LOGGER.info("Building [{}][{}] ",path,child);
+        LOGGER.info("Building [{}][{}] ", path, child);
         if (!path.endsWith("/")) {
             if (!child.startsWith("/")) {
                 return path + "/" + child;
@@ -268,33 +294,28 @@ public class StorageClientUtils {
 
     @SuppressWarnings("unchecked")
     public static <T> T getSetting(Object setting, T defaultValue) {
-        if ( setting != null ) {
+        if (setting != null) {
             return (T) setting;
         }
         return defaultValue;
     }
 
     public static String shardPath(String id) {
-        String hash;
-        try {
-            hash = encode(id.getBytes(UTF8), URL_SAFE_ENCODING);
-        } catch (UnsupportedEncodingException e) {
-            hash = encode(id.getBytes(), URL_SAFE_ENCODING);
-        }
-        return hash.substring(0,2)+"/"+hash.substring(2,4)+"/"+hash.substring(4,6)+"/"+hash;
+        String hash = insecureHash(id);
+        return hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, 6) + "/"
+                + hash;
     }
 
     public static String arrayEscape(String string) {
-        string = string.replaceAll("/","//");
+        string = string.replaceAll("/", "//");
         string = string.replaceAll(",", "/,");
         return string;
     }
+
     public static String arrayUnEscape(String string) {
         string = string.replaceAll("/,", ",");
-        string = string.replaceAll("//","/");
+        string = string.replaceAll("//", "/");
         return string;
     }
 
-    
-    
 }
