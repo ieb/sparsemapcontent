@@ -479,12 +479,15 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         List<Object> parameters = Lists.newArrayList();
         int set = 0;
         for (Entry<String, Object> e : properties.entrySet()) {
-            String k = "a"+set;
-            tables.append(MessageFormat.format(statementParts[1], k));
-            where.append(MessageFormat.format(statementParts[2], k));
-            parameters.add(e.getKey());
-            parameters.add(e.getValue());
-            set++;
+            Object v = e.getValue();
+            if ( v != null ) {
+                String k = "a"+set;
+                tables.append(MessageFormat.format(statementParts[1], k));
+                where.append(MessageFormat.format(statementParts[2], k));
+                parameters.add(e.getKey());
+                parameters.add(v);
+                set++;
+            }
         }
 
         final String sqlStatement = MessageFormat.format(statementParts[0], tables.toString(), where.toString());

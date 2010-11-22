@@ -287,7 +287,9 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
     public Iterator<Authorizable> findAuthorizable(String propertyName, String value,
             Class<? extends Authorizable> authorizableType) throws StorageClientException {
         Builder<String, Object> builder = ImmutableMap.builder();
-        builder.put(propertyName, StorageClientUtils.toStore(value));
+        if ( value != null ) {
+            builder.put(propertyName, StorageClientUtils.toStore(value));
+        }
         if (authorizableType.equals(User.class)) {
             builder.put(Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.USER_VALUE);
         } else if (authorizableType.equals(Group.class)) {
