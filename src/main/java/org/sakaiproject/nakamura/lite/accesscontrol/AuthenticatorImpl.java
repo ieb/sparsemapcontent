@@ -23,13 +23,13 @@ public class AuthenticatorImpl implements Authenticator {
         this.keySpace = configuration.getKeySpace();
         this.authorizableColumnFamily = configuration.getAuthorizableColumnFamily();
     }
-
+    
     public User authenticate(String userid, String password) {
         try {
             Map<String, Object> userAuthMap = client
                     .get(keySpace, authorizableColumnFamily, userid);
             if (userAuthMap == null) {
-                LOGGER.info("User was not found {}", userid);
+                LOGGER.debug("User was not found {}", userid);
                 return null;
             }
             String passwordHash = StorageClientUtils.secureHash(password);
@@ -51,10 +51,9 @@ public class AuthenticatorImpl implements Authenticator {
         try {
             Map<String, Object> userAuthMap = client.get(keySpace, authorizableColumnFamily, userid);
             if (userAuthMap == null || userAuthMap.size() == 0) {
-                LOGGER.info("User was not found {}", userid);
+                LOGGER.debug("User was not found {}", userid);
                 return null;
             }
-            System.err.println("Loaded "+userAuthMap);
             return new User(userAuthMap);
         } catch (StorageClientException e) {
             LOGGER.debug("Failed To system authenticate user " + e.getMessage(), e);
