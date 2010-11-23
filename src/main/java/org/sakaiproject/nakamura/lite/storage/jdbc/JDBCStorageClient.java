@@ -61,6 +61,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     private StreamedContentHelper streamedContentHelper;
     private Map<String, PreparedStatement> preparedStatements = Maps.newHashMap();
     private List<Disposable> toDispose = Lists.newArrayList();
+    private Exception closed;
 
     public JDBCStorageClient(Connection connection, Map<String, Object> properties,
             Map<String, Object> sqlConfig) throws SQLException, NoSuchAlgorithmException,
@@ -79,6 +80,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
 
     public Map<String, Object> get(String keySpace, String columnFamily, String key)
             throws StorageClientException {
+        checkClosed();
         ResultSet strings = null;
         Map<String, Object> result = Maps.newHashMap();
         String rid = rowHash(keySpace, columnFamily, key);
@@ -124,6 +126,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
 
     public void insert(String keySpace, String columnFamily, String key, Map<String, Object> values)
             throws StorageClientException {
+        checkClosed();
         try {
             startUpConnection();
             String rid = rowHash(keySpace, columnFamily, key);
@@ -195,6 +198,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
 
     public void remove(String keySpace, String columnFamily, String key)
             throws StorageClientException {
+        checkClosed();
         String rid = rowHash(keySpace, columnFamily, key);
         try {
             startUpConnection();
@@ -220,9 +224,16 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         try {
             shutdownConnection();
             connection.close();
+            closed = new Exception("Connection Closed Traceback");
             LOGGER.info("Sparse Content Map Database Connection closed.");
         } catch (Throwable t) {
             LOGGER.error("Failed to close connection ", t);
+        }
+    }
+    
+    private void checkClosed() throws StorageClientException {
+        if ( closed != null) {
+            throw new StorageClientException("Connection Has Been closed, traceback of close location follows ",closed);
         }
     }
 
@@ -256,7 +267,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
 
     public void startUpConnection() throws SQLException {
         if (!active && alive) {
-            LOGGER.debug("Activating {}", this);
+            LOGGER.debug("Opening Resources {}", this);
             openPreparedStatements();
 
             active = true;
@@ -277,7 +288,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
 
     public void shutdownConnection() {
         if (active) {
-            LOGGER.info("Passivating {}", this);
+            LOGGER.info("Closing Resources {}", this);
             closePreparedStatements();
             for (Disposable d : toDispose) {
                 d.close();
@@ -302,7 +313,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         return disposable;
     }
 
-    public boolean validate() {
+    public boolean validate() throws StorageClientException {
+        checkClosed();
         Statement statement = null;
         try {
             statement = connection.createStatement();
@@ -324,7 +336,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         return (String) sqlConfig.get(statementName);
     }
 
-    public void checkSchema(String[] clientConfigLocations) throws ConnectionPoolException {
+    public void checkSchema(String[] clientConfigLocations) throws ConnectionPoolException, StorageClientException {
+        checkClosed();
         Statement statement = null;
         try {
 
@@ -414,6 +427,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     public Map<String, Object> streamBodyIn(String keySpace, String columnFamily, String contentId,
             String contentBlockId, Map<String, Object> content, InputStream in)
             throws StorageClientException, AccessDeniedException, IOException {
+        checkClosed();
         return streamedContentHelper.writeBody(keySpace, columnFamily, contentId, contentBlockId,
                 content, in);
     }
@@ -422,7 +436,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     public InputStream streamBodyOut(String keySpace, String columnFamily, String contentId,
             String contentBlockId, Map<String, Object> content) throws StorageClientException,
             AccessDeniedException, IOException {
-
+        checkClosed();
         final InputStream in = streamedContentHelper.readBody(keySpace, columnFamily,
                 contentBlockId, content);
         registerDisposable(new Disposable() {
@@ -449,13 +463,15 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         alive = true;
     }
 
-    protected Connection getConnection() {
+    protected Connection getConnection() throws StorageClientException {
+        checkClosed();
         return connection;
     }
 
     @Override
     public DisposableIterator<Map<String, Object>> find(String keySpace, String columnFamily,
             Map<String, Object> properties) throws StorageClientException {
+        checkClosed();
 
         String[] keys = new String[] { "find." + keySpace + "." + columnFamily,
                 "find." + columnFamily, "find" };
@@ -495,19 +511,19 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         PreparedStatement tpst = null;
         ResultSet trs = null;
         try {
-            LOGGER.info("Preparing {} ",sqlStatement);
+            LOGGER.debug("Preparing {} ",sqlStatement);
             tpst = connection.prepareStatement(sqlStatement);
             tpst.clearParameters();
             int i = 1;
             for (Object params : parameters) {
                 tpst.setObject(i, StorageClientUtils.toStore(params));
-                LOGGER.info("Setting {} ",StorageClientUtils.toStore(params));
+                LOGGER.debug("Setting {} ",StorageClientUtils.toStore(params));
                 
                 i++;
             }
 
             trs = tpst.executeQuery();
-            LOGGER.info("Executed ");
+            LOGGER.debug("Executed ");
 
             // pass control to the iterator.
             final PreparedStatement pst = tpst;
@@ -571,7 +587,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                                 }
                             }
                         }
-                        LOGGER.info("No More Records ");
+                        LOGGER.debug("No More Records ");
                         close();
                         map = null;
                         return false;
@@ -585,7 +601,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
 
                 private String[] nextRow(ResultSet rs) throws SQLException {
                     String[] s =  new String[] { rs.getString(1), rs.getString(2), rs.getString(3) };
-                    LOGGER.info("Got Row {} ",Arrays.toString(s));
+                    LOGGER.debug("Got Row {} ",Arrays.toString(s));
                     return s;
                 }
 
