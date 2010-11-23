@@ -179,7 +179,7 @@ public class RepositoryImpl implements Repository {
     public void unbindSession(Session session) {
         // this only deals with thread locals so is thread safe.
         List<String> toRemove = Lists.newArrayList();
-        Map<String, Session> n = boundAdminSessions.get();
+        Map<String, Session> n = boundSessions.get();
         Map<String, Session> a = boundAdminSessions.get();
         for ( Entry<String, Session> e:  n.entrySet() ) {
             if ( session.equals(e.getValue())) {
