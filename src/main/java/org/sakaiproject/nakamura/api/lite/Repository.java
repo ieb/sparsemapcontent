@@ -17,4 +17,5 @@ public interface Repository {
 
     Authenticator getAuthenticator() throws ConnectionPoolException;
 
+    void logout() throws ConnectionPoolException;
 }

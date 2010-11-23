@@ -65,6 +65,7 @@ public class RepositoryImpl implements Repository {
         sharedCache = connectionPool.getSharedCache();
     }
 
+    @Override
     public void logout() throws ConnectionPoolException {
       // clean up any admin sessions
       Map<String, Session> adminSessions = boundAdminSessions.get();
@@ -133,7 +134,7 @@ public class RepositoryImpl implements Repository {
         AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration);
         User currentUser = authenticatorImpl.systemAuthenticate(User.ADMIN_USER);
         if ( currentUser == null ) {
-            throw new StorageClientException("User "+User.ADMIN_USER+" does not exist, cant login asministratively as this user");
+            throw new StorageClientException("User "+User.ADMIN_USER+" does not exist, cant login administratively as this user");
         }
         s = new SessionImpl(currentUser, connectionPool, configuration, sharedCache);
         boundAdminSessions.get().put(User.ADMIN_USER, s);
@@ -149,7 +150,7 @@ public class RepositoryImpl implements Repository {
         AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration);
         User currentUser = authenticatorImpl.systemAuthenticate(username);
         if ( currentUser == null ) {
-            throw new StorageClientException("User "+username+" does not exist, cant login asministratively as this user");
+            throw new StorageClientException("User "+username+" does not exist, cant login administratively as this user");
         }
         s = new SessionImpl(currentUser, connectionPool, configuration, sharedCache);
         boundAdminSessions.get().put(username, s);
