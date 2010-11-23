@@ -1,5 +1,5 @@
 
-DROP TABLE `css`;
+DROP TABLE IF EXISTS `css`;
 
 CREATE TABLE  `css` (
   `id` int(11) NOT NULL auto_increment,
@@ -12,7 +12,7 @@ CREATE TABLE  `css` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-DROP TABLE `au_css`;
+DROP TABLE IF EXISTS `au_css`;
 
 CREATE TABLE  `au_css` (
   `id` int(11) NOT NULL auto_increment,
@@ -24,7 +24,7 @@ CREATE TABLE  `au_css` (
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-DROP TABLE `cn_css`;
+DROP TABLE IF EXISTS `cn_css`;
 
 CREATE TABLE  `cn_css` (
   `id` int(11) NOT NULL auto_increment,
@@ -37,7 +37,7 @@ CREATE TABLE  `cn_css` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-DROP TABLE `ac_css`;
+DROP TABLE IF EXISTS `ac_css`;
 
 CREATE TABLE  `ac_css` (
   `id` int(11) NOT NULL auto_increment,
