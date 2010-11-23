@@ -8,11 +8,11 @@ public interface Session {
 
     void logout() throws ConnectionPoolException;
 
-    AccessControlManager getAccessControlManager();
+    AccessControlManager getAccessControlManager() throws StorageClientException;
 
-    AuthorizableManager getAuthorizableManager();
+    AuthorizableManager getAuthorizableManager() throws StorageClientException;
 
-    ContentManager getContentManager();
+    ContentManager getContentManager() throws StorageClientException;
 
     String getUserId();
 

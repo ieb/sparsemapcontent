@@ -1,5 +1,6 @@
 package org.sakaiproject.nakamura.lite;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import org.apache.felix.scr.annotations.Activate;
@@ -22,6 +23,7 @@ import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -104,7 +106,7 @@ public class RepositoryImpl implements Repository {
         if ( currentUser == null ) {
             throw new StorageClientException("User "+username+" does not exist, cant login as this user");
         }
-        s = new SessionImpl(currentUser, connectionPool, configuration, sharedCache);
+        s = new SessionImpl(this, currentUser, connectionPool, configuration, sharedCache);
         boundSessions.get().put(username, s);
       }
       return s;
@@ -120,7 +122,7 @@ public class RepositoryImpl implements Repository {
         if ( currentUser == null ) {
             throw new StorageClientException("User "+User.ANON_USER+" does not exist, cant login as this user");
         }
-        s = new SessionImpl(currentUser, connectionPool, configuration, sharedCache);
+        s = new SessionImpl(this, currentUser, connectionPool, configuration, sharedCache);
         boundSessions.get().put(User.ANON_USER, s);
       }
       return s;
@@ -136,7 +138,7 @@ public class RepositoryImpl implements Repository {
         if ( currentUser == null ) {
             throw new StorageClientException("User "+User.ADMIN_USER+" does not exist, cant login administratively as this user");
         }
-        s = new SessionImpl(currentUser, connectionPool, configuration, sharedCache);
+        s = new SessionImpl(this, currentUser, connectionPool, configuration, sharedCache);
         boundAdminSessions.get().put(User.ADMIN_USER, s);
       }
       return s;
@@ -152,7 +154,7 @@ public class RepositoryImpl implements Repository {
         if ( currentUser == null ) {
             throw new StorageClientException("User "+username+" does not exist, cant login administratively as this user");
         }
-        s = new SessionImpl(currentUser, connectionPool, configuration, sharedCache);
+        s = new SessionImpl(this, currentUser, connectionPool, configuration, sharedCache);
         boundAdminSessions.get().put(username, s);
       }
       return s;
@@ -171,6 +173,28 @@ public class RepositoryImpl implements Repository {
 
     public void setConnectionPool(ConnectionPool connectionPool) {
         this.connectionPool = connectionPool;
+    }
+
+    @Override
+    public void unbindSession(Session session) {
+        // this only deals with thread locals so is thread safe.
+        List<String> toRemove = Lists.newArrayList();
+        Map<String, Session> n = boundAdminSessions.get();
+        Map<String, Session> a = boundAdminSessions.get();
+        for ( Entry<String, Session> e:  n.entrySet() ) {
+            if ( session.equals(e.getValue())) {
+                toRemove.add(e.getKey());
+            }
+        }
+        for ( Entry<String, Session> e: a.entrySet()) {
+            if ( session.equals(e.getValue())) {
+                toRemove.add(e.getKey());
+            }
+        }
+        for ( String r : toRemove) {
+            n.remove(r);
+            a.remove(r);
+        }
     }
 
 
