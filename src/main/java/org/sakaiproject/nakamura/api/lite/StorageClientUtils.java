@@ -154,9 +154,7 @@ public class StorageClientUtils {
                 }
             }
             byte[] bytes = md.digest(password.getBytes(UTF8));
-            String hashed = encode(bytes, URL_SAFE_ENCODING);
-            LOGGER.info("Hashed {} to {} using {} ",new Object[] {password,hashed, md.getAlgorithm()});
-            return hashed;
+            return encode(bytes, URL_SAFE_ENCODING);
         } catch (UnsupportedEncodingException e3) {
             LOGGER.error("no UTF-8 Envoding, get a real JVM, nothing will work here. NPE to come");
             return null;
@@ -275,7 +273,6 @@ public class StorageClientUtils {
     }
 
     public static String newPath(String path, String child) {
-        LOGGER.info("Building [{}][{}] ", path, child);
         if (!path.endsWith("/")) {
             if (!child.startsWith("/")) {
                 return path + "/" + child;

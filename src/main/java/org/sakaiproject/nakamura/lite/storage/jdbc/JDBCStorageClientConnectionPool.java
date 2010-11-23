@@ -18,6 +18,7 @@ import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
+import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
@@ -92,7 +93,11 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
 
         public boolean validateObject(Object obj) {
             JDBCStorageClient client = checkSchema(obj);
-            return client.validate();
+            try {
+                return client.validate();
+            } catch (StorageClientException e) {
+                return false;
+            }
         }
 
     }
