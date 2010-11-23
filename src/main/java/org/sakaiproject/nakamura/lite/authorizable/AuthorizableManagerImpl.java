@@ -9,13 +9,14 @@ import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessControlManager;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.Authenticator;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.Security;
-import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
+import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +47,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
     private String authorizableColumnFamily;
     private User thisUser;
     private boolean closed;
+    private Authenticator authenticator;
 
     public AuthorizableManagerImpl(User currentUser, StorageClient client,
             Configuration configuration, AccessControlManager accessControlManager)
@@ -59,6 +61,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
         this.accessControlManager = accessControlManager;
         this.keySpace = configuration.getKeySpace();
         this.authorizableColumnFamily = configuration.getAuthorizableColumnFamily();
+        this.authenticator = new AuthenticatorImpl(client, configuration);
         this.closed = false;
     }
 
@@ -265,10 +268,17 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
     }
 
     @Override
-    public void changePassword(Authorizable authorizable, String password)
+    public void changePassword(Authorizable authorizable, String password, String oldPassword)
             throws StorageClientException, AccessDeniedException {
         String id = authorizable.getId();
+        
         if (thisUser.isAdmin() || currentUserId.equals(id)) {
+            if ( !thisUser.isAdmin() ) {
+                User u = authenticator.authenticate(id, oldPassword);
+                if ( u == null ) {
+                    throw new StorageClientException("Unable to change passwords, old password does not match");
+                }
+            }
             client.insert(keySpace, authorizableColumnFamily, id, ImmutableMap.of(
                     Authorizable.LASTMODIFIED,
                     StorageClientUtils.toStore(System.currentTimeMillis()),

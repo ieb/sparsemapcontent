@@ -24,7 +24,7 @@ public interface AuthorizableManager {
 
     void delete(String authorizableId) throws AccessDeniedException, StorageClientException;
 
-    void changePassword(Authorizable authorizable, String password) throws StorageClientException, AccessDeniedException;
+    void changePassword(Authorizable authorizable, String password, String oldPassword) throws StorageClientException, AccessDeniedException;
 
     Iterator<Authorizable> findAuthorizable(String propertyName, String value,
             Class<? extends Authorizable> authorizableType) throws StorageClientException;
