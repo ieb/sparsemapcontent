@@ -51,7 +51,7 @@ public abstract class AbstractAccessControlManagerImplTest {
 
     @After
     public void after() throws ConnectionPoolException {
-        connectionPool.closeConnection();
+        connectionPool.closeConnection(client);
     }
 
 	@Test

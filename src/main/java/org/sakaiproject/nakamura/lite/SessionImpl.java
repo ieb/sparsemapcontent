@@ -8,8 +8,10 @@ import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.Authenticator;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
+import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.content.ContentManagerImpl;
@@ -25,6 +27,8 @@ public class SessionImpl implements Session {
     private User currentUser;
     private Repository repository;
     private Exception closedAt;
+    private StorageClient client;
+    private Authenticator authenticator;
 
     public SessionImpl(Repository repository, User currentUser, ConnectionPool connectionPool,
             Configuration configuration, Map<String, CacheHolder> sharedCache)
@@ -32,43 +36,61 @@ public class SessionImpl implements Session {
         this.connectionPool = connectionPool;
         this.currentUser = currentUser;
         this.repository = repository;
-        StorageClient client = connectionPool.openConnection();
+        client = connectionPool.openConnection();
+        
         accessControlManager = new AccessControlManagerImpl(client, currentUser, configuration,
                 sharedCache);
         authorizableManager = new AuthorizableManagerImpl(currentUser, client, configuration,
                 accessControlManager);
 
         contentManager = new ContentManagerImpl(client, accessControlManager, configuration);
+
+        authenticator = new AuthenticatorImpl(client, configuration);
     }
 
+    @Override
     public void logout() throws ConnectionPoolException {
         if (closedAt == null) {
             accessControlManager.close();
             authorizableManager.close();
             contentManager.close();
-            connectionPool.closeConnection();
+            connectionPool.closeConnection(client);
             accessControlManager = null;
             authorizableManager = null;
             contentManager = null;
             connectionPool = null;
-            repository.unbindSession(this);
+            authenticator = null;
             closedAt = new Exception("This session was closed at:");
         }
     }
 
+    @Override
     public AccessControlManagerImpl getAccessControlManager() throws StorageClientException {
         check();
         return accessControlManager;
     }
 
+    @Override
     public AuthorizableManagerImpl getAuthorizableManager() throws StorageClientException {
         check();
         return authorizableManager;
     }
 
+    @Override
     public ContentManagerImpl getContentManager() throws StorageClientException {
         check();
         return contentManager;
+    }
+
+    @Override
+    public Authenticator getAuthenticator() throws StorageClientException {
+        check();
+        return authenticator;
+    }
+
+    @Override
+    public Repository getRepository() {
+        return repository;
     }
 
     @Override

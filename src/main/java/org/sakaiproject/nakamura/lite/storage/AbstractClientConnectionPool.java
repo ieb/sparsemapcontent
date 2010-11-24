@@ -1,6 +1,7 @@
 package org.sakaiproject.nakamura.lite.storage;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
@@ -12,10 +13,11 @@ import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Component(componentAbstract=true)
+@Component(componentAbstract = true)
 public abstract class AbstractClientConnectionPool implements ConnectionPool {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractClientConnectionPool.class);
+    private static final Logger LOGGER = LoggerFactory
+            .getLogger(AbstractClientConnectionPool.class);
 
     @Property(intValue = 200)
     private static final String MAX_ACTIVE = "max-active";
@@ -38,16 +40,16 @@ public abstract class AbstractClientConnectionPool implements ConnectionPool {
     @Property(value = "block | fail | grow ")
     private static final String WHEN_EHAUSTED = "when-exhausted-action";
 
-    private ThreadLocal<StorageClient> boundCLient = new ThreadLocal<StorageClient>();
-
     private GenericObjectPool pool;
+
+    private AtomicInteger ref = new AtomicInteger();
 
     public AbstractClientConnectionPool() {
     }
 
     @Activate
     public void activate(Map<String, Object> properties) throws ClassNotFoundException {
-        int maxActive = getProperty(properties.get(MAX_ACTIVE),200);
+        int maxActive = getProperty(properties.get(MAX_ACTIVE), 200);
         byte whenExhaustedAction = GenericObjectPool.DEFAULT_WHEN_EXHAUSTED_ACTION;
         String whenExhausted = (String) properties.get(WHEN_EHAUSTED);
         if ("fail".equals(whenExhausted)) {
@@ -64,7 +66,8 @@ public abstract class AbstractClientConnectionPool implements ConnectionPool {
         long timeBetweenEvictionRunsMillis = getProperty(
                 properties.get(TIME_BETWEEN_EVICTION_RUNS_MILLIS), 60000L);
         int numTestsPerEvictionRun = getProperty(properties.get(NUM_TESTS_PER_EVICTION_RUN), 1000);
-        long minEvictableIdleTimeMillis = getProperty(properties.get(MIN_EVICTABLE_IDLE_TIME_MILLIS), 10000L);
+        long minEvictableIdleTimeMillis = getProperty(
+                properties.get(MIN_EVICTABLE_IDLE_TIME_MILLIS), 10000L);
         boolean testWhileIdle = getProperty(properties.get(TEST_WHILE_IDLE), false);
 
         pool = new GenericObjectPool(getConnectionPoolFactory(), maxActive, whenExhaustedAction,
@@ -90,7 +93,7 @@ public abstract class AbstractClientConnectionPool implements ConnectionPool {
             pool.close();
             LOGGER.info("Sparse Map Content client pool closed ");
         } catch (Exception e) {
-            LOGGER.error("Failed to close pool ",e);
+            LOGGER.error("Failed to close pool ", e);
         }
     }
 
@@ -102,12 +105,9 @@ public abstract class AbstractClientConnectionPool implements ConnectionPool {
      */
     public StorageClient openConnection() throws ConnectionPoolException {
         try {
-            StorageClient clientConnection = boundCLient.get();
-            if (clientConnection == null) {
-                clientConnection = (StorageClient) pool.borrowObject();
-                boundCLient.set(clientConnection);
-            }
-            return clientConnection;
+            StorageClient client =  (StorageClient) pool.borrowObject();
+            LOGGER.info("Open Num Open Connections is now {} ",ref.getAndIncrement()+1);
+            return client;
         } catch (Exception e) {
             throw new ConnectionPoolException("Failed To Borrow connection from pool ", e);
         }
@@ -119,16 +119,16 @@ public abstract class AbstractClientConnectionPool implements ConnectionPool {
      * @see
      * org.sakaiproject.nakamura.lite.cassandra.ConnectionPool#closeConnection()
      */
-    public void closeConnection() throws ConnectionPoolException {
-        StorageClient clientConnection = boundCLient.get();
-        if (clientConnection != null) {
-            try {
-                pool.returnObject(clientConnection);
-            } catch (Exception e) {
-                throw new ConnectionPoolException("Failed To Return connection to pool ", e);
-            } finally {
-                boundCLient.set(null);
+    public void closeConnection(StorageClient client) throws ConnectionPoolException {
+        try {
+            if ( client != null ) {
+                pool.returnObject(client);
+                LOGGER.info("Close Num Open Connections is now {} ",ref.getAndDecrement()-1);
+            } else {
+                LOGGER.info("NoClose Num Open Connections is now {} ",ref.get());    
             }
+        } catch (Exception e) {
+            throw new ConnectionPoolException("Failed To Return connection to pool ", e);
         }
     }
 }

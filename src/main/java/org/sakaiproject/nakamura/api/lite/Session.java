@@ -1,6 +1,7 @@
 package org.sakaiproject.nakamura.api.lite;
 
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessControlManager;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.Authenticator;
 import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 
@@ -15,5 +16,9 @@ public interface Session {
     ContentManager getContentManager() throws StorageClientException;
 
     String getUserId();
+
+    Authenticator getAuthenticator() throws StorageClientException;
+
+    Repository getRepository();
 
 }

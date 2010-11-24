@@ -15,10 +15,11 @@ public interface ConnectionPool {
 
     /**
      * Closes the connection bound to this thread.
+     * @param client 
      * 
      * @throws ConnectionPoolException
      */
-    void closeConnection() throws ConnectionPoolException;
+    void closeConnection(StorageClient client) throws ConnectionPoolException;
 
     Map<String, CacheHolder> getSharedCache();
 

@@ -52,7 +52,8 @@ public class RepositoryImplTest {
         RepositoryImpl repository = new RepositoryImpl();
         repository.configuration = configuration;
         repository.connectionPool = connectionPool;
-        repository.activate(ImmutableMap.of("t",(Object)"x"));
+        Map<String, Object> properties = ImmutableMap.of("t",(Object)"x");
+        repository.activate(properties);
         
         Session session = repository.loginAdministrative();
         Assert.assertEquals(User.ADMIN_USER, session.getUserId());

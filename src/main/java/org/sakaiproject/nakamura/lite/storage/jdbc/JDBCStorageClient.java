@@ -289,11 +289,15 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     public void shutdownConnection() {
         if (active) {
             LOGGER.info("Closing Resources {}", this);
+            disposeDisposables();
             closePreparedStatements();
-            for (Disposable d : toDispose) {
-                d.close();
-            }
             active = false;
+        }
+    }
+
+    private void disposeDisposables() {
+        for (Disposable d : toDispose) {
+            d.close();
         }
     }
 
@@ -421,6 +425,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     }
 
     public void passivate() {
+       disposeDisposables();
     }
 
     @Override

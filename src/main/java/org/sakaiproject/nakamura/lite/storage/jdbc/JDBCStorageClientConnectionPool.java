@@ -120,9 +120,9 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
         Class<?> clazz = Class.forName(jdbcDriver);
 
         LOGGER.info("Loaded Database Driver {} as {}  ", jdbcDriver, clazz);
-
+        JDBCStorageClient client = null;
         try {
-            JDBCStorageClient client = (JDBCStorageClient) openConnection();
+            client = (JDBCStorageClient) openConnection();
             if ( client == null ) {
                 LOGGER.warn("Failed to check Schema, no connection");                
             }
@@ -130,7 +130,7 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
             LOGGER.warn("Failed to check Schema", e);
         } finally {
             try {
-                closeConnection();
+                closeConnection(client);
             } catch (ConnectionPoolException e) {
                 LOGGER.warn("Failed to close connection after schema check ", e);
             }
