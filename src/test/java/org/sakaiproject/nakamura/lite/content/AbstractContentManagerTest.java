@@ -61,7 +61,7 @@ public abstract class AbstractContentManagerTest {
 
     @After
     public void after() throws ConnectionPoolException {
-        connectionPool.closeConnection();
+        connectionPool.closeConnection(client);
     }
 
     @Test

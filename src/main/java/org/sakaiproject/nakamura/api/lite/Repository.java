@@ -1,7 +1,6 @@
 package org.sakaiproject.nakamura.api.lite;
 
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
-import org.sakaiproject.nakamura.api.lite.accesscontrol.Authenticator;
 
 public interface Repository {
 
@@ -15,9 +14,4 @@ public interface Repository {
 
     Session loginAdministrative(String username) throws ConnectionPoolException, StorageClientException, AccessDeniedException;
 
-    Authenticator getAuthenticator() throws ConnectionPoolException;
-
-    void logout() throws ConnectionPoolException;
-
-    void unbindSession(Session sessionImpl);
 }

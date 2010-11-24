@@ -112,7 +112,6 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
             Group group = (Group) authorizable;
             String[] membersAdded = group.getMembersAdded();
             Authorizable[] newMembers = new Authorizable[membersAdded.length];
-            Authorizable[] retiredMembers = new Authorizable[membersAdded.length];
             int i = 0;
             for (String newMember : membersAdded) {
                 try {
@@ -132,6 +131,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
             }
             i = 0;
             String[] membersRemoved = group.getMembersRemoved();
+            Authorizable[] retiredMembers = new Authorizable[membersRemoved.length];
             for (String retiredMember : membersRemoved) {
                 try {
                     // members that dont exist require no action
