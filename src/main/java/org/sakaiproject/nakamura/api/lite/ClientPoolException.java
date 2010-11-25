@@ -1,8 +1,8 @@
 package org.sakaiproject.nakamura.api.lite;
 
-public class ConnectionPoolException extends Exception {
+public class ClientPoolException extends StorageClientException {
 
-    public ConnectionPoolException(String message, Exception e) {
+    public ClientPoolException(String message, Exception e) {
         super(message, e);
     }
 

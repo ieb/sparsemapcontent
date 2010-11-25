@@ -11,26 +11,28 @@ import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Service;
 import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
-import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
 @Component(enabled=false, metatype = true, inherit=true)
-@Service(value = ConnectionPool.class)
-public class MemoryStorageClientConnectionPool extends AbstractClientConnectionPool {
+@Service(value = StorageClientPool.class)
+public class MemoryStorageClientPool extends AbstractClientConnectionPool {
 
     public static class ClientConnectionPoolFactory extends BasePoolableObjectFactory {
 
 
         private Map<String, Map<String, Object>> store;
         private Map<String, Object> properties;
+        private MemoryStorageClientPool pool;
 
-        public ClientConnectionPoolFactory(Map<String, Map<String, Object>> store, Map<String, Object> properties) {
+        public ClientConnectionPoolFactory(MemoryStorageClientPool pool, Map<String, Map<String, Object>> store, Map<String, Object> properties) {
            this.store = store;
+           this.pool = pool;
            this.properties = properties;
         }
 
         @Override
         public Object makeObject() throws Exception {
-            MemoryStorageClient client = new MemoryStorageClient(store, properties);
+            MemoryStorageClient client = new MemoryStorageClient(pool, store, properties);
             return client;
         }
 
@@ -60,7 +62,7 @@ public class MemoryStorageClientConnectionPool extends AbstractClientConnectionP
     private Map<String, Map<String, Object>> store;
     private Map<String, Object> properties;
 
-    public MemoryStorageClientConnectionPool() {
+    public MemoryStorageClientPool() {
     }
 
     @Activate
@@ -78,7 +80,7 @@ public class MemoryStorageClientConnectionPool extends AbstractClientConnectionP
 
     @Override
     protected PoolableObjectFactory getConnectionPoolFactory() {
-        return new ClientConnectionPoolFactory(store, properties);
+        return new ClientConnectionPoolFactory(this, store, properties);
     }
 
     @Override

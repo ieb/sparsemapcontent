@@ -1,6 +1,6 @@
 package org.sakaiproject.nakamura.lite.soak;
 
-import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.slf4j.Logger;
@@ -22,7 +22,7 @@ public abstract class AbstractSoakController {
         this.totalOperations = totalOperations;
     }
 
-    public void launchSoak(int nthreads) throws ConnectionPoolException, StorageClientException,
+    public void launchSoak(int nthreads) throws ClientPoolException, StorageClientException,
             AccessDeniedException {
         LOGGER.info(
         "|Threads|Time s|Throughput|Throughput per thread| Concurrency| Efficiency|");
@@ -62,6 +62,6 @@ public abstract class AbstractSoakController {
                 new Object[] { currentThreads, t, rate, ratePerThread, speedup, efficiency});
     }
 
-    protected abstract Runnable getRunnable(int tr) throws ConnectionPoolException,
+    protected abstract Runnable getRunnable(int tr) throws ClientPoolException,
             StorageClientException, AccessDeniedException;
 }

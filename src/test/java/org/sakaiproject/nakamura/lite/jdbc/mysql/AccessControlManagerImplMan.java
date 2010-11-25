@@ -1,13 +1,13 @@
 package org.sakaiproject.nakamura.lite.jdbc.mysql;
 
 import org.sakaiproject.nakamura.lite.accesscontrol.AbstractAccessControlManagerImplTest;
-import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
 public class AccessControlManagerImplMan extends AbstractAccessControlManagerImplTest {
 
     @Override
-    protected ConnectionPool getConnectionPool() throws ClassNotFoundException {
-        return MysqlSetup.getConnectionPool();
+    protected StorageClientPool getClientPool() throws ClassNotFoundException {
+        return MysqlSetup.getClientPool();
     }
 
 }

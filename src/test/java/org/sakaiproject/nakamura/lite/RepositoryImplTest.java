@@ -2,10 +2,11 @@ package org.sakaiproject.nakamura.lite;
 
 import java.util.Map;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -13,9 +14,9 @@ import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
 import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
-import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
-import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,15 +26,15 @@ import com.google.common.collect.Maps;
 public class RepositoryImplTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RepositoryImplTest.class);
-    private ConnectionPool connectionPool;
+    private StorageClientPool clientPool;
     private StorageClient client;
     private ConfigurationImpl configuration;
 
     @Before
     public void before() throws StorageClientException, AccessDeniedException,
-            ConnectionPoolException, ClassNotFoundException {
-        connectionPool = getConnectionPool();
-        client = connectionPool.openConnection();
+            ClientPoolException, ClassNotFoundException {
+        clientPool = getClientPool();
+        client = clientPool.getClient();
         configuration = new ConfigurationImpl();
         Map<String, Object> properties = Maps.newHashMap();
         properties.put("keyspace", "n");
@@ -46,12 +47,17 @@ public class RepositoryImplTest {
         authorizableActivator.setup();
         LOGGER.info("Setup Complete");
     }
+    
+    @After
+    public void after() {
+        client.close();
+    }
 
     @Test
-    public void testStart() throws ConnectionPoolException, StorageClientException, AccessDeniedException {
+    public void testStart() throws ClientPoolException, StorageClientException, AccessDeniedException {
         RepositoryImpl repository = new RepositoryImpl();
         repository.configuration = configuration;
-        repository.connectionPool = connectionPool;
+        repository.clientPool = clientPool;
         Map<String, Object> properties = ImmutableMap.of("t",(Object)"x");
         repository.activate(properties);
         
@@ -79,8 +85,8 @@ public class RepositoryImplTest {
 
     }
     
-    protected ConnectionPool getConnectionPool() throws ClassNotFoundException {
-        MemoryStorageClientConnectionPool cp = new MemoryStorageClientConnectionPool();
+    protected StorageClientPool getClientPool() throws ClassNotFoundException {
+        MemoryStorageClientPool cp = new MemoryStorageClientPool();
         cp.activate(ImmutableMap.of("test", (Object) "test",
                 BlockContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK, 9));
         return cp;

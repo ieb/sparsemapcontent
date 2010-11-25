@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
@@ -14,7 +14,7 @@ import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.soak.AbstractScalingClient;
-import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -25,7 +25,7 @@ public class CreateUsersAndGroupsWithMembersClient extends AbstractScalingClient
     private int ngroups;
     private Map<String, CacheHolder> sharedCache = new ConcurrentHashMap<String, CacheHolder>(1000);
 
-    public CreateUsersAndGroupsWithMembersClient(int totalUsers,  int totalGroups, ConnectionPool connectionPool) throws ConnectionPoolException,
+    public CreateUsersAndGroupsWithMembersClient(int totalUsers,  int totalGroups, StorageClientPool connectionPool) throws ClientPoolException,
             StorageClientException, AccessDeniedException {
         super(connectionPool);
         nusers = totalUsers;
@@ -78,9 +78,6 @@ public class CreateUsersAndGroupsWithMembersClient extends AbstractScalingClient
             // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (AccessDeniedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (ConnectionPoolException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }

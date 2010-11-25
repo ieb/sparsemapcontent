@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Timer;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.pool.PoolableObjectFactory;
@@ -17,13 +18,13 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
-import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
-import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,11 +32,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
 @Component(immediate = true, metatype = true, inherit = true)
-@Service(value = ConnectionPool.class)
-public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPool {
+@Service(value = StorageClientPool.class)
+public class  JDBCStorageClientPool extends AbstractClientConnectionPool {
 
     private static final Logger LOGGER = LoggerFactory
-            .getLogger(JDBCStorageClientConnectionPool.class);
+            .getLogger(JDBCStorageClientPool.class);
 
     @Property(value = { "jdbc:derby:sparsemap/db;create=true" })
     public static final String CONNECTION_URL = "jdbc-url";
@@ -51,16 +52,8 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
 
     public class JCBCStorageClientConnection implements PoolableObjectFactory {
 
-        private String url;
-        private Properties connectionProperties;
-        private String username;
-        private String password;
 
-        public JCBCStorageClientConnection(Map<String, Object> config) {
-            connectionProperties = getConnectionProperties(config);
-            username = StorageClientUtils.getSetting(config.get(USERNAME), "");
-            password = StorageClientUtils.getSetting(config.get(PASSWORD), "");
-            url = getConnectionUrl(config);
+        public JCBCStorageClientConnection() {
         }
 
         public void activateObject(Object obj) throws Exception {
@@ -75,15 +68,8 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
         }
 
         public Object makeObject() throws Exception {
-            if ("".equals(username)) {
-                Connection connection = DriverManager.getConnection(url, connectionProperties);
-                return checkSchema(new JDBCStorageClient(connection, properties,
-                        getSqlConfig(connection)));
-            } else {
-                Connection connection = DriverManager.getConnection(url, username, password);
-                return checkSchema(new JDBCStorageClient(connection, properties,
-                        getSqlConfig(connection)));
-            }
+           return checkSchema(new JDBCStorageClient(JDBCStorageClientPool.this, properties,
+                    getSqlConfig(getConnection())));
         }
 
         public void passivateObject(Object obj) throws Exception {
@@ -109,32 +95,50 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
 
     private Map<String, CacheHolder> sharedCache;
 
+    private Properties connectionProperties;
+
+    private String username;
+
+    private String password;
+
+    private String url;
+
+    private ConnectionManager connectionManager;
+
+    private Timer timer;
+
     @Activate
     public void activate(Map<String, Object> properties) throws ClassNotFoundException {
         this.properties = properties;
         super.activate(properties);
+        
+        connectionManager = new ConnectionManager();
+        timer = new Timer();
+        timer.schedule(connectionManager, 30000L, 30000L);
 
         sharedCache = new ConcurrentLRUMap<String, CacheHolder>(10000);
 
         String jdbcDriver = (String) properties.get(JDBC_DRIVER);
         Class<?> clazz = Class.forName(jdbcDriver);
+        
+        connectionProperties = getConnectionProperties(properties);
+        username = StorageClientUtils.getSetting(properties.get(USERNAME), "");
+        password = StorageClientUtils.getSetting(properties.get(PASSWORD), "");
+        url = StorageClientUtils.getSetting(properties.get(CONNECTION_URL),"");
 
         LOGGER.info("Loaded Database Driver {} as {}  ", jdbcDriver, clazz);
         JDBCStorageClient client = null;
         try {
-            client = (JDBCStorageClient) openConnection();
+            client = (JDBCStorageClient) getClient();
             if ( client == null ) {
                 LOGGER.warn("Failed to check Schema, no connection");                
             }
-        } catch (ConnectionPoolException e) {
+        } catch (ClientPoolException e) {
             LOGGER.warn("Failed to check Schema", e);
         } finally {
-            try {
-                closeConnection(client);
-            } catch (ConnectionPoolException e) {
-                LOGGER.warn("Failed to close connection after schema check ", e);
-            }
+            client.close();
         }
+
 
     }
 
@@ -142,6 +146,9 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
     public void deactivate(Map<String, Object> properties) {
         super.deactivate(properties);
 
+        timer.cancel();
+        connectionManager.close();
+        
         String connectionUrl = (String) this.properties.get(CONNECTION_URL);
         String jdbcDriver = (String) properties.get(JDBC_DRIVER);
         if ("org.apache.derby.jdbc.EmbeddedDriver".equals(jdbcDriver) && connectionUrl != null) {
@@ -187,8 +194,6 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
                 } catch (Throwable e) {
                     LOGGER.warn("Failed to check Schema", e);
                 }
-            } else {
-                client.setAlive();
             }
         }
         return client;
@@ -243,11 +248,8 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
                 BASESQLPATH + "." + dbProductName, BASESQLPATH };
     }
 
-    public String getConnectionUrl(Map<String, Object> config) {
-        return (String) config.get(CONNECTION_URL);
-    }
 
-    public Properties getConnectionProperties(Map<String, Object> config) {
+    private Properties getConnectionProperties(Map<String, Object> config) {
         Properties connectionProperties = new Properties();
         for (Entry<String, Object> e : config.entrySet()) {
             connectionProperties.put(e.getKey(), e.getValue());
@@ -257,12 +259,25 @@ public class JDBCStorageClientConnectionPool extends AbstractClientConnectionPoo
 
     @Override
     protected PoolableObjectFactory getConnectionPoolFactory() {
-        return new JCBCStorageClientConnection(properties);
+        return new JCBCStorageClientConnection();
     }
 
     @Override
     public Map<String, CacheHolder> getSharedCache() {
         return sharedCache;
+    }
+
+    public Connection getConnection() throws SQLException {
+        Connection connection = connectionManager.get();
+        if ( connection == null ) {
+            if ("".equals(username)) {
+                 connection = DriverManager.getConnection(url, connectionProperties);
+            } else {
+                 connection = DriverManager.getConnection(url, username, password);
+            }
+            connectionManager.set(connection);
+        }
+        return connection;
     }
 
 }

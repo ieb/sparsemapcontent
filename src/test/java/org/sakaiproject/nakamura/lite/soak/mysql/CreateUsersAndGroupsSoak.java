@@ -1,33 +1,33 @@
 package org.sakaiproject.nakamura.lite.soak.mysql;
 
-import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.lite.jdbc.mysql.MysqlSetup;
 import org.sakaiproject.nakamura.lite.soak.AbstractSoakController;
 import org.sakaiproject.nakamura.lite.soak.authorizable.CreateUsersAndGroupsClient;
-import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
 public class CreateUsersAndGroupsSoak extends AbstractSoakController {
 
     private int totalUsers;
-    private ConnectionPool connectionPool;
+    private StorageClientPool connectionPool;
 
-    public CreateUsersAndGroupsSoak(int totalUsers, ConnectionPool connectionPool) {
+    public CreateUsersAndGroupsSoak(int totalUsers, StorageClientPool connectionPool) {
         super(totalUsers);
         this.connectionPool = connectionPool;
         this.totalUsers = totalUsers;
     }
 
 
-    protected Runnable getRunnable(int nthreads) throws ConnectionPoolException,
+    protected Runnable getRunnable(int nthreads) throws ClientPoolException,
             StorageClientException, AccessDeniedException {
         int usersPerThread = totalUsers / nthreads;
         return new CreateUsersAndGroupsClient(usersPerThread, connectionPool);
     }
 
-    public static void main(String[] argv) throws ConnectionPoolException, StorageClientException,
+    public static void main(String[] argv) throws ClientPoolException, StorageClientException,
             AccessDeniedException, ClassNotFoundException {
 
         int totalUsers = 1000;
@@ -41,7 +41,7 @@ public class CreateUsersAndGroupsSoak extends AbstractSoakController {
         }
 
         CreateUsersAndGroupsSoak createUsersAndGroupsSoak = new CreateUsersAndGroupsSoak(
-                totalUsers, MysqlSetup.getConnectionPool());
+                totalUsers, MysqlSetup.getClientPool());
         createUsersAndGroupsSoak.launchSoak(nthreads);
     }
 

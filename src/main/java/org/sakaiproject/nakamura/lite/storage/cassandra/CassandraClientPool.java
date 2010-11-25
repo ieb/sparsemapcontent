@@ -19,15 +19,15 @@ import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
-import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component(enabled=false, metatype = true, inherit=true)
-@Service(value = ConnectionPool.class)
-public class CassandraClientConnectionPool extends AbstractClientConnectionPool {
+@Service(value = StorageClientPool.class)
+public class CassandraClientPool extends AbstractClientConnectionPool {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CassandraClientConnectionPool.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CassandraClientPool.class);
     @Property(value = { "localhost:9610" })
     private static final String CONNECTION_POOL = "conection-pool";
 
@@ -37,9 +37,11 @@ public class CassandraClientConnectionPool extends AbstractClientConnectionPool 
         private int[] ports;
         private int savedLastHost = 0;
         private Map<String, Object> properties;
+        private CassandraClientPool pool;
 
-        public ClientConnectionPoolFactory(String[] connections, Map<String, Object> properties) {
+        public ClientConnectionPoolFactory(CassandraClientPool pool, String[] connections, Map<String, Object> properties) {
             this.properties = properties;
+            this.pool = pool;
             hosts = new String[connections.length];
             ports = new int[connections.length];
             int i = 0;
@@ -90,33 +92,33 @@ public class CassandraClientConnectionPool extends AbstractClientConnectionPool 
             savedLastHost = lastHost;
             TProtocol tProtocol = new TBinaryProtocol(tSocket);
             LOGGER.debug("Opened Connection {} isOpen {} Host {} Port {}",tSocket, tSocket.isOpen());
-            CassandraClientConnection clientConnection = new CassandraClientConnection(tProtocol, tSocket, properties);
+            CassandraClient clientConnection = new CassandraClient( pool, tProtocol, tSocket, properties);
             return clientConnection;
         }
 
         @Override
         public void passivateObject(Object obj) throws Exception {
-            CassandraClientConnection clientConnection = (CassandraClientConnection) obj;
+            CassandraClient clientConnection = (CassandraClient) obj;
             clientConnection.passivate();
             super.passivateObject(obj);
         }
 
         @Override
         public void activateObject(Object obj) throws Exception {
-            CassandraClientConnection clientConnection = (CassandraClientConnection) obj;
+            CassandraClient clientConnection = (CassandraClient) obj;
             clientConnection.activate();
             super.activateObject(obj);
         }
 
         @Override
         public void destroyObject(Object obj) throws Exception {
-            CassandraClientConnection clientConnection = (CassandraClientConnection) obj;
+            CassandraClient clientConnection = (CassandraClient) obj;
             clientConnection.destroy();
         }
 
         @Override
         public boolean validateObject(Object obj) {
-            CassandraClientConnection clientConnection = (CassandraClientConnection) obj;
+            CassandraClient clientConnection = (CassandraClient) obj;
             try {
                 clientConnection.validate();
             } catch (TException e) {
@@ -132,7 +134,7 @@ public class CassandraClientConnectionPool extends AbstractClientConnectionPool 
     private Map<String, Object> properties;
     private Map<String, CacheHolder> sharedCache;
 
-    public CassandraClientConnectionPool() {
+    public CassandraClientPool() {
     }
 
     @Activate
@@ -155,7 +157,7 @@ public class CassandraClientConnectionPool extends AbstractClientConnectionPool 
 
     @Override
     protected PoolableObjectFactory getConnectionPoolFactory() {
-        return new ClientConnectionPoolFactory(connections, properties);
+        return new ClientConnectionPoolFactory(this, connections, properties);
     }
 
     @Override

@@ -2,7 +2,7 @@ package org.sakaiproject.nakamura.lite.soak.authorizable;
 
 import java.util.Map;
 
-import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
@@ -13,7 +13,7 @@ import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.soak.AbstractScalingClient;
 import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
-import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -22,9 +22,9 @@ public class CreateUsersAndGroupsClient extends AbstractScalingClient {
     private int nusers;
     private Map<String, CacheHolder> sharedCache = new ConcurrentLRUMap<String, CacheHolder>(1000);
 
-    public CreateUsersAndGroupsClient(int totalUsers, ConnectionPool connectionPool) throws ConnectionPoolException,
+    public CreateUsersAndGroupsClient(int totalUsers, StorageClientPool clientPool) throws ClientPoolException,
             StorageClientException, AccessDeniedException {
-        super(connectionPool);
+        super(clientPool);
         nusers = totalUsers;
     }
 
@@ -54,9 +54,6 @@ public class CreateUsersAndGroupsClient extends AbstractScalingClient {
             // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (AccessDeniedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (ConnectionPoolException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }

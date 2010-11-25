@@ -39,9 +39,9 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 
-public class CassandraClientConnection extends Client implements StorageClient {
+public class CassandraClient extends Client implements StorageClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CassandraClientConnection.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CassandraClient.class);
     public static final String CONFIG_BLOCK_SIZE = "block-size";
     public static final String CONFIG_MAX_CHUNKS_PER_BLOCK = "chunks-per-block";
 
@@ -52,15 +52,21 @@ public class CassandraClientConnection extends Client implements StorageClient {
     private BlockContentHelper contentHelper;
     private int blockSize;
     private int maxChunksPerBlockSet;
+    private CassandraClientPool pool;
 
-    public CassandraClientConnection(TProtocol tProtocol, TSocket tSocket, Map<String, Object> properties) {
+    public CassandraClient(CassandraClientPool pool, TProtocol tProtocol, TSocket tSocket, Map<String, Object> properties) {
         super(tProtocol);
         this.tSocket = tSocket;
+        this.pool = pool;
         contentHelper = new BlockSetContentHelper(this);
         blockSize = StorageClientUtils.getSetting(properties.get(CONFIG_BLOCK_SIZE), DEFAULT_BLOCK_SIZE);
         maxChunksPerBlockSet = StorageClientUtils.getSetting(properties.get(CONFIG_MAX_CHUNKS_PER_BLOCK),
                 DEFAULT_MAX_CHUNKS_PER_BLOCK);
 
+    }
+    
+    public void close() {
+       pool.releaseClient(this);
     }
     
 

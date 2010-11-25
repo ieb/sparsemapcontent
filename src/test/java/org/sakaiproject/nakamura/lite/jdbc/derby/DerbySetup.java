@@ -1,20 +1,20 @@
 package org.sakaiproject.nakamura.lite.jdbc.derby;
 
-import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClientConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClientPool;
 
 import com.google.common.collect.ImmutableMap;
 
 public class DerbySetup {
 
-    private static JDBCStorageClientConnectionPool connectionPool = createConnectionPool();
+    private static JDBCStorageClientPool clientPool = createClientPool();
 
-    private synchronized static JDBCStorageClientConnectionPool createConnectionPool() {
+    private synchronized static JDBCStorageClientPool createClientPool() {
         try {
-            JDBCStorageClientConnectionPool connectionPool = new JDBCStorageClientConnectionPool();
+            JDBCStorageClientPool connectionPool = new JDBCStorageClientPool();
             connectionPool.activate(ImmutableMap
-                    .of(JDBCStorageClientConnectionPool.CONNECTION_URL,
+                    .of(JDBCStorageClientPool.CONNECTION_URL,
                             (Object) "jdbc:derby:memory:MyDB;create=true",
-                            JDBCStorageClientConnectionPool.JDBC_DRIVER,
+                            JDBCStorageClientPool.JDBC_DRIVER,
                             "org.apache.derby.jdbc.EmbeddedDriver"));
             return connectionPool;
         } catch (ClassNotFoundException e) {
@@ -22,8 +22,8 @@ public class DerbySetup {
         }
     }
     
-    public static JDBCStorageClientConnectionPool getConnectionPool() {
-        return connectionPool;
+    public static JDBCStorageClientPool getClientPool() {
+        return clientPool;
     }
 
 }

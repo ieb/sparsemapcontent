@@ -24,16 +24,22 @@ public class MemoryStorageClient implements StorageClient {
     private int blockSize;
     private int maxChunksPerBlockSet;
     private BlockContentHelper contentHelper;
+    private MemoryStorageClientPool pool;
 
-    public MemoryStorageClient(Map<String, Map<String, Object>> store,
+    public MemoryStorageClient(MemoryStorageClientPool pool, Map<String, Map<String, Object>> store,
             Map<String, Object> properties) {
         this.store = store;
+        this.pool = pool;
         contentHelper = new BlockSetContentHelper(this);
         blockSize = StorageClientUtils.getSetting(properties.get(BlockSetContentHelper.CONFIG_BLOCK_SIZE),
                 BlockSetContentHelper.DEFAULT_BLOCK_SIZE);
         maxChunksPerBlockSet = StorageClientUtils.getSetting(
                 properties.get(BlockSetContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK), BlockSetContentHelper.DEFAULT_MAX_CHUNKS_PER_BLOCK);
 
+    }
+    
+    public void close() {
+        pool.releaseClient(this);
     }
 
     public void destroy() {

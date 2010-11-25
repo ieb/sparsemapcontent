@@ -1,23 +1,23 @@
 package org.sakaiproject.nakamura.lite.soak.cassandra;
 
-import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.lite.soak.AbstractSoakController;
 import org.sakaiproject.nakamura.lite.soak.authorizable.CreateUsersAndGroupsWithMembersClient;
-import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
-import org.sakaiproject.nakamura.lite.storage.cassandra.CassandraClientConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.cassandra.CassandraClientPool;
 
 import com.google.common.collect.ImmutableMap;
 
 public class CreateUsersAndGroupsWithMembersSoak extends AbstractSoakController {
 
     private int totalUsers;
-    private ConnectionPool connectionPool;
+    private StorageClientPool connectionPool;
     private int totalGroups;
 
-    public CreateUsersAndGroupsWithMembersSoak(int totalUsers, int totalGroups, ConnectionPool connectionPool) {
+    public CreateUsersAndGroupsWithMembersSoak(int totalUsers, int totalGroups, StorageClientPool connectionPool) {
         super(totalUsers+(totalGroups*5));
         this.connectionPool = connectionPool;
         this.totalUsers = totalUsers;
@@ -25,14 +25,14 @@ public class CreateUsersAndGroupsWithMembersSoak extends AbstractSoakController 
     }
 
 
-    protected Runnable getRunnable(int nthreads) throws ConnectionPoolException,
+    protected Runnable getRunnable(int nthreads) throws ClientPoolException,
             StorageClientException, AccessDeniedException {
         int usersPerThread = totalUsers / nthreads;
         int groupsPerThread = totalGroups / nthreads;
         return new CreateUsersAndGroupsWithMembersClient(usersPerThread, groupsPerThread, connectionPool);
     }
 
-    public static void main(String[] argv) throws ConnectionPoolException, StorageClientException,
+    public static void main(String[] argv) throws ClientPoolException, StorageClientException,
             AccessDeniedException, ClassNotFoundException {
 
         int totalUsers = 1000;
@@ -54,8 +54,8 @@ public class CreateUsersAndGroupsWithMembersSoak extends AbstractSoakController 
         createUsersAndGroupsSoak.launchSoak(nthreads);
     }
     
-    protected static ConnectionPool getConnectionPool() throws ClassNotFoundException {
-        CassandraClientConnectionPool cp = new CassandraClientConnectionPool();
+    protected static StorageClientPool getConnectionPool() throws ClassNotFoundException {
+        CassandraClientPool cp = new CassandraClientPool();
         cp.activate(ImmutableMap.of("test", (Object) "test"));
         return cp;
     }

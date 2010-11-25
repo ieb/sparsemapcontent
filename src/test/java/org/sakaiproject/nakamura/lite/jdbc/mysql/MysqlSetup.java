@@ -1,19 +1,19 @@
 package org.sakaiproject.nakamura.lite.jdbc.mysql;
 
-import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClientConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClientPool;
 
 import com.google.common.collect.ImmutableMap;
 
 public class MysqlSetup {
 
-    private static JDBCStorageClientConnectionPool connectionPool = createConnectionPool();
+    private static JDBCStorageClientPool clientPool = createClientPool();
 
-    public synchronized static JDBCStorageClientConnectionPool createConnectionPool() {
+    public synchronized static JDBCStorageClientPool createClientPool() {
         try {
-            JDBCStorageClientConnectionPool connectionPool = new JDBCStorageClientConnectionPool();
-            connectionPool.activate(ImmutableMap.of(JDBCStorageClientConnectionPool.CONNECTION_URL,
+            JDBCStorageClientPool connectionPool = new JDBCStorageClientPool();
+            connectionPool.activate(ImmutableMap.of(JDBCStorageClientPool.CONNECTION_URL,
                     (Object) "jdbc:mysql://127.0.0.1:3306/sakai22?useUnicode=true&amp;characterEncoding=UTF-8",
-                    JDBCStorageClientConnectionPool.JDBC_DRIVER,
+                    JDBCStorageClientPool.JDBC_DRIVER,
                     "com.mysql.jdbc.Driver",
                     "username","sakai22",
                     "password","sakai22"));
@@ -23,8 +23,8 @@ public class MysqlSetup {
         }
     }
     
-    public static JDBCStorageClientConnectionPool getConnectionPool() {
-        return connectionPool;
+    public static JDBCStorageClientPool getClientPool() {
+        return clientPool;
     }
     
 

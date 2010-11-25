@@ -2,12 +2,12 @@ package org.sakaiproject.nakamura.lite.soak;
 
 import java.util.Map;
 
-import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
-import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 
 import com.google.common.collect.Maps;
@@ -20,16 +20,16 @@ import com.google.common.collect.Maps;
 public abstract class AbstractScalingClient implements Runnable  {
 
    
-    protected ConnectionPool connectionPool;
+    protected StorageClientPool clientPool;
     protected StorageClient client;
     protected ConfigurationImpl configuration;
 
-    public AbstractScalingClient(ConnectionPool connectionPool) throws ConnectionPoolException, StorageClientException, AccessDeniedException {
-        this.connectionPool = connectionPool;        
+    public AbstractScalingClient(StorageClientPool clientPool) throws ClientPoolException, StorageClientException, AccessDeniedException {
+        this.clientPool = clientPool;        
     }
     
-    public void setup() throws ConnectionPoolException, StorageClientException, AccessDeniedException {
-        client = connectionPool.openConnection();
+    public void setup() throws ClientPoolException, StorageClientException, AccessDeniedException {
+        client = clientPool.getClient();
         configuration = new ConfigurationImpl();
         Map<String, Object> properties = Maps.newHashMap();
         properties.put("keyspace", "n");

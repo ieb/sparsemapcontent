@@ -3,7 +3,7 @@ package org.sakaiproject.nakamura.lite;
 import java.util.Map;
 
 import org.sakaiproject.nakamura.api.lite.Configuration;
-import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -15,7 +15,7 @@ import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.content.ContentManagerImpl;
-import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 
 public class SessionImpl implements Session {
@@ -23,42 +23,38 @@ public class SessionImpl implements Session {
     private AccessControlManagerImpl accessControlManager;
     private ContentManagerImpl contentManager;
     private AuthorizableManagerImpl authorizableManager;
-    private ConnectionPool connectionPool;
     private User currentUser;
     private Repository repository;
     private Exception closedAt;
     private StorageClient client;
     private Authenticator authenticator;
 
-    public SessionImpl(Repository repository, User currentUser, ConnectionPool connectionPool,
+    public SessionImpl(Repository repository, User currentUser, StorageClient client,
             Configuration configuration, Map<String, CacheHolder> sharedCache)
-            throws ConnectionPoolException, StorageClientException, AccessDeniedException {
-        this.connectionPool = connectionPool;
+            throws ClientPoolException, StorageClientException, AccessDeniedException {
         this.currentUser = currentUser;
         this.repository = repository;
-        client = connectionPool.openConnection();
-        
+        this.client = client;
         accessControlManager = new AccessControlManagerImpl(client, currentUser, configuration,
                 sharedCache);
         authorizableManager = new AuthorizableManagerImpl(currentUser, client, configuration,
                 accessControlManager);
 
         contentManager = new ContentManagerImpl(client, accessControlManager, configuration);
-
+        
         authenticator = new AuthenticatorImpl(client, configuration);
     }
 
-    @Override
-    public void logout() throws ConnectionPoolException {
+    public void logout() throws ClientPoolException {
         if (closedAt == null) {
             accessControlManager.close();
             authorizableManager.close();
             contentManager.close();
-            connectionPool.closeConnection(client);
+            client.close();
             accessControlManager = null;
             authorizableManager = null;
             contentManager = null;
-            connectionPool = null;
+            client = null;
             authenticator = null;
             closedAt = new Exception("This session was closed at:");
         }
@@ -81,13 +77,13 @@ public class SessionImpl implements Session {
         check();
         return contentManager;
     }
-
+    
     @Override
     public Authenticator getAuthenticator() throws StorageClientException {
         check();
         return authenticator;
     }
-
+    
     @Override
     public Repository getRepository() {
         return repository;

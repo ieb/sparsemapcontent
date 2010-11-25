@@ -7,7 +7,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -17,7 +17,7 @@ import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.Security;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
-import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,12 +29,12 @@ public abstract class AbstractAccessControlManagerImplTest {
 			.getLogger(AbstractAccessControlManagerImplTest.class);
 	private StorageClient client;
 	private ConfigurationImpl configuration;
-    private ConnectionPool connectionPool;
+    private StorageClientPool clientPool;
 
 	@Before
-	public void before() throws StorageClientException, AccessDeniedException, ConnectionPoolException, ClassNotFoundException {
-        connectionPool = getConnectionPool();
-        client = connectionPool.openConnection();
+	public void before() throws StorageClientException, AccessDeniedException, ClientPoolException, ClassNotFoundException {
+        clientPool = getClientPool();
+        client = clientPool.getClient();
 		configuration = new ConfigurationImpl();
 		Map<String, Object> properties = Maps.newHashMap();
 		properties.put("keyspace", "n");
@@ -47,11 +47,11 @@ public abstract class AbstractAccessControlManagerImplTest {
 		LOGGER.info("Setup Complete");
 	}
 
-    protected abstract ConnectionPool getConnectionPool() throws ClassNotFoundException;
+    protected abstract StorageClientPool getClientPool() throws ClassNotFoundException;
 
     @After
-    public void after() throws ConnectionPoolException {
-        connectionPool.closeConnection(client);
+    public void after() throws ClientPoolException {
+        client.close();
     }
 
 	@Test

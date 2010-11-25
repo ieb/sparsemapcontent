@@ -10,6 +10,7 @@ import java.util.GregorianCalendar;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
@@ -35,7 +36,7 @@ public class FileStreamContentHelper implements StreamedContentHelper {
     
     @Override
     public Map<String, Object> writeBody(String keySpace, String columnFamily, String contentId,
-            String contentBlockId, Map<String, Object> content, InputStream in) throws IOException {
+            String contentBlockId, Map<String, Object> content, InputStream in) throws IOException, StorageClientException {
         String path = getPath(keySpace, columnFamily, contentBlockId);
         File file = new File(fileStore+"/"+path);
         File parentFile = file.getParentFile();
@@ -55,7 +56,7 @@ public class FileStreamContentHelper implements StreamedContentHelper {
         return metadata;
     }
 
-    private String getPath(String keySpace, String columnFamily, String contentBlockId) {
+    private String getPath(String keySpace, String columnFamily, String contentBlockId) throws StorageClientException {
         Calendar c = new GregorianCalendar();
         c.setTimeInMillis(System.currentTimeMillis());
         int year = c.get(Calendar.YEAR);

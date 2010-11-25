@@ -9,12 +9,12 @@ import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
-import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component(componentAbstract = true)
-public abstract class AbstractClientConnectionPool implements ConnectionPool {
+public abstract class AbstractClientConnectionPool implements StorageClientPool {
 
     private static final Logger LOGGER = LoggerFactory
             .getLogger(AbstractClientConnectionPool.class);
@@ -91,7 +91,7 @@ public abstract class AbstractClientConnectionPool implements ConnectionPool {
         try {
             pool.clear();
             pool.close();
-            LOGGER.info("Sparse Map Content client pool closed ");
+            LOGGER.debug("Sparse Map Content client pool closed ");
         } catch (Exception e) {
             LOGGER.error("Failed to close pool ", e);
         }
@@ -103,13 +103,11 @@ public abstract class AbstractClientConnectionPool implements ConnectionPool {
      * @see
      * org.sakaiproject.nakamura.lite.cassandra.ConnectionPool#openConnection()
      */
-    public StorageClient openConnection() throws ConnectionPoolException {
+    public StorageClient getClient() throws ClientPoolException {
         try {
-            StorageClient client =  (StorageClient) pool.borrowObject();
-            LOGGER.info("Open Num Open Connections is now {} ",ref.getAndIncrement()+1);
-            return client;
+             return (StorageClient) pool.borrowObject();
         } catch (Exception e) {
-            throw new ConnectionPoolException("Failed To Borrow connection from pool ", e);
+            throw new ClientPoolException("Failed To Borrow connection from pool ", e);
         }
     }
 
@@ -119,16 +117,14 @@ public abstract class AbstractClientConnectionPool implements ConnectionPool {
      * @see
      * org.sakaiproject.nakamura.lite.cassandra.ConnectionPool#closeConnection()
      */
-    public void closeConnection(StorageClient client) throws ConnectionPoolException {
+    public void releaseClient(StorageClient client) {
         try {
             if ( client != null ) {
                 pool.returnObject(client);
-                LOGGER.info("Close Num Open Connections is now {} ",ref.getAndDecrement()-1);
-            } else {
-                LOGGER.info("NoClose Num Open Connections is now {} ",ref.get());    
             }
         } catch (Exception e) {
-            throw new ConnectionPoolException("Failed To Return connection to pool ", e);
+            LOGGER.warn("Failed to close connection "+e.getMessage(),e);
         }
     }
+    
 }

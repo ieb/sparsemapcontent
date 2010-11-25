@@ -7,7 +7,7 @@ import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 
 public interface Session {
 
-    void logout() throws ConnectionPoolException;
+    void logout() throws ClientPoolException;
 
     AccessControlManager getAccessControlManager() throws StorageClientException;
 
