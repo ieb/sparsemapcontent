@@ -233,9 +233,9 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     public void close() {
         if (closed == null) {
             try {
+                closed = new Exception("Connection Closed Traceback");
                 shutdownConnection();
                 jcbcStorageClientConnection.releaseClient(this);
-                closed = new Exception("Connection Closed Traceback");
                 LOGGER.info("Sparse Content Map Database Connection closed.");
             } catch (Throwable t) {
                 LOGGER.error("Failed to close connection ", t);
