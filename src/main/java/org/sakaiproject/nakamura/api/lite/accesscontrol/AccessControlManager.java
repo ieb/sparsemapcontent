@@ -3,6 +3,8 @@ package org.sakaiproject.nakamura.api.lite.accesscontrol;
 import java.util.Map;
 
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
+import org.sakaiproject.nakamura.api.lite.authorizable.User;
 
 public interface AccessControlManager {
 
@@ -16,5 +18,7 @@ public interface AccessControlManager {
             throws AccessDeniedException, StorageClientException;
 
     String getCurrentUserId();
+
+    boolean can(Authorizable authorizable, String objectType, String objectPath, Permission permission);
 
 }

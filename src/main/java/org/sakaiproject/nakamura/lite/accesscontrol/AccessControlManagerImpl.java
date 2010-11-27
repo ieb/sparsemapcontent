@@ -11,9 +11,10 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AclModification;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permission;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
+import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
-import org.sakaiproject.nakamura.lite.Security;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
@@ -83,7 +84,7 @@ public class AccessControlManagerImpl implements AccessControlManager {
         if (Security.ZONE_AUTHORIZABLES.equals(objectType) && user.getId().equals(objectPath)) {
             return;
         }
-        int[] privileges = compilePermission(objectType, objectPath, 0);
+        int[] privileges = compilePermission(user,objectType, objectPath, 0);
         if (!((permission.getPermission() & privileges[0]) == permission.getPermission())) {
             throw new AccessDeniedException(objectType, objectPath, permission.getDescription(),
                     user.getId());
@@ -97,10 +98,10 @@ public class AccessControlManagerImpl implements AccessControlManager {
         return objectType + "/" + objectPath;
     }
 
-    private int[] compilePermission(String objectType, String objectPath, int recursion)
+    private int[] compilePermission(Authorizable authorizable, String objectType, String objectPath, int recursion)
             throws StorageClientException {
         String key = getAclKey(objectType, objectPath);
-        if (cache.containsKey(key)) {
+        if (user.getId().equals(authorizable.getId()) && cache.containsKey(key)) {
             return cache.get(key);
         } else {
             LOGGER.info("Cache Miss {} [{}] ", cache, key);
@@ -114,7 +115,7 @@ public class AccessControlManagerImpl implements AccessControlManager {
         if (acl != null) {
 
             {
-                String principal = user.getId();
+                String principal = authorizable.getId();
                 int tg = StorageClientUtils.toInt(acl.get(principal
                         + AclModification.GRANTED_MARKER));
                 int td = StorageClientUtils.toInt(acl
@@ -125,7 +126,7 @@ public class AccessControlManagerImpl implements AccessControlManager {
                 // Object[]{tg,td,grants,denies});
 
             }
-            for (String principal : user.getPrincipals()) {
+            for (String principal : authorizable.getPrincipals()) {
                 int tg = StorageClientUtils.toInt(acl.get(principal
                         + AclModification.GRANTED_MARKER));
                 int td = StorageClientUtils.toInt(acl
@@ -135,7 +136,7 @@ public class AccessControlManagerImpl implements AccessControlManager {
                 // LOGGER.info("Added Permissions for {} {}   result {} {}",new
                 // Object[]{tg,td,grants,denies});
             }
-            if (!User.ANON_USER.equals(user.getId())) {
+            if (!User.ANON_USER.equals(authorizable.getId())) {
                 // all users except anon are in the group everyone, by default
                 // but only if not already denied or granted by a more specific
                 // permission.
@@ -162,7 +163,7 @@ public class AccessControlManagerImpl implements AccessControlManager {
             if (recursion < 20 && !StorageClientUtils.isRoot(objectPath)
                     && (granted != 0xffff || denied != 0xffff)) {
                 recursion++;
-                int[] parentPriv = compilePermission(objectType,
+                int[] parentPriv = compilePermission(authorizable, objectType,
                         StorageClientUtils.getParentObjectPath(objectPath), recursion);
                 if (parentPriv != null) {
                     /*
@@ -196,7 +197,9 @@ public class AccessControlManagerImpl implements AccessControlManager {
             /*
              * Keep a cached copy
              */
-            cache.put(key, new int[] { granted, denied });
+            if ( user.getId().equals(authorizable.getId()) ) {
+                cache.put(key, new int[] { granted, denied });
+            }
             return new int[] { granted, denied };
 
         }
@@ -241,6 +244,27 @@ public class AccessControlManagerImpl implements AccessControlManager {
         if (closed) {
             throw new StorageClientException("Access Control Manager is closed");
         }
+    }
+
+    @Override
+    public boolean can(Authorizable authorizable, String objectType, String objectPath, Permission permission) {
+        if (authorizable instanceof User && ((User) authorizable).isAdmin()) {
+            return true;
+        }
+        // users can always operate on their own user object.
+        if (Security.ZONE_AUTHORIZABLES.equals(objectType) && authorizable.getId().equals(objectPath)) {
+            return true;
+        }
+        try {
+            int[] privileges = compilePermission(authorizable, objectType, objectPath, 0);
+            if (!((permission.getPermission() & privileges[0]) == permission.getPermission())) {
+                return false;
+            }
+        } catch (StorageClientException e) {
+            LOGGER.warn(e.getMessage(),e);
+            return false;
+        }
+        return true;
     }
 
 }

@@ -1,4 +1,4 @@
-package org.sakaiproject.nakamura.lite;
+package org.sakaiproject.nakamura.api.lite.accesscontrol;
 
 public class Security {
 
