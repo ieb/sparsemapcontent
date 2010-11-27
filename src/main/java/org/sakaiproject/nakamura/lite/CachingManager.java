@@ -35,7 +35,7 @@ public class CachingManager {
             miss++;
             if (sharedCache != null) {
                 if (m != null) {
-                    LOGGER.info("Found Map {} ", m);
+                    LOGGER.info("Found Map {} {}", cacheKey, m);
                 }
                 sharedCache.put(cacheKey, new CacheHolder(m));
             }
