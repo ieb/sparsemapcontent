@@ -85,21 +85,17 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             selectStringRow.clearParameters();
             selectStringRow.setString(1, rid);
             strings = selectStringRow.executeQuery();
-            LOGGER.info("Executing next {} {} {} {} {} {} ",
-                    new Object[] { this, Thread.currentThread(), keySpace, columnFamily, key, rid });
             while (strings.next()) {
                 result.put(strings.getString(1), strings.getString(2));
             }
-            LOGGER.info("Done next {} {} {} ",
-                    new Object[] { this, Thread.currentThread(), result.size() });
         } catch (SQLException e) {
             LOGGER.warn("Failed to perform get operation on  " + keySpace + ":" + columnFamily
                     + ":" + key, e);
             if (passivate != null) {
-                LOGGER.info("Was Pasivated ", passivate);
+                LOGGER.warn("Was Pasivated ", passivate);
             }
             if (closed != null) {
-                LOGGER.info("Was Closed ", closed);
+                LOGGER.warn("Was Closed ", closed);
             }
             throw new StorageClientException(e.getMessage(), e);
         } finally {
@@ -236,7 +232,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 closed = new Exception("Connection Closed Traceback");
                 shutdownConnection();
                 jcbcStorageClientConnection.releaseClient(this);
-                LOGGER.info("Sparse Content Map Database Connection closed.");
             } catch (Throwable t) {
                 LOGGER.error("Failed to close connection ", t);
             }
@@ -282,7 +277,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
 
     public void shutdownConnection() {
         if (active) {
-            LOGGER.info("Closing Resources {}", this);
             disposeDisposables();
             active = false;
         }
