@@ -15,31 +15,28 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
-import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
+import org.sakaiproject.nakamura.lite.CachingManager;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
 
-public class AccessControlManagerImpl implements AccessControlManager {
+public class AccessControlManagerImpl extends CachingManager implements AccessControlManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AccessControlManagerImpl.class);
-    private StorageClient client;
     private User user;
     private String keySpace;
     private String aclColumnFamily;
     private Map<String, int[]> cache = new ConcurrentHashMap<String, int[]>();
     private boolean closed;
-    private Map<String, CacheHolder> aclCache;
 
     public AccessControlManagerImpl(StorageClient client, User currentUser, Configuration config,
-            Map<String, CacheHolder> aclCache) {
+            Map<String, CacheHolder> sharedCache) {
+        super(client, sharedCache);
         this.user = currentUser;
-        this.client = client;
         this.aclColumnFamily = config.getAclColumnFamily();
         this.keySpace = config.getKeySpace();
-        this.aclCache = aclCache;
         closed = false;
     }
 
@@ -49,7 +46,7 @@ public class AccessControlManagerImpl implements AccessControlManager {
         check(objectType, objectPath, Permissions.CAN_READ_ACL);
 
         String key = this.getAclKey(objectType, objectPath);
-        return getCachedAcl(key);
+        return getCached(keySpace, aclColumnFamily, key);
     }
 
     public void setAcl(String objectType, String objectPath, AclModification[] aclModifications)
@@ -71,8 +68,7 @@ public class AccessControlManagerImpl implements AccessControlManager {
             }
         }
         LOGGER.info("Updating ACL {} {} ", key, modifications);
-        clearCachedAcl(key);
-        client.insert(keySpace, aclColumnFamily, key, modifications);
+        putCached(keySpace, aclColumnFamily, key, modifications);
     }
 
     public void check(String objectType, String objectPath, Permission permission)
@@ -107,7 +103,7 @@ public class AccessControlManagerImpl implements AccessControlManager {
             LOGGER.info("Cache Miss {} [{}] ", cache, key);
         }
 
-        Map<String, Object> acl = getCachedAcl(key);
+        Map<String, Object> acl = getCached(keySpace, aclColumnFamily, key);
         LOGGER.info("ACL on {} is {} ", key, acl);
 
         int grants = 0;
@@ -211,25 +207,6 @@ public class AccessControlManagerImpl implements AccessControlManager {
         return new int[] { 0, 0 };
     }
 
-    private Map<String, Object> getCachedAcl(String key) throws StorageClientException {
-        Map<String, Object> acl;
-        if (aclCache != null && aclCache.containsKey(key)) {
-            CacheHolder aclCacheHolder = aclCache.get(key);
-            acl = aclCacheHolder.get();
-        } else {
-            acl = client.get(keySpace, aclColumnFamily, key);
-            if (aclCache != null) {
-                aclCache.put(key, new CacheHolder(acl));
-            }
-        }
-        return acl;
-    }
-
-    private void clearCachedAcl(String key) {
-        if (aclCache != null) {
-            aclCache.remove(key);
-        }
-    }
 
     @Override
     public String getCurrentUserId() {

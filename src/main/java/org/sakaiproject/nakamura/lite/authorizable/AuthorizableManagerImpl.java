@@ -16,7 +16,9 @@ import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
+import org.sakaiproject.nakamura.lite.CachingManager;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
+import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +35,7 @@ import com.google.common.collect.Maps;
  * @author ieb
  * 
  */
-public class AuthorizableManagerImpl implements AuthorizableManager {
+public class AuthorizableManagerImpl extends CachingManager implements AuthorizableManager {
 
     private static final Set<String> FILTER_ON_UPDATE = ImmutableSet.of(Authorizable.ID_FIELD,
             Authorizable.PASSWORD_FIELD);
@@ -50,8 +52,10 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
     private Authenticator authenticator;
 
     public AuthorizableManagerImpl(User currentUser, StorageClient client,
-            Configuration configuration, AccessControlManager accessControlManager)
-            throws StorageClientException, AccessDeniedException {
+            Configuration configuration, AccessControlManager accessControlManager,
+            Map<String, CacheHolder> sharedCache) throws StorageClientException,
+            AccessDeniedException {
+        super(client, sharedCache);
         this.currentUserId = currentUser.getId();
         if (currentUserId == null) {
             throw new RuntimeException("Current User ID shoud not be null");
@@ -69,19 +73,19 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
         return thisUser;
     }
 
-    public Authorizable findAuthorizable(String authorizableId) throws AccessDeniedException,
+    public Authorizable findAuthorizable(final String authorizableId) throws AccessDeniedException,
             StorageClientException {
         checkOpen();
         if (!this.currentUserId.equals(authorizableId)) {
             accessControlManager.check(Security.ZONE_AUTHORIZABLES, authorizableId,
                     Permissions.CAN_READ);
         }
-        Map<String, Object> authorizableMap = client.get(keySpace, authorizableColumnFamily,
+
+        Map<String, Object> authorizableMap = getCached(keySpace, authorizableColumnFamily,
                 authorizableId);
         if (authorizableMap == null || authorizableMap.isEmpty()) {
             return null;
         }
-        LOGGER.info("Found Map {} ", authorizableMap);
         if (Authorizable.isAUser(authorizableMap)) {
             return new User(authorizableMap);
         } else if (Authorizable.isAGroup(authorizableMap)) {
@@ -154,7 +158,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
                         Map<String, Object> encodedProperties = StorageClientUtils
                                 .getFilteredAndEcodedMap(newMember.getPropertiesForUpdate(),
                                         FILTER_ON_UPDATE);
-                        client.insert(keySpace, authorizableColumnFamily, newMember.getId(),
+                        putCached(keySpace, authorizableColumnFamily, newMember.getId(),
                                 encodedProperties);
                     } else {
                         LOGGER.info("New Member {} already had group principal {} ",
@@ -169,7 +173,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
                         Map<String, Object> encodedProperties = StorageClientUtils
                                 .getFilteredAndEcodedMap(retiredMember.getPropertiesForUpdate(),
                                         FILTER_ON_UPDATE);
-                        client.insert(keySpace, authorizableColumnFamily, retiredMember.getId(),
+                        putCached(keySpace, authorizableColumnFamily, retiredMember.getId(),
                                 encodedProperties);
                     } else {
                         LOGGER.info("Retired Member {} didnt have group principal {} ",
@@ -184,7 +188,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
                 StorageClientUtils.toStore(System.currentTimeMillis()));
         encodedProperties.put(Authorizable.LASTMODIFIED_BY,
                 StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
-        client.insert(keySpace, authorizableColumnFamily, id, encodedProperties);
+        putCached(keySpace, authorizableColumnFamily, id, encodedProperties);
         authorizable.reset();
 
     }
@@ -224,7 +228,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
                 StorageClientUtils.toStore(System.currentTimeMillis()));
         encodedProperties.put(Authorizable.CREATED_BY,
                 StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
-        client.insert(keySpace, authorizableColumnFamily, authorizableId, encodedProperties);
+        putCached(keySpace, authorizableColumnFamily, authorizableId, encodedProperties);
         return true;
     }
 
@@ -253,6 +257,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
     public void delete(String authorizableId) throws AccessDeniedException, StorageClientException {
         checkOpen();
         accessControlManager.check(Security.ZONE_ADMIN, authorizableId, Permissions.CAN_DELETE);
+        removeFromCache(keySpace, authorizableColumnFamily, authorizableId);
         client.remove(keySpace, authorizableColumnFamily, authorizableId);
 
     }
@@ -271,15 +276,16 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
     public void changePassword(Authorizable authorizable, String password, String oldPassword)
             throws StorageClientException, AccessDeniedException {
         String id = authorizable.getId();
-        
+
         if (thisUser.isAdmin() || currentUserId.equals(id)) {
-            if ( !thisUser.isAdmin() ) {
+            if (!thisUser.isAdmin()) {
                 User u = authenticator.authenticate(id, oldPassword);
-                if ( u == null ) {
-                    throw new StorageClientException("Unable to change passwords, old password does not match");
+                if (u == null) {
+                    throw new StorageClientException(
+                            "Unable to change passwords, old password does not match");
                 }
             }
-            client.insert(keySpace, authorizableColumnFamily, id, ImmutableMap.of(
+            putCached(keySpace, authorizableColumnFamily, id, ImmutableMap.of(
                     Authorizable.LASTMODIFIED,
                     StorageClientUtils.toStore(System.currentTimeMillis()),
                     Authorizable.LASTMODIFIED_BY,
@@ -297,7 +303,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
     public Iterator<Authorizable> findAuthorizable(String propertyName, String value,
             Class<? extends Authorizable> authorizableType) throws StorageClientException {
         Builder<String, Object> builder = ImmutableMap.builder();
-        if ( value != null ) {
+        if (value != null) {
             builder.put(propertyName, StorageClientUtils.toStore(value));
         }
         if (authorizableType.equals(User.class)) {
@@ -308,7 +314,7 @@ public class AuthorizableManagerImpl implements AuthorizableManager {
         final Iterator<Map<String, Object>> authMaps = client.find(keySpace,
                 authorizableColumnFamily, builder.build());
 
-        return  new Iterator<Authorizable>() {
+        return new Iterator<Authorizable>() {
 
             private Authorizable authorizable;
 

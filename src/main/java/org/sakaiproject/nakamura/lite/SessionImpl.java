@@ -38,7 +38,7 @@ public class SessionImpl implements Session {
         accessControlManager = new AccessControlManagerImpl(client, currentUser, configuration,
                 sharedCache);
         authorizableManager = new AuthorizableManagerImpl(currentUser, client, configuration,
-                accessControlManager);
+                accessControlManager, sharedCache);
 
         contentManager = new ContentManagerImpl(client, accessControlManager, configuration);
         

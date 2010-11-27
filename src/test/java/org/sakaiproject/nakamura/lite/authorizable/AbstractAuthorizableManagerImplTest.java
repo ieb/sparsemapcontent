@@ -73,7 +73,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
 				client, currentUser, configuration, sharedCache);
 
 		AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(
-				currentUser, client, configuration, accessControlManagerImpl);
+				currentUser, client, configuration, accessControlManagerImpl, sharedCache);
 
 		Assert.assertNotNull(authorizableManager
 				.findAuthorizable(User.ADMIN_USER));
@@ -110,7 +110,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
 				client, currentUser, configuration, sharedCache);
 
 		AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(
-				currentUser, client, configuration, accessControlManagerImpl);
+				currentUser, client, configuration, accessControlManagerImpl, sharedCache);
 
 		Authorizable a = authorizableManager.findAuthorizable(User.ADMIN_USER);
 		Authorizable an = authorizableManager.findAuthorizable(User.ANON_USER);
@@ -145,7 +145,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
 				client, currentUser, configuration, sharedCache);
 
 		AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(
-				currentUser, client, configuration, accessControlManagerImpl);
+				currentUser, client, configuration, accessControlManagerImpl, sharedCache);
 		
 		authorizableManager.delete("testuser");
 
@@ -181,7 +181,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
 				client, currentUser, configuration, sharedCache);
 
 		AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(
-				currentUser, client, configuration, accessControlManagerImpl);
+				currentUser, client, configuration, accessControlManagerImpl, sharedCache);
 		
 		authorizableManager.delete("testuser2");
 
@@ -208,7 +208,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
 		AccessControlManagerImpl userAccessControlManagerImpl = new AccessControlManagerImpl(
 				client, user, configuration, sharedCache);
 		AuthorizableManagerImpl userAuthorizableManager = new AuthorizableManagerImpl(
-				user, client, configuration, userAccessControlManagerImpl);
+				user, client, configuration, userAccessControlManagerImpl, sharedCache);
 
 		try {
 			userAuthorizableManager
@@ -243,7 +243,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
 				client, currentUser, configuration, sharedCache);
 
 		AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(
-				currentUser, client, configuration, accessControlManagerImpl);
+				currentUser, client, configuration, accessControlManagerImpl, sharedCache);
 		
 		authorizableManager.delete("user3");
 		authorizableManager.delete("testgroup");
@@ -323,7 +323,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
 	                client, currentUser, configuration, sharedCache);
 
 	        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(
-	                currentUser, client, configuration, accessControlManagerImpl);
+	                currentUser, client, configuration, accessControlManagerImpl, sharedCache);
 	        
 	        for ( int i = 0; i < 10; i++ ) {
 	            authorizableManager.delete("testfinduser"+i);
