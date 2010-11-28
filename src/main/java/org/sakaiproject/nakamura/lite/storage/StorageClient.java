@@ -1,12 +1,12 @@
 package org.sakaiproject.nakamura.lite.storage;
 
+import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Map;
-
-import org.sakaiproject.nakamura.api.lite.StorageClientException;
-import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 
 public interface StorageClient {
 
@@ -19,7 +19,8 @@ public interface StorageClient {
     void remove(String keySpace, String columnFamily, String key) throws StorageClientException;
 
     InputStream streamBodyOut(String keySpace, String columnFamily, String contentId,
-            String contentBlockId, Map<String, Object> content) throws StorageClientException, AccessDeniedException, IOException;
+            String contentBlockId, Map<String, Object> content) throws StorageClientException,
+            AccessDeniedException, IOException;
 
     Map<String, Object> streamBodyIn(String keySpace, String columnFamily, String contentId,
             String contentBlockId, Map<String, Object> content, InputStream in)
@@ -29,5 +30,5 @@ public interface StorageClient {
             Map<String, Object> properties) throws StorageClientException;
 
     void close();
-    
+
 }

@@ -1,11 +1,11 @@
 package org.sakaiproject.nakamura.lite.memory;
 
+import com.google.common.collect.ImmutableMap;
+
 import org.sakaiproject.nakamura.lite.content.AbstractContentManagerTest;
 import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientPool;
-
-import com.google.common.collect.ImmutableMap;
 
 public class ContentManagerImplTest extends AbstractContentManagerTest {
 

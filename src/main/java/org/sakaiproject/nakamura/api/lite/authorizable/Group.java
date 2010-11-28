@@ -1,13 +1,13 @@
 package org.sakaiproject.nakamura.api.lite.authorizable;
 
-import java.util.Map;
-import java.util.Set;
+import com.google.common.collect.Sets;
 
 import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.util.Iterables;
 
-import com.google.common.collect.Sets;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A group has a list of members that is maintaiend in the group. This is

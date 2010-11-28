@@ -1,12 +1,12 @@
 package org.sakaiproject.nakamura.lite;
 
-import java.util.Map;
-
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.sakaiproject.nakamura.api.lite.Configuration;
+
+import java.util.Map;
 
 @Component(immediate = true, metatype = true)
 @Service(value = Configuration.class)
@@ -20,8 +20,7 @@ public class ConfigurationImpl implements Configuration {
     private static final String AUTHORIZABLE_COLUMN_FAMILY = "authorizable-column-family";
     @Property(value = "cn")
     private static final String CONTENT_COLUMN_FAMILY = "content-column-family";
-    
-    
+
     private String aclColumnFamily;
     private String keySpace;
     private String authorizableColumnFamily;
@@ -50,7 +49,5 @@ public class ConfigurationImpl implements Configuration {
     public String getContentColumnFamily() {
         return contentColumnFamily;
     }
-    
-    
 
 }

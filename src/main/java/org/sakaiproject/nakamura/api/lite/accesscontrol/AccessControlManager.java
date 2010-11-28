@@ -1,10 +1,9 @@
 package org.sakaiproject.nakamura.api.lite.accesscontrol;
 
-import java.util.Map;
-
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
-import org.sakaiproject.nakamura.api.lite.authorizable.User;
+
+import java.util.Map;
 
 public interface AccessControlManager {
 
@@ -19,6 +18,7 @@ public interface AccessControlManager {
 
     String getCurrentUserId();
 
-    boolean can(Authorizable authorizable, String objectType, String objectPath, Permission permission);
+    boolean can(Authorizable authorizable, String objectType, String objectPath,
+            Permission permission);
 
 }

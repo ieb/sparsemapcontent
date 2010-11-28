@@ -8,5 +8,4 @@ public interface Authenticator {
 
     User systemAuthenticate(String userid);
 
-
 }

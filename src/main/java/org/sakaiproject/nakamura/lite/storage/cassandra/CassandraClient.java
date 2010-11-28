@@ -1,12 +1,6 @@
 package org.sakaiproject.nakamura.lite.storage.cassandra;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
+import com.google.common.collect.Lists;
 
 import org.apache.cassandra.thrift.Cassandra.Client;
 import org.apache.cassandra.thrift.Column;
@@ -37,7 +31,13 @@ import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class CassandraClient extends Client implements StorageClient {
 
@@ -54,22 +54,22 @@ public class CassandraClient extends Client implements StorageClient {
     private int maxChunksPerBlockSet;
     private CassandraClientPool pool;
 
-    public CassandraClient(CassandraClientPool pool, TProtocol tProtocol, TSocket tSocket, Map<String, Object> properties) {
+    public CassandraClient(CassandraClientPool pool, TProtocol tProtocol, TSocket tSocket,
+            Map<String, Object> properties) {
         super(tProtocol);
         this.tSocket = tSocket;
         this.pool = pool;
         contentHelper = new BlockSetContentHelper(this);
-        blockSize = StorageClientUtils.getSetting(properties.get(CONFIG_BLOCK_SIZE), DEFAULT_BLOCK_SIZE);
-        maxChunksPerBlockSet = StorageClientUtils.getSetting(properties.get(CONFIG_MAX_CHUNKS_PER_BLOCK),
-                DEFAULT_MAX_CHUNKS_PER_BLOCK);
+        blockSize = StorageClientUtils.getSetting(properties.get(CONFIG_BLOCK_SIZE),
+                DEFAULT_BLOCK_SIZE);
+        maxChunksPerBlockSet = StorageClientUtils.getSetting(
+                properties.get(CONFIG_MAX_CHUNKS_PER_BLOCK), DEFAULT_MAX_CHUNKS_PER_BLOCK);
 
     }
-    
+
     public void close() {
-       pool.releaseClient(this);
+        pool.releaseClient(this);
     }
-    
-
 
     public void destroy() {
         try {
@@ -134,8 +134,9 @@ public class CassandraClient extends Client implements StorageClient {
         try {
             Map<String, Map<String, List<Mutation>>> mutation = new HashMap<String, Map<String, List<Mutation>>>();
             Map<String, List<Mutation>> columnMutations = new HashMap<String, List<Mutation>>();
-            LOGGER.debug("Saving changes to {}:{}:{} ", new Object[]{keySpace,columnFamily,key});
-            List<Mutation> keyMutations = Lists.newArrayList();    
+            LOGGER.debug("Saving changes to {}:{}:{} ",
+                    new Object[] { keySpace, columnFamily, key });
+            List<Mutation> keyMutations = Lists.newArrayList();
             columnMutations.put(columnFamily, keyMutations);
             mutation.put(key, columnMutations);
             for (Entry<String, Object> value : values.entrySet()) {
@@ -186,7 +187,7 @@ public class CassandraClient extends Client implements StorageClient {
                     keyMutations.add(mu);
                 }
             }
-            LOGGER.debug("Mutation {} ",mutation);
+            LOGGER.debug("Mutation {} ", mutation);
             batch_mutate(keySpace, mutation, ConsistencyLevel.ONE);
         } catch (InvalidRequestException e) {
             throw new StorageClientException(e.getMessage(), e);
@@ -215,11 +216,10 @@ public class CassandraClient extends Client implements StorageClient {
         }
     }
 
-
     @Override
     public Map<String, Object> streamBodyIn(String keySpace, String contentColumnFamily,
-            String contentId, String contentBlockId, Map<String, Object> content, InputStream in) throws StorageClientException,
-            AccessDeniedException, IOException {
+            String contentId, String contentBlockId, Map<String, Object> content, InputStream in)
+            throws StorageClientException, AccessDeniedException, IOException {
         return contentHelper.writeBody(keySpace, contentColumnFamily, contentId, contentBlockId,
                 blockSize, maxChunksPerBlockSet, in);
     }
@@ -230,18 +230,14 @@ public class CassandraClient extends Client implements StorageClient {
             AccessDeniedException {
 
         int nBlocks = StorageClientUtils.toInt(content.get(Content.NBLOCKS_FIELD));
-        return contentHelper.readBody(keySpace, contentColumnFamily, contentBlockId,
-                nBlocks);
+        return contentHelper.readBody(keySpace, contentColumnFamily, contentBlockId, nBlocks);
     }
-
-
 
     @Override
-    public DisposableIterator<Map<String, Object>> find(String keySpace, String authorizableColumnFamily,
-            Map<String, Object> properties) {
-        //TODO: Implement
+    public DisposableIterator<Map<String, Object>> find(String keySpace,
+            String authorizableColumnFamily, Map<String, Object> properties) {
+        // TODO: Implement
         throw new UnsupportedOperationException();
     }
-
 
 }

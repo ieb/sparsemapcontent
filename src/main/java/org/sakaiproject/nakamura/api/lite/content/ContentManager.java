@@ -1,10 +1,10 @@
 package org.sakaiproject.nakamura.api.lite.content;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 public interface ContentManager {
 

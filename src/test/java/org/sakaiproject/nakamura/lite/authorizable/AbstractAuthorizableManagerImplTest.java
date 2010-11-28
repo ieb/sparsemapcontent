@@ -1,8 +1,7 @@
 package org.sakaiproject.nakamura.lite.authorizable;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Map;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -19,370 +18,351 @@ import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
-import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
+import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Map;
 
 public abstract class AbstractAuthorizableManagerImplTest {
 
-	private static final Logger LOGGER = LoggerFactory
-			.getLogger(AbstractAuthorizableManagerImplTest.class);
-	private StorageClient client;
-	private ConfigurationImpl configuration;
+    private static final Logger LOGGER = LoggerFactory
+            .getLogger(AbstractAuthorizableManagerImplTest.class);
+    private StorageClient client;
+    private ConfigurationImpl configuration;
     private StorageClientPool clientPool;
     private Map<String, CacheHolder> sharedCache = new ConcurrentLRUMap<String, CacheHolder>(1000);
 
-	@Before
-	public void before() throws StorageClientException, AccessDeniedException, ClientPoolException, ClassNotFoundException {
+    @Before
+    public void before() throws StorageClientException, AccessDeniedException, ClientPoolException,
+            ClassNotFoundException {
         clientPool = getClientPool();
         client = clientPool.getClient();
-		configuration = new ConfigurationImpl();
-		Map<String, Object> properties = Maps.newHashMap();
-		properties.put("keyspace", "n");
-		properties.put("acl-column-family", "ac");
-		properties.put("authorizable-column-family", "au");
-		configuration.activate(properties);
-		AuthorizableActivator authorizableActivator = new AuthorizableActivator(
-				client, configuration);
-		authorizableActivator.setup();
-		LOGGER.info("Setup Complete");
-	}
-	
-    protected abstract StorageClientPool getClientPool() throws ClassNotFoundException;
+        configuration = new ConfigurationImpl();
+        Map<String, Object> properties = Maps.newHashMap();
+        properties.put("keyspace", "n");
+        properties.put("acl-column-family", "ac");
+        properties.put("authorizable-column-family", "au");
+        configuration.activate(properties);
+        AuthorizableActivator authorizableActivator = new AuthorizableActivator(client,
+                configuration);
+        authorizableActivator.setup();
+        LOGGER.info("Setup Complete");
+    }
 
+    protected abstract StorageClientPool getClientPool() throws ClassNotFoundException;
 
     @After
     public void after() throws ClientPoolException {
         client.close();
     }
 
-	@Test
-	public void testAuthorizableManager() throws StorageClientException,
-			AccessDeniedException {
-		AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
-		User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
-		
-		Assert.assertNotNull(currentUser);
-	
+    @Test
+    public void testAuthorizableManager() throws StorageClientException, AccessDeniedException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
-		AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
-				client, currentUser, configuration, sharedCache);
+        Assert.assertNotNull(currentUser);
 
-		AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(
-				currentUser, client, configuration, accessControlManagerImpl, sharedCache);
+        AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
+                currentUser, configuration, sharedCache);
 
-		Assert.assertNotNull(authorizableManager
-				.findAuthorizable(User.ADMIN_USER));
-		Assert.assertNotNull(authorizableManager
-				.findAuthorizable(User.ANON_USER));
-		Assert.assertEquals(currentUser, authorizableManager.getUser());
-	}
+        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
+                client, configuration, accessControlManagerImpl, sharedCache);
 
-	@Test
-	public void testAuthorizableManagerAccessDenied() throws StorageClientException,
-			AccessDeniedException {
-		AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
-		User currentUser = AuthenticatorImpl.authenticate("admin", "wrong-password");
-		
-		Assert.assertNull(currentUser);
-	}
+        Assert.assertNotNull(authorizableManager.findAuthorizable(User.ADMIN_USER));
+        Assert.assertNotNull(authorizableManager.findAuthorizable(User.ANON_USER));
+        Assert.assertEquals(currentUser, authorizableManager.getUser());
+    }
 
-	@Test
-	public void testAuthorizableManagerUserNotFound() throws StorageClientException,
-			AccessDeniedException {
-		AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
-		User currentUser = AuthenticatorImpl.authenticate("nonuser", "wrong-password");
-		
-		Assert.assertNull(currentUser);
-	}
+    @Test
+    public void testAuthorizableManagerAccessDenied() throws StorageClientException,
+            AccessDeniedException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "wrong-password");
 
-	@Test
-	public void testAuthorizableManagerCheckUser()
-			throws StorageClientException, AccessDeniedException {
-		AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
-		User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+        Assert.assertNull(currentUser);
+    }
 
-		AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
-				client, currentUser, configuration, sharedCache);
+    @Test
+    public void testAuthorizableManagerUserNotFound() throws StorageClientException,
+            AccessDeniedException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("nonuser", "wrong-password");
 
-		AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(
-				currentUser, client, configuration, accessControlManagerImpl, sharedCache);
+        Assert.assertNull(currentUser);
+    }
 
-		Authorizable a = authorizableManager.findAuthorizable(User.ADMIN_USER);
-		Authorizable an = authorizableManager.findAuthorizable(User.ANON_USER);
-		Authorizable missing = authorizableManager
-				.findAuthorizable("missinguser");
-		Assert.assertNull(missing);
-		Assert.assertNotNull(a);
-		Assert.assertNotNull(an);
-		Assert.assertFalse(a instanceof Group);
-		Assert.assertFalse(an instanceof Group);
-		User user = (User) a;
-		String[] principals = user.getPrincipals();
-		Assert.assertNotNull(principals);
-		Assert.assertEquals(0, principals.length);
-		Assert.assertTrue(user.isAdmin());
+    @Test
+    public void testAuthorizableManagerCheckUser() throws StorageClientException,
+            AccessDeniedException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
-		User anon = (User) an;
-		principals = anon.getPrincipals();
-		Assert.assertNotNull(principals);
-		Assert.assertEquals(0, principals.length);
-		Assert.assertFalse(anon.isAdmin());
+        AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
+                currentUser, configuration, sharedCache);
 
-	}
+        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
+                client, configuration, accessControlManagerImpl, sharedCache);
 
-	@Test
-	public void testAuthorizableManagerCreateUser()
-			throws StorageClientException, AccessDeniedException {
-		AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
-		User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+        Authorizable a = authorizableManager.findAuthorizable(User.ADMIN_USER);
+        Authorizable an = authorizableManager.findAuthorizable(User.ANON_USER);
+        Authorizable missing = authorizableManager.findAuthorizable("missinguser");
+        Assert.assertNull(missing);
+        Assert.assertNotNull(a);
+        Assert.assertNotNull(an);
+        Assert.assertFalse(a instanceof Group);
+        Assert.assertFalse(an instanceof Group);
+        User user = (User) a;
+        String[] principals = user.getPrincipals();
+        Assert.assertNotNull(principals);
+        Assert.assertEquals(0, principals.length);
+        Assert.assertTrue(user.isAdmin());
 
-		AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
-				client, currentUser, configuration, sharedCache);
+        User anon = (User) an;
+        principals = anon.getPrincipals();
+        Assert.assertNotNull(principals);
+        Assert.assertEquals(0, principals.length);
+        Assert.assertFalse(anon.isAdmin());
 
-		AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(
-				currentUser, client, configuration, accessControlManagerImpl, sharedCache);
-		
-		authorizableManager.delete("testuser");
+    }
 
-		Assert.assertTrue(authorizableManager.createUser("testuser",
-				"Test User", "test", ImmutableMap.of("testkey",
-						(Object) "testvalue", "principals",
-						"administrators;testers", Authorizable.AUTHORIZABLE_TYPE_FIELD,
-						Authorizable.GROUP_VALUE)));
-		Assert.assertFalse(authorizableManager.createUser("testuser",
-				"Test User", "test", ImmutableMap.of("testkey",
-						(Object) "testvalue", "principals",
-						"administrators;testers")));
+    @Test
+    public void testAuthorizableManagerCreateUser() throws StorageClientException,
+            AccessDeniedException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
-		Authorizable a = authorizableManager.findAuthorizable("testuser");
-		Assert.assertNotNull(a);
-		Assert.assertFalse(a instanceof Group);
-		User user = (User) a;
-		String[] principals = user.getPrincipals();
-		Assert.assertNotNull(principals);
-		LOGGER.info("Principals {} ", Arrays.toString(principals));
-		Assert.assertEquals(2, principals.length);
-		Assert.assertTrue(user.isAdmin());
+        AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
+                currentUser, configuration, sharedCache);
 
-	}
+        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
+                client, configuration, accessControlManagerImpl, sharedCache);
 
-	@Test
-	public void testAuthorizableManagerCreateUserDenied()
-			throws StorageClientException, AccessDeniedException {
-		AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
-		User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+        authorizableManager.delete("testuser");
 
-		AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
-				client, currentUser, configuration, sharedCache);
+        Assert.assertTrue(authorizableManager.createUser("testuser", "Test User", "test",
+                ImmutableMap.of("testkey", (Object) "testvalue", "principals",
+                        "administrators;testers", Authorizable.AUTHORIZABLE_TYPE_FIELD,
+                        Authorizable.GROUP_VALUE)));
+        Assert.assertFalse(authorizableManager.createUser("testuser", "Test User", "test",
+                ImmutableMap.of("testkey", (Object) "testvalue", "principals",
+                        "administrators;testers")));
 
-		AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(
-				currentUser, client, configuration, accessControlManagerImpl, sharedCache);
-		
-		authorizableManager.delete("testuser2");
+        Authorizable a = authorizableManager.findAuthorizable("testuser");
+        Assert.assertNotNull(a);
+        Assert.assertFalse(a instanceof Group);
+        User user = (User) a;
+        String[] principals = user.getPrincipals();
+        Assert.assertNotNull(principals);
+        LOGGER.info("Principals {} ", Arrays.toString(principals));
+        Assert.assertEquals(2, principals.length);
+        Assert.assertTrue(user.isAdmin());
 
-		Assert.assertTrue(authorizableManager.createUser("testuser2",
-				"Test User", "test", ImmutableMap.of("testkey",
-						(Object) "testvalue", "principals", "testers",
-						Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.GROUP_VALUE)));
-		Assert.assertFalse(authorizableManager.createUser("testuser2",
-				"Test User", "test", ImmutableMap.of("testkey",
-						(Object) "testvalue", "principals",
-						"administrators;testers")));
+    }
 
-		Authorizable a = authorizableManager.findAuthorizable("testuser2");
-		Assert.assertNotNull(a);
-		Assert.assertFalse(a instanceof Group);
-		User user = (User) a;
-		String[] principals = user.getPrincipals();
-		LOGGER.info("Principals {} ", Arrays.toString(principals));
-		Assert.assertArrayEquals(new String[] { "testers" },
-				principals);
+    @Test
+    public void testAuthorizableManagerCreateUserDenied() throws StorageClientException,
+            AccessDeniedException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
-		Assert.assertFalse(user.isAdmin());
+        AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
+                currentUser, configuration, sharedCache);
 
-		AccessControlManagerImpl userAccessControlManagerImpl = new AccessControlManagerImpl(
-				client, user, configuration, sharedCache);
-		AuthorizableManagerImpl userAuthorizableManager = new AuthorizableManagerImpl(
-				user, client, configuration, userAccessControlManagerImpl, sharedCache);
+        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
+                client, configuration, accessControlManagerImpl, sharedCache);
 
-		try {
-			userAuthorizableManager
-					.createUser("testuser3", "Test User", "test", ImmutableMap
-							.of("testkey", (Object) "testvalue", "principals",
-									"administrators;testers",
-									Authorizable.AUTHORIZABLE_TYPE_FIELD,
-									Authorizable.GROUP_VALUE));
-			Assert.fail();
-		} catch (AccessDeniedException e) {
-			LOGGER.info(" Correctly denied access {} ", e.getMessage());
-		}
+        authorizableManager.delete("testuser2");
 
-		try {
-			userAuthorizableManager.createUser("testuser4", "Test User", "test",
-					ImmutableMap.of("testkey", (Object) "testvalue",
-							"principals", "administrators;testers"));
-			Assert.fail();
-		} catch (AccessDeniedException e) {
-			LOGGER.info(" Correctly denied access {} ", e.getMessage());
-		}
+        Assert.assertTrue(authorizableManager.createUser("testuser2", "Test User", "test",
+                ImmutableMap.of("testkey", (Object) "testvalue", "principals", "testers",
+                        Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.GROUP_VALUE)));
+        Assert.assertFalse(authorizableManager.createUser("testuser2", "Test User", "test",
+                ImmutableMap.of("testkey", (Object) "testvalue", "principals",
+                        "administrators;testers")));
 
-	}
+        Authorizable a = authorizableManager.findAuthorizable("testuser2");
+        Assert.assertNotNull(a);
+        Assert.assertFalse(a instanceof Group);
+        User user = (User) a;
+        String[] principals = user.getPrincipals();
+        LOGGER.info("Principals {} ", Arrays.toString(principals));
+        Assert.assertArrayEquals(new String[] { "testers" }, principals);
 
-	@Test
-	public void testAuthorizableManagerCreateGroup()
-			throws StorageClientException, AccessDeniedException {
-		AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
-		User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+        Assert.assertFalse(user.isAdmin());
 
-		AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
-				client, currentUser, configuration, sharedCache);
+        AccessControlManagerImpl userAccessControlManagerImpl = new AccessControlManagerImpl(
+                client, user, configuration, sharedCache);
+        AuthorizableManagerImpl userAuthorizableManager = new AuthorizableManagerImpl(user, client,
+                configuration, userAccessControlManagerImpl, sharedCache);
 
-		AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(
-				currentUser, client, configuration, accessControlManagerImpl, sharedCache);
-		
-		authorizableManager.delete("user3");
-		authorizableManager.delete("testgroup");
+        try {
+            userAuthorizableManager.createUser("testuser3", "Test User", "test", ImmutableMap.of(
+                    "testkey", (Object) "testvalue", "principals", "administrators;testers",
+                    Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.GROUP_VALUE));
+            Assert.fail();
+        } catch (AccessDeniedException e) {
+            LOGGER.info(" Correctly denied access {} ", e.getMessage());
+        }
 
-		Assert.assertTrue(authorizableManager.createUser("user3", "TestUser",
-				null, ImmutableMap.of("testkey", (Object) "testvalue",
-						"principals", "administrators;testers", "members",
-						"user1;user2")));
-		Assert.assertTrue(authorizableManager.createGroup("testgroup",
-				"Test Group", ImmutableMap.of("testkey", (Object) "testvalue",
-						"principals", "administrators;testers", "members",
-						"user1;user2")));
-		Assert.assertFalse(authorizableManager.createGroup("testgroup",
-				"Test Group", ImmutableMap.of("testkey", (Object) "testvalue",
-						"principals", "administrators;testers", "members",
-						"user1;user2", Authorizable.AUTHORIZABLE_TYPE_FIELD,
-						Authorizable.GROUP_VALUE)));
+        try {
+            userAuthorizableManager.createUser("testuser4", "Test User", "test", ImmutableMap.of(
+                    "testkey", (Object) "testvalue", "principals", "administrators;testers"));
+            Assert.fail();
+        } catch (AccessDeniedException e) {
+            LOGGER.info(" Correctly denied access {} ", e.getMessage());
+        }
 
-		Authorizable a = authorizableManager.findAuthorizable("testgroup");
-		Assert.assertNotNull(a);
-		Assert.assertTrue(a instanceof Group);
-		Group g = (Group) a;
-		String[] principals = g.getPrincipals();
-		LOGGER.info("Principals {} ", Arrays.toString(principals));
-		Assert.assertArrayEquals(new String[] { "administrators", "testers" },
-				principals);
-		String[] members = g.getMembers();
-		LOGGER.info("Members {} ", Arrays.toString(members));
-		Assert.assertArrayEquals(new String[] { "user1", "user2" }, members);
+    }
 
-		g.setProperty("SomeValue", "AValue");
-		g.setProperty(Authorizable.PASSWORD_FIELD, "badpassword");
-		g.removeProperty("testkey");
-		g.addPrincipal("tester2");
-		g.removePrincipal("testers");
-		// adding user 3 should make it a member of testgroup and give it the pricipal testgroup
-		g.addMember("user3");
-		g.removeMember("user2");
+    @Test
+    public void testAuthorizableManagerCreateGroup() throws StorageClientException,
+            AccessDeniedException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
-		LOGGER.info("Updating Group with changed membership ----------------------");
-		authorizableManager.updateAuthorizable(g);
+        AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
+                currentUser, configuration, sharedCache);
+
+        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
+                client, configuration, accessControlManagerImpl, sharedCache);
+
+        authorizableManager.delete("user3");
+        authorizableManager.delete("testgroup");
+
+        Assert.assertTrue(authorizableManager.createUser("user3", "TestUser", null, ImmutableMap
+                .of("testkey", (Object) "testvalue", "principals", "administrators;testers",
+                        "members", "user1;user2")));
+        Assert.assertTrue(authorizableManager.createGroup("testgroup", "Test Group", ImmutableMap
+                .of("testkey", (Object) "testvalue", "principals", "administrators;testers",
+                        "members", "user1;user2")));
+        Assert.assertFalse(authorizableManager.createGroup("testgroup", "Test Group", ImmutableMap
+                .of("testkey", (Object) "testvalue", "principals", "administrators;testers",
+                        "members", "user1;user2", Authorizable.AUTHORIZABLE_TYPE_FIELD,
+                        Authorizable.GROUP_VALUE)));
+
+        Authorizable a = authorizableManager.findAuthorizable("testgroup");
+        Assert.assertNotNull(a);
+        Assert.assertTrue(a instanceof Group);
+        Group g = (Group) a;
+        String[] principals = g.getPrincipals();
+        LOGGER.info("Principals {} ", Arrays.toString(principals));
+        Assert.assertArrayEquals(new String[] { "administrators", "testers" }, principals);
+        String[] members = g.getMembers();
+        LOGGER.info("Members {} ", Arrays.toString(members));
+        Assert.assertArrayEquals(new String[] { "user1", "user2" }, members);
+
+        g.setProperty("SomeValue", "AValue");
+        g.setProperty(Authorizable.PASSWORD_FIELD, "badpassword");
+        g.removeProperty("testkey");
+        g.addPrincipal("tester2");
+        g.removePrincipal("testers");
+        // adding user 3 should make it a member of testgroup and give it the
+        // pricipal testgroup
+        g.addMember("user3");
+        g.removeMember("user2");
+
+        LOGGER.info("Updating Group with changed membership ----------------------");
+        authorizableManager.updateAuthorizable(g);
         LOGGER.info("Done Updating Group with changed membership ----------------------");
 
-		Authorizable a2 = authorizableManager.findAuthorizable("testgroup");
-		Assert.assertNotNull(a2);
-		Assert.assertTrue(a2 instanceof Group);
-		Group g2 = (Group) a2;
-		principals = g2.getPrincipals();
-		LOGGER.info("Principals {} ", Arrays.toString(principals));
-		Assert.assertArrayEquals(new String[] { "administrators", "tester2" },
-				principals);
-		members = g2.getMembers();
-		LOGGER.info("Members {} ", Arrays.toString(members));
-		Assert.assertArrayEquals(new String[] { "user1", "user3" }, members);
-		Assert.assertNull(g2.getProperty(Authorizable.PASSWORD_FIELD));
+        Authorizable a2 = authorizableManager.findAuthorizable("testgroup");
+        Assert.assertNotNull(a2);
+        Assert.assertTrue(a2 instanceof Group);
+        Group g2 = (Group) a2;
+        principals = g2.getPrincipals();
+        LOGGER.info("Principals {} ", Arrays.toString(principals));
+        Assert.assertArrayEquals(new String[] { "administrators", "tester2" }, principals);
+        members = g2.getMembers();
+        LOGGER.info("Members {} ", Arrays.toString(members));
+        Assert.assertArrayEquals(new String[] { "user1", "user3" }, members);
+        Assert.assertNull(g2.getProperty(Authorizable.PASSWORD_FIELD));
 
-		// Test that User3 no has testgroup as a principal.
-		Authorizable a3 = authorizableManager.findAuthorizable("user3");
-		Assert.assertNotNull(a3);
-		Assert.assertFalse(a3 instanceof Group);
-		User u3 = (User) a3;
-		principals = u3.getPrincipals();
-		LOGGER.info("Principals {} ", Arrays.toString(principals));
-		Assert.assertArrayEquals(new String[] { "administrators", "testers",
-				"testgroup" }, principals);
+        // Test that User3 no has testgroup as a principal.
+        Authorizable a3 = authorizableManager.findAuthorizable("user3");
+        Assert.assertNotNull(a3);
+        Assert.assertFalse(a3 instanceof Group);
+        User u3 = (User) a3;
+        principals = u3.getPrincipals();
+        LOGGER.info("Principals {} ", Arrays.toString(principals));
+        Assert.assertArrayEquals(new String[] { "administrators", "testers", "testgroup" },
+                principals);
 
-	}
-	
-	
-	@Test
-	public void testFindAuthorizable() throws StorageClientException, AccessDeniedException {
-	    try {
-	       AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
-	        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+    }
 
-	        AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
-	                client, currentUser, configuration, sharedCache);
+    @Test
+    public void testFindAuthorizable() throws StorageClientException, AccessDeniedException {
+        try {
+            AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+            User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
-	        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(
-	                currentUser, client, configuration, accessControlManagerImpl, sharedCache);
-	        
-	        for ( int i = 0; i < 10; i++ ) {
-	            authorizableManager.delete("testfinduser"+i);
-	            Assert.assertTrue(authorizableManager.createUser("testfinduser"+i, "TestUser",
-	                    null, ImmutableMap.of(
-	                            "rep:principalName", (Object)("principal"+i),
-	                            "sakai:groupproperty", "groupprop",
-	                            "sakai:userprop", "userprop")));
-	            authorizableManager.delete("testgroup"+i);
-	        Assert.assertTrue(authorizableManager.createGroup("testgroup"+i,
-	                "Test Group"+i, ImmutableMap.of(
-	                        "rep:principalName", (Object)("principal"+i),
-	                        "sakai:groupproperty", "groupprop",
-	                        "sakai:grprop", "grprop")));
-	        }
-	        for ( int i = 0; i < 10; i++ ) {
-	            Iterator<Authorizable> userIterator = authorizableManager.findAuthorizable("rep:principalName","principal"+i, User.class);
-	            Assert.assertNotNull(userIterator);
-	            Assert.assertTrue(userIterator.hasNext());
-	            Authorizable a = userIterator.next();
+            AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
+                    client, currentUser, configuration, sharedCache);
+
+            AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
+                    client, configuration, accessControlManagerImpl, sharedCache);
+
+            for (int i = 0; i < 10; i++) {
+                authorizableManager.delete("testfinduser" + i);
+                Assert.assertTrue(authorizableManager.createUser("testfinduser" + i, "TestUser",
+                        null, ImmutableMap.of("rep:principalName", (Object) ("principal" + i),
+                                "sakai:groupproperty", "groupprop", "sakai:userprop", "userprop")));
+                authorizableManager.delete("testgroup" + i);
+                Assert.assertTrue(authorizableManager.createGroup("testgroup" + i,
+                        "Test Group" + i, ImmutableMap.of("rep:principalName",
+                                (Object) ("principal" + i), "sakai:groupproperty", "groupprop",
+                                "sakai:grprop", "grprop")));
+            }
+            for (int i = 0; i < 10; i++) {
+                Iterator<Authorizable> userIterator = authorizableManager.findAuthorizable(
+                        "rep:principalName", "principal" + i, User.class);
+                Assert.assertNotNull(userIterator);
+                Assert.assertTrue(userIterator.hasNext());
+                Authorizable a = userIterator.next();
                 Assert.assertFalse(userIterator.hasNext());
                 Assert.assertTrue(a instanceof User);
                 User u = (User) a;
-                Assert.assertEquals("testfinduser"+i, u.getId());
-	        }
-            for ( int i = 0; i < 10; i++ ) {
-                Iterator<Authorizable> groupIterator = authorizableManager.findAuthorizable("rep:principalName","principal"+i, Group.class);
+                Assert.assertEquals("testfinduser" + i, u.getId());
+            }
+            for (int i = 0; i < 10; i++) {
+                Iterator<Authorizable> groupIterator = authorizableManager.findAuthorizable(
+                        "rep:principalName", "principal" + i, Group.class);
                 Assert.assertNotNull(groupIterator);
                 Assert.assertTrue(groupIterator.hasNext());
                 Authorizable a = groupIterator.next();
                 Assert.assertFalse(groupIterator.hasNext());
                 Assert.assertTrue(a instanceof Group);
                 Group u = (Group) a;
-                Assert.assertEquals("testgroup"+i, u.getId());
+                Assert.assertEquals("testgroup" + i, u.getId());
             }
-            for ( int i = 0; i < 10; i++ ) {
-                Iterator<Authorizable> groupIterator = authorizableManager.findAuthorizable("rep:principalName","principal"+i, Authorizable.class);
+            for (int i = 0; i < 10; i++) {
+                Iterator<Authorizable> groupIterator = authorizableManager.findAuthorizable(
+                        "rep:principalName", "principal" + i, Authorizable.class);
                 Assert.assertNotNull(groupIterator);
                 Assert.assertTrue(groupIterator.hasNext());
                 Authorizable a = groupIterator.next();
-                if ( a instanceof Group ) {
-                    Assert.assertEquals("testgroup"+i, a.getId());
+                if (a instanceof Group) {
+                    Assert.assertEquals("testgroup" + i, a.getId());
                 } else {
-                    Assert.assertEquals("testfinduser"+i, a.getId());
+                    Assert.assertEquals("testfinduser" + i, a.getId());
                 }
                 Assert.assertTrue(groupIterator.hasNext());
                 a = groupIterator.next();
-                if ( a instanceof Group ) {
-                    Assert.assertEquals("testgroup"+i, a.getId());
+                if (a instanceof Group) {
+                    Assert.assertEquals("testgroup" + i, a.getId());
                 } else {
-                    Assert.assertEquals("testfinduser"+i, a.getId());
+                    Assert.assertEquals("testfinduser" + i, a.getId());
                 }
                 Assert.assertFalse(groupIterator.hasNext());
             }
-	    } catch ( UnsupportedOperationException e) {
-	        LOGGER.warn("Finder methods not implemented, FIXME");
-	    }
+        } catch (UnsupportedOperationException e) {
+            LOGGER.warn("Finder methods not implemented, FIXME");
+        }
 
-	}
-
+    }
 
 }

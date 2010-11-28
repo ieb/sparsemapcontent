@@ -24,8 +24,7 @@ public abstract class AbstractSoakController {
 
     public void launchSoak(int nthreads) throws ClientPoolException, StorageClientException,
             AccessDeniedException {
-        LOGGER.info(
-        "|Threads|Time s|Throughput|Throughput per thread| Concurrency| Efficiency|");
+        LOGGER.info("|Threads|Time s|Throughput|Throughput per thread| Concurrency| Efficiency|");
         for (int tr = 1; tr <= nthreads; tr++) {
             long s = System.currentTimeMillis();
             Thread[] threads = new Thread[tr];
@@ -48,18 +47,17 @@ public abstract class AbstractSoakController {
         }
 
     }
-    
+
     protected void logRate(double t, int currentThreads) {
         double rate = ((double) totalOperations) / t;
         double ratePerThread = ((double) totalOperations) / (((double) currentThreads) * t);
-        if ( currentThreads == 1 ) {
+        if (currentThreads == 1) {
             singleThreadRate = rate;
         }
-        double speedup = rate/singleThreadRate;
-        double efficiency = 100*speedup/((double)currentThreads);
-        LOGGER.info(
-                "| {}| {}| {}| {}| {}| {}%|",
-                new Object[] { currentThreads, t, rate, ratePerThread, speedup, efficiency});
+        double speedup = rate / singleThreadRate;
+        double efficiency = 100 * speedup / ((double) currentThreads);
+        LOGGER.info("| {}| {}| {}| {}| {}| {}%|", new Object[] { currentThreads, t, rate,
+                ratePerThread, speedup, efficiency });
     }
 
     protected abstract Runnable getRunnable(int tr) throws ClientPoolException,

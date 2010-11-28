@@ -1,15 +1,13 @@
 package org.sakaiproject.nakamura.api.lite.authorizable;
 
-import java.util.Iterator;
-import java.util.Map;
-
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 
+import java.util.Iterator;
+import java.util.Map;
+
 public interface AuthorizableManager {
 
-    
-    
     Authorizable findAuthorizable(String authorizableId) throws AccessDeniedException,
             StorageClientException;
 
@@ -24,11 +22,10 @@ public interface AuthorizableManager {
 
     void delete(String authorizableId) throws AccessDeniedException, StorageClientException;
 
-    void changePassword(Authorizable authorizable, String password, String oldPassword) throws StorageClientException, AccessDeniedException;
+    void changePassword(Authorizable authorizable, String password, String oldPassword)
+            throws StorageClientException, AccessDeniedException;
 
     Iterator<Authorizable> findAuthorizable(String propertyName, String value,
             Class<? extends Authorizable> authorizableType) throws StorageClientException;
-    
-    
 
 }

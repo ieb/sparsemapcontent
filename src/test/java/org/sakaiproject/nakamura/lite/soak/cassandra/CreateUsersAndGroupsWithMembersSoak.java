@@ -1,5 +1,7 @@
 package org.sakaiproject.nakamura.lite.soak.cassandra;
 
+import com.google.common.collect.ImmutableMap;
+
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
@@ -9,27 +11,26 @@ import org.sakaiproject.nakamura.lite.soak.authorizable.CreateUsersAndGroupsWith
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.cassandra.CassandraClientPool;
 
-import com.google.common.collect.ImmutableMap;
-
 public class CreateUsersAndGroupsWithMembersSoak extends AbstractSoakController {
 
     private int totalUsers;
     private StorageClientPool connectionPool;
     private int totalGroups;
 
-    public CreateUsersAndGroupsWithMembersSoak(int totalUsers, int totalGroups, StorageClientPool connectionPool) {
-        super(totalUsers+(totalGroups*5));
+    public CreateUsersAndGroupsWithMembersSoak(int totalUsers, int totalGroups,
+            StorageClientPool connectionPool) {
+        super(totalUsers + (totalGroups * 5));
         this.connectionPool = connectionPool;
         this.totalUsers = totalUsers;
         this.totalGroups = totalGroups;
     }
 
-
     protected Runnable getRunnable(int nthreads) throws ClientPoolException,
             StorageClientException, AccessDeniedException {
         int usersPerThread = totalUsers / nthreads;
         int groupsPerThread = totalGroups / nthreads;
-        return new CreateUsersAndGroupsWithMembersClient(usersPerThread, groupsPerThread, connectionPool);
+        return new CreateUsersAndGroupsWithMembersClient(usersPerThread, groupsPerThread,
+                connectionPool);
     }
 
     public static void main(String[] argv) throws ClientPoolException, StorageClientException,
@@ -53,7 +54,7 @@ public class CreateUsersAndGroupsWithMembersSoak extends AbstractSoakController 
                 totalUsers, totalGroups, getConnectionPool());
         createUsersAndGroupsSoak.launchSoak(nthreads);
     }
-    
+
     protected static StorageClientPool getConnectionPool() throws ClassNotFoundException {
         CassandraClientPool cp = new CassandraClientPool();
         cp.activate(ImmutableMap.of("test", (Object) "test"));

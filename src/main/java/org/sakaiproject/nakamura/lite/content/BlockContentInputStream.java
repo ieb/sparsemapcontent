@@ -1,15 +1,15 @@
 package org.sakaiproject.nakamura.lite.content;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
-
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
 
 public class BlockContentInputStream extends InputStream {
 
@@ -27,8 +27,9 @@ public class BlockContentInputStream extends InputStream {
     private String contentColumnFamily;
     private StorageClient client;
 
-    public BlockContentInputStream(StorageClient client, String keySpace, String contentColumnFamily,
-            String blockId, int nBlocks) throws StorageClientException, AccessDeniedException {
+    public BlockContentInputStream(StorageClient client, String keySpace,
+            String contentColumnFamily, String blockId, int nBlocks) throws StorageClientException,
+            AccessDeniedException {
 
         this.blockId = blockId;
         this.nBlocks = nBlocks;
@@ -76,8 +77,8 @@ public class BlockContentInputStream extends InputStream {
                 throw new IOException(e.getMessage(), e);
             }
             currentBlockNumber = 0;
-            blocksInSet = StorageClientUtils.toInt(block
-                    .get(BlockSetContentHelper.NUMBLOCKS_FIELD));
+            blocksInSet = StorageClientUtils
+                    .toInt(block.get(BlockSetContentHelper.NUMBLOCKS_FIELD));
             LOGGER.info("Loaded New Block Set {}  containing {} blocks ", currentBlockSet,
                     blocksInSet);
 
@@ -86,8 +87,7 @@ public class BlockContentInputStream extends InputStream {
         LOGGER.info("Loading block {} {} ", currentBlockNumber, blocksInSet);
         blockLength = StorageClientUtils.toInt(block
                 .get(BlockSetContentHelper.BLOCK_LENGTH_FIELD_STUB + currentBlockNumber));
-        buffer = (byte[]) block
-                .get(BlockSetContentHelper.BODY_FIELD_STUB + currentBlockNumber);
+        buffer = (byte[]) block.get(BlockSetContentHelper.BODY_FIELD_STUB + currentBlockNumber);
         offset = 0;
         LOGGER.info("Loaded Buffer {} {} size {} ", new Object[] { currentBlockSet,
                 currentBlockNumber, buffer.length });

@@ -1,8 +1,7 @@
 package org.sakaiproject.nakamura.lite.content;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
@@ -12,8 +11,9 @@ import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
 
 public class BlockSetContentHelper implements BlockContentHelper {
 
@@ -25,7 +25,7 @@ public class BlockSetContentHelper implements BlockContentHelper {
     /**
      * the stub of all bodies 0..numblocks
      */
-   public static final String BODY_FIELD_STUB = "body:";
+    public static final String BODY_FIELD_STUB = "body:";
     /**
      * The number of blocks in this block set
      */
@@ -78,9 +78,9 @@ public class BlockSetContentHelper implements BlockContentHelper {
             int bufferLength = saveBuffer.length;
             length = length + bufferLength;
             lastBlockWrite = i;
-            client.insert(keySpace, contentColumnFamily, key, ImmutableMap.of(
-                    Content.UUID_FIELD, StorageClientUtils.toStore(contentId),
-                    NUMBLOCKS_FIELD, StorageClientUtils.toStore(bodyNum + 1), blockLengthKey,
+            client.insert(keySpace, contentColumnFamily, key, ImmutableMap.of(Content.UUID_FIELD,
+                    StorageClientUtils.toStore(contentId), NUMBLOCKS_FIELD,
+                    StorageClientUtils.toStore(bodyNum + 1), blockLengthKey,
                     StorageClientUtils.toStore(bufferLength), bodyKey, saveBuffer));
             bodyNum++;
             if (bodyNum > maxChunksPerBlockSet) {
@@ -94,8 +94,10 @@ public class BlockSetContentHelper implements BlockContentHelper {
         metadata.put(Content.NBLOCKS_FIELD, StorageClientUtils.toStore(lastBlockWrite + 1));
         metadata.put(Content.LENGTH_FIELD, StorageClientUtils.toStore(length));
         metadata.put(Content.BLOCKSIZE_FIELD, StorageClientUtils.toStore(blockSize));
-        
-        LOGGER.info("Saved Last block ContentID {} BlockID {} Nblocks {}  length {}  blocksize {} ",new Object[] {contentId,contentBlockId, lastBlockWrite+1, length, blockSize});
+
+        LOGGER.info(
+                "Saved Last block ContentID {} BlockID {} Nblocks {}  length {}  blocksize {} ",
+                new Object[] { contentId, contentBlockId, lastBlockWrite + 1, length, blockSize });
         return metadata;
 
     }
@@ -103,7 +105,8 @@ public class BlockSetContentHelper implements BlockContentHelper {
     @Override
     public InputStream readBody(String keySpace, String contentColumnFamily, String contentBlockId,
             int nBlocks) throws StorageClientException, AccessDeniedException {
-        return new BlockContentInputStream(client, keySpace, contentColumnFamily, contentBlockId, nBlocks);
+        return new BlockContentInputStream(client, keySpace, contentColumnFamily, contentBlockId,
+                nBlocks);
     }
 
 }

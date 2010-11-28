@@ -1,16 +1,15 @@
 package org.sakaiproject.nakamura.lite.accesscontrol;
 
-import java.util.Map;
-
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Authenticator;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
-import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 public class AuthenticatorImpl implements Authenticator {
 
@@ -24,7 +23,7 @@ public class AuthenticatorImpl implements Authenticator {
         this.keySpace = configuration.getKeySpace();
         this.authorizableColumnFamily = configuration.getAuthorizableColumnFamily();
     }
-    
+
     public User authenticate(String userid, String password) {
         try {
             Map<String, Object> userAuthMap = client
@@ -50,7 +49,8 @@ public class AuthenticatorImpl implements Authenticator {
 
     public User systemAuthenticate(String userid) {
         try {
-            Map<String, Object> userAuthMap = client.get(keySpace, authorizableColumnFamily, userid);
+            Map<String, Object> userAuthMap = client
+                    .get(keySpace, authorizableColumnFamily, userid);
             if (userAuthMap == null || userAuthMap.size() == 0) {
                 LOGGER.debug("User was not found {}", userid);
                 return null;

@@ -18,12 +18,12 @@
  */
 package org.sakaiproject.nakamura.api.lite.util;
 
+import org.apache.commons.lang.exception.NestableRuntimeException;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.security.SecureRandom;
 import java.util.Random;
-
-import org.apache.commons.lang.exception.NestableRuntimeException;
 
 /**
  * This code is borrowed from OpenJPA for the Type1 UUI Generator

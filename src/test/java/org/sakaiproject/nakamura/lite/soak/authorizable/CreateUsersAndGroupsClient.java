@@ -1,6 +1,6 @@
 package org.sakaiproject.nakamura.lite.soak.authorizable;
 
-import java.util.Map;
+import com.google.common.collect.ImmutableMap;
 
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -15,15 +15,15 @@ import org.sakaiproject.nakamura.lite.soak.AbstractScalingClient;
 import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
-import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 
 public class CreateUsersAndGroupsClient extends AbstractScalingClient {
 
     private int nusers;
     private Map<String, CacheHolder> sharedCache = new ConcurrentLRUMap<String, CacheHolder>(1000);
 
-    public CreateUsersAndGroupsClient(int totalUsers, StorageClientPool clientPool) throws ClientPoolException,
-            StorageClientException, AccessDeniedException {
+    public CreateUsersAndGroupsClient(int totalUsers, StorageClientPool clientPool)
+            throws ClientPoolException, StorageClientException, AccessDeniedException {
         super(clientPool);
         nusers = totalUsers;
     }

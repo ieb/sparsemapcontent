@@ -12,6 +12,7 @@ public interface Repository {
     Session loginAdministrative() throws ClientPoolException, StorageClientException,
             AccessDeniedException;
 
-    Session loginAdministrative(String username) throws ClientPoolException, StorageClientException, AccessDeniedException;
+    Session loginAdministrative(String username) throws ClientPoolException,
+            StorageClientException, AccessDeniedException;
 
 }

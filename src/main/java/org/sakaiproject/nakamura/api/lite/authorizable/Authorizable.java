@@ -1,14 +1,14 @@
 package org.sakaiproject.nakamura.api.lite.authorizable;
 
-import java.util.Map;
-import java.util.Set;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 
 import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.util.Iterables;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
+import java.util.Map;
+import java.util.Set;
 
 public class Authorizable {
 
@@ -28,20 +28,17 @@ public class Authorizable {
     public static final Object USER_VALUE = "u";
 
     public static final String ADMINISTRATORS_GROUP = "administrators";
-    
+
     public static final String LASTMODIFIED = "lastModified";
     public static final String LASTMODIFIED_BY = "lastModifiedBy";
     public static final String CREATED = "create";
     public static final String CREATED_BY = "createdBy";
-
 
     private static final Set<String> FILTER_PROPERTIES = ImmutableSet.of(PASSWORD_FIELD, ID_FIELD);
 
     private static final Set<String> PRIVATE_PROPERTIES = ImmutableSet.of(PASSWORD_FIELD);
 
     public static final String NO_PASSWORD = "--none--";
-
-
 
     protected Map<String, Object> authorizableMap;
     protected Set<String> principals;
@@ -77,11 +74,15 @@ public class Authorizable {
     }
 
     public static boolean isAGroup(Map<String, Object> authProperties) {
-        return (authProperties != null) && GROUP_VALUE.equals(StorageClientUtils.toString(authProperties.get(AUTHORIZABLE_TYPE_FIELD)));
+        return (authProperties != null)
+                && GROUP_VALUE.equals(StorageClientUtils.toString(authProperties
+                        .get(AUTHORIZABLE_TYPE_FIELD)));
     }
 
     public static boolean isAUser(Map<String, Object> authProperties) {
-        return (authProperties != null) && USER_VALUE.equals(StorageClientUtils.toString(authProperties.get(AUTHORIZABLE_TYPE_FIELD)));
+        return (authProperties != null)
+                && USER_VALUE.equals(StorageClientUtils.toString(authProperties
+                        .get(AUTHORIZABLE_TYPE_FIELD)));
     }
 
     public static boolean isAuthorizable(Map<String, Object> authProperties) {

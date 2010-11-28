@@ -1,5 +1,7 @@
 package org.sakaiproject.nakamura.lite.soak.cassandra;
 
+import com.google.common.collect.ImmutableMap;
+
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
@@ -8,8 +10,6 @@ import org.sakaiproject.nakamura.lite.soak.AbstractSoakController;
 import org.sakaiproject.nakamura.lite.soak.authorizable.CreateUsersAndGroupsClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.cassandra.CassandraClientPool;
-
-import com.google.common.collect.ImmutableMap;
 
 public class CreateUsersAndGroupsSoak extends AbstractSoakController {
     private int totalUsers;
@@ -20,7 +20,6 @@ public class CreateUsersAndGroupsSoak extends AbstractSoakController {
         this.connectionPool = connectionPool;
         this.totalUsers = totalUsers;
     }
-
 
     protected Runnable getRunnable(int nthreads) throws ClientPoolException,
             StorageClientException, AccessDeniedException {
@@ -45,7 +44,7 @@ public class CreateUsersAndGroupsSoak extends AbstractSoakController {
                 totalUsers, getConnectionPool());
         createUsersAndGroupsSoak.launchSoak(nthreads);
     }
-    
+
     protected static StorageClientPool getConnectionPool() throws ClassNotFoundException {
         CassandraClientPool cp = new CassandraClientPool();
         cp.activate(ImmutableMap.of("test", (Object) "test"));

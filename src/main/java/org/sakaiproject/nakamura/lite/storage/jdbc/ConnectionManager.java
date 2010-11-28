@@ -58,14 +58,14 @@ public class ConnectionManager extends TimerTask {
     }
 
     public void close() {
-        while(threadMap.size() > 0 ) {
+        while (threadMap.size() > 0) {
             Thread[] copy = threadMap.keySet().toArray(new Thread[threadMap.size()]);
             for (Thread t : copy) {
                 ConnectionHolder ch = threadMap.remove(t);
                 if (ch != null) {
                     ch.close();
                 }
-            }            
+            }
         }
         threadMap.clear();
         threadMap = null;

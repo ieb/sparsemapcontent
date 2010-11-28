@@ -1,9 +1,9 @@
 package org.sakaiproject.nakamura.lite.storage;
 
-import java.util.Map;
-
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
+
+import java.util.Map;
 
 public interface StorageClientPool {
 
@@ -12,7 +12,6 @@ public interface StorageClientPool {
      * @throws ClientPoolException
      */
     StorageClient getClient() throws ClientPoolException;
-
 
     Map<String, CacheHolder> getSharedCache();
 

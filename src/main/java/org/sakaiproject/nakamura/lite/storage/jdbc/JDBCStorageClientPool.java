@@ -1,15 +1,7 @@
 package org.sakaiproject.nakamura.lite.storage.jdbc;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Timer;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.pool.PoolableObjectFactory;
@@ -28,15 +20,22 @@ import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Timer;
 
 @Component(immediate = true, metatype = true, inherit = true)
 @Service(value = StorageClientPool.class)
-public class  JDBCStorageClientPool extends AbstractClientConnectionPool {
+public class JDBCStorageClientPool extends AbstractClientConnectionPool {
 
-    private static final Logger LOGGER = LoggerFactory
-            .getLogger(JDBCStorageClientPool.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JDBCStorageClientPool.class);
 
     @Property(value = { "jdbc:derby:sparsemap/db;create=true" })
     public static final String CONNECTION_URL = "jdbc-url";
@@ -51,7 +50,6 @@ public class  JDBCStorageClientPool extends AbstractClientConnectionPool {
     private static final String BASESQLPATH = "org/sakaiproject/nakamura/lite/storage/jdbc/config/client";
 
     public class JCBCStorageClientConnection implements PoolableObjectFactory {
-
 
         public JCBCStorageClientConnection() {
         }
@@ -68,7 +66,7 @@ public class  JDBCStorageClientPool extends AbstractClientConnectionPool {
         }
 
         public Object makeObject() throws Exception {
-           return checkSchema(new JDBCStorageClient(JDBCStorageClientPool.this, properties,
+            return checkSchema(new JDBCStorageClient(JDBCStorageClientPool.this, properties,
                     getSqlConfig(getConnection())));
         }
 
@@ -111,7 +109,7 @@ public class  JDBCStorageClientPool extends AbstractClientConnectionPool {
     public void activate(Map<String, Object> properties) throws ClassNotFoundException {
         this.properties = properties;
         super.activate(properties);
-        
+
         connectionManager = new ConnectionManager();
         timer = new Timer();
         timer.schedule(connectionManager, 30000L, 30000L);
@@ -120,25 +118,24 @@ public class  JDBCStorageClientPool extends AbstractClientConnectionPool {
 
         String jdbcDriver = (String) properties.get(JDBC_DRIVER);
         Class<?> clazz = Class.forName(jdbcDriver);
-        
+
         connectionProperties = getConnectionProperties(properties);
         username = StorageClientUtils.getSetting(properties.get(USERNAME), "");
         password = StorageClientUtils.getSetting(properties.get(PASSWORD), "");
-        url = StorageClientUtils.getSetting(properties.get(CONNECTION_URL),"");
+        url = StorageClientUtils.getSetting(properties.get(CONNECTION_URL), "");
 
         LOGGER.info("Loaded Database Driver {} as {}  ", jdbcDriver, clazz);
         JDBCStorageClient client = null;
         try {
             client = (JDBCStorageClient) getClient();
-            if ( client == null ) {
-                LOGGER.warn("Failed to check Schema, no connection");                
+            if (client == null) {
+                LOGGER.warn("Failed to check Schema, no connection");
             }
         } catch (ClientPoolException e) {
             LOGGER.warn("Failed to check Schema", e);
         } finally {
             client.close();
         }
-
 
     }
 
@@ -148,7 +145,7 @@ public class  JDBCStorageClientPool extends AbstractClientConnectionPool {
 
         timer.cancel();
         connectionManager.close();
-        
+
         String connectionUrl = (String) this.properties.get(CONNECTION_URL);
         String jdbcDriver = (String) properties.get(JDBC_DRIVER);
         if ("org.apache.derby.jdbc.EmbeddedDriver".equals(jdbcDriver) && connectionUrl != null) {
@@ -248,7 +245,6 @@ public class  JDBCStorageClientPool extends AbstractClientConnectionPool {
                 BASESQLPATH + "." + dbProductName, BASESQLPATH };
     }
 
-
     private Properties getConnectionProperties(Map<String, Object> config) {
         Properties connectionProperties = new Properties();
         for (Entry<String, Object> e : config.entrySet()) {
@@ -269,11 +265,11 @@ public class  JDBCStorageClientPool extends AbstractClientConnectionPool {
 
     public Connection getConnection() throws SQLException {
         Connection connection = connectionManager.get();
-        if ( connection == null ) {
+        if (connection == null) {
             if ("".equals(username)) {
-                 connection = DriverManager.getConnection(url, connectionProperties);
+                connection = DriverManager.getConnection(url, connectionProperties);
             } else {
-                 connection = DriverManager.getConnection(url, username, password);
+                connection = DriverManager.getConnection(url, username, password);
             }
             connectionManager.set(connection);
         }

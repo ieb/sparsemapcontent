@@ -1,7 +1,6 @@
 package org.sakaiproject.nakamura.lite.accesscontrol;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import com.google.common.collect.Maps;
 
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -20,7 +19,8 @@ import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Maps;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AccessControlManagerImpl extends CachingManager implements AccessControlManager {
 
@@ -80,7 +80,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         if (Security.ZONE_AUTHORIZABLES.equals(objectType) && user.getId().equals(objectPath)) {
             return;
         }
-        int[] privileges = compilePermission(user,objectType, objectPath, 0);
+        int[] privileges = compilePermission(user, objectType, objectPath, 0);
         if (!((permission.getPermission() & privileges[0]) == permission.getPermission())) {
             throw new AccessDeniedException(objectType, objectPath, permission.getDescription(),
                     user.getId());
@@ -94,8 +94,8 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         return objectType + "/" + objectPath;
     }
 
-    private int[] compilePermission(Authorizable authorizable, String objectType, String objectPath, int recursion)
-            throws StorageClientException {
+    private int[] compilePermission(Authorizable authorizable, String objectType,
+            String objectPath, int recursion) throws StorageClientException {
         String key = getAclKey(objectType, objectPath);
         if (user.getId().equals(authorizable.getId()) && cache.containsKey(key)) {
             return cache.get(key);
@@ -193,7 +193,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
             /*
              * Keep a cached copy
              */
-            if ( user.getId().equals(authorizable.getId()) ) {
+            if (user.getId().equals(authorizable.getId())) {
                 cache.put(key, new int[] { granted, denied });
             }
             return new int[] { granted, denied };
@@ -206,7 +206,6 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         }
         return new int[] { 0, 0 };
     }
-
 
     @Override
     public String getCurrentUserId() {
@@ -224,12 +223,14 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
     }
 
     @Override
-    public boolean can(Authorizable authorizable, String objectType, String objectPath, Permission permission) {
+    public boolean can(Authorizable authorizable, String objectType, String objectPath,
+            Permission permission) {
         if (authorizable instanceof User && ((User) authorizable).isAdmin()) {
             return true;
         }
         // users can always operate on their own user object.
-        if (Security.ZONE_AUTHORIZABLES.equals(objectType) && authorizable.getId().equals(objectPath)) {
+        if (Security.ZONE_AUTHORIZABLES.equals(objectType)
+                && authorizable.getId().equals(objectPath)) {
             return true;
         }
         try {
@@ -238,7 +239,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
                 return false;
             }
         } catch (StorageClientException e) {
-            LOGGER.warn(e.getMessage(),e);
+            LOGGER.warn(e.getMessage(), e);
             return false;
         }
         return true;

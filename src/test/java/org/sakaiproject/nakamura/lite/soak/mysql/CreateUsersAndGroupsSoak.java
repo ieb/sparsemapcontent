@@ -20,7 +20,6 @@ public class CreateUsersAndGroupsSoak extends AbstractSoakController {
         this.totalUsers = totalUsers;
     }
 
-
     protected Runnable getRunnable(int nthreads) throws ClientPoolException,
             StorageClientException, AccessDeniedException {
         int usersPerThread = totalUsers / nthreads;

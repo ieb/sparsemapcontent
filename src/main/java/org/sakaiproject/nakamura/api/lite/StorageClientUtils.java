@@ -1,20 +1,20 @@
 package org.sakaiproject.nakamura.api.lite;
 
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.Maps;
 
 import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.util.Type1UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
-import com.google.common.collect.Maps;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public class StorageClientUtils {
 
@@ -124,7 +124,8 @@ public class StorageClientUtils {
                 } catch (NoSuchAlgorithmException e2) {
                     LOGGER.error("You have no Message Digest Algorightms intalled in this JVM, secure Hashes are not availalbe, encoding bytes :"
                             + e2.getMessage());
-                    return encode(StringUtils.leftPad(naked,10,'_').getBytes(UTF8), URL_SAFE_ENCODING);
+                    return encode(StringUtils.leftPad(naked, 10, '_').getBytes(UTF8),
+                            URL_SAFE_ENCODING);
                 }
             }
             byte[] bytes = md.digest(naked.getBytes(UTF8));
@@ -149,7 +150,8 @@ public class StorageClientUtils {
                     } catch (NoSuchAlgorithmException e2) {
                         LOGGER.error("You have no Message Digest Algorightms intalled in this JVM, secure Hashes are not availalbe, encoding bytes :"
                                 + e2.getMessage());
-                        return encode(StringUtils.leftPad(password,10,'_').getBytes(UTF8), URL_SAFE_ENCODING);
+                        return encode(StringUtils.leftPad(password, 10, '_').getBytes(UTF8),
+                                URL_SAFE_ENCODING);
                     }
                 }
             }

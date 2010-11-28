@@ -1,11 +1,5 @@
 package org.sakaiproject.nakamura.lite.storage.mem;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -17,6 +11,12 @@ import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class MemoryStorageClient implements StorageClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MemoryStorageClient.class);
@@ -26,18 +26,20 @@ public class MemoryStorageClient implements StorageClient {
     private BlockContentHelper contentHelper;
     private MemoryStorageClientPool pool;
 
-    public MemoryStorageClient(MemoryStorageClientPool pool, Map<String, Map<String, Object>> store,
-            Map<String, Object> properties) {
+    public MemoryStorageClient(MemoryStorageClientPool pool,
+            Map<String, Map<String, Object>> store, Map<String, Object> properties) {
         this.store = store;
         this.pool = pool;
         contentHelper = new BlockSetContentHelper(this);
-        blockSize = StorageClientUtils.getSetting(properties.get(BlockSetContentHelper.CONFIG_BLOCK_SIZE),
+        blockSize = StorageClientUtils.getSetting(
+                properties.get(BlockSetContentHelper.CONFIG_BLOCK_SIZE),
                 BlockSetContentHelper.DEFAULT_BLOCK_SIZE);
         maxChunksPerBlockSet = StorageClientUtils.getSetting(
-                properties.get(BlockSetContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK), BlockSetContentHelper.DEFAULT_MAX_CHUNKS_PER_BLOCK);
+                properties.get(BlockSetContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK),
+                BlockSetContentHelper.DEFAULT_MAX_CHUNKS_PER_BLOCK);
 
     }
-    
+
     public void close() {
         pool.releaseClient(this);
     }
@@ -99,8 +101,8 @@ public class MemoryStorageClient implements StorageClient {
 
     @Override
     public Map<String, Object> streamBodyIn(String keySpace, String contentColumnFamily,
-            String contentId, String contentBlockId, Map<String, Object> content, InputStream in) throws StorageClientException,
-            AccessDeniedException, IOException {
+            String contentId, String contentBlockId, Map<String, Object> content, InputStream in)
+            throws StorageClientException, AccessDeniedException, IOException {
         return contentHelper.writeBody(keySpace, contentColumnFamily, contentId, contentBlockId,
                 blockSize, maxChunksPerBlockSet, in);
     }
@@ -115,11 +117,10 @@ public class MemoryStorageClient implements StorageClient {
     }
 
     @Override
-    public DisposableIterator<Map<String, Object>> find(String keySpace, String authorizableColumnFamily,
-            Map<String, Object> properties) {
-        //TODO: Implement
+    public DisposableIterator<Map<String, Object>> find(String keySpace,
+            String authorizableColumnFamily, Map<String, Object> properties) {
+        // TODO: Implement
         throw new UnsupportedOperationException();
     }
-
 
 }

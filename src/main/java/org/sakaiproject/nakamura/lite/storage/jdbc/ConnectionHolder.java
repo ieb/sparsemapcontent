@@ -1,10 +1,10 @@
 package org.sakaiproject.nakamura.lite.storage.jdbc;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 
 public class ConnectionHolder {
 
@@ -21,9 +21,9 @@ public class ConnectionHolder {
     public void ping() {
         lastUsed = System.currentTimeMillis();
     }
-    
+
     public boolean hasExpired() {
-        return (System.currentTimeMillis() > lastUsed+TTL);
+        return (System.currentTimeMillis() > lastUsed + TTL);
     }
 
     public Connection get() {
@@ -31,11 +31,11 @@ public class ConnectionHolder {
     }
 
     public void close() {
-        if ( connection != null ) {
+        if (connection != null) {
             try {
                 connection.close();
             } catch (SQLException e) {
-                LOGGER.debug("Failed to close connection "+e.getMessage(),e);
+                LOGGER.debug("Failed to close connection " + e.getMessage(), e);
             }
         }
     }

@@ -1,8 +1,5 @@
 package org.sakaiproject.nakamura.lite.storage;
 
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.felix.scr.annotations.Activate;
@@ -12,6 +9,9 @@ import org.apache.felix.scr.annotations.Property;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component(componentAbstract = true)
 public abstract class AbstractClientConnectionPool implements StorageClientPool {
@@ -105,7 +105,7 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
      */
     public StorageClient getClient() throws ClientPoolException {
         try {
-             return (StorageClient) pool.borrowObject();
+            return (StorageClient) pool.borrowObject();
         } catch (Exception e) {
             throw new ClientPoolException("Failed To Borrow connection from pool ", e);
         }
@@ -119,12 +119,12 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
      */
     public void releaseClient(StorageClient client) {
         try {
-            if ( client != null ) {
+            if (client != null) {
                 pool.returnObject(client);
             }
         } catch (Exception e) {
-            LOGGER.warn("Failed to close connection "+e.getMessage(),e);
+            LOGGER.warn("Failed to close connection " + e.getMessage(), e);
         }
     }
-    
+
 }

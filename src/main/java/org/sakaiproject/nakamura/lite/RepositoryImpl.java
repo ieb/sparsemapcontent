@@ -1,7 +1,5 @@
 package org.sakaiproject.nakamura.lite;
 
-import java.util.Map;
-
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
@@ -19,6 +17,8 @@ import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
+
+import java.util.Map;
 
 @Component(immediate = true, metatype = true)
 @Service(value = Repository.class)
@@ -87,8 +87,7 @@ public class RepositoryImpl implements Repository {
             AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration);
             User currentUser = authenticatorImpl.authenticate(username, password);
             if (currentUser == null) {
-                throw new StorageClientException("User " + username
-                        + " cant login with password");
+                throw new StorageClientException("User " + username + " cant login with password");
             }
             return new SessionImpl(this, currentUser, client, configuration, sharedCache);
         } catch (ClientPoolException e) {

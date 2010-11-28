@@ -1,9 +1,7 @@
 package org.sakaiproject.nakamura.lite;
 
-import java.util.Map;
-
-import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -15,8 +13,9 @@ import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.content.ContentManagerImpl;
-import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
+
+import java.util.Map;
 
 public class SessionImpl implements Session {
 
@@ -41,7 +40,7 @@ public class SessionImpl implements Session {
                 accessControlManager, sharedCache);
 
         contentManager = new ContentManagerImpl(client, accessControlManager, configuration);
-        
+
         authenticator = new AuthenticatorImpl(client, configuration);
     }
 
@@ -77,13 +76,13 @@ public class SessionImpl implements Session {
         check();
         return contentManager;
     }
-    
+
     @Override
     public Authenticator getAuthenticator() throws StorageClientException {
         check();
         return authenticator;
     }
-    
+
     @Override
     public Repository getRepository() {
         return repository;

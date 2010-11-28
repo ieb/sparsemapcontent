@@ -1,11 +1,11 @@
 package org.sakaiproject.nakamura.lite.cassandra;
 
+import com.google.common.collect.ImmutableMap;
+
 import org.sakaiproject.nakamura.lite.authorizable.AbstractAuthorizableManagerImplTest;
 import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.cassandra.CassandraClientPool;
-
-import com.google.common.collect.ImmutableMap;
 
 public class AuthorizableManagerImplMan extends AbstractAuthorizableManagerImplTest {
 

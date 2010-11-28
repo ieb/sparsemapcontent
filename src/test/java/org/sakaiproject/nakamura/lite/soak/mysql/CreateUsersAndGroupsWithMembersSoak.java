@@ -15,19 +15,20 @@ public class CreateUsersAndGroupsWithMembersSoak extends AbstractSoakController 
     private StorageClientPool connectionPool;
     private int totalGroups;
 
-    public CreateUsersAndGroupsWithMembersSoak(int totalUsers, int totalGroups, StorageClientPool connectionPool) {
+    public CreateUsersAndGroupsWithMembersSoak(int totalUsers, int totalGroups,
+            StorageClientPool connectionPool) {
         super(totalUsers);
         this.connectionPool = connectionPool;
         this.totalUsers = totalUsers;
         this.totalGroups = totalGroups;
     }
 
-
     protected Runnable getRunnable(int nthreads) throws ClientPoolException,
             StorageClientException, AccessDeniedException {
         int usersPerThread = totalUsers / nthreads;
         int groupsPerThread = totalGroups / nthreads;
-        return new CreateUsersAndGroupsWithMembersClient(usersPerThread, groupsPerThread, connectionPool);
+        return new CreateUsersAndGroupsWithMembersClient(usersPerThread, groupsPerThread,
+                connectionPool);
     }
 
     public static void main(String[] argv) throws ClientPoolException, StorageClientException,
@@ -36,7 +37,7 @@ public class CreateUsersAndGroupsWithMembersSoak extends AbstractSoakController 
         int totalUsers = 1000;
         int totalGroups = 1000;
         int nthreads = 10;
-        
+
         if (argv.length > 0) {
             nthreads = StorageClientUtils.getSetting(Integer.valueOf(argv[0]), nthreads);
         }

@@ -1,7 +1,5 @@
 package org.sakaiproject.nakamura.lite.storage.cassandra;
 
-import java.util.Map;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.PoolableObjectFactory;
@@ -23,7 +21,9 @@ import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Component(enabled=false, metatype = true, inherit=true)
+import java.util.Map;
+
+@Component(enabled = false, metatype = true, inherit = true)
 @Service(value = StorageClientPool.class)
 public class CassandraClientPool extends AbstractClientConnectionPool {
 
@@ -39,7 +39,8 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
         private Map<String, Object> properties;
         private CassandraClientPool pool;
 
-        public ClientConnectionPoolFactory(CassandraClientPool pool, String[] connections, Map<String, Object> properties) {
+        public ClientConnectionPoolFactory(CassandraClientPool pool, String[] connections,
+                Map<String, Object> properties) {
             this.properties = properties;
             this.pool = pool;
             hosts = new String[connections.length];
@@ -63,11 +64,12 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
                 try {
                     tSocket = new TSocket(hosts[i], ports[i]);
                     tSocket.open();
-                    LOGGER.debug("Opened connction to {} {} ",hosts[i], ports[i]);
+                    LOGGER.debug("Opened connction to {} {} ", hosts[i], ports[i]);
                     lastHost = i;
                     break;
                 } catch (Exception ex) {
-                    LOGGER.warn("Failed to open connection to host "+hosts[i]+" on port "+ports[i]+" cause:"+ex.getMessage());
+                    LOGGER.warn("Failed to open connection to host " + hosts[i] + " on port "
+                            + ports[i] + " cause:" + ex.getMessage());
                     tSocket = null;
                 }
             }
@@ -76,23 +78,27 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
                     try {
                         tSocket = new TSocket(hosts[i], ports[i]);
                         tSocket.open();
-                        LOGGER.debug("Opened connction to {} {} ",hosts[i], ports[i]);
+                        LOGGER.debug("Opened connction to {} {} ", hosts[i], ports[i]);
                         lastHost = i;
                         break;
                     } catch (Exception ex) {
-                        LOGGER.warn("Failed to open connection to host "+hosts[i]+" on port "+ports[i]+" cause:"+ex.getMessage());
+                        LOGGER.warn("Failed to open connection to host " + hosts[i] + " on port "
+                                + ports[i] + " cause:" + ex.getMessage());
                         tSocket = null;
                     }
                 }
             }
-            if ( tSocket == null ) {
+            if (tSocket == null) {
                 LOGGER.error("Unable to connect to any Cassandra Hosts");
-                throw new StorageClientException("Unable to connect to any Cassandra Clients, tried all known locations");
+                throw new StorageClientException(
+                        "Unable to connect to any Cassandra Clients, tried all known locations");
             }
             savedLastHost = lastHost;
             TProtocol tProtocol = new TBinaryProtocol(tSocket);
-            LOGGER.debug("Opened Connection {} isOpen {} Host {} Port {}",tSocket, tSocket.isOpen());
-            CassandraClient clientConnection = new CassandraClient( pool, tProtocol, tSocket, properties);
+            LOGGER.debug("Opened Connection {} isOpen {} Host {} Port {}", tSocket,
+                    tSocket.isOpen());
+            CassandraClient clientConnection = new CassandraClient(pool, tProtocol, tSocket,
+                    properties);
             return clientConnection;
         }
 
@@ -139,12 +145,12 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
 
     @Activate
     public void activate(Map<String, Object> properties) throws ClassNotFoundException {
-        connections = StorageClientUtils.getSetting(properties.get(CONNECTION_POOL), new String[] { "localhost:9160" });
+        connections = StorageClientUtils.getSetting(properties.get(CONNECTION_POOL),
+                new String[] { "localhost:9160" });
         this.properties = properties;
         super.activate(properties);
         // this should come from the memory service ultimately.
         sharedCache = new ConcurrentLRUMap<String, CacheHolder>(10000);
-
 
     }
 
@@ -152,8 +158,6 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
     public void deactivate(Map<String, Object> properties) {
         super.deactivate(properties);
     }
-
-
 
     @Override
     protected PoolableObjectFactory getConnectionPoolFactory() {

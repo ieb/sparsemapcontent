@@ -1,8 +1,5 @@
 package org.sakaiproject.nakamura.lite.storage.mem;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.felix.scr.annotations.Activate;
@@ -13,21 +10,24 @@ import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
-@Component(enabled=false, metatype = true, inherit=true)
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+@Component(enabled = false, metatype = true, inherit = true)
 @Service(value = StorageClientPool.class)
 public class MemoryStorageClientPool extends AbstractClientConnectionPool {
 
     public static class ClientConnectionPoolFactory extends BasePoolableObjectFactory {
 
-
         private Map<String, Map<String, Object>> store;
         private Map<String, Object> properties;
         private MemoryStorageClientPool pool;
 
-        public ClientConnectionPoolFactory(MemoryStorageClientPool pool, Map<String, Map<String, Object>> store, Map<String, Object> properties) {
-           this.store = store;
-           this.pool = pool;
-           this.properties = properties;
+        public ClientConnectionPoolFactory(MemoryStorageClientPool pool,
+                Map<String, Map<String, Object>> store, Map<String, Object> properties) {
+            this.store = store;
+            this.pool = pool;
+            this.properties = properties;
         }
 
         @Override
@@ -68,7 +68,7 @@ public class MemoryStorageClientPool extends AbstractClientConnectionPool {
     @Activate
     public void activate(Map<String, Object> properties) throws ClassNotFoundException {
         this.properties = properties;
-        store = new ConcurrentHashMap<String, Map<String,Object>>();
+        store = new ConcurrentHashMap<String, Map<String, Object>>();
         super.activate(properties);
     }
 

@@ -1,5 +1,22 @@
 package org.sakaiproject.nakamura.lite.storage.jdbc;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
+import org.apache.commons.lang.StringUtils;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.lite.content.FileStreamContentHelper;
+import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
+import org.sakaiproject.nakamura.lite.storage.Disposable;
+import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.RowHasher;
+import org.sakaiproject.nakamura.lite.storage.StorageClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,23 +34,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.apache.commons.lang.StringUtils;
-import org.sakaiproject.nakamura.api.lite.ClientPoolException;
-import org.sakaiproject.nakamura.api.lite.StorageClientException;
-import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
-import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
-import org.sakaiproject.nakamura.lite.content.FileStreamContentHelper;
-import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
-import org.sakaiproject.nakamura.lite.storage.Disposable;
-import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
-import org.sakaiproject.nakamura.lite.storage.RowHasher;
-import org.sakaiproject.nakamura.lite.storage.StorageClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 public class JDBCStorageClient implements StorageClient, RowHasher {
 
@@ -105,12 +105,13 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         return result;
     }
 
-    public String rowHash(String keySpace, String columnFamily, String key) throws StorageClientException {
+    public String rowHash(String keySpace, String columnFamily, String key)
+            throws StorageClientException {
         MessageDigest hasher;
         try {
             hasher = MessageDigest.getInstance(rowidHash);
         } catch (NoSuchAlgorithmException e1) {
-            throw new StorageClientException("Unable to get hash algorithm "+e1.getMessage(),e1);
+            throw new StorageClientException("Unable to get hash algorithm " + e1.getMessage(), e1);
         }
         String keystring = keySpace + ":" + columnFamily + ":" + key;
         byte[] ridkey;
