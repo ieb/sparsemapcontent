@@ -319,7 +319,7 @@ public class StorageClientUtils {
     public static String shardPath(String id) {
         String hash = insecureHash(id);
         return hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, 6) + "/"
-                + hash;
+                + id;
     }
 
     public static String arrayEscape(String string) {
