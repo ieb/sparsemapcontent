@@ -78,6 +78,7 @@ public class CachingManager {
     protected void putCached(String keySpace, String columnFamily, String key,
             Map<String, Object> encodedProperties) throws StorageClientException {
         removeFromCache(keySpace, columnFamily, key);
+        LOGGER.info("Updating {} with {}  ",key, encodedProperties);
         client.insert(keySpace, columnFamily, key, encodedProperties);
     }
 

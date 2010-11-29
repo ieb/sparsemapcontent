@@ -29,6 +29,7 @@ import org.sakaiproject.nakamura.lite.content.FileStreamContentHelper;
 import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
 import org.sakaiproject.nakamura.lite.storage.Disposable;
 import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
 import org.sakaiproject.nakamura.lite.storage.RowHasher;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
@@ -188,7 +189,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                         LOGGER.debug("Updated {} {} [{}]",
                                 new Object[] { getRowId(keySpace, columnFamily, key), k, o });
                     }
-                } else if (o == null) {
+                } else if (o instanceof RemoveProperty) {
                     removeStringColumn = getStatement(keySpace, columnFamily,
                             SQL_REMOVE_STRING_COLUMN, rid);
                     removeStringColumn.clearWarnings();

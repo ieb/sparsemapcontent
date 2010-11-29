@@ -23,6 +23,7 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.util.Iterables;
+import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
 
 import java.util.Map;
 import java.util.Set;
@@ -62,7 +63,8 @@ public class Authorizable {
 
     protected String id;
 
-    protected boolean modified;
+    protected Set<String> propertiesModified;
+    protected boolean principalsModified;
 
     public Authorizable(Map<String, Object> autorizableMap) {
         this.authorizableMap = autorizableMap;
@@ -74,7 +76,8 @@ public class Authorizable {
                     StorageClientUtils.toString(principalsB), ';')));
         }
         this.id = StorageClientUtils.toString(authorizableMap.get(ID_FIELD));
-        modified = false;
+        propertiesModified = Sets.newHashSet();
+        principalsModified = false;
     }
 
     public String[] getPrincipals() {
@@ -86,8 +89,10 @@ public class Authorizable {
     }
 
     public Map<String, Object> getSafeProperties() {
-        authorizableMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
-        return StorageClientUtils.getFilterMap(authorizableMap, FILTER_PROPERTIES);
+        if ( principalsModified ) {
+            authorizableMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
+        }
+        return StorageClientUtils.getFilterMap(authorizableMap, null, FILTER_PROPERTIES);
     }
 
     public static boolean isAGroup(Map<String, Object> authProperties) {
@@ -111,7 +116,7 @@ public class Authorizable {
             Object cv = authorizableMap.get(key);
             if (!value.equals(cv)) {
                 authorizableMap.put(key, value);
-                modified = true;
+                propertiesModified.add(key);
             }
 
         }
@@ -126,36 +131,41 @@ public class Authorizable {
 
     public void removeProperty(String key) {
         if (authorizableMap.containsKey(key)) {
-            authorizableMap.remove(key);
-            modified = true;
+            authorizableMap.put(key,new RemoveProperty());
+            propertiesModified.add(key);
         }
     }
 
     public void addPrincipal(String principal) {
         if (!principals.contains(principal)) {
             principals.add(principal);
-            modified = true;
+            principalsModified = true;
+            
         }
     }
 
     public void removePrincipal(String principal) {
         if (principals.contains(principal)) {
             principals.remove(principal);
-            modified = true;
+            principalsModified = true;
         }
     }
 
     public Map<String, Object> getPropertiesForUpdate() {
-        authorizableMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
-        return StorageClientUtils.getFilterMap(authorizableMap, FILTER_PROPERTIES);
+        if ( principalsModified ) {
+            authorizableMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
+            propertiesModified.add(PRINCIPALS_FIELD);
+        }
+        return StorageClientUtils.getFilterMap(authorizableMap, propertiesModified, FILTER_PROPERTIES);
     }
 
     public void reset() {
-        modified = false;
+        principalsModified = false;
+        propertiesModified.clear();
     }
 
     public boolean isModified() {
-        return modified;
+        return principalsModified || (propertiesModified.size() > 0);
     }
 
     public boolean hasProperty(String name) {

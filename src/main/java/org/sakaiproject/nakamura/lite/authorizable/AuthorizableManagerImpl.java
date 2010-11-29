@@ -41,6 +41,7 @@ import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -139,14 +140,15 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                     newMembers[i] = findAuthorizable(newMember);
                     // members that dont exist or cant be read must be removed.
                     if (newMembers[i] == null) {
+                        LOGGER.warn("===================== Added member {} does not exist, and had been removed from the list to be added",newMember );
                         group.removeMember(newMember);
                     }
                 } catch (AccessDeniedException e) {
                     group.removeMember(newMember);
-                    LOGGER.debug("Cant read member {} ", newMember);
+                    LOGGER.warn("Cant read member {} ", newMember);
                 } catch (StorageClientException e) {
                     group.removeMember(newMember);
-                    LOGGER.debug("Cant read member {} ", newMember);
+                    LOGGER.warn("Cant read member {} ", newMember);
                 }
                 i++;
             }
@@ -158,15 +160,16 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                     // members that dont exist require no action
                     retiredMembers[i] = findAuthorizable(retiredMember);
                 } catch (AccessDeniedException e) {
-                    LOGGER.debug("Cant read member {} ", retiredMember);
+                    LOGGER.warn("Cant read member {} wont be retrired ", retiredMember);
                 } catch (StorageClientException e) {
-                    LOGGER.debug("Cant read member {} ", retiredMember);
+                    LOGGER.warn("Cant read member {} wont be retired", retiredMember);
                 }
                 i++;
 
             }
 
-            LOGGER.info("Membership Change added [{}] removed [{}] ", newMembers, retiredMembers);
+            LOGGER.info("Membership Change added [{}] removed [{}] ", Arrays.toString(newMembers), Arrays.toString(retiredMembers));
+            int changes = 0;
             // there is now a sparse list of authorizables, that need changing
             for (Authorizable newMember : newMembers) {
                 if (newMember != null) {
@@ -177,6 +180,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                                         FILTER_ON_UPDATE);
                         putCached(keySpace, authorizableColumnFamily, newMember.getId(),
                                 encodedProperties);
+                        LOGGER.info("Updated {} with principal {} {} ",new Object[]{newMember.getId(), group.getId(), encodedProperties});
+                        findAuthorizable(newMember.getId());
+                        changes++;
                     } else {
                         LOGGER.info("New Member {} already had group principal {} ",
                                 newMember.getId(), authorizable.getId());
@@ -192,13 +198,18 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                                         FILTER_ON_UPDATE);
                         putCached(keySpace, authorizableColumnFamily, retiredMember.getId(),
                                 encodedProperties);
+                        changes++;
+                        LOGGER.info("Update {} and removed principal {} ",retiredMember.getId(), group.getId());
                     } else {
                         LOGGER.info("Retired Member {} didnt have group principal {} ",
                                 retiredMember.getId(), authorizable.getId());
                     }
                 }
             }
+            LOGGER.info(" Finished Updating other principals, made {} changes, Saving Changes to {} ", changes, id);
         }
+        
+        
         Map<String, Object> encodedProperties = StorageClientUtils.getFilteredAndEcodedMap(
                 authorizable.getPropertiesForUpdate(), FILTER_ON_UPDATE);
         encodedProperties.put(Authorizable.LASTMODIFIED,

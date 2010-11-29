@@ -110,11 +110,11 @@ public class StorageClientUtilsTest {
     @Test
     public void testGetFilterMap() {
         Map<String, Object> t = ImmutableMap.of("a", (Object) "b", "c", "d");
-        Map<String, Object> m = StorageClientUtils.getFilterMap(t, ImmutableSet.of("c"));
+        Map<String, Object> m = StorageClientUtils.getFilterMap(t, null, ImmutableSet.of("c"));
         Assert.assertEquals(1, m.size());
         Assert.assertEquals("b", m.get("a"));
         Map<String, Object> t2 = ImmutableMap.of("a", (Object) "b", "c", "d", "e", m);
-        Map<String, Object> m2 = StorageClientUtils.getFilterMap(t2, ImmutableSet.of("c"));
+        Map<String, Object> m2 = StorageClientUtils.getFilterMap(t2, null, ImmutableSet.of("c"));
         Assert.assertEquals(2, m2.size());
         Assert.assertEquals("b", m2.get("a"));
         m = (Map<String, Object>) m2.get("e");

@@ -40,6 +40,7 @@ public class Group extends Authorizable {
     private Set<String> members;
     private Set<String> membersAdded;
     private Set<String> membersRemoved;
+    private boolean membersModified;
 
     public Group(Map<String, Object> groupMap) {
         super(groupMap);
@@ -47,12 +48,30 @@ public class Group extends Authorizable {
                 StorageClientUtils.toString(authorizableMap.get(MEMBERS_FIELD)), ';')));
         this.membersAdded = Sets.newHashSet();
         this.membersRemoved = Sets.newHashSet();
+        membersModified = true;
     }
 
     @Override
     public Map<String, Object> getPropertiesForUpdate() {
-        authorizableMap.put(MEMBERS_FIELD, StringUtils.join(members, ';'));
+        if ( membersModified ) {
+            authorizableMap.put(MEMBERS_FIELD, StringUtils.join(members, ';'));
+            propertiesModified.add(MEMBERS_FIELD);
+        }
         return super.getPropertiesForUpdate();
+    }
+    
+    @Override
+    public Map<String, Object> getSafeProperties() {
+        if ( membersModified ) {
+            authorizableMap.put(MEMBERS_FIELD, StringUtils.join(members, ';'));
+            propertiesModified.add(MEMBERS_FIELD);
+        }
+        return super.getSafeProperties();
+    }
+    
+    @Override
+    public boolean isModified() {
+        return membersModified || super.isModified();
     }
 
     public String[] getMembers() {
@@ -64,7 +83,7 @@ public class Group extends Authorizable {
             members.add(member);
             membersAdded.add(member);
             membersRemoved.remove(member);
-            modified = true;
+            membersModified = true;
         }
     }
 
@@ -73,7 +92,7 @@ public class Group extends Authorizable {
             members.remove(member);
             membersAdded.remove(member);
             membersRemoved.add(member);
-            modified = true;
+            membersModified = true;
         }
     }
 
@@ -89,6 +108,7 @@ public class Group extends Authorizable {
         super.reset();
         membersAdded.clear();
         membersRemoved.clear();
+        membersModified = false;
     }
 
 }

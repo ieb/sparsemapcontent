@@ -23,6 +23,7 @@ import com.google.common.collect.Maps;
 
 import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.util.Type1UUID;
+import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +46,7 @@ public class StorageClientUtils {
 
     public static String toString(Object object) {
         try {
-            if (object == null) {
+            if (object == null || object instanceof RemoveProperty) {
                 return null;
             } else if (object instanceof byte[]) {
                 return new String((byte[]) object, UTF8);
@@ -61,7 +62,7 @@ public class StorageClientUtils {
     }
 
     public static Object toStore(Object object) {
-        if (object == null) {
+        if (object == null || object instanceof RemoveProperty) {
             return null;
         } else if (object instanceof byte[]) {
             return (byte[]) object;
@@ -229,15 +230,19 @@ public class StorageClientUtils {
      * @return
      */
     @SuppressWarnings("unchecked")
-    public static <K, V> Map<K, V> getFilterMap(Map<K, V> source, Set<K> filter) {
+    public static <K, V> Map<K, V> getFilterMap(Map<K, V> source, Set<K> include, Set<K> exclude) {
         Builder<K, V> filteredMap = new ImmutableMap.Builder<K, V>();
         for (Entry<K, V> e : source.entrySet()) {
-            if (!filter.contains(e.getKey())) {
-                Object o = e.getValue();
-                if (o instanceof Map) {
-                    filteredMap.put(e.getKey(), (V) getFilterMap((Map<K, V>) e.getValue(), filter));
-                } else {
-                    filteredMap.put(e.getKey(), e.getValue());
+            K k = e.getKey();
+            if (include == null || include.contains(k)) {
+                if (!exclude.contains(k)) {
+                    Object o = e.getValue();
+                    if (o instanceof Map) {
+                        filteredMap.put(k,
+                                (V) getFilterMap((Map<K, V>) e.getValue(), null, exclude));
+                    } else {
+                        filteredMap.put(k, e.getValue());
+                    }
                 }
             }
         }
@@ -278,7 +283,7 @@ public class StorageClientUtils {
     public static int toInt(Object object) {
         if (object instanceof Integer) {
             return ((Integer) object).intValue();
-        } else if (object == null) {
+        } else if (object == null || object instanceof RemoveProperty) {
             return 0;
         }
         return Integer.parseInt(toString(object), ENCODING_BASE);
@@ -287,6 +292,8 @@ public class StorageClientUtils {
     public static long toLong(Object object) {
         if (object instanceof Long) {
             return ((Long) object).longValue();
+        } else if (object == null || object instanceof RemoveProperty) {
+            return 0;
         }
         return Long.parseLong(toString(object), ENCODING_BASE);
     }

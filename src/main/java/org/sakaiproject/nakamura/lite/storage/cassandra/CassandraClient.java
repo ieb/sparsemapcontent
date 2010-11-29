@@ -44,6 +44,7 @@ import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
 import org.sakaiproject.nakamura.lite.content.BlockSetContentHelper;
 import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -160,7 +161,7 @@ public class CassandraClient extends Client implements StorageClient {
                 String name = value.getKey();
                 byte[] bname = StorageClientUtils.toBytes(name);
                 Object v = value.getValue();
-                if (v == null) {
+                if (v instanceof RemoveProperty) {
                     Deletion deletion = new Deletion();
                     SlicePredicate deletionPredicate = new SlicePredicate();
                     deletionPredicate.addToColumn_names(bname);

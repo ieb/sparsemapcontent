@@ -24,6 +24,7 @@ import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
 import org.sakaiproject.nakamura.lite.content.BlockSetContentHelper;
 import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,7 +100,7 @@ public class MemoryStorageClient implements StorageClient {
                 System.arraycopy(bvalue, 0, nvalue, 0, bvalue.length);
                 value = nvalue;
             }
-            if (value == null) {
+            if (value == null || value instanceof RemoveProperty) {
                 row.remove(e.getKey());
             } else {
                 row.put(e.getKey(), value);
