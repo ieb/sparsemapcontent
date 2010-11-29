@@ -1,14 +1,32 @@
+/*
+ * Licensed to the Sakai Foundation (SF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The SF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package org.sakaiproject.nakamura.api.lite.authorizable;
 
-import java.util.Map;
-import java.util.Set;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 
 import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.util.Iterables;
+import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
+import java.util.Map;
+import java.util.Set;
 
 public class Authorizable {
 
@@ -28,12 +46,11 @@ public class Authorizable {
     public static final Object USER_VALUE = "u";
 
     public static final String ADMINISTRATORS_GROUP = "administrators";
-    
+
     public static final String LASTMODIFIED = "lastModified";
     public static final String LASTMODIFIED_BY = "lastModifiedBy";
     public static final String CREATED = "create";
     public static final String CREATED_BY = "createdBy";
-
 
     private static final Set<String> FILTER_PROPERTIES = ImmutableSet.of(PASSWORD_FIELD, ID_FIELD);
 
@@ -41,14 +58,13 @@ public class Authorizable {
 
     public static final String NO_PASSWORD = "--none--";
 
-
-
     protected Map<String, Object> authorizableMap;
     protected Set<String> principals;
 
     protected String id;
 
-    protected boolean modified;
+    protected Set<String> propertiesModified;
+    protected boolean principalsModified;
 
     public Authorizable(Map<String, Object> autorizableMap) {
         this.authorizableMap = autorizableMap;
@@ -60,7 +76,8 @@ public class Authorizable {
                     StorageClientUtils.toString(principalsB), ';')));
         }
         this.id = StorageClientUtils.toString(authorizableMap.get(ID_FIELD));
-        modified = false;
+        propertiesModified = Sets.newHashSet();
+        principalsModified = false;
     }
 
     public String[] getPrincipals() {
@@ -72,16 +89,22 @@ public class Authorizable {
     }
 
     public Map<String, Object> getSafeProperties() {
-        authorizableMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
-        return StorageClientUtils.getFilterMap(authorizableMap, FILTER_PROPERTIES);
+        if ( principalsModified ) {
+            authorizableMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
+        }
+        return StorageClientUtils.getFilterMap(authorizableMap, null, FILTER_PROPERTIES);
     }
 
     public static boolean isAGroup(Map<String, Object> authProperties) {
-        return (authProperties != null) && GROUP_VALUE.equals(StorageClientUtils.toString(authProperties.get(AUTHORIZABLE_TYPE_FIELD)));
+        return (authProperties != null)
+                && GROUP_VALUE.equals(StorageClientUtils.toString(authProperties
+                        .get(AUTHORIZABLE_TYPE_FIELD)));
     }
 
     public static boolean isAUser(Map<String, Object> authProperties) {
-        return (authProperties != null) && USER_VALUE.equals(StorageClientUtils.toString(authProperties.get(AUTHORIZABLE_TYPE_FIELD)));
+        return (authProperties != null)
+                && USER_VALUE.equals(StorageClientUtils.toString(authProperties
+                        .get(AUTHORIZABLE_TYPE_FIELD)));
     }
 
     public static boolean isAuthorizable(Map<String, Object> authProperties) {
@@ -93,7 +116,7 @@ public class Authorizable {
             Object cv = authorizableMap.get(key);
             if (!value.equals(cv)) {
                 authorizableMap.put(key, value);
-                modified = true;
+                propertiesModified.add(key);
             }
 
         }
@@ -108,36 +131,41 @@ public class Authorizable {
 
     public void removeProperty(String key) {
         if (authorizableMap.containsKey(key)) {
-            authorizableMap.remove(key);
-            modified = true;
+            authorizableMap.put(key,new RemoveProperty());
+            propertiesModified.add(key);
         }
     }
 
     public void addPrincipal(String principal) {
         if (!principals.contains(principal)) {
             principals.add(principal);
-            modified = true;
+            principalsModified = true;
+            
         }
     }
 
     public void removePrincipal(String principal) {
         if (principals.contains(principal)) {
             principals.remove(principal);
-            modified = true;
+            principalsModified = true;
         }
     }
 
     public Map<String, Object> getPropertiesForUpdate() {
-        authorizableMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
-        return StorageClientUtils.getFilterMap(authorizableMap, FILTER_PROPERTIES);
+        if ( principalsModified ) {
+            authorizableMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
+            propertiesModified.add(PRINCIPALS_FIELD);
+        }
+        return StorageClientUtils.getFilterMap(authorizableMap, propertiesModified, FILTER_PROPERTIES);
     }
 
     public void reset() {
-        modified = false;
+        principalsModified = false;
+        propertiesModified.clear();
     }
 
     public boolean isModified() {
-        return modified;
+        return principalsModified || (propertiesModified.size() > 0);
     }
 
     public boolean hasProperty(String name) {

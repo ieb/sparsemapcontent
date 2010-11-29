@@ -53,7 +53,7 @@ public class AclModification {
     public static String grantKey(String key) {
         return key + GRANTED_MARKER;
     }
-    
+
     public static String denyKey(String key) {
         return key + DENIED_MARKER;
     }
@@ -62,20 +62,19 @@ public class AclModification {
         return key != null && key.endsWith(GRANTED_MARKER);
     }
 
-    public static void addAcl(boolean grant, Permission permssion, String key, List<AclModification> modifications) {
-        if ( grant ) {
+    public static void addAcl(boolean grant, Permission permssion, String key,
+            List<AclModification> modifications) {
+        if (grant) {
             key = AclModification.grantKey(key);
         } else {
             key = AclModification.denyKey(key);
         }
-        modifications
-        .add(new AclModification(key,
-                        permssion.getPermission(),
+        modifications.add(new AclModification(key, permssion.getPermission(),
                 AclModification.Operation.OP_OR));
     }
 
-    public static void filterAcl(Map<String, Object> acl, boolean grant,
-            Permission permission, boolean set, List<AclModification> modifications) {
+    public static void filterAcl(Map<String, Object> acl, boolean grant, Permission permission,
+            boolean set, List<AclModification> modifications) {
         int perm = permission.getPermission();
         Operation op = Operation.OP_OR;
         if (!set) {
@@ -86,7 +85,7 @@ public class AclModification {
             String key = ace.getKey();
             if (AclModification.isGrant(key) == grant) {
                 // clear the bit if set.
-                modifications.add(new AclModification(key,perm,op));
+                modifications.add(new AclModification(key, perm, op));
             }
         }
     }

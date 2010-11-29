@@ -1,4 +1,31 @@
+/*
+ * Licensed to the Sakai Foundation (SF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The SF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package org.sakaiproject.nakamura.api.lite;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.Maps;
+
+import org.apache.commons.lang.StringUtils;
+import org.sakaiproject.nakamura.api.lite.util.Type1UUID;
+import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
@@ -6,15 +33,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import org.apache.commons.lang.StringUtils;
-import org.sakaiproject.nakamura.api.lite.util.Type1UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
-import com.google.common.collect.Maps;
 
 public class StorageClientUtils {
 
@@ -28,7 +46,7 @@ public class StorageClientUtils {
 
     public static String toString(Object object) {
         try {
-            if (object == null) {
+            if (object == null || object instanceof RemoveProperty) {
                 return null;
             } else if (object instanceof byte[]) {
                 return new String((byte[]) object, UTF8);
@@ -44,7 +62,7 @@ public class StorageClientUtils {
     }
 
     public static Object toStore(Object object) {
-        if (object == null) {
+        if (object == null || object instanceof RemoveProperty) {
             return null;
         } else if (object instanceof byte[]) {
             return (byte[]) object;
@@ -124,7 +142,8 @@ public class StorageClientUtils {
                 } catch (NoSuchAlgorithmException e2) {
                     LOGGER.error("You have no Message Digest Algorightms intalled in this JVM, secure Hashes are not availalbe, encoding bytes :"
                             + e2.getMessage());
-                    return encode(StringUtils.leftPad(naked,10,'_').getBytes(UTF8), URL_SAFE_ENCODING);
+                    return encode(StringUtils.leftPad(naked, 10, '_').getBytes(UTF8),
+                            URL_SAFE_ENCODING);
                 }
             }
             byte[] bytes = md.digest(naked.getBytes(UTF8));
@@ -149,7 +168,8 @@ public class StorageClientUtils {
                     } catch (NoSuchAlgorithmException e2) {
                         LOGGER.error("You have no Message Digest Algorightms intalled in this JVM, secure Hashes are not availalbe, encoding bytes :"
                                 + e2.getMessage());
-                        return encode(StringUtils.leftPad(password,10,'_').getBytes(UTF8), URL_SAFE_ENCODING);
+                        return encode(StringUtils.leftPad(password, 10, '_').getBytes(UTF8),
+                                URL_SAFE_ENCODING);
                     }
                 }
             }
@@ -210,15 +230,19 @@ public class StorageClientUtils {
      * @return
      */
     @SuppressWarnings("unchecked")
-    public static <K, V> Map<K, V> getFilterMap(Map<K, V> source, Set<K> filter) {
+    public static <K, V> Map<K, V> getFilterMap(Map<K, V> source, Set<K> include, Set<K> exclude) {
         Builder<K, V> filteredMap = new ImmutableMap.Builder<K, V>();
         for (Entry<K, V> e : source.entrySet()) {
-            if (!filter.contains(e.getKey())) {
-                Object o = e.getValue();
-                if (o instanceof Map) {
-                    filteredMap.put(e.getKey(), (V) getFilterMap((Map<K, V>) e.getValue(), filter));
-                } else {
-                    filteredMap.put(e.getKey(), e.getValue());
+            K k = e.getKey();
+            if (include == null || include.contains(k)) {
+                if (!exclude.contains(k)) {
+                    Object o = e.getValue();
+                    if (o instanceof Map) {
+                        filteredMap.put(k,
+                                (V) getFilterMap((Map<K, V>) e.getValue(), null, exclude));
+                    } else {
+                        filteredMap.put(k, e.getValue());
+                    }
                 }
             }
         }
@@ -259,7 +283,7 @@ public class StorageClientUtils {
     public static int toInt(Object object) {
         if (object instanceof Integer) {
             return ((Integer) object).intValue();
-        } else if (object == null) {
+        } else if (object == null || object instanceof RemoveProperty) {
             return 0;
         }
         return Integer.parseInt(toString(object), ENCODING_BASE);
@@ -268,6 +292,8 @@ public class StorageClientUtils {
     public static long toLong(Object object) {
         if (object instanceof Long) {
             return ((Long) object).longValue();
+        } else if (object == null || object instanceof RemoveProperty) {
+            return 0;
         }
         return Long.parseLong(toString(object), ENCODING_BASE);
     }
@@ -300,7 +326,7 @@ public class StorageClientUtils {
     public static String shardPath(String id) {
         String hash = insecureHash(id);
         return hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, 6) + "/"
-                + hash;
+                + id;
     }
 
     public static String arrayEscape(String string) {

@@ -1,10 +1,21 @@
+/*
+ * Licensed to the Sakai Foundation (SF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The SF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package org.sakaiproject.nakamura.lite.storage.mem;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
@@ -13,9 +24,16 @@ import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
 import org.sakaiproject.nakamura.lite.content.BlockSetContentHelper;
 import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MemoryStorageClient implements StorageClient {
 
@@ -24,16 +42,24 @@ public class MemoryStorageClient implements StorageClient {
     private int blockSize;
     private int maxChunksPerBlockSet;
     private BlockContentHelper contentHelper;
+    private MemoryStorageClientPool pool;
 
-    public MemoryStorageClient(Map<String, Map<String, Object>> store,
-            Map<String, Object> properties) {
+    public MemoryStorageClient(MemoryStorageClientPool pool,
+            Map<String, Map<String, Object>> store, Map<String, Object> properties) {
         this.store = store;
+        this.pool = pool;
         contentHelper = new BlockSetContentHelper(this);
-        blockSize = StorageClientUtils.getSetting(properties.get(BlockSetContentHelper.CONFIG_BLOCK_SIZE),
+        blockSize = StorageClientUtils.getSetting(
+                properties.get(BlockSetContentHelper.CONFIG_BLOCK_SIZE),
                 BlockSetContentHelper.DEFAULT_BLOCK_SIZE);
         maxChunksPerBlockSet = StorageClientUtils.getSetting(
-                properties.get(BlockSetContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK), BlockSetContentHelper.DEFAULT_MAX_CHUNKS_PER_BLOCK);
+                properties.get(BlockSetContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK),
+                BlockSetContentHelper.DEFAULT_MAX_CHUNKS_PER_BLOCK);
 
+    }
+
+    public void close() {
+        pool.releaseClient(this);
     }
 
     public void destroy() {
@@ -74,7 +100,7 @@ public class MemoryStorageClient implements StorageClient {
                 System.arraycopy(bvalue, 0, nvalue, 0, bvalue.length);
                 value = nvalue;
             }
-            if (value == null) {
+            if (value == null || value instanceof RemoveProperty) {
                 row.remove(e.getKey());
             } else {
                 row.put(e.getKey(), value);
@@ -93,8 +119,8 @@ public class MemoryStorageClient implements StorageClient {
 
     @Override
     public Map<String, Object> streamBodyIn(String keySpace, String contentColumnFamily,
-            String contentId, String contentBlockId, Map<String, Object> content, InputStream in) throws StorageClientException,
-            AccessDeniedException, IOException {
+            String contentId, String contentBlockId, Map<String, Object> content, InputStream in)
+            throws StorageClientException, AccessDeniedException, IOException {
         return contentHelper.writeBody(keySpace, contentColumnFamily, contentId, contentBlockId,
                 blockSize, maxChunksPerBlockSet, in);
     }
@@ -109,11 +135,10 @@ public class MemoryStorageClient implements StorageClient {
     }
 
     @Override
-    public DisposableIterator<Map<String, Object>> find(String keySpace, String authorizableColumnFamily,
-            Map<String, Object> properties) {
-        //TODO: Implement
+    public DisposableIterator<Map<String, Object>> find(String keySpace,
+            String authorizableColumnFamily, Map<String, Object> properties) {
+        // TODO: Implement
         throw new UnsupportedOperationException();
     }
-
 
 }

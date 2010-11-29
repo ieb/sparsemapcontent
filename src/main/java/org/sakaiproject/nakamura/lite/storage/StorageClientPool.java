@@ -15,27 +15,21 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.sakaiproject.nakamura.api.lite.accesscontrol;
+package org.sakaiproject.nakamura.lite.storage;
 
-import org.sakaiproject.nakamura.api.lite.StorageClientException;
-import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 
 import java.util.Map;
 
-public interface AccessControlManager {
+public interface StorageClientPool {
 
-    Map<String, Object> getAcl(String objectType, String objectPath) throws StorageClientException,
-            AccessDeniedException;
+    /**
+     * @return the connection bound to this thread, or one that was just opened.
+     * @throws ClientPoolException
+     */
+    StorageClient getClient() throws ClientPoolException;
 
-    void setAcl(String objectType, String objectPath, AclModification[] aclModifications)
-            throws StorageClientException, AccessDeniedException;
-
-    void check(String objectType, String objectPath, Permission permission)
-            throws AccessDeniedException, StorageClientException;
-
-    String getCurrentUserId();
-
-    boolean can(Authorizable authorizable, String objectType, String objectPath,
-            Permission permission);
+    Map<String, CacheHolder> getSharedCache();
 
 }

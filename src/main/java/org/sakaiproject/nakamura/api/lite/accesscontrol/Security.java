@@ -17,25 +17,13 @@
  */
 package org.sakaiproject.nakamura.api.lite.accesscontrol;
 
-import org.sakaiproject.nakamura.api.lite.StorageClientException;
-import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
+public class Security {
 
-import java.util.Map;
-
-public interface AccessControlManager {
-
-    Map<String, Object> getAcl(String objectType, String objectPath) throws StorageClientException,
-            AccessDeniedException;
-
-    void setAcl(String objectType, String objectPath, AclModification[] aclModifications)
-            throws StorageClientException, AccessDeniedException;
-
-    void check(String objectType, String objectPath, Permission permission)
-            throws AccessDeniedException, StorageClientException;
-
-    String getCurrentUserId();
-
-    boolean can(Authorizable authorizable, String objectType, String objectPath,
-            Permission permission);
+    public static final String ZONE_AUTHORIZABLES = "AU";
+    public static final String ZONE_ADMIN = "AD";
+    public static final String ADMIN_GROUPS = "GR";
+    public static final String ADMIN_USERS = "US";
+    public static final String ZONE_CONTENT = "CO";
+    public static final String ADMIN_AUTHORIZABLES = "AA";
 
 }

@@ -1,7 +1,27 @@
+/*
+ * Licensed to the Sakai Foundation (SF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The SF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package org.sakaiproject.nakamura.lite.content;
 
-import java.util.Iterator;
-import java.util.Map;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Maps;
+import com.google.common.collect.UnmodifiableIterator;
 
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
@@ -10,17 +30,14 @@ import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Maps;
-import com.google.common.collect.UnmodifiableIterator;
+import java.util.Iterator;
+import java.util.Map;
 
-public class InternalContent  {
+public class InternalContent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Content.class);
     /**
-     * The ID of a content item 
+     * The ID of a content item
      */
     public static final String UUID_FIELD = "id";
     /**
@@ -32,7 +49,8 @@ public class InternalContent  {
      */
     public static final String STRUCTURE_UUID_FIELD = ":cid";
     /**
-     * BlockID where the body of this content item is stored, if there is a body (content row)
+     * BlockID where the body of this content item is stored, if there is a body
+     * (content row)
      */
     public static final String BLOCKID_FIELD = "blockId";
     /**
@@ -57,7 +75,8 @@ public class InternalContent  {
     public static final String DELETED_FIELD = "deleted";
 
     /**
-     * The block size in bytes in each block in a block set, if body store uses blocking (content row)
+     * The block size in bytes in each block in a block set, if body store uses
+     * blocking (content row)
      */
     public static final String BLOCKSIZE_FIELD = "blocksize";
     /**
@@ -74,7 +93,8 @@ public class InternalContent  {
     public static final String TRUE = "Y";
 
     /**
-     * The date (stored as GMT epoch long) the body was last modified. (content row)
+     * The date (stored as GMT epoch long) the body was last modified. (content
+     * row)
      */
     public static final String BODY_LAST_MODIFIED = "bodyLastModified";
 
@@ -132,54 +152,50 @@ public class InternalContent  {
         updated = true;
         newcontent = true;
     }
-    
-    void internalize(Map<String, Object> structure,
-            ContentManagerImpl contentManager) {
+
+    void internalize(Map<String, Object> structure, ContentManagerImpl contentManager) {
         this.structure = structure;
         this.contentManager = contentManager;
         updated = false;
-        newcontent = false;        
+        newcontent = false;
     }
-
-
 
     Map<String, Object> getContent() {
         return content;
     }
-    
+
     Map<String, Object> getUpdated() {
         return updatedContent;
     }
-    
+
     public void reset() {
         updatedContent.clear();
         updated = false;
         newcontent = false;
     }
-    
+
     public boolean isNew() {
         return newcontent;
     }
-    
+
     public boolean isUpdated() {
         return updated;
     }
 
     public Map<String, Object> getProperties() {
-        LOGGER.info("getting properties map {}",content);
+        LOGGER.info("getting properties map {}", content);
         return ImmutableMap.copyOf(content);
     }
-    
+
     public void setProperty(String key, Object value) {
         Object o = content.get(key);
-        if ( o == null || !o.equals(value) ) {
+        if (o == null || !o.equals(value)) {
             content.put(key, value);
-            updatedContent.put(key,value);
+            updatedContent.put(key, value);
             updated = true;
         }
-        
-    }
 
+    }
 
     public String getPath() {
         return path;
@@ -223,17 +239,15 @@ public class InternalContent  {
     }
 
     public Iterable<String> listChildPaths() {
-        return new Iterable<String>() {  
+        return new Iterable<String>() {
             public Iterator<String> iterator() {
-                return Iterators.filter(structure.keySet().iterator(),
-                        new Predicate<String>() {
-                            public boolean apply(String input) {
-                                return input.charAt(0) != ':';
-                            }
-                        });
+                return Iterators.filter(structure.keySet().iterator(), new Predicate<String>() {
+                    public boolean apply(String input) {
+                        return input.charAt(0) != ':';
+                    }
+                });
             }
         };
     }
-
 
 }

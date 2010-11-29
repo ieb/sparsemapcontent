@@ -15,12 +15,18 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.sakaiproject.nakamura.lite.storage;
 
-import org.sakaiproject.nakamura.api.lite.StorageClientException;
+package org.sakaiproject.nakamura.api.lite;
 
-public interface RowHasher {
+public class ClientPoolException extends StorageClientException {
 
-    String rowHash(String keySpace, String columnFamily, String key) throws StorageClientException;
+    public ClientPoolException(String message, Exception e) {
+        super(message, e);
+    }
+
+    /**
+	 * 
+	 */
+    private static final long serialVersionUID = -5680737304829249567L;
 
 }

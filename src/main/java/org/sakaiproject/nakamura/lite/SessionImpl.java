@@ -1,9 +1,24 @@
+/*
+ * Licensed to the Sakai Foundation (SF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The SF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package org.sakaiproject.nakamura.lite;
 
-import java.util.Map;
-
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Configuration;
-import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -15,50 +30,47 @@ import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.content.ContentManagerImpl;
-import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
+
+import java.util.Map;
 
 public class SessionImpl implements Session {
 
     private AccessControlManagerImpl accessControlManager;
     private ContentManagerImpl contentManager;
     private AuthorizableManagerImpl authorizableManager;
-    private ConnectionPool connectionPool;
     private User currentUser;
     private Repository repository;
     private Exception closedAt;
     private StorageClient client;
     private Authenticator authenticator;
 
-    public SessionImpl(Repository repository, User currentUser, ConnectionPool connectionPool,
+    public SessionImpl(Repository repository, User currentUser, StorageClient client,
             Configuration configuration, Map<String, CacheHolder> sharedCache)
-            throws ConnectionPoolException, StorageClientException, AccessDeniedException {
-        this.connectionPool = connectionPool;
+            throws ClientPoolException, StorageClientException, AccessDeniedException {
         this.currentUser = currentUser;
         this.repository = repository;
-        client = connectionPool.openConnection();
-        
+        this.client = client;
         accessControlManager = new AccessControlManagerImpl(client, currentUser, configuration,
                 sharedCache);
         authorizableManager = new AuthorizableManagerImpl(currentUser, client, configuration,
-                accessControlManager);
+                accessControlManager, sharedCache);
 
         contentManager = new ContentManagerImpl(client, accessControlManager, configuration);
 
         authenticator = new AuthenticatorImpl(client, configuration);
     }
 
-    @Override
-    public void logout() throws ConnectionPoolException {
+    public void logout() throws ClientPoolException {
         if (closedAt == null) {
             accessControlManager.close();
             authorizableManager.close();
             contentManager.close();
-            connectionPool.closeConnection(client);
+            client.close();
             accessControlManager = null;
             authorizableManager = null;
             contentManager = null;
-            connectionPool = null;
+            client = null;
             authenticator = null;
             closedAt = new Exception("This session was closed at:");
         }

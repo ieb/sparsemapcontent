@@ -1,7 +1,21 @@
+/*
+ * Licensed to the Sakai Foundation (SF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The SF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package org.sakaiproject.nakamura.lite.storage;
-
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
@@ -9,12 +23,15 @@ import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
-import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
 @Component(componentAbstract = true)
-public abstract class AbstractClientConnectionPool implements ConnectionPool {
+public abstract class AbstractClientConnectionPool implements StorageClientPool {
 
     private static final Logger LOGGER = LoggerFactory
             .getLogger(AbstractClientConnectionPool.class);
@@ -91,7 +108,7 @@ public abstract class AbstractClientConnectionPool implements ConnectionPool {
         try {
             pool.clear();
             pool.close();
-            LOGGER.info("Sparse Map Content client pool closed ");
+            LOGGER.debug("Sparse Map Content client pool closed ");
         } catch (Exception e) {
             LOGGER.error("Failed to close pool ", e);
         }
@@ -103,13 +120,11 @@ public abstract class AbstractClientConnectionPool implements ConnectionPool {
      * @see
      * org.sakaiproject.nakamura.lite.cassandra.ConnectionPool#openConnection()
      */
-    public StorageClient openConnection() throws ConnectionPoolException {
+    public StorageClient getClient() throws ClientPoolException {
         try {
-            StorageClient client =  (StorageClient) pool.borrowObject();
-            LOGGER.info("Open Num Open Connections is now {} ",ref.getAndIncrement()+1);
-            return client;
+            return (StorageClient) pool.borrowObject();
         } catch (Exception e) {
-            throw new ConnectionPoolException("Failed To Borrow connection from pool ", e);
+            throw new ClientPoolException("Failed To Borrow connection from pool ", e);
         }
     }
 
@@ -119,16 +134,14 @@ public abstract class AbstractClientConnectionPool implements ConnectionPool {
      * @see
      * org.sakaiproject.nakamura.lite.cassandra.ConnectionPool#closeConnection()
      */
-    public void closeConnection(StorageClient client) throws ConnectionPoolException {
+    public void releaseClient(StorageClient client) {
         try {
-            if ( client != null ) {
+            if (client != null) {
                 pool.returnObject(client);
-                LOGGER.info("Close Num Open Connections is now {} ",ref.getAndDecrement()-1);
-            } else {
-                LOGGER.info("NoClose Num Open Connections is now {} ",ref.get());    
             }
         } catch (Exception e) {
-            throw new ConnectionPoolException("Failed To Return connection to pool ", e);
+            LOGGER.warn("Failed to close connection " + e.getMessage(), e);
         }
     }
+
 }

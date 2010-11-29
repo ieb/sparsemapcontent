@@ -1,4 +1,31 @@
+/*
+ * Licensed to the Sakai Foundation (SF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The SF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package org.sakaiproject.nakamura.lite.content;
+
+import com.google.common.collect.Maps;
+
+import org.apache.commons.io.IOUtils;
+import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
+import org.sakaiproject.nakamura.api.lite.content.Content;
+import org.sakaiproject.nakamura.lite.storage.RowHasher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,16 +36,6 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Map;
 
-import org.apache.commons.io.IOUtils;
-import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
-import org.sakaiproject.nakamura.api.lite.content.Content;
-import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
-import org.sakaiproject.nakamura.lite.storage.RowHasher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.Maps;
-
 public class FileStreamContentHelper implements StreamedContentHelper {
 
     private static final String DEFAULT_FILE_STORE = "store";
@@ -28,26 +45,29 @@ public class FileStreamContentHelper implements StreamedContentHelper {
     private String fileStore;
     private RowHasher rowHasher;
 
-    public FileStreamContentHelper(RowHasher rowHasher, Map<String,Object> properties) {
-        fileStore = StorageClientUtils.getSetting(properties.get(CONFIG_STOREBASE), DEFAULT_FILE_STORE);
+    public FileStreamContentHelper(RowHasher rowHasher, Map<String, Object> properties) {
+        fileStore = StorageClientUtils.getSetting(properties.get(CONFIG_STOREBASE),
+                DEFAULT_FILE_STORE);
         this.rowHasher = rowHasher;
     }
-    
+
     @Override
     public Map<String, Object> writeBody(String keySpace, String columnFamily, String contentId,
-            String contentBlockId, Map<String, Object> content, InputStream in) throws IOException {
+            String contentBlockId, Map<String, Object> content, InputStream in) throws IOException,
+            StorageClientException {
         String path = getPath(keySpace, columnFamily, contentBlockId);
-        File file = new File(fileStore+"/"+path);
+        File file = new File(fileStore + "/" + path);
         File parentFile = file.getParentFile();
-        if ( !parentFile.exists() ) {
-            if ( !parentFile.mkdirs() ) {
-                throw new IOException("Unable to create directory "+parentFile.getAbsolutePath());
+        if (!parentFile.exists()) {
+            if (!parentFile.mkdirs()) {
+                throw new IOException("Unable to create directory " + parentFile.getAbsolutePath());
             }
         }
         FileOutputStream out = new FileOutputStream(file);
         long length = IOUtils.copyLarge(in, out);
         out.close();
-        LOGGER.info("Wrote {} bytes to {} as body of {}:{}:{} ",new Object[] {length,path, keySpace, columnFamily, contentBlockId});
+        LOGGER.info("Wrote {} bytes to {} as body of {}:{}:{} ", new Object[] { length, path,
+                keySpace, columnFamily, contentBlockId });
         Map<String, Object> metadata = Maps.newHashMap();
         metadata.put(Content.LENGTH_FIELD, StorageClientUtils.toStore(length));
         metadata.put(Content.BLOCKID_FIELD, StorageClientUtils.toStore(contentBlockId));
@@ -55,20 +75,24 @@ public class FileStreamContentHelper implements StreamedContentHelper {
         return metadata;
     }
 
-    private String getPath(String keySpace, String columnFamily, String contentBlockId) {
+    private String getPath(String keySpace, String columnFamily, String contentBlockId)
+            throws StorageClientException {
         Calendar c = new GregorianCalendar();
         c.setTimeInMillis(System.currentTimeMillis());
         int year = c.get(Calendar.YEAR);
         int month = c.get(Calendar.MONTH);
         String rowHash = rowHasher.rowHash(keySpace, columnFamily, contentBlockId);
-        return year+"/"+month+"/"+rowHash.substring(0,2)+"/"+rowHash.substring(2,4)+"/"+rowHash.substring(4,6)+"/"+rowHash;
+        return year + "/" + month + "/" + rowHash.substring(0, 2) + "/" + rowHash.substring(2, 4)
+                + "/" + rowHash.substring(4, 6) + "/" + rowHash;
     }
 
     @Override
-    public InputStream readBody(String keySpace, String columnFamily, String contentBlockId, Map<String, Object> content) throws IOException {
+    public InputStream readBody(String keySpace, String columnFamily, String contentBlockId,
+            Map<String, Object> content) throws IOException {
         String path = StorageClientUtils.toString(content.get(STORE_LOCATION));
-        LOGGER.info("Reading from {} as body of {}:{}:{} ",new Object[] {path, keySpace, columnFamily, contentBlockId});
-        File file = new File(fileStore+"/"+path);
+        LOGGER.info("Reading from {} as body of {}:{}:{} ", new Object[] { path, keySpace,
+                columnFamily, contentBlockId });
+        File file = new File(fileStore + "/" + path);
         return new FileInputStream(file);
     }
 

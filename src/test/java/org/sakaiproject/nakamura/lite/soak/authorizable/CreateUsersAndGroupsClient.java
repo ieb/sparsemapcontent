@@ -1,8 +1,25 @@
+/*
+ * Licensed to the Sakai Foundation (SF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The SF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package org.sakaiproject.nakamura.lite.soak.authorizable;
 
-import java.util.Map;
+import com.google.common.collect.ImmutableMap;
 
-import org.sakaiproject.nakamura.api.lite.ConnectionPoolException;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
@@ -13,18 +30,18 @@ import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.soak.AbstractScalingClient;
 import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
-import org.sakaiproject.nakamura.lite.storage.ConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
-import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 
 public class CreateUsersAndGroupsClient extends AbstractScalingClient {
 
     private int nusers;
     private Map<String, CacheHolder> sharedCache = new ConcurrentLRUMap<String, CacheHolder>(1000);
 
-    public CreateUsersAndGroupsClient(int totalUsers, ConnectionPool connectionPool) throws ConnectionPoolException,
-            StorageClientException, AccessDeniedException {
-        super(connectionPool);
+    public CreateUsersAndGroupsClient(int totalUsers, StorageClientPool clientPool)
+            throws ClientPoolException, StorageClientException, AccessDeniedException {
+        super(clientPool);
         nusers = totalUsers;
     }
 
@@ -41,7 +58,7 @@ public class CreateUsersAndGroupsClient extends AbstractScalingClient {
                     client, currentUser, configuration, sharedCache);
 
             AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
-                    client, configuration, accessControlManagerImpl);
+                    client, configuration, accessControlManagerImpl, sharedCache);
 
             for (int i = 0; i < nusers; i++) {
                 String userId = tname + "_" + i;
@@ -54,9 +71,6 @@ public class CreateUsersAndGroupsClient extends AbstractScalingClient {
             // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (AccessDeniedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (ConnectionPoolException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
