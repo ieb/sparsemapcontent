@@ -84,7 +84,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
                 modifications.put(name, StorageClientUtils.toStore(bitmap));
             }
         }
-        LOGGER.info("Updating ACL {} {} ", key, modifications);
+        LOGGER.debug("Updating ACL {} {} ", key, modifications);
         putCached(keySpace, aclColumnFamily, key, modifications);
     }
 
@@ -117,11 +117,11 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         if (user.getId().equals(authorizable.getId()) && cache.containsKey(key)) {
             return cache.get(key);
         } else {
-            LOGGER.info("Cache Miss {} [{}] ", cache, key);
+            LOGGER.debug("Cache Miss {} [{}] ", cache, key);
         }
 
         Map<String, Object> acl = getCached(keySpace, aclColumnFamily, key);
-        LOGGER.info("ACL on {} is {} ", key, acl);
+        LOGGER.debug("ACL on {} is {} ", key, acl);
 
         int grants = 0;
         int denies = 0;

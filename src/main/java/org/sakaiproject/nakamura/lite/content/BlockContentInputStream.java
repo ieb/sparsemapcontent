@@ -80,33 +80,33 @@ public class BlockContentInputStream extends InputStream {
     private boolean readBuffer() throws IOException {
         currentBlockNumber++;
         if (currentBlockNumber >= blocksInSet) {
-            LOGGER.info("No more blocks In set, next set ? blocks {} {} ", currentBlockSet, nBlocks);
+            LOGGER.debug("No more blocks In set, next set ? blocks {} {} ", currentBlockSet, nBlocks);
             if (currentBlockSet + 1 == nBlocks) {
-                LOGGER.info("No more blocks {} {} ", currentBlockSet, nBlocks);
+                LOGGER.debug("No more blocks {} {} ", currentBlockSet, nBlocks);
                 return false;
             }
             currentBlockSet++;
             String blockKey = blockId + ":" + currentBlockSet;
             try {
                 block = client.get(keySpace, contentColumnFamily, blockKey);
-                LOGGER.info("New Block Loaded {} {} ", blockKey, block);
+                LOGGER.debug("New Block Loaded {} {} ", blockKey, block);
             } catch (StorageClientException e) {
                 throw new IOException(e.getMessage(), e);
             }
             currentBlockNumber = 0;
             blocksInSet = StorageClientUtils
                     .toInt(block.get(BlockSetContentHelper.NUMBLOCKS_FIELD));
-            LOGGER.info("Loaded New Block Set {}  containing {} blocks ", currentBlockSet,
+            LOGGER.debug("Loaded New Block Set {}  containing {} blocks ", currentBlockSet,
                     blocksInSet);
 
         }
 
-        LOGGER.info("Loading block {} {} ", currentBlockNumber, blocksInSet);
+        LOGGER.debug("Loading block {} {} ", currentBlockNumber, blocksInSet);
         blockLength = StorageClientUtils.toInt(block
                 .get(BlockSetContentHelper.BLOCK_LENGTH_FIELD_STUB + currentBlockNumber));
         buffer = (byte[]) block.get(BlockSetContentHelper.BODY_FIELD_STUB + currentBlockNumber);
         offset = 0;
-        LOGGER.info("Loaded Buffer {} {} size {} ", new Object[] { currentBlockSet,
+        LOGGER.debug("Loaded Buffer {} {} size {} ", new Object[] { currentBlockSet,
                 currentBlockNumber, buffer.length });
         return true;
     }
@@ -128,10 +128,10 @@ public class BlockContentInputStream extends InputStream {
                 n = n - (blockLength - offset);
                 skipped += (blockLength - offset);
                 if (!readBuffer()) {
-                    LOGGER.info("Skipped over EOF {} ", skipped);
+                    LOGGER.debug("Skipped over EOF {} ", skipped);
                     return skipped;
                 }
-                LOGGER.info("Skipped Partial {} ", skipped);
+                LOGGER.debug("Skipped Partial {} ", skipped);
             }
         }
         LOGGER.debug("Skipped Final {} ", skipped);
