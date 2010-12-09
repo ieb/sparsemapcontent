@@ -224,7 +224,6 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         return new int[] { 0, 0 };
     }
 
-    @Override
     public String getCurrentUserId() {
         return user.getId();
     }
@@ -239,7 +238,6 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         }
     }
 
-    @Override
     public boolean can(Authorizable authorizable, String objectType, String objectPath,
             Permission permission) {
         if (authorizable instanceof User && ((User) authorizable).isAdmin()) {

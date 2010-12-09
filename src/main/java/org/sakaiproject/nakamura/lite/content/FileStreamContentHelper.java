@@ -51,7 +51,6 @@ public class FileStreamContentHelper implements StreamedContentHelper {
         this.rowHasher = rowHasher;
     }
 
-    @Override
     public Map<String, Object> writeBody(String keySpace, String columnFamily, String contentId,
             String contentBlockId, Map<String, Object> content, InputStream in) throws IOException,
             StorageClientException {
@@ -86,7 +85,6 @@ public class FileStreamContentHelper implements StreamedContentHelper {
                 + "/" + rowHash.substring(4, 6) + "/" + rowHash;
     }
 
-    @Override
     public InputStream readBody(String keySpace, String columnFamily, String contentBlockId,
             Map<String, Object> content) throws IOException {
         String path = StorageClientUtils.toString(content.get(STORE_LOCATION));

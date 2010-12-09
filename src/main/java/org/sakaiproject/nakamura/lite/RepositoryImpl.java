@@ -72,25 +72,21 @@ public class RepositoryImpl implements Repository {
     public void deactivate(Map<String, Object> properties) throws ClientPoolException {
     }
 
-    @Override
     public Session login(String username, String password) throws ClientPoolException,
             StorageClientException, AccessDeniedException {
         return openSession(username, password);
     }
 
-    @Override
     public Session login() throws ClientPoolException, StorageClientException,
             AccessDeniedException {
         return openSession(User.ANON_USER);
     }
 
-    @Override
     public Session loginAdministrative() throws ClientPoolException, StorageClientException,
             AccessDeniedException {
         return openSession(User.ADMIN_USER);
     }
 
-    @Override
     public Session loginAdministrative(String username) throws StorageClientException,
             ClientPoolException, AccessDeniedException {
         return openSession(username);

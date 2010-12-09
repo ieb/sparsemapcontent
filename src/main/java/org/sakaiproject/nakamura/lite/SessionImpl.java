@@ -76,36 +76,30 @@ public class SessionImpl implements Session {
         }
     }
 
-    @Override
     public AccessControlManagerImpl getAccessControlManager() throws StorageClientException {
         check();
         return accessControlManager;
     }
 
-    @Override
     public AuthorizableManagerImpl getAuthorizableManager() throws StorageClientException {
         check();
         return authorizableManager;
     }
 
-    @Override
     public ContentManagerImpl getContentManager() throws StorageClientException {
         check();
         return contentManager;
     }
 
-    @Override
     public Authenticator getAuthenticator() throws StorageClientException {
         check();
         return authenticator;
     }
 
-    @Override
     public Repository getRepository() {
         return repository;
     }
 
-    @Override
     public String getUserId() {
         return currentUser.getId();
     }

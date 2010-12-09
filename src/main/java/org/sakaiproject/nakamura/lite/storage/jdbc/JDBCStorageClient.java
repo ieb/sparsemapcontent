@@ -424,7 +424,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         disposeDisposables();
     }
 
-    @Override
     public Map<String, Object> streamBodyIn(String keySpace, String columnFamily, String contentId,
             String contentBlockId, Map<String, Object> content, InputStream in)
             throws StorageClientException, AccessDeniedException, IOException {
@@ -433,7 +432,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 content, in);
     }
 
-    @Override
     public InputStream streamBodyOut(String keySpace, String columnFamily, String contentId,
             String contentBlockId, Map<String, Object> content) throws StorageClientException,
             AccessDeniedException, IOException {
@@ -444,7 +442,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
 
             private boolean open = true;
 
-            @Override
             public void close() {
                 if (open && in != null) {
                     try {
@@ -465,7 +462,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         return jcbcStorageClientConnection.getConnection();
     }
 
-    @Override
     public DisposableIterator<Map<String, Object>> find(String keySpace, String columnFamily,
             Map<String, Object> properties) throws StorageClientException {
         checkClosed();
@@ -534,17 +530,14 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 private boolean open = true;
                 private String[] lastrow;
 
-                @Override
                 public void remove() {
                     throw new UnsupportedOperationException();
                 }
 
-                @Override
                 public Map<String, Object> next() {
                     return map;
                 }
 
-                @Override
                 public boolean hasNext() {
                     try {
                         if (open && rs.next()) {
@@ -605,7 +598,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     return s;
                 }
 
-                @Override
                 public void close() {
                     if (open) {
                         open = false;

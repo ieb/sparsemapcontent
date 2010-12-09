@@ -119,7 +119,6 @@ public class BlockSetContentHelper implements BlockContentHelper {
 
     }
 
-    @Override
     public InputStream readBody(String keySpace, String contentColumnFamily, String contentBlockId,
             int nBlocks) throws StorageClientException, AccessDeniedException {
         return new BlockContentInputStream(client, keySpace, contentColumnFamily, contentBlockId,

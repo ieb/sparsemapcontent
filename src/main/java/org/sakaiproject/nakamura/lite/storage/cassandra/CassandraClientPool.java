@@ -181,7 +181,6 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
         return new ClientConnectionPoolFactory(this, connections, properties);
     }
 
-    @Override
     public Map<String, CacheHolder> getSharedCache() {
         return sharedCache;
     }

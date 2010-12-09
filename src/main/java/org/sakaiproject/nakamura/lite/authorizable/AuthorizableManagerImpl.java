@@ -300,7 +300,6 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         }
     }
 
-    @Override
     public void changePassword(Authorizable authorizable, String password, String oldPassword)
             throws StorageClientException, AccessDeniedException {
         String id = authorizable.getId();
@@ -327,7 +326,6 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         }
     }
 
-    @Override
     public Iterator<Authorizable> findAuthorizable(String propertyName, String value,
             Class<? extends Authorizable> authorizableType) throws StorageClientException {
         Builder<String, Object> builder = ImmutableMap.builder();
@@ -346,7 +344,6 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
 
             private Authorizable authorizable;
 
-            @Override
             public boolean hasNext() {
                 while (authMaps.hasNext()) {
                     Map<String, Object> authMap = authMaps.next();
@@ -381,12 +378,10 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 return false;
             }
 
-            @Override
             public Authorizable next() {
                 return authorizable;
             }
 
-            @Override
             public void remove() {
                 throw new UnsupportedOperationException();
             }
