@@ -51,7 +51,6 @@ public class FileStreamContentHelper implements StreamedContentHelper {
         this.rowHasher = rowHasher;
     }
 
-    @Override
     public Map<String, Object> writeBody(String keySpace, String columnFamily, String contentId,
             String contentBlockId, Map<String, Object> content, InputStream in) throws IOException,
             StorageClientException {
@@ -66,7 +65,7 @@ public class FileStreamContentHelper implements StreamedContentHelper {
         FileOutputStream out = new FileOutputStream(file);
         long length = IOUtils.copyLarge(in, out);
         out.close();
-        LOGGER.info("Wrote {} bytes to {} as body of {}:{}:{} ", new Object[] { length, path,
+        LOGGER.debug("Wrote {} bytes to {} as body of {}:{}:{} ", new Object[] { length, path,
                 keySpace, columnFamily, contentBlockId });
         Map<String, Object> metadata = Maps.newHashMap();
         metadata.put(Content.LENGTH_FIELD, StorageClientUtils.toStore(length));
@@ -86,11 +85,10 @@ public class FileStreamContentHelper implements StreamedContentHelper {
                 + "/" + rowHash.substring(4, 6) + "/" + rowHash;
     }
 
-    @Override
     public InputStream readBody(String keySpace, String columnFamily, String contentBlockId,
             Map<String, Object> content) throws IOException {
         String path = StorageClientUtils.toString(content.get(STORE_LOCATION));
-        LOGGER.info("Reading from {} as body of {}:{}:{} ", new Object[] { path, keySpace,
+        LOGGER.debug("Reading from {} as body of {}:{}:{} ", new Object[] { path, keySpace,
                 columnFamily, contentBlockId });
         File file = new File(fileStore + "/" + path);
         return new FileInputStream(file);

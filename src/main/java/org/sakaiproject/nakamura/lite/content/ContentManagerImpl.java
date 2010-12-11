@@ -204,10 +204,10 @@ public class ContentManagerImpl implements ContentManager {
                     StorageClientUtils.getParentObjectPath(path),
                     ImmutableMap.of(StorageClientUtils.getObjectName(path), newVersionIdS));
         }
-        LOGGER.info("Saved Version [{}] {}", saveVersionId, saveVersion);
-        LOGGER.info("New Version [{}] {}", newVersionId, newVersion);
-        LOGGER.info("Structure {} ", client.get(keySpace, contentColumnFamily, path));
-        LOGGER.info(
+        LOGGER.debug("Saved Version [{}] {}", saveVersionId, saveVersion);
+        LOGGER.debug("New Version [{}] {}", newVersionId, newVersion);
+        LOGGER.debug("Structure {} ", client.get(keySpace, contentColumnFamily, path));
+        LOGGER.debug(
                 "Parent Structure {} ",
                 client.get(keySpace, contentColumnFamily,
                         StorageClientUtils.getParentObjectPath(path)));
@@ -232,7 +232,7 @@ public class ContentManagerImpl implements ContentManager {
             toSave.put(CREATED, StorageClientUtils.toStore(System.currentTimeMillis()));
             toSave.put(CREATED_BY,
                     StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
-            LOGGER.info("New Content with {} {} ", id, toSave);
+            LOGGER.debug("New Content with {} {} ", id, toSave);
         } else if (content.isUpdated()) {
             toSave = Maps.newHashMap(content.getUpdated());
             id = StorageClientUtils.toString(contentPropertes.get(UUID_FIELD));
@@ -240,7 +240,7 @@ public class ContentManagerImpl implements ContentManager {
             toSave.put(LASTMODIFIED, StorageClientUtils.toStore(System.currentTimeMillis()));
             toSave.put(LASTMODIFIED_BY,
                     StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
-            LOGGER.info("Updating Content with {} {} ", id, toSave);
+            LOGGER.debug("Updating Content with {} {} ", id, toSave);
         } else {
             // if not new or updated, dont update.
             return;
@@ -264,7 +264,7 @@ public class ContentManagerImpl implements ContentManager {
         }
         // save the content id.
         client.insert(keySpace, contentColumnFamily, id, toSave);
-        LOGGER.info("Saved {} at {} as {} ", new Object[] { path, id, toSave });
+        LOGGER.debug("Saved {} at {} as {} ", new Object[] { path, id, toSave });
         // reset state to unmodified to take further modifications.
         content.reset();
     }
@@ -321,7 +321,7 @@ public class ContentManagerImpl implements ContentManager {
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
         Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
-        LOGGER.info("Structure Loaded {} {} ", path, structure);
+        LOGGER.debug("Structure Loaded {} {} ", path, structure);
         String contentId = StorageClientUtils.toString(structure.get(STRUCTURE_UUID_FIELD));
         Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
         String contentBlockId = StorageClientUtils.toString(content.get(BLOCKID_FIELD));

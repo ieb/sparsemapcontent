@@ -34,10 +34,6 @@ We will add search indexes at some point using Lucene, perhaps in the form of Zo
 
 h2. Backlog
 
-# Provide Read Cache implementation of StorageClient that chains to a real storage client.
-# Provide Write Through Cache implementation of StorageClient that chains to a real storage client.
-# Provide Scoped (as in Transaction Scoped) implementation of StorageClient that chains to a real storage client.
-# Do scalability testing on MySQL and Cassandra
 # Implement Infinispan StorageClient cache (Read or Write Through)
 
 
@@ -45,6 +41,12 @@ h2. Completed Backlog
 
 # Check all byte[] usage and limit to only real bodies. (14/11/2010) no byte[] are used for content bodies.
 # Replace all byte[] usage with InputStreams or a resetable holder, pushing down into the StorageClient. (14/11/2010)
+# Provide Read Cache implementation of StorageClient that chains to a real storage client (28/11/2010, CachedManager)
+# Provide Write Through Cache implementation of StorageClient that chains to a real storage client, (wont fix)
+# Provide Scoped (as in Transaction Scoped) implementation of StorageClient that chains to a real storage client (wont fix since there which Jackrabbit in place there is no guarentee that the session you see on the request is the session that should be committed)
+# Do scalability testing on MySQL and Cassandra (done 22/11/2010)
+# Implement SparseMapUserManager and related classes in th server bundle in Sling. (done 28/11/2010)
+
 
 
 

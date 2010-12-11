@@ -100,7 +100,6 @@ public class MemoryStorageClientPool extends AbstractClientConnectionPool {
         return new ClientConnectionPoolFactory(this, store, properties);
     }
 
-    @Override
     public Map<String, CacheHolder> getSharedCache() {
         // no point in having a L2 cache for memory.
         return null;

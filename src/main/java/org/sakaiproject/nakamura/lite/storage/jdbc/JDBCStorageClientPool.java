@@ -275,7 +275,6 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
         return new JCBCStorageClientConnection();
     }
 
-    @Override
     public Map<String, CacheHolder> getSharedCache() {
         return sharedCache;
     }

@@ -168,7 +168,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
 
             }
 
-            LOGGER.info("Membership Change added [{}] removed [{}] ", Arrays.toString(newMembers), Arrays.toString(retiredMembers));
+            LOGGER.debug("Membership Change added [{}] removed [{}] ", Arrays.toString(newMembers), Arrays.toString(retiredMembers));
             int changes = 0;
             // there is now a sparse list of authorizables, that need changing
             for (Authorizable newMember : newMembers) {
@@ -180,11 +180,11 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                                         FILTER_ON_UPDATE);
                         putCached(keySpace, authorizableColumnFamily, newMember.getId(),
                                 encodedProperties);
-                        LOGGER.info("Updated {} with principal {} {} ",new Object[]{newMember.getId(), group.getId(), encodedProperties});
+                        LOGGER.debug("Updated {} with principal {} {} ",new Object[]{newMember.getId(), group.getId(), encodedProperties});
                         findAuthorizable(newMember.getId());
                         changes++;
                     } else {
-                        LOGGER.info("New Member {} already had group principal {} ",
+                        LOGGER.debug("New Member {} already had group principal {} ",
                                 newMember.getId(), authorizable.getId());
                     }
                 }
@@ -199,14 +199,14 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                         putCached(keySpace, authorizableColumnFamily, retiredMember.getId(),
                                 encodedProperties);
                         changes++;
-                        LOGGER.info("Update {} and removed principal {} ",retiredMember.getId(), group.getId());
+                        LOGGER.debug("Update {} and removed principal {} ",retiredMember.getId(), group.getId());
                     } else {
-                        LOGGER.info("Retired Member {} didnt have group principal {} ",
+                        LOGGER.debug("Retired Member {} didnt have group principal {} ",
                                 retiredMember.getId(), authorizable.getId());
                     }
                 }
             }
-            LOGGER.info(" Finished Updating other principals, made {} changes, Saving Changes to {} ", changes, id);
+            LOGGER.debug(" Finished Updating other principals, made {} changes, Saving Changes to {} ", changes, id);
         }
         
         
@@ -300,7 +300,6 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         }
     }
 
-    @Override
     public void changePassword(Authorizable authorizable, String password, String oldPassword)
             throws StorageClientException, AccessDeniedException {
         String id = authorizable.getId();
@@ -327,7 +326,6 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         }
     }
 
-    @Override
     public Iterator<Authorizable> findAuthorizable(String propertyName, String value,
             Class<? extends Authorizable> authorizableType) throws StorageClientException {
         Builder<String, Object> builder = ImmutableMap.builder();
@@ -346,7 +344,6 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
 
             private Authorizable authorizable;
 
-            @Override
             public boolean hasNext() {
                 while (authMaps.hasNext()) {
                     Map<String, Object> authMap = authMaps.next();
@@ -381,12 +378,10 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 return false;
             }
 
-            @Override
             public Authorizable next() {
                 return authorizable;
             }
 
-            @Override
             public void remove() {
                 throw new UnsupportedOperationException();
             }

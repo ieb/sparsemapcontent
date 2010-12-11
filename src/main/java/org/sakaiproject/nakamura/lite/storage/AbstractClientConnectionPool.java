@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Component(componentAbstract = true)
 public abstract class AbstractClientConnectionPool implements StorageClientPool {
@@ -59,7 +58,6 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
 
     private GenericObjectPool pool;
 
-    private AtomicInteger ref = new AtomicInteger();
 
     public AbstractClientConnectionPool() {
     }

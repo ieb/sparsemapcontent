@@ -117,7 +117,6 @@ public class MemoryStorageClient implements StorageClient {
         }
     }
 
-    @Override
     public Map<String, Object> streamBodyIn(String keySpace, String contentColumnFamily,
             String contentId, String contentBlockId, Map<String, Object> content, InputStream in)
             throws StorageClientException, AccessDeniedException, IOException {
@@ -125,7 +124,6 @@ public class MemoryStorageClient implements StorageClient {
                 blockSize, maxChunksPerBlockSet, in);
     }
 
-    @Override
     public InputStream streamBodyOut(String keySpace, String contentColumnFamily, String contentId,
             String contentBlockId, Map<String, Object> content) throws StorageClientException,
             AccessDeniedException {
@@ -134,7 +132,6 @@ public class MemoryStorageClient implements StorageClient {
         return contentHelper.readBody(keySpace, contentColumnFamily, contentBlockId, nBlocks);
     }
 
-    @Override
     public DisposableIterator<Map<String, Object>> find(String keySpace,
             String authorizableColumnFamily, Map<String, Object> properties) {
         // TODO: Implement

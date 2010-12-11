@@ -52,7 +52,7 @@ public class CachingManager {
             miss++;
             if (sharedCache != null) {
                 if (m != null) {
-                    LOGGER.info("Found Map {} {}", cacheKey, m);
+                    LOGGER.debug("Found Map {} {}", cacheKey, m);
                 }
                 sharedCache.put(cacheKey, new CacheHolder(m));
             }
@@ -78,7 +78,7 @@ public class CachingManager {
     protected void putCached(String keySpace, String columnFamily, String key,
             Map<String, Object> encodedProperties) throws StorageClientException {
         removeFromCache(keySpace, columnFamily, key);
-        LOGGER.info("Updating {} with {}  ",key, encodedProperties);
+        LOGGER.debug("Updating {} with {}  ",key, encodedProperties);
         client.insert(keySpace, columnFamily, key, encodedProperties);
     }
 

@@ -72,12 +72,12 @@ public class BlockSetContentHelper implements BlockContentHelper {
             while (offset < buffer.length) {
                 nread = in.read(buffer, offset, buffer.length - offset);
                 if (nread < 0) {
-                    LOGGER.info("Got to end of stream ");
+                    LOGGER.debug("Got to end of stream ");
                     break; // end of input stream, in a block read
                 }
                 offset += nread;
             }
-            LOGGER.info("Read {} bytes ", offset);
+            LOGGER.debug("Read {} bytes ", offset);
 
             if (offset == 0 && nread < 0) {
                 break; // end of the input stream and the block was empty.
@@ -112,14 +112,13 @@ public class BlockSetContentHelper implements BlockContentHelper {
         metadata.put(Content.LENGTH_FIELD, StorageClientUtils.toStore(length));
         metadata.put(Content.BLOCKSIZE_FIELD, StorageClientUtils.toStore(blockSize));
 
-        LOGGER.info(
+        LOGGER.debug(
                 "Saved Last block ContentID {} BlockID {} Nblocks {}  length {}  blocksize {} ",
                 new Object[] { contentId, contentBlockId, lastBlockWrite + 1, length, blockSize });
         return metadata;
 
     }
 
-    @Override
     public InputStream readBody(String keySpace, String contentColumnFamily, String contentBlockId,
             int nBlocks) throws StorageClientException, AccessDeniedException {
         return new BlockContentInputStream(client, keySpace, contentColumnFamily, contentBlockId,

@@ -45,7 +45,6 @@ public class CreateUsersAndGroupsClient extends AbstractScalingClient {
         nusers = totalUsers;
     }
 
-    @Override
     public void run() {
         try {
             super.setup();

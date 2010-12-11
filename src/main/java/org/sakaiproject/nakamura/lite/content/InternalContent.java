@@ -183,7 +183,7 @@ public class InternalContent {
     }
 
     public Map<String, Object> getProperties() {
-        LOGGER.info("getting properties map {}", content);
+        LOGGER.debug("getting properties map {}", content);
         return ImmutableMap.copyOf(content);
     }
 
