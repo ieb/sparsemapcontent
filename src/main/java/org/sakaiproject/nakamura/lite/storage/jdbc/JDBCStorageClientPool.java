@@ -54,7 +54,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JDBCStorageClientPool.class);
 
-    @Property(value = { "jdbc:derby:sparsemap/db;create=true" })
+    @Property(value = { "jdbc:derby:sling/sparsemap/db;create=true" })
     public static final String CONNECTION_URL = "jdbc-url";
     @Property(value = { "org.apache.derby.jdbc.EmbeddedDriver" })
     public static final String JDBC_DRIVER = "jdbc-driver";

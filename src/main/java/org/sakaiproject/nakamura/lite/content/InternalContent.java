@@ -27,6 +27,7 @@ import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.content.Content;
+import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -206,10 +207,10 @@ public class InternalContent {
 
             public Iterator<Content> iterator() {
                 final Iterator<String> childIterator = listChildPaths().iterator();
-                return new UnmodifiableIterator<Content>() {
+                return new PreemptiveIterator<Content>() {
                     Content childContent;
 
-                    public boolean hasNext() {
+                    protected boolean internalHasNext() {
                         childContent = null;
                         try {
                             while (childContent == null && childIterator.hasNext()) {
@@ -230,7 +231,7 @@ public class InternalContent {
                         return (childContent != null);
                     }
 
-                    public Content next() {
+                    protected Content internalNext() {
                         return childContent;
                     }
                 };

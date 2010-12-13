@@ -34,6 +34,7 @@ import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
+import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.sakaiproject.nakamura.lite.CachingManager;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
@@ -340,11 +341,11 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         final Iterator<Map<String, Object>> authMaps = client.find(keySpace,
                 authorizableColumnFamily, builder.build());
 
-        return new Iterator<Authorizable>() {
+        return new PreemptiveIterator<Authorizable>() {
 
             private Authorizable authorizable;
 
-            public boolean hasNext() {
+            protected boolean internalHasNext() {
                 while (authMaps.hasNext()) {
                     Map<String, Object> authMap = authMaps.next();
                     if (authMap != null) {
@@ -378,13 +379,10 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 return false;
             }
 
-            public Authorizable next() {
+            protected Authorizable internalNext() {
                 return authorizable;
             }
 
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
 
         };
     }

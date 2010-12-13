@@ -25,6 +25,7 @@ import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.sakaiproject.nakamura.lite.content.FileStreamContentHelper;
 import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
 import org.sakaiproject.nakamura.lite.storage.Disposable;
@@ -524,21 +525,18 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             final ResultSet rs = trs;
             tpst = null;
             trs = null;
-            return registerDisposable(new DisposableIterator<Map<String, Object>>() {
+            return registerDisposable(new PreemptiveIterator<Map<String, Object>>() {
 
                 private Map<String, Object> map = Maps.newHashMap();
                 private boolean open = true;
                 private String[] lastrow;
 
-                public void remove() {
-                    throw new UnsupportedOperationException();
-                }
 
-                public Map<String, Object> next() {
+                protected Map<String, Object> internalNext() {
                     return map;
                 }
 
-                public boolean hasNext() {
+                protected boolean internalHasNext() {
                     try {
                         if (open && rs.next()) {
                             String[] row = nextRow(rs);
