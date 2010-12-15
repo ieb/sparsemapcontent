@@ -6,7 +6,30 @@ import java.util.Map.Entry;
 
 public class AclModification {
     public enum Operation {
-        OP_REPLACE(), OP_OR(), OP_AND(), OP_XOR(), OP_NOT(), OP_DEL()
+        /**
+         * Replace whatever is in already defined as an ACE with this bitmap
+         */
+        OP_REPLACE(), 
+        /**
+         * Or the existing bitmap with this bitmap to geenrate the new bitmap 
+         */
+        OP_OR(), 
+        /**
+         * And this bitmap with the exisitng bitmap to generate the new bitmap 
+         */
+        OP_AND(), 
+        /**
+         * XOR this bitmapp with the existing bitmap to generte the new bitmap
+         */
+        OP_XOR(), 
+        /**
+         * Invert this bitmap and replace the the existing bitmap with the result. 
+         */
+        OP_NOT(), 
+        /**
+         * Delete the existing bitmap. 
+         */
+        OP_DEL()
     }
 
     public static final String GRANTED_MARKER = "@g";
@@ -14,8 +37,14 @@ public class AclModification {
 
     private String key;
     private int bitmap;
-    private Operation op;;
+    private Operation op;
+    
 
+    /**
+     * @param principal the ACE key, normally the principal
+     * @param bitmap the bitmap to be applied
+     * @param op the operation to be applied to the existing bitmap  @see {@link Operation}
+     */
     public AclModification(String key, int bitmap, Operation op) {
         this.key = key;
         this.bitmap = bitmap;

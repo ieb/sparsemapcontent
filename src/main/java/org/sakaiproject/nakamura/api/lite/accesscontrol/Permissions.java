@@ -29,5 +29,6 @@ public class Permissions {
     public static final Permission CAN_ANYTHING_ACL = CAN_READ_ACL.combine(CAN_WRITE_ACL).combine(
             CAN_DELETE_ACL);
     public static final Permission CAN_MANAGE = CAN_ANYTHING.combine(CAN_ANYTHING_ACL);
+    public static final Permission ALL = CAN_ANYTHING.combine(CAN_ANYTHING_ACL);
 
 }
