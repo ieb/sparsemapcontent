@@ -61,6 +61,13 @@ public class StorageClientUtils {
             return null; // no utf8.. get real!
         }
     }
+    
+    public static String getAltField(String field, String streamId) {
+        if ( streamId == null ) {
+            return field;
+        }
+        return field+"/"+streamId;
+    }
 
     public static Object toStore(Object object) {
         if (object == null || object instanceof RemoveProperty) {
