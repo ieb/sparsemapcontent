@@ -91,6 +91,13 @@ public class AclModification {
         return key != null && key.endsWith(GRANTED_MARKER);
     }
 
+    /**
+     * Sets  the bits requsted
+     * @param grant
+     * @param permssion
+     * @param key
+     * @param modifications
+     */
     public static void addAcl(boolean grant, Permission permssion, String key,
             List<AclModification> modifications) {
         if (grant) {
@@ -100,6 +107,24 @@ public class AclModification {
         }
         modifications.add(new AclModification(key, permssion.getPermission(),
                 AclModification.Operation.OP_OR));
+    }
+
+    /**
+     * Unsets the bits requested
+     * @param grant
+     * @param permssion
+     * @param key
+     * @param modifications
+     */
+    public static void removeAcl(boolean grant, Permission permssion, String key,
+            List<AclModification> modifications) {
+        if (grant) {
+            key = AclModification.grantKey(key);
+        } else {
+            key = AclModification.denyKey(key);
+        }
+        modifications.add(new AclModification(key, ~permssion.getPermission(),
+                AclModification.Operation.OP_AND));
     }
 
     public static void filterAcl(Map<String, Object> acl, boolean grant, Permission permission,
