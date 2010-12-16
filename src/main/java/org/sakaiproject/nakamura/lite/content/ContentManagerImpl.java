@@ -299,7 +299,7 @@ public class ContentManagerImpl implements ContentManager {
         Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
         String contentBlockId = null;
         boolean isnew = false;
-        String blockIdField = getAltField(BLOCKID_FIELD,streamId);
+        String blockIdField = StorageClientUtils.getAltField(BLOCKID_FIELD,streamId);
         if (content.containsKey(blockIdField)) {
             contentBlockId = StorageClientUtils.toString(content.get(blockIdField));
         } else {
@@ -308,12 +308,12 @@ public class ContentManagerImpl implements ContentManager {
         }
         Map<String, Object> metadata = client.streamBodyIn(keySpace, contentColumnFamily,
                 contentId, contentBlockId, content, in);
-        metadata.put(getAltField(BODY_LAST_MODIFIED, streamId), StorageClientUtils.toStore(System.currentTimeMillis()));
-        metadata.put(getAltField(BODY_LAST_MODIFIED_BY, streamId),
+        metadata.put(StorageClientUtils.getAltField(BODY_LAST_MODIFIED, streamId), StorageClientUtils.toStore(System.currentTimeMillis()));
+        metadata.put(StorageClientUtils.getAltField(BODY_LAST_MODIFIED_BY, streamId),
                 StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
         if (isnew) {
-            metadata.put(getAltField(BODY_CREATED, streamId), StorageClientUtils.toStore(System.currentTimeMillis()));
-            metadata.put(getAltField(BODY_CREATED_BY, streamId),
+            metadata.put(StorageClientUtils.getAltField(BODY_CREATED, streamId), StorageClientUtils.toStore(System.currentTimeMillis()));
+            metadata.put(StorageClientUtils.getAltField(BODY_CREATED_BY, streamId),
                     StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
         }
         client.insert(keySpace, contentColumnFamily, contentId, metadata);
@@ -321,12 +321,7 @@ public class ContentManagerImpl implements ContentManager {
         return length;
 
     }
-    public String getAltField(String field, String streamId) {
-        if ( streamId == null ) {
-            return field;
-        }
-        return field+"/"+streamId;
-    }
+   
 
     public InputStream getInputStream(String path) throws StorageClientException,
     AccessDeniedException, IOException {
@@ -341,7 +336,7 @@ public class ContentManagerImpl implements ContentManager {
         LOGGER.debug("Structure Loaded {} {} ", path, structure);
         String contentId = StorageClientUtils.toString(structure.get(STRUCTURE_UUID_FIELD));
         Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
-        String contentBlockId = StorageClientUtils.toString(content.get(getAltField(BLOCKID_FIELD, streamId)));
+        String contentBlockId = StorageClientUtils.toString(content.get(StorageClientUtils.getAltField(BLOCKID_FIELD, streamId)));
         return client.streamBodyOut(keySpace, contentColumnFamily, contentId, contentBlockId,
                 content);
     }

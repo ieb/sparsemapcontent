@@ -45,6 +45,4 @@ public interface ContentManager {
     InputStream getInputStream(String path, String streamId) throws StorageClientException,
             AccessDeniedException, IOException;
 
-    String getAltField(String field, String streamId);
-
 }
