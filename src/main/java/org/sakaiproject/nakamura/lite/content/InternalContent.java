@@ -133,6 +133,18 @@ public class InternalContent {
      * The user that lastModified the item. (content row)
      */
     public static final String LASTMODIFIED_BY = "lastModifiedBy";
+    
+    /**
+     * Mime type
+     */
+    public static final String MIMETYPE = "mimeType";
+    
+    /**
+     * Charset encoding if char based.
+     */
+    public static final String ENCODING = "encoding";
+
+
 
     private Map<String, Object> structure;
     private Map<String, Object> content;

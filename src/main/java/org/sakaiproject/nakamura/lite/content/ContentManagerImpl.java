@@ -286,6 +286,11 @@ public class ContentManagerImpl implements ContentManager {
     }
 
     public long writeBody(String path, InputStream in) throws StorageClientException,
+    AccessDeniedException, IOException {
+        return writeBody(path, in, null);
+    }
+
+    public long writeBody(String path, InputStream in, String streamId ) throws StorageClientException,
             AccessDeniedException, IOException {
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_WRITE);
@@ -294,20 +299,21 @@ public class ContentManagerImpl implements ContentManager {
         Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
         String contentBlockId = null;
         boolean isnew = false;
-        if (content.containsKey(BLOCKID_FIELD)) {
-            contentBlockId = StorageClientUtils.toString(content.get(BLOCKID_FIELD));
+        String blockIdField = StorageClientUtils.getAltField(BLOCKID_FIELD,streamId);
+        if (content.containsKey(blockIdField)) {
+            contentBlockId = StorageClientUtils.toString(content.get(blockIdField));
         } else {
             contentBlockId = StorageClientUtils.getUuid();
             isnew = true;
         }
         Map<String, Object> metadata = client.streamBodyIn(keySpace, contentColumnFamily,
                 contentId, contentBlockId, content, in);
-        metadata.put(BODY_LAST_MODIFIED, StorageClientUtils.toStore(System.currentTimeMillis()));
-        metadata.put(BODY_LAST_MODIFIED_BY,
+        metadata.put(StorageClientUtils.getAltField(BODY_LAST_MODIFIED, streamId), StorageClientUtils.toStore(System.currentTimeMillis()));
+        metadata.put(StorageClientUtils.getAltField(BODY_LAST_MODIFIED_BY, streamId),
                 StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
         if (isnew) {
-            metadata.put(BODY_CREATED, StorageClientUtils.toStore(System.currentTimeMillis()));
-            metadata.put(BODY_CREATED_BY,
+            metadata.put(StorageClientUtils.getAltField(BODY_CREATED, streamId), StorageClientUtils.toStore(System.currentTimeMillis()));
+            metadata.put(StorageClientUtils.getAltField(BODY_CREATED_BY, streamId),
                     StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
         }
         client.insert(keySpace, contentColumnFamily, contentId, metadata);
@@ -315,8 +321,14 @@ public class ContentManagerImpl implements ContentManager {
         return length;
 
     }
+   
 
     public InputStream getInputStream(String path) throws StorageClientException,
+    AccessDeniedException, IOException {
+            return getInputStream(path,null);
+    }
+
+    public InputStream getInputStream(String path, String streamId) throws StorageClientException,
             AccessDeniedException, IOException {
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
@@ -324,7 +336,7 @@ public class ContentManagerImpl implements ContentManager {
         LOGGER.debug("Structure Loaded {} {} ", path, structure);
         String contentId = StorageClientUtils.toString(structure.get(STRUCTURE_UUID_FIELD));
         Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
-        String contentBlockId = StorageClientUtils.toString(content.get(BLOCKID_FIELD));
+        String contentBlockId = StorageClientUtils.toString(content.get(StorageClientUtils.getAltField(BLOCKID_FIELD, streamId)));
         return client.streamBodyOut(keySpace, contentColumnFamily, contentId, contentBlockId,
                 content);
     }

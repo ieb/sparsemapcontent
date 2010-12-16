@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
@@ -60,6 +61,13 @@ public class StorageClientUtils {
             return null; // no utf8.. get real!
         }
     }
+    
+    public static String getAltField(String field, String streamId) {
+        if ( streamId == null ) {
+            return field;
+        }
+        return field+"/"+streamId;
+    }
 
     public static Object toStore(Object object) {
         if (object == null || object instanceof RemoveProperty) {
@@ -72,6 +80,13 @@ public class StorageClientUtils {
             return Long.toString((Long) object, ENCODING_BASE);
         } else if (object instanceof Integer) {
             return Integer.toString((Integer) object, ENCODING_BASE);
+        } else if ( object instanceof String[] ) {
+            String[] sin = (String[]) object;
+            String[] sout = new String[sin.length];
+            for ( int i = 0; i < sin.length; i++ ) {
+                sout[i] = StorageClientUtils.arrayEscape(sin[i]);
+            }
+            return StringUtils.join(sout, ',');
         } else {
             LOGGER.warn("Converting " + object.getClass() + " to byte[] via string");
             return String.valueOf(object);
@@ -330,15 +345,25 @@ public class StorageClientUtils {
     }
 
     public static String arrayEscape(String string) {
-        string = string.replaceAll("/", "//");
-        string = string.replaceAll(",", "/,");
+        string = string.replaceAll("%", "%1");
+        string = string.replaceAll(",", "%2");
         return string;
     }
 
     public static String arrayUnEscape(String string) {
-        string = string.replaceAll("/,", ",");
-        string = string.replaceAll("//", "/");
+        string = string.replaceAll("%2", ",");
+        string = string.replaceAll("%1", "%");
         return string;
     }
+
+    public static String[] toStringArray(Object object) {
+        String[] v = StringUtils.split(StorageClientUtils.toString(object),',');
+        for ( int i = 0; i < v.length; i++ ) {
+            v[i] = StorageClientUtils.arrayUnEscape(v[i]);
+        }
+        return v;
+    }
+    
+
 
 }
