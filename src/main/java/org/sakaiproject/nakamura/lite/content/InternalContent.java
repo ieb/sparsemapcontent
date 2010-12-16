@@ -138,6 +138,12 @@ public class InternalContent {
      * Mime type
      */
     public static final String MIMETYPE = "mimeType";
+    
+    /**
+     * Charset encoding if char based.
+     */
+    public static final String ENCODING = "encoding";
+
 
 
     private Map<String, Object> structure;
