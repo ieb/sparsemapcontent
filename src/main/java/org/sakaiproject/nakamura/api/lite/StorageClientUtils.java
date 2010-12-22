@@ -367,6 +367,13 @@ public class StorageClientUtils {
         return v;
     }
     
+    
+    public static String[] nonNullStringArray(String[] parameterValues) {
+        if ( parameterValues == null ) {
+          return new String[0];
+        }
+        return parameterValues;
+    }
 
 
 }
