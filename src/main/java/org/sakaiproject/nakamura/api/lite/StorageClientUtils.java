@@ -357,6 +357,9 @@ public class StorageClientUtils {
     }
 
     public static String[] toStringArray(Object object) {
+        if ( object == null ) {
+            return null;
+        }
         String[] v = StringUtils.split(StorageClientUtils.toString(object),',');
         for ( int i = 0; i < v.length; i++ ) {
             v[i] = StorageClientUtils.arrayUnEscape(v[i]);
@@ -364,6 +367,13 @@ public class StorageClientUtils {
         return v;
     }
     
+    
+    public static String[] nonNullStringArray(String[] parameterValues) {
+        if ( parameterValues == null ) {
+          return new String[0];
+        }
+        return parameterValues;
+    }
 
 
 }

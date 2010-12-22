@@ -224,6 +224,14 @@ public class ContentManagerImpl implements ContentManager {
         Map<String, Object> toSave = null;
         Map<String, Object> contentPropertes = content.getContent();
         if (content.isNew()) {
+            // create the parents if necessary
+            if ( !StorageClientUtils.isRoot(path) ) {
+                String parentPath = StorageClientUtils.getParentObjectPath(path);
+                Content parentContent = get(parentPath);
+                if ( parentContent == null ) {
+                    update(new Content(parentPath, null));
+                }
+            }
             toSave = Maps.newHashMap(contentPropertes);
             id = StorageClientUtils.getUuid();
             idStore = StorageClientUtils.toStore(id);

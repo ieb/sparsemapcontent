@@ -38,4 +38,6 @@ public interface AccessControlManager {
     boolean can(Authorizable authorizable, String objectType, String objectPath,
             Permission permission);
 
+    Permission[] getPemissions(String zoneContent, String path) throws StorageClientException;
+
 }
