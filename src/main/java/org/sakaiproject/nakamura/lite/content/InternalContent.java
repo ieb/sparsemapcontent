@@ -21,7 +21,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
-import com.google.common.collect.UnmodifiableIterator;
 
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
@@ -159,6 +158,9 @@ public class InternalContent {
     }
 
     public InternalContent(String path, Map<String, Object> content) {
+        if ( content == null ) {
+            content = Maps.newHashMap();
+        }
         this.content = content;
         this.updatedContent = Maps.newHashMap(content);
         this.path = path;

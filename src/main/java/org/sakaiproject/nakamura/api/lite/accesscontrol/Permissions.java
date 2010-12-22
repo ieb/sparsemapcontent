@@ -28,7 +28,10 @@ public class Permissions {
     public static final Permission CAN_DELETE_ACL = new Permission(0x4000, "Delete ACL");
     public static final Permission CAN_ANYTHING_ACL = CAN_READ_ACL.combine(CAN_WRITE_ACL).combine(
             CAN_DELETE_ACL);
-    public static final Permission CAN_MANAGE = CAN_ANYTHING.combine(CAN_ANYTHING_ACL);
-    public static final Permission ALL = CAN_ANYTHING.combine(CAN_ANYTHING_ACL);
+    public static final Permission CAN_MANAGE = CAN_ANYTHING.combine(CAN_ANYTHING_ACL,"Manage");
+    public static final Permission ALL = CAN_ANYTHING.combine(CAN_ANYTHING_ACL,"All");
 
+    public static final Permission[] PRIMARY_PERMISSIONS = new Permission[] {
+        CAN_READ, CAN_WRITE, CAN_DELETE, CAN_READ_ACL, CAN_WRITE_ACL, CAN_DELETE_ACL, CAN_MANAGE, ALL
+    };
 }

@@ -20,25 +20,30 @@ package org.sakaiproject.nakamura.api.lite.accesscontrol;
 public class Permission {
 
     private int permission;
-    private String description;
+    private String name;
 
-    public Permission(int permission, String description) {
+    public Permission(int permission, String name) {
         this.permission = permission;
-        this.description = description;
+        this.name = name;
     }
 
     public int getPermission() {
         return permission;
     }
 
-    public String getDescription() {
-        return description;
-    }
 
     public Permission combine(Permission permission) {
-        String description = this.description + " and " + permission.getDescription();
+        String name = this.name + " and " + permission.getName();
         int permBitMap = this.permission | permission.getPermission();
-        return new Permission(permBitMap, description);
+        return new Permission(permBitMap, name);
+    }
+    public Permission combine(Permission permission, String newName) {
+        int permBitMap = this.permission | permission.getPermission();
+        return new Permission(permBitMap, newName);
+    }
+    
+    public String getName() {
+        return name;
     }
 
 }

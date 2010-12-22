@@ -17,6 +17,7 @@
  */
 package org.sakaiproject.nakamura.lite.accesscontrol;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import org.sakaiproject.nakamura.api.lite.Configuration;
@@ -36,6 +37,7 @@ import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -99,7 +101,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         }
         int[] privileges = compilePermission(user, objectType, objectPath, 0);
         if (!((permission.getPermission() & privileges[0]) == permission.getPermission())) {
-            throw new AccessDeniedException(objectType, objectPath, permission.getDescription(),
+            throw new AccessDeniedException(objectType, objectPath, permission.getName(),
                     user.getId());
         }
     }
@@ -258,6 +260,17 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
             return false;
         }
         return true;
+    }
+
+    public Permission[] getPemissions(String objectType, String path) throws StorageClientException {
+        int[] perms = compilePermission(this.user, objectType, path, 0);
+        List<Permission> permissions = Lists.newArrayList();
+        for ( Permission p : Permissions.PRIMARY_PERMISSIONS) {
+            if ( (perms[0] & p.getPermission()) == p.getPermission()) {
+                permissions.add(p);
+            }
+        }
+        return permissions.toArray(new Permission[permissions.size()]);
     }
 
 }
