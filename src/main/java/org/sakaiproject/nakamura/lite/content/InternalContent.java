@@ -27,6 +27,7 @@ import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
+import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -295,6 +296,11 @@ public class InternalContent {
         }
 
     }
+    
+    public void removeProperty(String name) {
+        setProperty(name, new RemoveProperty());
+    }
+
 
     /**
      * @param key
@@ -305,7 +311,11 @@ public class InternalContent {
      *         answer.
      */
     public Object getProperty(String key) {
-        return content.get(key);
+        Object o =  content.get(key);
+        if ( o instanceof RemoveProperty ) {
+            return null;
+        }
+        return o;
     }
 
     /**
@@ -313,7 +323,7 @@ public class InternalContent {
      * @return true if the property exists.
      */
     public boolean hasProperty(String key) {
-        return content.containsKey(key);
+        return content.containsKey(key) && !(content.get(key) instanceof RemoveProperty);
     }
 
     /**
