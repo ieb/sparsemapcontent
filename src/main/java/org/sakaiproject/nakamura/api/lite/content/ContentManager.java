@@ -182,4 +182,10 @@ public interface ContentManager {
     InputStream getInputStream(String path, String streamId) throws StorageClientException,
             AccessDeniedException, IOException;
 
+    /**
+     * @param path
+     * @return true if the path exists
+     */
+    boolean exists(String path);
+
 }

@@ -153,6 +153,19 @@ public class ContentManagerImpl implements ContentManager {
         contentColumnFamily = config.getContentColumnFamily();
         closed = false;
     }
+    
+    public boolean exists(String path) {
+        try {
+            accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
+            Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
+            return (structure != null && structure.size() > 0);
+        } catch (AccessDeniedException e) {
+            LOGGER.debug(e.getMessage(), e);
+        } catch (StorageClientException e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
+        return false;             
+    }
 
     public Content get(String path) throws StorageClientException, AccessDeniedException {
         checkOpen();
