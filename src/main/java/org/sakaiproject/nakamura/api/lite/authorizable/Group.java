@@ -36,6 +36,9 @@ import java.util.Set;
  */
 public class Group extends Authorizable {
 
+    /**
+     * The ID of the everyone group. Includes all users except anon.
+     */
     public static final String EVERYONE = "everyone";
     private Set<String> members;
     private Set<String> membersAdded;

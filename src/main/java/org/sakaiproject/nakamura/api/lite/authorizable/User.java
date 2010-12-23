@@ -28,10 +28,22 @@ import java.util.Set;
 
 import javax.security.auth.Subject;
 
+/**
+ * Represetnation of the User.
+ */
 public class User extends Authorizable {
 
+    /**
+     * The ID of the admin user.
+     */
     public static final String ADMIN_USER = "admin";
+    /**
+     * The ID of the anon user.
+     */
     public static final String ANON_USER = "anonymous";
+    /**
+     * The ID of teh system user.
+     */
     public static final String SYSTEM_USER = "system";
     public static final String IMPERSONATORS_FIELD = "impersonators";
 
@@ -39,11 +51,23 @@ public class User extends Authorizable {
         super(userMap);
     }
 
+    /**
+     * @return true if this user is an administrative user.
+     */
     public boolean isAdmin() {
         return SYSTEM_USER.equals(id) || ADMIN_USER.equals(id)
                 || principals.contains(ADMINISTRATORS_GROUP);
     }
 
+    /**
+     * Does this user allow any of the principals identified in the subject to
+     * impersonate it.
+     * 
+     * @param impersSubject
+     *            a subject containing principals to be tested
+     * @return true if this user allows one or more of the subjects to
+     *         impersonate it.
+     */
     public boolean allowImpersonate(Subject impersSubject) {
 
         String impersonators = StorageClientUtils.toString(getProperty(IMPERSONATORS_FIELD));

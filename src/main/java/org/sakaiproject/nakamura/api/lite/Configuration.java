@@ -18,14 +18,36 @@
 
 package org.sakaiproject.nakamura.api.lite;
 
+/**
+ * An Interface to define configuration for the sparse content store.
+ */
 public interface Configuration {
 
+    /**
+     * @return name of the column family used for Acl Storage, in an RDBMS
+     *         environment might be used to form the basis for tables storing
+     *         ACls.
+     */
     String getAclColumnFamily();
 
+    /**
+     * @return name of the Keyspace used by the sparse content store. In an
+     *         RDBMS environment could be used as the tablespace name.
+     */
     String getKeySpace();
 
+    /**
+     * @return name of the column family used for Authorizable Storage, in an
+     *         RDBMS environment might be used to form the basis for tables
+     *         storing Authorizables.
+     */
     String getAuthorizableColumnFamily();
 
+    /**
+     * @return name of the column family used for Content Storage, in an
+     *         RDBMS environment might be used to form the basis for tables
+     *         storing Content objects.
+     */
     String getContentColumnFamily();
 
 }

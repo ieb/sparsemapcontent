@@ -18,6 +18,10 @@
 
 package org.sakaiproject.nakamura.api.lite;
 
+/**
+ * Indicates a problem with the Underlaying storage pool for the sparse content
+ * store.
+ */
 public class ClientPoolException extends StorageClientException {
 
     public ClientPoolException(String message, Exception e) {

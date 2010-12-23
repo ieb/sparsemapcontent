@@ -28,23 +28,44 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+/**
+ * Utilites for managing storage related to the Sparse Map Content Store.
+ */
 public class StorageClientUtils {
 
+    /**
+     * UTF8 charset constant
+     */
     public final static String UTF8 = "UTF-8";
     /** how are numbers encoded, base ? */
     public final static int ENCODING_BASE = 10;
+    /**
+     * Default hashing algorithm for passwords
+     */
     public final static String SECURE_HASH_DIGEST = "SHA-512";
+    /**
+     * Charset for encoding byte data as char
+     */
     public static final char[] URL_SAFE_ENCODING = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
             .toCharArray();
     private static final Logger LOGGER = LoggerFactory.getLogger(StorageClientUtils.class);
 
+    /**
+     * Concert a storage object to string. In the sparse store everything is
+     * stored in as an efficient way as possible. To avoid unnecessary
+     * marshalling to and from the store we leave it to the application to
+     * marshal properties in and out of the store on demand.
+     * 
+     * @param object
+     *            the storage object
+     * @return a string representation of the storage object.
+     */
     public static String toString(Object object) {
         try {
             if (object == null || object instanceof RemoveProperty) {
@@ -61,14 +82,31 @@ public class StorageClientUtils {
             return null; // no utf8.. get real!
         }
     }
-    
+
+    /**
+     * Get the name of an alternative field for an alternative stream.
+     * 
+     * @param field
+     *            the fieldname
+     * @param streamId
+     *            the alternative stream name
+     * @return the alternative field name.
+     */
     public static String getAltField(String field, String streamId) {
-        if ( streamId == null ) {
+        if (streamId == null) {
             return field;
         }
-        return field+"/"+streamId;
+        return field + "/" + streamId;
     }
 
+    /**
+     * Convert the object from application to store format. This should be used
+     * whenever a value is being placed into the store.
+     * 
+     * @param object
+     *            the object to place in store.
+     * @return the Store representation of the object.
+     */
     public static Object toStore(Object object) {
         if (object == null || object instanceof RemoveProperty) {
             return null;
@@ -80,10 +118,10 @@ public class StorageClientUtils {
             return Long.toString((Long) object, ENCODING_BASE);
         } else if (object instanceof Integer) {
             return Integer.toString((Integer) object, ENCODING_BASE);
-        } else if ( object instanceof String[] ) {
+        } else if (object instanceof String[]) {
             String[] sin = (String[]) object;
             String[] sout = new String[sin.length];
-            for ( int i = 0; i < sin.length; i++ ) {
+            for (int i = 0; i < sin.length; i++) {
                 sout[i] = StorageClientUtils.arrayEscape(sin[i]);
             }
             return StringUtils.join(sout, ',');
@@ -93,6 +131,13 @@ public class StorageClientUtils {
         }
     }
 
+    /**
+     * Convert a store object to a byte[]
+     * 
+     * @param value
+     *            the store object
+     * @return a byte[] of the store object.
+     */
     public static byte[] toBytes(Object value) {
         Object o = toStore(value);
         if (o instanceof byte[]) {
@@ -106,11 +151,19 @@ public class StorageClientUtils {
         }
     }
 
+    /**
+     * @param objectPath
+     * @return true if the objectPath represents a root path.
+     */
     public static boolean isRoot(String objectPath) {
         return (objectPath == null) || "/".equals(objectPath) || "".equals(objectPath)
                 || (objectPath.indexOf("/") < 0);
     }
 
+    /**
+     * @param objectPath
+     * @return the parent of the supplied path or the path if already a root.
+     */
     public static String getParentObjectPath(String objectPath) {
         if ("/".equals(objectPath)) {
             return "/";
@@ -128,6 +181,11 @@ public class StorageClientUtils {
         return res;
     }
 
+    /**
+     * @param objectPath
+     * @return the name of the supplied path, normally defiend as the last
+     *         element in the path.
+     */
     public static String getObjectName(String objectPath) {
         if ("/".equals(objectPath)) {
             return "/";
@@ -146,6 +204,11 @@ public class StorageClientUtils {
 
     }
 
+    /**
+     * @param naked
+     * @return a lower cost insecure hash of the naked value which can be used
+     *         for keys as its not too long.
+     */
     public static String insecureHash(String naked) {
         try {
             MessageDigest md;
@@ -169,6 +232,11 @@ public class StorageClientUtils {
         }
     }
 
+    /**
+     * @param password
+     * @return as secure hash of the supplied password, unsuitable for keys as
+     *         its too long.
+     */
     public static String secureHash(String password) {
         try {
             MessageDigest md;
@@ -291,10 +359,17 @@ public class StorageClientUtils {
         return filteredMap;
     }
 
+    /**
+     * @return a UUID, compact encoded, suitable for use in URLs
+     */
     public static String getUuid() {
         return StorageClientUtils.encode(Type1UUID.next(), StorageClientUtils.URL_SAFE_ENCODING);
     }
 
+    /**
+     * @param object
+     * @return the store object as an int.
+     */
     public static int toInt(Object object) {
         if (object instanceof Integer) {
             return ((Integer) object).intValue();
@@ -304,6 +379,10 @@ public class StorageClientUtils {
         return Integer.parseInt(toString(object), ENCODING_BASE);
     }
 
+    /**
+     * @param object
+     * @return the store object as a Long
+     */
     public static long toLong(Object object) {
         if (object instanceof Long) {
             return ((Long) object).longValue();
@@ -313,6 +392,11 @@ public class StorageClientUtils {
         return Long.parseLong(toString(object), ENCODING_BASE);
     }
 
+    /**
+     * @param path
+     * @param child
+     * @return create a new path by appending the child to the parent path.
+     */
     public static String newPath(String path, String child) {
         if (!path.endsWith("/")) {
             if (!child.startsWith("/")) {
@@ -330,6 +414,12 @@ public class StorageClientUtils {
         }
     }
 
+    /**
+     * @param <T>
+     * @param setting
+     * @param defaultValue
+     * @return gets a setting of type <T> usign the default value if null.
+     */
     @SuppressWarnings("unchecked")
     public static <T> T getSetting(Object setting, T defaultValue) {
         if (setting != null) {
@@ -338,42 +428,64 @@ public class StorageClientUtils {
         return defaultValue;
     }
 
+    /**
+     * @param id
+     * @return perform a 3 level shard of the path using base^^2 as the width of
+     *         the shard where base is the cardinality of the encoding of the
+     *         ID.
+     */
     public static String shardPath(String id) {
         String hash = insecureHash(id);
         return hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, 6) + "/"
                 + id;
     }
 
+    /**
+     * @param string
+     * @return an escaped version of the supplied string suitable for using in a
+     *         stored array. The implemenation is not that efficient.
+     */
     public static String arrayEscape(String string) {
         string = string.replaceAll("%", "%1");
         string = string.replaceAll(",", "%2");
         return string;
     }
 
+    /**
+     * @param string
+     * @return reverse the arrayEscape operation.
+     */
     public static String arrayUnEscape(String string) {
         string = string.replaceAll("%2", ",");
         string = string.replaceAll("%1", "%");
         return string;
     }
 
+    /**
+     * @param object
+     * @return null or the store object converted to a string[]
+     */
     public static String[] toStringArray(Object object) {
-        if ( object == null ) {
+        if (object == null) {
             return null;
         }
-        String[] v = StringUtils.split(StorageClientUtils.toString(object),',');
-        for ( int i = 0; i < v.length; i++ ) {
+        String[] v = StringUtils.split(StorageClientUtils.toString(object), ',');
+        for (int i = 0; i < v.length; i++) {
             v[i] = StorageClientUtils.arrayUnEscape(v[i]);
         }
         return v;
     }
-    
-    
+
+    /**
+     * @param parameterValues
+     * @return ensure that a string[] is not null after conversion from store.
+     *         Use this to make iterators easier on stored arrays.
+     */
     public static String[] nonNullStringArray(String[] parameterValues) {
-        if ( parameterValues == null ) {
-          return new String[0];
+        if (parameterValues == null) {
+            return new String[0];
         }
         return parameterValues;
     }
-
 
 }

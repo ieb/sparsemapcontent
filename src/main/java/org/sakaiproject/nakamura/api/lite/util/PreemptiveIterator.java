@@ -5,6 +5,10 @@ import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * A Iterator wrapper that pre-emptively checks the next value in the underlying iterator before responding true to hasNext().
+ * @param <T>
+ */
 public abstract class PreemptiveIterator<T> implements Iterator<T>, DisposableIterator<T> {
 
     private static final int UNDETERMINED = 0;

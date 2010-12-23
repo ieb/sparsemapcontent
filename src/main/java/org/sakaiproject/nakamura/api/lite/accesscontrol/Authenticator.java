@@ -19,10 +19,28 @@ package org.sakaiproject.nakamura.api.lite.accesscontrol;
 
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 
+/**
+ * Authenticates a user
+ */
 public interface Authenticator {
 
+    /**
+     * Gets a User object if the userid and password are valid.
+     * 
+     * @param userid
+     *            the userid
+     * @param password
+     *            password for the user
+     * @return the user object for the user or null if the authentication
+     *         attempt is not valid.
+     */
     User authenticate(String userid, String password);
 
+    /**
+     * perform a system authentiation, trusting the userId.
+     * @param userid
+     * @return the User object if the userID exists.
+     */
     User systemAuthenticate(String userid);
 
 }

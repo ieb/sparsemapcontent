@@ -16,6 +16,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
+/**
+ * Utiltiy class to create an entirely in memorty Sparse Repository, usefull for
+ * testing or bulk internal modifications.
+ */
 public class BaseMemoryRepository {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseMemoryRepository.class);
@@ -24,8 +28,8 @@ public class BaseMemoryRepository {
     private ConfigurationImpl configuration;
     private RepositoryImpl repository;
 
-    public BaseMemoryRepository() throws StorageClientException, AccessDeniedException, ClientPoolException,
-            ClassNotFoundException {
+    public BaseMemoryRepository() throws StorageClientException, AccessDeniedException,
+            ClientPoolException, ClassNotFoundException {
         clientPool = getClientPool();
         client = clientPool.getClient();
         configuration = new ConfigurationImpl();
@@ -51,14 +55,13 @@ public class BaseMemoryRepository {
         client.close();
     }
 
-
     protected StorageClientPool getClientPool() throws ClassNotFoundException {
         MemoryStorageClientPool cp = new MemoryStorageClientPool();
         cp.activate(ImmutableMap.of("test", (Object) "test",
                 BlockContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK, 9));
         return cp;
     }
-    
+
     public RepositoryImpl getRepository() {
         return repository;
     }
