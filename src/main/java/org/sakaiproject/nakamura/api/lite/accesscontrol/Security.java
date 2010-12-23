@@ -17,13 +17,34 @@
  */
 package org.sakaiproject.nakamura.api.lite.accesscontrol;
 
+/**
+ * Defines Security Zone Names or Object Types.
+ */
 public class Security {
 
+    /**
+     * Authorizables permissions.
+     */
     public static final String ZONE_AUTHORIZABLES = "AU";
+    /**
+     * Administrative permissions.
+     */
     public static final String ZONE_ADMIN = "AD";
+    /**
+     * Special object path to Admin groups
+     */
     public static final String ADMIN_GROUPS = "GR";
+    /**
+     * Special object path to Admin users
+     */
     public static final String ADMIN_USERS = "US";
+    /**
+     * Content permissions
+     */
     public static final String ZONE_CONTENT = "CO";
+    /**
+     * Special object path to admin all authorizables.
+     */
     public static final String ADMIN_AUTHORIZABLES = "AA";
 
 }

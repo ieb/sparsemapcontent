@@ -28,6 +28,9 @@ import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Base Authorizable object.
+ */
 public class Authorizable {
 
     public static final String PASSWORD_FIELD = "pwd";

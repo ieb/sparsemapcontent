@@ -20,6 +20,9 @@ package org.sakaiproject.nakamura.api.lite.util;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * Utility class to ease use of iterators and iterables.
+ */
 public class Iterables {
 
     public static <T> Iterable<T> of(final T[] array) {

@@ -22,16 +22,44 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.Authenticator;
 import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 
+/**
+ * A lightweight container bound to the user that will maintain state associated
+ * with the user for as long as the session exists. A session provides access to
+ * Content, ACLs and Authorizables. Session implementations are not assumed to
+ * be thread safe and should not be shared between threads without explicit
+ * synchronzation, similarly Session implementations should not be bound to
+ * threads
+ */
 public interface Session {
 
+    /**
+     * Logout of the session releasing all resources
+     * 
+     * @throws ClientPoolException
+     */
     void logout() throws ClientPoolException;
 
+    /**
+     * @return the access control manager for this session.
+     * @throws StorageClientException
+     */
     AccessControlManager getAccessControlManager() throws StorageClientException;
 
+    /**
+     * @return the authorizable manager for this session.
+     * @throws StorageClientException
+     */
     AuthorizableManager getAuthorizableManager() throws StorageClientException;
 
+    /**
+     * @return the content manager for this session.
+     * @throws StorageClientException
+     */
     ContentManager getContentManager() throws StorageClientException;
 
+    /**
+     * @return the userID that this session is bound to.
+     */
     String getUserId();
 
     Authenticator getAuthenticator() throws StorageClientException;

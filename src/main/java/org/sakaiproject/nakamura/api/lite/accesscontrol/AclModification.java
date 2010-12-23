@@ -4,46 +4,68 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+/**
+ * Specification of a modification to be applied to an ACL.
+ */
 public class AclModification {
     public enum Operation {
         /**
          * Replace whatever is in already defined as an ACE with this bitmap
          */
-        OP_REPLACE(), 
+        OP_REPLACE(),
         /**
-         * Or the existing bitmap with this bitmap to geenrate the new bitmap 
+         * Or the existing bitmap with this bitmap to geenrate the new bitmap
          */
-        OP_OR(), 
+        OP_OR(),
         /**
-         * And this bitmap with the exisitng bitmap to generate the new bitmap 
+         * And this bitmap with the exisitng bitmap to generate the new bitmap
          */
-        OP_AND(), 
+        OP_AND(),
         /**
          * XOR this bitmapp with the existing bitmap to generte the new bitmap
          */
-        OP_XOR(), 
+        OP_XOR(),
         /**
-         * Invert this bitmap and replace the the existing bitmap with the result. 
+         * Invert this bitmap and replace the the existing bitmap with the
+         * result.
          */
-        OP_NOT(), 
+        OP_NOT(),
         /**
-         * Delete the existing bitmap. 
+         * Delete the existing bitmap.
          */
         OP_DEL()
     }
 
+    /**
+     * marker to define granted ACEs (appended to the principal name)
+     */
     public static final String GRANTED_MARKER = "@g";
+    /**
+     * marker to define denied ACEs
+     */
     public static final String DENIED_MARKER = "@d";
 
+    /**
+     * The ACE key
+     */
     private String key;
+    /**
+     * Bit map to be applied in the modification.
+     */
     private int bitmap;
+    /**
+     * Operation to be used on the bitmap.
+     */
     private Operation op;
-    
 
     /**
-     * @param principal the ACE key, normally the principal
-     * @param bitmap the bitmap to be applied
-     * @param op the operation to be applied to the existing bitmap  @see {@link Operation}
+     * @param principal
+     *            the ACE key, normally the principal
+     * @param bitmap
+     *            the bitmap to be applied
+     * @param op
+     *            the operation to be applied to the existing bitmap @see
+     *            {@link Operation}
      */
     public AclModification(String key, int bitmap, Operation op) {
         this.key = key;
@@ -92,7 +114,8 @@ public class AclModification {
     }
 
     /**
-     * Sets  the bits requsted
+     * Sets the bits requsted
+     * 
      * @param grant
      * @param permssion
      * @param key
@@ -111,6 +134,7 @@ public class AclModification {
 
     /**
      * Unsets the bits requested
+     * 
      * @param grant
      * @param permssion
      * @param key

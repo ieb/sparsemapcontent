@@ -17,6 +17,9 @@
  */
 package org.sakaiproject.nakamura.api.lite;
 
+/**
+ * A general error with the Sparse Storage implementation.
+ */
 public class StorageClientException extends Exception {
 
     public StorageClientException(String message, Throwable t) {

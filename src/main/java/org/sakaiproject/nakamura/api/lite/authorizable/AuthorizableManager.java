@@ -23,25 +23,82 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import java.util.Iterator;
 import java.util.Map;
 
+/**
+ * Service to manage authorizables.
+ */
 public interface AuthorizableManager {
 
+    /**
+     * Find an Authorizable by ID.
+     * @param authorizableId
+     * @return the authorizable object.
+     * @throws AccessDeniedException
+     * @throws StorageClientException
+     */
     Authorizable findAuthorizable(String authorizableId) throws AccessDeniedException,
             StorageClientException;
 
+    /**
+     * Update an authorizable
+     * @param authorizable the authorzable
+     * @throws AccessDeniedException
+     * @throws StorageClientException
+     */
     void updateAuthorizable(Authorizable authorizable) throws AccessDeniedException,
             StorageClientException;
 
-    boolean createGroup(String authorizableId, String authorizableName,
+    /**
+     * Create a group
+     * @param authorizableId the group ID
+     * @param authorizableName the groupName
+     * @param properties initial properties of the group.
+     * @return true if created.
+     * @throws AccessDeniedException
+     * @throws StorageClientException
+     */
+    boolean createGroup(String groupId, String groupName,
             Map<String, Object> properties) throws AccessDeniedException, StorageClientException;
 
-    boolean createUser(String authorizableId, String authorizableName, String password,
+    /**
+     * Create a user
+     * @param userId the user ID
+     * @param userName the user name
+     * @param password the password (unencoded, null if no password)
+     * @param properties initial properties of the user.
+     * @return true if created.
+     * @throws AccessDeniedException
+     * @throws StorageClientException
+     */
+    boolean createUser(String userId, String userName, String password,
             Map<String, Object> properties) throws AccessDeniedException, StorageClientException;
 
+    /**
+     * Delete an authorizable.
+     * @param authorizableId
+     * @throws AccessDeniedException
+     * @throws StorageClientException
+     */
     void delete(String authorizableId) throws AccessDeniedException, StorageClientException;
 
+    /**
+     * Change the password of an authorizable (User only)
+     * @param authorizable
+     * @param password
+     * @param oldPassword
+     * @throws StorageClientException
+     * @throws AccessDeniedException
+     */
     void changePassword(Authorizable authorizable, String password, String oldPassword)
             throws StorageClientException, AccessDeniedException;
 
+    /**
+     * Find authorizables by exact property matches
+     * @param propertyName the name of the property
+     * @param value the value of the property
+     * @param authorizableType the type of the authorizable
+     * @return a list of Authorizables that match the criteria.
+     * @throws StorageClientException
+     */
     Iterator<Authorizable> findAuthorizable(String propertyName, String value,
             Class<? extends Authorizable> authorizableType) throws StorageClientException;
 

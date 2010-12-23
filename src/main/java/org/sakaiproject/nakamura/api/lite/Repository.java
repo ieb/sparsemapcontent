@@ -19,16 +19,70 @@ package org.sakaiproject.nakamura.api.lite;
 
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 
+/**
+ * Repository container that provides a mechanism to login to the sparse content
+ * store.
+ */
 public interface Repository {
 
+    /**
+     * Login with a user name and password
+     * 
+     * @param username
+     *            the username
+     * @param password
+     *            the password
+     * @return a session for the username if the login was valid.
+     * @throws ClientPoolException
+     *             If there was a problem getting resources from the pool.
+     * @throws StorageClientException
+     *             If there was a problem with the storage pool.
+     * @throws AccessDeniedException
+     *             If the user was denied access.
+     */
     Session login(String username, String password) throws ClientPoolException,
             StorageClientException, AccessDeniedException;
 
+    /**
+     * Perform an anon login
+     * 
+     * @return an anon session.
+     * @throws ClientPoolException
+     *             If there was a problem getting resources from the pool.
+     * @throws StorageClientException
+     *             If there was a problem with the storage pool.
+     * @throws AccessDeniedException
+     *             If the anon was denied access.
+     */
     Session login() throws ClientPoolException, StorageClientException, AccessDeniedException;
 
+    /**
+     * Perform an administrative login as the super user (admin)
+     * 
+     * @return an admin session.
+     * @throws ClientPoolException
+     *             If there was a problem getting resources from the pool.
+     * @throws StorageClientException
+     *             If there was a problem with the storage pool.
+     * @throws AccessDeniedException
+     *             If admin was denied access.
+     */
     Session loginAdministrative() throws ClientPoolException, StorageClientException,
             AccessDeniedException;
 
+    /**
+     * Perform an administrative login as the identified user
+     * 
+     * @param username
+     *            the user to login as
+     * @return a session bound to the user.
+     * @throws ClientPoolException
+     *             If there was a problem getting resources from the pool.
+     * @throws StorageClientException
+     *             If there was a problem with the storage pool.
+     * @throws AccessDeniedException
+     *             If the user was denied access.
+     */
     Session loginAdministrative(String username) throws ClientPoolException,
             StorageClientException, AccessDeniedException;
 

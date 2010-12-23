@@ -17,6 +17,9 @@
  */
 package org.sakaiproject.nakamura.api.lite.accesscontrol;
 
+/**
+ * Defines a permission using a bitmap (32bit) and a name.
+ */
 public class Permission {
 
     private int permission;

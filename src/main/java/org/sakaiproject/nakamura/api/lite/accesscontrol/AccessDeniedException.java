@@ -17,6 +17,9 @@
  */
 package org.sakaiproject.nakamura.api.lite.accesscontrol;
 
+/**
+ * Thrown when access is denied. Contains a description of why.
+ */
 public class AccessDeniedException extends Exception {
 
     /**
