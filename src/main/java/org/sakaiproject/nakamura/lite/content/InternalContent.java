@@ -33,6 +33,10 @@ import org.slf4j.LoggerFactory;
 import java.util.Iterator;
 import java.util.Map;
 
+/**
+ * Internal Content Object for holding sparse Content objects. Has a protected
+ * constructor for internal use.
+ */
 public class InternalContent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Content.class);
@@ -132,33 +136,74 @@ public class InternalContent {
      * The user that lastModified the item. (content row)
      */
     public static final String LASTMODIFIED_BY = "lastModifiedBy";
-    
+
     /**
      * Mime type
      */
     public static final String MIMETYPE = "mimeType";
-    
+
     /**
      * Charset encoding if char based.
      */
     public static final String ENCODING = "encoding";
 
-
-
+    /**
+     * Map of the structure object for the content object.
+     */
     private Map<String, Object> structure;
+    /**
+     * Map of the content object itself.
+     */
     private Map<String, Object> content;
+    /**
+     * Path locating this content object within the overall content structure.
+     */
     private String path;
+    /**
+     * The ContentManager that manages this content object.
+     */
     private ContentManagerImpl contentManager;
+    /**
+     * Map of content object that has been updated since this content object was
+     * retrieved.
+     */
     private Map<String, Object> updatedContent;
+    /**
+     * True if updated.
+     */
     private boolean updated;
+    /**
+     * True if the content is new.
+     */
     private boolean newcontent;
 
+    /**
+     * Internal constructor used by the ContentManager to create the content
+     * object.
+     * 
+     * @param path
+     *            the path
+     * @param structure
+     *            the strucutre map
+     * @param content
+     *            the content map
+     * @param contentManager
+     *            the content manager manging the content.
+     */
     InternalContent(String path, Map<String, Object> structure, Map<String, Object> content,
             ContentManagerImpl contentManager) {
     }
 
+    /**
+     * Create a new Content Object that has not been persisted
+     * 
+     * @param path
+     *            the path.
+     * @param content
+     *            the content map.
+     */
     public InternalContent(String path, Map<String, Object> content) {
-        if ( content == null ) {
+        if (content == null) {
             content = Maps.newHashMap();
         }
         this.content = content;
@@ -168,6 +213,14 @@ public class InternalContent {
         newcontent = true;
     }
 
+    /**
+     * Convert a new content object to an internal version.
+     * 
+     * @param structure
+     *            the structure object
+     * @param contentManager
+     *            the content manager now managing this content object.
+     */
     void internalize(Map<String, Object> structure, ContentManagerImpl contentManager) {
         this.structure = structure;
         this.contentManager = contentManager;
@@ -175,33 +228,64 @@ public class InternalContent {
         newcontent = false;
     }
 
+    /**
+     * @return get the internal content map.
+     */
     Map<String, Object> getContent() {
         return content;
     }
 
+    /**
+     * @return get the updated content map.
+     */
     Map<String, Object> getUpdated() {
         return updatedContent;
     }
 
+    /**
+     * Reset the object back to its last saved state.
+     */
     public void reset() {
         updatedContent.clear();
         updated = false;
         newcontent = false;
     }
 
+    /**
+     * @return true if the Content object is new and not connected to a content
+     *         manager or structure.
+     */
     public boolean isNew() {
         return newcontent;
     }
 
+    /**
+     * @return true if the content object has been updated since it was
+     *         retrieved.
+     */
     public boolean isUpdated() {
         return updated;
     }
 
+    /**
+     * @return get a read only copy of the properties. Property values are in
+     *         store format and must be converted before use with
+     *         StorageContentUtils.toString, toInteger, toLong etc
+     */
     public Map<String, Object> getProperties() {
         LOGGER.debug("getting properties map {}", content);
         return ImmutableMap.copyOf(content);
     }
 
+    /**
+     * set a property, creating if it does not exist, overwriting if it does.
+     * 
+     * @param key
+     *            the key for the property
+     * @param value
+     *            the value for the property in storage format created with
+     *            StorageContentUtils.toStore()
+     */
     public void setProperty(String key, Object value) {
         Object o = content.get(key);
         if (o == null || !o.equals(value)) {
@@ -212,10 +296,36 @@ public class InternalContent {
 
     }
 
+    /**
+     * @param key
+     * @return the value of the property in storage format (use
+     *         StorageContentUtils.toString etc to convert). null if the
+     *         property does not exist. null can be ambiguous and
+     *         hasProperty(String key) should be checked for an authoratative
+     *         answer.
+     */
+    public Object getProperty(String key) {
+        return content.get(key);
+    }
+
+    /**
+     * @param key
+     * @return true if the property exists.
+     */
+    public boolean hasProperty(String key) {
+        return content.containsKey(key);
+    }
+
+    /**
+     * @return get the path of the content object.
+     */
     public String getPath() {
         return path;
     }
 
+    /**
+     * @return an iterable for all children of this content item.
+     */
     public Iterable<Content> listChildren() {
         return new Iterable<Content>() {
 
@@ -253,6 +363,9 @@ public class InternalContent {
         };
     }
 
+    /**
+     * @return an iterable of all relative child paths of this object.
+     */
     public Iterable<String> listChildPaths() {
         return new Iterable<String>() {
             public Iterator<String> iterator() {
