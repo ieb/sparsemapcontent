@@ -188,4 +188,50 @@ public interface ContentManager {
      */
     boolean exists(String path);
 
+    /**
+     * Copy a content item from to
+     * 
+     * @param from
+     *            the path to copy from, must exist
+     * @param to
+     *            the path to copy to, must not exist
+     * @param deep
+     *            if true, a copy is made of all the streams, if false the
+     *            streams are shared but copies are made of the properties.
+     * @throws IOException
+     * @throws AccessDeniedException
+     *             if the user cant read the source or write the desination.
+     * @throws IOException
+     */
+    void copy(String from, String to, boolean deep) throws StorageClientException,
+            AccessDeniedException, IOException;
+
+    /**
+     * Move a content item from to.
+     * 
+     * @param from
+     *            the source, must exist
+     * @param to
+     *            the destination must not exist.
+     * @throws StorageClientException
+     * @throws AccessDeniedException
+     */
+    void move(String from, String to) throws AccessDeniedException, StorageClientException;
+
+    /**
+     * Create a Link. Links place a pointer to real content located at the to
+     * path, in the from path. Modifications to the underlying content are
+     * reflected in both locations. Permissions are controlled by the location
+     * and not the underlying content.
+     * 
+     * @param from
+     *            the source of the link (the soft part), must not exist.
+     * @param to
+     *            the destination, must exist
+     * @throws AccessDeniedException
+     *             if the user cant read the to and write the from
+     * @throws StorageClientException
+     */
+    void link(String from, String to) throws AccessDeniedException, StorageClientException;
+
 }

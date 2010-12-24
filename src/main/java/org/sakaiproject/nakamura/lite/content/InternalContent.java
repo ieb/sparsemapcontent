@@ -54,6 +54,10 @@ public class InternalContent {
      */
     public static final String STRUCTURE_UUID_FIELD = ":cid";
     /**
+     * Where a structure object is a link, this field contains the location of the target of the link
+     */
+    public static final String LINKED_PATH_FIELD = ":link";
+    /**
      * BlockID where the body of this content item is stored, if there is a body
      * (content row)
      */
@@ -137,6 +141,21 @@ public class InternalContent {
      * The user that lastModified the item. (content row)
      */
     public static final String LASTMODIFIED_BY = "lastModifiedBy";
+
+    /**
+     * The path the content object was copied from if it was copied
+     */
+    public static final String COPIED_FROM_PATH = "copiedFrom";
+
+    /**
+     * The ID the content object was copied from.
+     */
+    public static final String COPIED_FROM_ID = "copiedFromId";
+
+    /**
+     * If the copy was deep, then true
+     */
+    public static final String COPIED_DEEP = "copiedDeep";
 
     /**
      * Mime type
