@@ -22,6 +22,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * Defines a ContentManager service for operating on content.
@@ -50,6 +51,7 @@ public interface ContentManager {
      * 
      * @param path
      *            the path to the item
+     * @return 
      * @throws StorageClientException
      *             if there was a problem with the operation.
      * @throws AccessDeniedException
@@ -58,7 +60,7 @@ public interface ContentManager {
      *             exists, just that the user can't save a version of anything
      *             at that location and possibly at parent locations.
      */
-    void saveVersion(String path) throws StorageClientException, AccessDeniedException;
+    String saveVersion(String path) throws StorageClientException, AccessDeniedException;
 
     /**
      * Update or create the content object, and intermediate path if necessary,
@@ -233,5 +235,59 @@ public interface ContentManager {
      * @throws StorageClientException
      */
     void link(String from, String to) throws AccessDeniedException, StorageClientException;
+
+    /**
+     * Get a specific version
+     * 
+     * @param path
+     * @param versionId
+     * @return the Content object, which will be read only, or null if the
+     *         version does not exist for the path.
+     * @throws StorageClientException
+     * @throws AccessDeniedException
+     */
+    Content getVersion(String path, String versionId) throws StorageClientException,
+            AccessDeniedException;
+
+    /**
+     * Get an InputStream for the body of the version specified.
+     * 
+     * @param path
+     * @param versionId
+     * @param streamId
+     * @return the input stream or null if the streamId or versionId does not
+     *         exist for the specified path.
+     * @throws AccessDeniedException
+     * @throws StorageClientException
+     * @throws IOException
+     */
+    InputStream getVersionInputStream(String path, String versionId, String streamId)
+            throws AccessDeniedException, StorageClientException, IOException;
+
+    /**
+     * Get the primary stream for the version
+     * 
+     * @param path
+     * @param versionId
+     * @return the input stream or null if the version or main stream doesnt
+     *         exist for the path.
+     * @throws AccessDeniedException
+     * @throws StorageClientException
+     * @throws IOException
+     */
+    InputStream getVersionInputStream(String path, String versionId) throws AccessDeniedException,
+            StorageClientException, IOException;
+
+    /**
+     * List the versionIds of all version starting wih the most recent.
+     * 
+     * @param path
+     * @return an Iterator of all versions, the newest first or an empty
+     *         iterator if there were no versions.
+     * @throws AccessDeniedException
+     * @throws StorageClientException
+     */
+    List<String> getVersionHistory(String path) throws AccessDeniedException,
+            StorageClientException;
 
 }

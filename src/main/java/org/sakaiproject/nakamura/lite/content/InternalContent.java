@@ -166,6 +166,24 @@ public class InternalContent {
      * Charset encoding if char based.
      */
     public static final String ENCODING = "encoding";
+    
+    /**
+     * 
+     */
+    public static final String VERSION_HISTORY_ID_FIELD = "versionHistoryId";
+
+    /**
+     * 
+     */
+    public static final String VERSION_NUMBER = "versionNumber";
+    
+    /**
+     * The who this version was saved by
+     */
+    public static final String VERSION_SAVEDBY = "versionSavedBy";
+
+
+
 
     /**
      * Map of the structure object for the content object.
@@ -196,6 +214,7 @@ public class InternalContent {
      * True if the content is new.
      */
     private boolean newcontent;
+    private boolean readOnly;
 
     /**
      * Internal constructor used by the ContentManager to create the content
@@ -231,6 +250,7 @@ public class InternalContent {
         this.path = path;
         updated = true;
         newcontent = true;
+        readOnly = false;
     }
 
     /**
@@ -241,11 +261,12 @@ public class InternalContent {
      * @param contentManager
      *            the content manager now managing this content object.
      */
-    void internalize(Map<String, Object> structure, ContentManagerImpl contentManager) {
+    void internalize(Map<String, Object> structure, ContentManagerImpl contentManager, boolean readOnly) {
         this.structure = structure;
         this.contentManager = contentManager;
         updated = false;
         newcontent = false;
+        this.readOnly = readOnly;
     }
 
     /**
@@ -284,6 +305,9 @@ public class InternalContent {
      *         retrieved.
      */
     public boolean isUpdated() {
+        if ( readOnly ) {
+            return false;
+        }
         return updated;
     }
 
@@ -307,6 +331,9 @@ public class InternalContent {
      *            StorageContentUtils.toStore()
      */
     public void setProperty(String key, Object value) {
+        if ( readOnly) {
+            return;
+        }
         Object o = content.get(key);
         if (o == null || !o.equals(value)) {
             content.put(key, value);
@@ -317,6 +344,9 @@ public class InternalContent {
     }
     
     public void removeProperty(String name) {
+        if ( readOnly) {
+            return;
+        }
         setProperty(name, new RemoveProperty());
     }
 
