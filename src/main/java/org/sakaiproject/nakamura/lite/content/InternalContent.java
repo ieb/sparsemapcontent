@@ -359,6 +359,7 @@ public class InternalContent {
      *         hasProperty(String key) should be checked for an authoratative
      *         answer.
      */
+    // TODO: Unit test
     public Object getProperty(String key) {
         Object o =  content.get(key);
         if ( o instanceof RemoveProperty ) {

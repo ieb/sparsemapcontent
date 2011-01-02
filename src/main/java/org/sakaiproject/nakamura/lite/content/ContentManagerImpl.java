@@ -173,6 +173,7 @@ public class ContentManagerImpl implements ContentManager {
         closed = false;
     }
 
+    // TODO: Unit test
     public boolean exists(String path) {
         try {
             accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);

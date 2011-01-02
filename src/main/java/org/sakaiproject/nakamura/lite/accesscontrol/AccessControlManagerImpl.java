@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AccessControlManagerImpl extends CachingManager implements AccessControlManager {
@@ -265,12 +266,121 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
     public Permission[] getPemissions(String objectType, String path) throws StorageClientException {
         int[] perms = compilePermission(this.user, objectType, path, 0);
         List<Permission> permissions = Lists.newArrayList();
-        for ( Permission p : Permissions.PRIMARY_PERMISSIONS) {
-            if ( (perms[0] & p.getPermission()) == p.getPermission()) {
+        for (Permission p : Permissions.PRIMARY_PERMISSIONS) {
+            if ((perms[0] & p.getPermission()) == p.getPermission()) {
                 permissions.add(p);
             }
         }
         return permissions.toArray(new Permission[permissions.size()]);
+    }
+
+    public String[] findPrincipals(String objectType, String objectPath, int permission, boolean granted) throws StorageClientException {
+        Map<String, int[]> principalMap = internalCompilePrincipals(objectType, objectPath, 0);
+        LOGGER.debug("Got Principals {} ",principalMap);
+        List<String> principals = Lists.newArrayList();
+        for (Entry<String, int[]> perm : principalMap.entrySet()) {
+            int[] p = perm.getValue();
+            if ( granted && (p[0] & permission) == permission ) {
+                principals.add(perm.getKey());
+                LOGGER.debug("Included {} {} {} ",new Object[]{perm.getKey(), perm.getValue(), permission});
+            } else if ( !granted && (p[1] & permission) == permission) {
+                principals.add(perm.getKey());
+                LOGGER.debug("Included {} {} {} ",new Object[]{perm.getKey(), perm.getValue(), permission});
+            } else {
+                LOGGER.debug("Filtered {} {} {} ",new Object[]{perm.getKey(), perm.getValue(), permission});
+            }
+        }
+        LOGGER.debug(" Found Principals {} ",principals);
+        return principals.toArray(new String[principals.size()]);
+    }
+
+    private Map<String, int[]> internalCompilePrincipals(String objectType, String objectPath, int recursion) throws StorageClientException {
+        Map<String, int[]> compiledPermissions = Maps.newHashMap();
+        String key = getAclKey(objectType, objectPath);
+
+        Map<String, Object> acl = getCached(keySpace, aclColumnFamily, key);
+
+        if (acl != null) {
+            LOGGER.debug("Checking {} {} ",key,acl);
+            for (Entry<String, Object> ace : acl.entrySet()) {
+                String aceKey = ace.getKey();
+                String principal = aceKey.substring(0, aceKey.length() - 2);
+                
+                if (!compiledPermissions.containsKey(principal)) {
+                    int tg = StorageClientUtils.toInt(acl.get(principal
+                            + AclModification.GRANTED_MARKER));
+                    int td = StorageClientUtils.toInt(acl.get(principal
+                            + AclModification.DENIED_MARKER));
+                    compiledPermissions.put(principal, new int[] { tg, td });
+                    LOGGER.debug("added {} ",principal);
+                }
+
+            }
+        }
+        /*
+         * grants contains the granted permissions in a bitmap denies contains
+         * the denied permissions in a bitmap
+         */
+
+        /*
+         * Only look to parent objects if this is not the root object and
+         * everything is not granted and denied
+         */
+        if (recursion < 20 && !StorageClientUtils.isRoot(objectPath)) {
+            recursion++;
+            Map<String, int[]> parentPermissions = internalCompilePrincipals(objectType,
+                    StorageClientUtils.getParentObjectPath(objectPath), recursion);
+            // add the parernt privileges in
+            for (Entry<String, int[]> parentPermission : parentPermissions.entrySet()) {
+                int[] thisPriv = new int[2];
+                String principal = parentPermission.getKey();
+                if (compiledPermissions.containsKey(principal)) {
+                    thisPriv = compiledPermissions.get(principal);
+                    LOGGER.debug("modified {} ",principal);
+                } else {
+                    LOGGER.debug("creating {} ",principal);
+                }
+                int[] parentPriv = parentPermission.getValue();
+
+                /*
+                 * Grant permission not denied at this level parentPriv[0] is
+                 * permissions granted by the parent ~denies is permissions not
+                 * denied here parentPriv[0] & ~denies is permissions granted by
+                 * the parent that have not been denied here. we need to add
+                 * those to things granted here. ie |
+                 */
+                int granted = thisPriv[0] | (parentPriv[0] & ~thisPriv[1]);
+                /*
+                 * Deny permissions not granted at this level
+                 */
+                int denied = thisPriv[1] | (parentPriv[1] & ~thisPriv[0]);
+
+                compiledPermissions.put(principal, new int[] { granted, denied });
+
+            }
+        }
+
+        //
+        // If not denied all users and groups can read other users and
+        // groups and all content can be read
+        for (String principal : new String[] { Group.EVERYONE, User.ANON_USER }) {
+            int[] perm = new int[2];
+            if (compiledPermissions.containsKey(principal)) {
+                perm = compiledPermissions.get(principal);
+            }
+            if (((perm[1] & Permissions.CAN_READ.getPermission()) == 0)
+                    && (Security.ZONE_AUTHORIZABLES.equals(objectType) || Security.ZONE_CONTENT
+                            .equals(objectType))) {
+                perm[0] = perm[0] | Permissions.CAN_READ.getPermission();
+                LOGGER.debug("added Default {} ",principal);
+                compiledPermissions.put(principal, perm);
+            }
+        }
+        compiledPermissions.put(User.ADMIN_USER, new int[] { 0xffff, 0x0000});
+        return compiledPermissions;
+        // only store those permissions the match the requested set.]
+        
+
     }
 
 }

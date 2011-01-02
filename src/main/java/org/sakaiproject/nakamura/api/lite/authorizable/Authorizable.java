@@ -91,6 +91,7 @@ public class Authorizable {
         return id;
     }
 
+    // TODO: Unit test
     public Map<String, Object> getSafeProperties() {
         if ( principalsModified ) {
             authorizableMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));

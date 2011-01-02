@@ -209,6 +209,7 @@ public class StorageClientUtils {
      * @return a lower cost insecure hash of the naked value which can be used
      *         for keys as its not too long.
      */
+    // TODO: Unit test
     public static String insecureHash(String naked) {
         try {
             MessageDigest md;
@@ -445,6 +446,7 @@ public class StorageClientUtils {
      * @return an escaped version of the supplied string suitable for using in a
      *         stored array. The implemenation is not that efficient.
      */
+    // TODO: Unit test
     public static String arrayEscape(String string) {
         string = string.replaceAll("%", "%1");
         string = string.replaceAll(",", "%2");
@@ -455,6 +457,7 @@ public class StorageClientUtils {
      * @param string
      * @return reverse the arrayEscape operation.
      */
+    // TODO: Unit test
     public static String arrayUnEscape(String string) {
         string = string.replaceAll("%2", ",");
         string = string.replaceAll("%1", "%");
@@ -465,6 +468,7 @@ public class StorageClientUtils {
      * @param object
      * @return null or the store object converted to a string[]
      */
+    // TODO: Unit test
     public static String[] toStringArray(Object object) {
         if (object == null) {
             return null;
@@ -481,6 +485,7 @@ public class StorageClientUtils {
      * @return ensure that a string[] is not null after conversion from store.
      *         Use this to make iterators easier on stored arrays.
      */
+    // TODO: Unit test
     public static String[] nonNullStringArray(String[] parameterValues) {
         if (parameterValues == null) {
             return new String[0];

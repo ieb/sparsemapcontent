@@ -95,6 +95,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
     public Authorizable findAuthorizable(final String authorizableId) throws AccessDeniedException,
             StorageClientException {
         checkOpen();
+        if ( Group.EVERYONE.equals(authorizableId)) {
+            return Group.EVERYONE_GROUP;
+        }
         if (!this.currentUserId.equals(authorizableId)) {
             accessControlManager.check(Security.ZONE_AUTHORIZABLES, authorizableId,
                     Permissions.CAN_READ);
@@ -301,6 +304,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         }
     }
 
+    // TODO: Unit test
     public void changePassword(Authorizable authorizable, String password, String oldPassword)
             throws StorageClientException, AccessDeniedException {
         String id = authorizable.getId();

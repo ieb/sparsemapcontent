@@ -104,11 +104,23 @@ public interface AccessControlManager {
      *            the object type @see {@link Security}
      * @param objectPath
      *            the path to the object
-     * @param path
      * @return an array of permissions granted at for the current user on the
      *         object.
      * @throws StorageClientException
      */
-    Permission[] getPemissions(String zoneContent, String path) throws StorageClientException;
+    Permission[] getPemissions(String objectType, String objectPath) throws StorageClientException;
+
+    /**
+     * Finds all principals with the matching permissions explicitly grantent by the supplied path or parent paths.
+      * @param objectType
+     *            the object type @see {@link Security}
+     * @param objectPath
+     *            the path to the object
+     * @param permission the permission bitmap to search for
+     * @param granted true if the permission search is for granted permissions, false if for denied.
+     * @return an array of principals that have the permission granted.
+     * @throws StorageClientException 
+     */
+    String[] findPrincipals(String objectType, String objectPath, int permission, boolean granted) throws StorageClientException;
 
 }
