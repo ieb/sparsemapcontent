@@ -1,20 +1,16 @@
 
 CREATE TABLE css ( 
-  id INT NOT NULL GENERATED ALWAYS AS IDENTITY ( START WITH 0 ,INCREMENT BY 1 ),
   rid varchar(32) NOT NULL,
   cid varchar(64) NOT NULL,
-  v varchar(780) NOT NULL,
-  PRIMARY KEY (id),
-  UNIQUE (rid,cid));
+  v varchar(780) NOT NULL);
 
 
 
 CREATE TABLE  csb (
-  id INT NOT NULL GENERATED ALWAYS AS IDENTITY ( START WITH 0 ,INCREMENT BY 1 ),
   rid varchar(32) NOT NULL,
   cid varchar(64) NOT NULL,
-  v blob,
-  PRIMARY KEY (id),
-  UNIQUE (rid,cid));
+  v blob);
 
+CREATE INDEX css_rc_idx ON css (rid, cid);
+CREATE INDEX css_rc_idx ON csb (rid, cid);
 CREATE INDEX css_locate_idx ON css (v, cid);
