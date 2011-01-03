@@ -36,11 +36,11 @@ public interface StorageClient {
     void remove(String keySpace, String columnFamily, String key) throws StorageClientException;
 
     InputStream streamBodyOut(String keySpace, String columnFamily, String contentId,
-            String contentBlockId, Map<String, Object> content) throws StorageClientException,
+            String contentBlockId, String streamId, Map<String, Object> content) throws StorageClientException,
             AccessDeniedException, IOException;
 
     Map<String, Object> streamBodyIn(String keySpace, String columnFamily, String contentId,
-            String contentBlockId, Map<String, Object> content, InputStream in)
+            String contentBlockId, String streamId, Map<String, Object> content, InputStream in)
             throws StorageClientException, AccessDeniedException, IOException;
 
     Iterator<Map<String, Object>> find(String keySpace, String authorizableColumnFamily,

@@ -58,7 +58,7 @@ public class BlockSetContentHelper implements BlockContentHelper {
     }
 
     public Map<String, Object> writeBody(String keySpace, String contentColumnFamily,
-            String contentId, String contentBlockId, int blockSize, int maxChunksPerBlockSet,
+            String contentId, String contentBlockId, String streamId, int blockSize, int maxChunksPerBlockSet,
             InputStream in) throws StorageClientException, AccessDeniedException, IOException {
 
         int i = 0;
@@ -107,10 +107,10 @@ public class BlockSetContentHelper implements BlockContentHelper {
         }
         Map<String, Object> metadata = Maps.newHashMap();
 
-        metadata.put(Content.BLOCKID_FIELD, StorageClientUtils.toStore(contentBlockId));
-        metadata.put(Content.NBLOCKS_FIELD, StorageClientUtils.toStore(lastBlockWrite + 1));
-        metadata.put(Content.LENGTH_FIELD, StorageClientUtils.toStore(length));
-        metadata.put(Content.BLOCKSIZE_FIELD, StorageClientUtils.toStore(blockSize));
+        metadata.put(StorageClientUtils.getAltField(Content.BLOCKID_FIELD, streamId), StorageClientUtils.toStore(contentBlockId));
+        metadata.put(StorageClientUtils.getAltField(Content.NBLOCKS_FIELD, streamId), StorageClientUtils.toStore(lastBlockWrite + 1));
+        metadata.put(StorageClientUtils.getAltField(Content.LENGTH_FIELD, streamId), StorageClientUtils.toStore(length));
+        metadata.put(StorageClientUtils.getAltField(Content.BLOCKSIZE_FIELD, streamId), StorageClientUtils.toStore(blockSize));
 
         LOGGER.debug(
                 "Saved Last block ContentID {} BlockID {} Nblocks {}  length {}  blocksize {} ",
@@ -119,9 +119,10 @@ public class BlockSetContentHelper implements BlockContentHelper {
 
     }
 
-    public InputStream readBody(String keySpace, String contentColumnFamily, String contentBlockId,
+    public InputStream readBody(String keySpace, String contentColumnFamily, String contentBlockId, String streamId,
             int nBlocks) throws StorageClientException, AccessDeniedException {
-        return new BlockContentInputStream(client, keySpace, contentColumnFamily, contentBlockId,
+        // all the information is stored against the contentBlockId which is unique to the stream
+        return new BlockContentInputStream(client, keySpace, contentColumnFamily, contentBlockId, 
                 nBlocks);
     }
 

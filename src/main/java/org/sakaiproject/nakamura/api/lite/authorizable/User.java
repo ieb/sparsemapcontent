@@ -68,6 +68,7 @@ public class User extends Authorizable {
      * @return true if this user allows one or more of the subjects to
      *         impersonate it.
      */
+    // TODO: Unit test
     public boolean allowImpersonate(Subject impersSubject) {
 
         String impersonators = StorageClientUtils.toString(getProperty(IMPERSONATORS_FIELD));

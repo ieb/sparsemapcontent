@@ -52,7 +52,7 @@ public class FileStreamContentHelper implements StreamedContentHelper {
     }
 
     public Map<String, Object> writeBody(String keySpace, String columnFamily, String contentId,
-            String contentBlockId, Map<String, Object> content, InputStream in) throws IOException,
+            String contentBlockId, String streamId, Map<String, Object> content, InputStream in) throws IOException,
             StorageClientException {
         String path = getPath(keySpace, columnFamily, contentBlockId);
         File file = new File(fileStore + "/" + path);
@@ -65,12 +65,12 @@ public class FileStreamContentHelper implements StreamedContentHelper {
         FileOutputStream out = new FileOutputStream(file);
         long length = IOUtils.copyLarge(in, out);
         out.close();
-        LOGGER.debug("Wrote {} bytes to {} as body of {}:{}:{} ", new Object[] { length, path,
-                keySpace, columnFamily, contentBlockId });
+        LOGGER.debug("Wrote {} bytes to {} as body of {}:{}:{} stream {} ", new Object[] { length, path,
+                keySpace, columnFamily, contentBlockId, streamId });
         Map<String, Object> metadata = Maps.newHashMap();
-        metadata.put(Content.LENGTH_FIELD, StorageClientUtils.toStore(length));
-        metadata.put(Content.BLOCKID_FIELD, StorageClientUtils.toStore(contentBlockId));
-        metadata.put(STORE_LOCATION, StorageClientUtils.toStore(path));
+        metadata.put(StorageClientUtils.getAltField(Content.LENGTH_FIELD, streamId), StorageClientUtils.toStore(length));
+        metadata.put(StorageClientUtils.getAltField(Content.BLOCKID_FIELD, streamId), StorageClientUtils.toStore(contentBlockId));
+        metadata.put(StorageClientUtils.getAltField(STORE_LOCATION, streamId), StorageClientUtils.toStore(path));
         return metadata;
     }
 
@@ -85,9 +85,9 @@ public class FileStreamContentHelper implements StreamedContentHelper {
                 + "/" + rowHash.substring(4, 6) + "/" + rowHash;
     }
 
-    public InputStream readBody(String keySpace, String columnFamily, String contentBlockId,
+    public InputStream readBody(String keySpace, String columnFamily, String contentBlockId, String streamId,
             Map<String, Object> content) throws IOException {
-        String path = StorageClientUtils.toString(content.get(STORE_LOCATION));
+        String path = StorageClientUtils.toString(content.get(StorageClientUtils.getAltField(STORE_LOCATION, streamId)));
         LOGGER.debug("Reading from {} as body of {}:{}:{} ", new Object[] { path, keySpace,
                 columnFamily, contentBlockId });
         File file = new File(fileStore + "/" + path);

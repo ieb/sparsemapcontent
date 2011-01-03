@@ -118,18 +118,18 @@ public class MemoryStorageClient implements StorageClient {
     }
 
     public Map<String, Object> streamBodyIn(String keySpace, String contentColumnFamily,
-            String contentId, String contentBlockId, Map<String, Object> content, InputStream in)
+            String contentId, String contentBlockId, String streamId, Map<String, Object> content, InputStream in)
             throws StorageClientException, AccessDeniedException, IOException {
-        return contentHelper.writeBody(keySpace, contentColumnFamily, contentId, contentBlockId,
+        return contentHelper.writeBody(keySpace, contentColumnFamily, contentId, contentBlockId, streamId,
                 blockSize, maxChunksPerBlockSet, in);
     }
 
     public InputStream streamBodyOut(String keySpace, String contentColumnFamily, String contentId,
-            String contentBlockId, Map<String, Object> content) throws StorageClientException,
+            String contentBlockId, String streamId, Map<String, Object> content) throws StorageClientException,
             AccessDeniedException {
 
         int nBlocks = StorageClientUtils.toInt(content.get(Content.NBLOCKS_FIELD));
-        return contentHelper.readBody(keySpace, contentColumnFamily, contentBlockId, nBlocks);
+        return contentHelper.readBody(keySpace, contentColumnFamily, contentBlockId, streamId, nBlocks);
     }
 
     public DisposableIterator<Map<String, Object>> find(String keySpace,

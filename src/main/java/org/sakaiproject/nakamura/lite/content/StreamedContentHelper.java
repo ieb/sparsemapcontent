@@ -26,10 +26,10 @@ import java.util.Map;
 public interface StreamedContentHelper {
 
     Map<String, Object> writeBody(String keySpace, String columnFamily, String contentId,
-            String contentBlockId, Map<String, Object> content, InputStream in) throws IOException,
+            String contentBlockId, String streamId, Map<String, Object> content, InputStream in) throws IOException,
             StorageClientException;
 
     InputStream readBody(String keySpace, String columnFamily, String contentBlockId,
-            Map<String, Object> content) throws IOException;
+            String streamId, Map<String, Object> content) throws IOException;
 
 }

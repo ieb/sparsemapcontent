@@ -17,6 +17,7 @@
  */
 package org.sakaiproject.nakamura.api.lite.authorizable;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
 import org.apache.commons.lang.StringUtils;
@@ -40,6 +41,7 @@ public class Group extends Authorizable {
      * The ID of the everyone group. Includes all users except anon.
      */
     public static final String EVERYONE = "everyone";
+    public static final Group EVERYONE_GROUP = new Group(ImmutableMap.of("id",StorageClientUtils.toStore(EVERYONE)));
     private Set<String> members;
     private Set<String> membersAdded;
     private Set<String> membersRemoved;
@@ -64,6 +66,7 @@ public class Group extends Authorizable {
     }
     
     @Override
+    // TODO: Unit test
     public Map<String, Object> getSafeProperties() {
         if ( membersModified ) {
             authorizableMap.put(MEMBERS_FIELD, StringUtils.join(members, ';'));
@@ -73,6 +76,7 @@ public class Group extends Authorizable {
     }
     
     @Override
+    // TODO: Unit test
     public boolean isModified() {
         return membersModified || super.isModified();
     }

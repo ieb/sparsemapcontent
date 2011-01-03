@@ -60,6 +60,7 @@ public class Content extends InternalContent {
      *            does exist, this new object will overwrite.
      * @param content
      *            a map of initial content metadata.
+     * @param  
      */
     public Content(String path, java.util.Map<String, Object> content) {
         super(path, content);

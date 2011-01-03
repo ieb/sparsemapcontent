@@ -426,19 +426,19 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     }
 
     public Map<String, Object> streamBodyIn(String keySpace, String columnFamily, String contentId,
-            String contentBlockId, Map<String, Object> content, InputStream in)
+            String contentBlockId, String streamId, Map<String, Object> content, InputStream in)
             throws StorageClientException, AccessDeniedException, IOException {
         checkClosed();
-        return streamedContentHelper.writeBody(keySpace, columnFamily, contentId, contentBlockId,
+        return streamedContentHelper.writeBody(keySpace, columnFamily, contentId, contentBlockId, streamId,
                 content, in);
     }
 
     public InputStream streamBodyOut(String keySpace, String columnFamily, String contentId,
-            String contentBlockId, Map<String, Object> content) throws StorageClientException,
+            String contentBlockId, String streamId, Map<String, Object> content) throws StorageClientException,
             AccessDeniedException, IOException {
         checkClosed();
         final InputStream in = streamedContentHelper.readBody(keySpace, columnFamily,
-                contentBlockId, content);
+                contentBlockId, streamId, content);
         registerDisposable(new Disposable() {
 
             private boolean open = true;

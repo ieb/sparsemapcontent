@@ -44,7 +44,9 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -204,7 +206,8 @@ public abstract class AbstractContentManagerTest {
     }
 
     @Test
-    public void testVersionContent() throws StorageClientException, AccessDeniedException {
+    public void testVersionContent() throws StorageClientException, AccessDeniedException,
+            InterruptedException {
         AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
@@ -242,7 +245,7 @@ public abstract class AbstractContentManagerTest {
 
         // FIXME: add some version list methods, we have no way of testing if
         // this works.
-        contentManager.saveVersion("/");
+        String versionName = contentManager.saveVersion("/");
 
         // must reload after a version save.
         content = contentManager.get("/");
@@ -253,6 +256,24 @@ public abstract class AbstractContentManagerTest {
         content = contentManager.get("/");
         p = content.getProperties();
         Assert.assertEquals("value4", StorageClientUtils.toString(p.get("prop1update")));
+
+        // just in case the machine is so fast all of that took 1ms
+        Thread.sleep(50);
+
+        String versionName2 = contentManager.saveVersion("/");
+
+        Content versionContent = contentManager.getVersion("/", versionName);
+        Assert.assertNotNull(versionContent);
+        Content versionContent2 = contentManager.getVersion("/", versionName2);
+        Assert.assertNotNull(versionContent2);
+        List<String> versionList = contentManager.getVersionHistory("/");
+        Assert.assertNotNull(versionList);
+        Assert.assertArrayEquals("Version List is " + Arrays.toString(versionList.toArray())
+                + " expecting " + versionName2 + " then " + versionName, new String[] {
+                versionName2, versionName }, versionList.toArray(new String[versionList.size()]));
+
+        Content badVersionContent = contentManager.getVersion("/", "BadVersion");
+        Assert.assertNull(badVersionContent);
 
     }
 
