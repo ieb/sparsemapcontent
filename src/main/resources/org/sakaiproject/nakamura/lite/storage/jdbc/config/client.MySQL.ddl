@@ -6,6 +6,8 @@
 
 DROP TABLE IF EXISTS `css`;
 
+# Central store
+
 CREATE TABLE  `css` (
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
@@ -17,6 +19,7 @@ CREATE TABLE  `css` (
 
 DROP TABLE IF EXISTS `au_css`;
 
+# Store just for Authorizables
 CREATE TABLE  `au_css` (
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
@@ -27,6 +30,7 @@ CREATE TABLE  `au_css` (
 
 DROP TABLE IF EXISTS `cn_css`;
 
+# Store just for Content
 CREATE TABLE  `cn_css` (
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
@@ -38,6 +42,7 @@ CREATE TABLE  `cn_css` (
 
 DROP TABLE IF EXISTS `ac_css`;
 
+# Store just for Access Control
 CREATE TABLE  `ac_css` (
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
@@ -46,5 +51,47 @@ CREATE TABLE  `ac_css` (
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+
+# Body Store. In some cases we want to store the bodies of the objects in a binary serialized lump
+# This allows us to load and save the sparse map without using multiple records in the above tables and hence is more compact
+# And uses less bandwidth to the DB.
+# Where this is done, we still index certain fields as defined in index_cols
+
+CREATE TABLE  `css_b` (
+  `rid` varchar(32) NOT NULL,
+  `b` blob,
+  KEY `rowkey` USING BTREE (`rid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+# Central Store for Object bodies, serialized content maps rather than columns
+CREATE TABLE  `cn_css_b` (
+  `rid` varchar(32) NOT NULL,
+  `b` blob,
+  KEY `rowkey` USING BTREE (`rid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+# Central Store for Object bodies, serialized content maps rather than columns
+CREATE TABLE  `au_css_b` (
+  `rid` varchar(32) NOT NULL,
+  `b` blob,
+  KEY `rowkey` USING BTREE (`rid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+# Central Store for Object bodies, serialized content maps rather than columns
+CREATE TABLE  `ac_css_b` (
+  `rid` varchar(32) NOT NULL,
+  `b` blob,
+  KEY `rowkey` USING BTREE (`rid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+
+# Columns that need to be indexed
+CREATE TABLE  `index_cols` (
+  `cid` varchar(64) NOT NULL,
+  PRIMARY KEY  (`cid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+insert into index_cols (cid) values ('au:rep:principalName');
+insert into index_cols (cid) values ('au:type');
 
 

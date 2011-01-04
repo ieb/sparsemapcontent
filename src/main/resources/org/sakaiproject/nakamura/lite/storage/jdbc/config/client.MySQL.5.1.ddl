@@ -56,3 +56,46 @@ CREATE TABLE  `ac_css` (
 
 
 
+# Body Store. In some cases we want to store the bodies of the objects in a binary serialized lump
+# This allows us to load and save the sparse map without using multiple records in the above tables and hence is more compact
+# And uses less bandwidth to the DB.
+# Where this is done, we still index certain fields as defined in index_cols
+
+CREATE TABLE  `css_b` (
+  `rid` varchar(32) NOT NULL,
+  `b` blob,
+  PRIMARY KEY (`rid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+# Central Store for Object bodies, serialized content maps rather than columns
+CREATE TABLE  `cn_css_b` (
+  `rid` varchar(32) NOT NULL,
+  `b` blob,
+  PRIMARY KEY (`rid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+# Central Store for Object bodies, serialized content maps rather than columns
+CREATE TABLE  `au_css_b` (
+  `rid` varchar(32) NOT NULL,
+  `b` blob,
+  PRIMARY KEY (`rid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+# Central Store for Object bodies, serialized content maps rather than columns
+CREATE TABLE  `ac_css_b` (
+  `rid` varchar(32) NOT NULL,
+  `b` blob,
+  PRIMARY KEY (`rid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+# This table stores the colunms that are indexed
+
+CREATE TABLE  `index_cols` (
+  `cid` varchar(64) NOT NULL,
+  PRIMARY KEY  (`cid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+insert into index_cols (cid) values ('au:firstName');
+
+

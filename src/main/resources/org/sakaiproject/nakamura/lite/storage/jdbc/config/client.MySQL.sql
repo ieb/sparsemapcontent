@@ -22,6 +22,34 @@ remove-string-column.n.cn = delete from cn_css where rid = ? and cid = ?
 ### remove-string-column.n.cn._X = delete from cn_css_X where rid = ? and cid = ?
 check-schema = select count(*) from css
 find.n.au = select a.rid, a.cid, a.v from au_css a {0} where {1} 1 = 1;, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
+select-index-columns = select cid from index_cols
+
+block-select-row = select b from css_b where rid = ?
+block-delete-row = delete from css_b where rid = ?
+block-insert-row = insert into css_b (rid,b) values (?, ?)
+block-update-row = update css_b set b = ? where rid = ?
+
+block-select-row.n.ac = select b from ac_css_b where rid = ?
+block-delete-row.n.ac = delete from ac_css_b where rid = ?
+block-insert-row.n.ac = insert into ac_css_b (rid,b) values (?, ?)
+block-update-row.n.ac = update ac_css_b set b = ? where rid = ?
+
+block-select-row.n.cn = select b from cn_css_b where rid = ?
+block-delete-row.n.cn = delete from cn_css_b where rid = ?
+block-insert-row.n.cn = insert into cn_css_b (rid,b) values (?, ?)
+block-update-row.n.cn = update cn_css_b set b = ? where rid = ?
+
+block-select-row.n.au = select b from au_css_b where rid = ?
+block-delete-row.n.au = delete from au_css_b where rid = ?
+block-insert-row.n.au = insert into au_css_b (rid,b) values (?, ?)
+block-update-row.n.au = update au_css_b set b = ? where rid = ?
+
+block-find = select a.rid, a.b from css_b a {0} where {1} 1 = 1;, css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
+block-find.n.au = select a.rid, a.b from au_css_b a {0} where {1} 1 = 1;, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
+block-find.n.cn = select a.rid, a.b from cn_css_b a {0} where {1} 1 = 1;, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
+block-find.n.ac = select a.rid, a.b from ac_css_b a {0} where {1} 1 = 1;, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
+
 
 validate = select 1
 rowid-hash = SHA1
+use-batch-inserts = 1
