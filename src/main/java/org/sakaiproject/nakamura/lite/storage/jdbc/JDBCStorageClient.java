@@ -283,7 +283,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                                 insertSeq.add(e);
                             }
                         } else {
-                            LOGGER.info("Index updated for {} {} ", new Object[] { rid, e.getKey(),
+                            LOGGER.debug("Index updated for {} {} ", new Object[] { rid, e.getKey(),
                                     e.getValue() });
                         }
                     }
@@ -299,7 +299,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                                     e.getValue() });
                             
                         } else {
-                            LOGGER.info("Index inserted for {} {} ", new Object[] { rid, e.getKey(),
+                            LOGGER.debug("Index inserted for {} {} ", new Object[] { rid, e.getKey(),
                                     e.getValue() });
 
                         }
@@ -340,12 +340,12 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                                             + getRowId(keySpace, columnFamily, key) + "  column:["
                                             + k + "] ");
                                 } else {
-                                    LOGGER.info("Inserted Index {} {} [{}]",
+                                    LOGGER.debug("Inserted Index {} {} [{}]",
                                             new Object[] { getRowId(keySpace, columnFamily, key),
                                                     k, o });
                                 }
                             } else {
-                                LOGGER.info(
+                                LOGGER.debug(
                                         "Updated Index {} {} [{}]",
                                         new Object[] { getRowId(keySpace, columnFamily, key), k, o });
                             }
@@ -358,11 +358,11 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                             removeStringColumn.setString(2, k);
                             if (removeStringColumn.executeUpdate() == 0) {
                                 m = get(keySpace, columnFamily, key);
-                                LOGGER.info(
+                                LOGGER.debug(
                                         "Column Not present did not remove {} {} Current Column:{} ",
                                         new Object[] { getRowId(keySpace, columnFamily, key), k, m });
                             } else {
-                                LOGGER.info("Removed Index {} {} ",
+                                LOGGER.debug("Removed Index {} {} ",
                                         getRowId(keySpace, columnFamily, key), k);
                             }
                         }
@@ -398,7 +398,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     loadIndexColumns.add(rs.getString(1));
                 }
                 indexColumns = loadIndexColumns;
-                LOGGER.info("Indexing Colums is {} ", indexColumns);
+                LOGGER.debug("Indexing Colums is {} ", indexColumns);
             } catch (SQLException e) {
                 LOGGER.warn(e.getMessage(), e);
                 return false;
@@ -408,10 +408,10 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             }
         }
         if (indexColumns.contains(columnFamily + ":" + k)) {
-            LOGGER.info("Will Index {}:{}", columnFamily, k);
+            LOGGER.debug("Will Index {}:{}", columnFamily, k);
             return true;
         } else {
-            LOGGER.info("Should Not Index {}:{}", columnFamily, k);
+            LOGGER.debug("Should Not Index {}:{}", columnFamily, k);
             return false;
         }
     }
@@ -711,13 +711,18 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         int set = 0;
         for (Entry<String, Object> e : properties.entrySet()) {
             Object v = e.getValue();
-            if (v != null) {
-                String k = "a" + set;
-                tables.append(MessageFormat.format(statementParts[1], k));
-                where.append(MessageFormat.format(statementParts[2], k));
-                parameters.add(e.getKey());
-                parameters.add(v);
-                set++;
+            String k = e.getKey();
+            if ( shouldIndex(keySpace, columnFamily, k) ) {
+                if (v != null) {
+                    String t = "a" + set;
+                    tables.append(MessageFormat.format(statementParts[1], t));
+                    where.append(MessageFormat.format(statementParts[2], t));
+                    parameters.add(k);
+                    parameters.add(v);
+                    set++;
+                }
+            } else {
+                LOGGER.warn("Search on {}:{} is not supported, filter dropped ",columnFamily,k);
             }
         }
 
@@ -727,14 +732,14 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         PreparedStatement tpst = null;
         ResultSet trs = null;
         try {
-            LOGGER.info("Preparing {} ", sqlStatement);
+            LOGGER.debug("Preparing {} ", sqlStatement);
             tpst = jcbcStorageClientConnection.getConnection().prepareStatement(sqlStatement);
             inc("iterator");
             tpst.clearParameters();
             int i = 1;
             for (Object params : parameters) {
                 tpst.setObject(i, StorageClientUtils.toStore(params));
-                LOGGER.info("Setting {} ", StorageClientUtils.toStore(params));
+                LOGGER.debug("Setting {} ", StorageClientUtils.toStore(params));
 
                 i++;
             }

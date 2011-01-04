@@ -1,3 +1,9 @@
+# SQL statements of the form key[.keyspace.columnfamily.[rowID0-2]]
+# the based key should always be present
+# the keyspace.columnfamily selectors are used to shard the column family (optional)
+# the rowID0-2 is to shard on rowID, you can selectively shard hot rowID areas.
+# If sharding ensure that any exiting data is migrated (using SQL DML) and that the finder statements are adjusted to incorporate the shards (warning, might be hard)
+# Indexer statements
 delete-string-row = delete from css where rid = ?
 delete-string-row.n.ac = delete from ac_css where rid = ?
 delete-string-row.n.au = delete from au_css where rid = ?
@@ -20,7 +26,6 @@ remove-string-column.n.au = delete from au_css where rid = ? and cid = ?
 remove-string-column.n.cn = delete from cn_css where rid = ? and cid = ?
 # Example of a sharded query, rowIDs starting with x will use this
 ### remove-string-column.n.cn._X = delete from cn_css_X where rid = ? and cid = ?
-check-schema = select count(*) from css
 find.n.au = select a.rid, a.cid, a.v from au_css a {0} where {1} 1 = 1;, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
 select-index-columns = select cid from index_cols
 
@@ -44,12 +49,24 @@ block-delete-row.n.au = delete from au_css_b where rid = ?
 block-insert-row.n.au = insert into au_css_b (rid,b) values (?, ?)
 block-update-row.n.au = update au_css_b set b = ? where rid = ?
 
+#
+# These are finder statements
 block-find = select a.rid, a.b from css_b a {0} where {1} 1 = 1;, css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
 block-find.n.au = select a.rid, a.b from au_css_b a {0} where {1} 1 = 1;, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
 block-find.n.cn = select a.rid, a.b from cn_css_b a {0} where {1} 1 = 1;, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
 block-find.n.ac = select a.rid, a.b from ac_css_b a {0} where {1} 1 = 1;, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
 
 
+# statement to validate the connection
 validate = select 1
+
+# What type of rowID has should be used. Must be non colliding (reasonable probability), cant be changed once set without data migration.
+# SHA-1 has a 1:10E14 probability of collision, so IMVHO is Ok here. Do not use MD5, it will collide.
 rowid-hash = SHA1
+
+# statement to check that the schema exists
+check-schema = select count(*) from css
+
+# Use batch Inserts means that update operations will be performed as batches rather than single SQL statements. This only really effects the update of 
+# Index tables and not the content store but it will reduce the number of SQL operations where more than one field is indexed per content item.
 use-batch-inserts = 1

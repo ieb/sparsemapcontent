@@ -512,7 +512,6 @@ public class StorageClientUtils {
             throw new IOException("Body Key does not match row key, unable to read");
         }
         int size = dis.readInt();
-        LOGGER.info("Loading {} Map Size {} ",ckey,size);
         for ( int i = 0; i < size; i++ ) {
             String k = dis.readUTF();
             String v = dis.readUTF();
@@ -540,7 +539,6 @@ public class StorageClientUtils {
         dos.flush();
         baos.flush();
         byte[] b = baos.toByteArray();
-        LOGGER.info("Saved {} as Map Size {} byte[{}] ",new Object[]{key,m.size(),b.length});
         baos.close();
         dos.close();
         return new ByteArrayInputStream(b);
