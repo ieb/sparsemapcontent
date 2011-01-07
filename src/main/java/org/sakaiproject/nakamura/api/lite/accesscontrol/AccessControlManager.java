@@ -108,7 +108,7 @@ public interface AccessControlManager {
      *         object.
      * @throws StorageClientException
      */
-    Permission[] getPemissions(String objectType, String objectPath) throws StorageClientException;
+    Permission[] getPermissions(String objectType, String objectPath) throws StorageClientException;
 
     /**
      * Finds all principals with the matching permissions explicitly grantent by the supplied path or parent paths.
