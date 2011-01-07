@@ -44,21 +44,24 @@ public class SessionImpl implements Session {
     private Exception closedAt;
     private StorageClient client;
     private Authenticator authenticator;
+    private StoreListener storeListener;
 
     public SessionImpl(Repository repository, User currentUser, StorageClient client,
-            Configuration configuration, Map<String, CacheHolder> sharedCache)
+            Configuration configuration, Map<String, CacheHolder> sharedCache, StoreListener storeListener)
             throws ClientPoolException, StorageClientException, AccessDeniedException {
         this.currentUser = currentUser;
         this.repository = repository;
         this.client = client;
         accessControlManager = new AccessControlManagerImpl(client, currentUser, configuration,
-                sharedCache);
+                sharedCache, storeListener);
         authorizableManager = new AuthorizableManagerImpl(currentUser, client, configuration,
-                accessControlManager, sharedCache);
+                accessControlManager, sharedCache, storeListener);
 
-        contentManager = new ContentManagerImpl(client, accessControlManager, configuration);
+        contentManager = new ContentManagerImpl(client, accessControlManager, configuration, storeListener);
 
         authenticator = new AuthenticatorImpl(client, configuration);
+        this.storeListener = storeListener;
+        storeListener.onLogin(currentUser.getId(), this.toString());
     }
 
     public void logout() throws ClientPoolException {
@@ -73,6 +76,7 @@ public class SessionImpl implements Session {
             client = null;
             authenticator = null;
             closedAt = new Exception("This session was closed at:");
+            storeListener.onLogout(currentUser.getId(), this.toString());
         }
     }
 

@@ -33,6 +33,7 @@ import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.CachingManager;
+import org.sakaiproject.nakamura.lite.StoreListener;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,14 +51,16 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
     private String aclColumnFamily;
     private Map<String, int[]> cache = new ConcurrentHashMap<String, int[]>();
     private boolean closed;
+    private StoreListener storeListener;
 
     public AccessControlManagerImpl(StorageClient client, User currentUser, Configuration config,
-            Map<String, CacheHolder> sharedCache) {
+            Map<String, CacheHolder> sharedCache, StoreListener storeListener) {
         super(client, sharedCache);
         this.user = currentUser;
         this.aclColumnFamily = config.getAclColumnFamily();
         this.keySpace = config.getKeySpace();
         closed = false;
+        this.storeListener = storeListener;
     }
 
     public Map<String, Object> getAcl(String objectType, String objectPath)
@@ -89,6 +92,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         }
         LOGGER.debug("Updating ACL {} {} ", key, modifications);
         putCached(keySpace, aclColumnFamily, key, modifications);
+        storeListener.onUpdate(objectType, objectPath,  getCurrentUserId(), false, "op:acl");
     }
 
     public void check(String objectType, String objectPath, Permission permission)

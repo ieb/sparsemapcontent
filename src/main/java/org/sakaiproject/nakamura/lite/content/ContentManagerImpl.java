@@ -58,6 +58,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
+import org.sakaiproject.nakamura.lite.StoreListener;
 import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
@@ -164,13 +165,16 @@ public class ContentManagerImpl implements ContentManager {
 
     private boolean closed;
 
+    private StoreListener eventListener;
+
     public ContentManagerImpl(StorageClient client, AccessControlManager accessControlManager,
-            Configuration config) {
+            Configuration config, StoreListener eventListener) {
         this.client = client;
         this.accessControlManager = accessControlManager;
         keySpace = config.getKeySpace();
         contentColumnFamily = config.getContentColumnFamily();
         closed = false;
+        this.eventListener = eventListener;
     }
 
     // TODO: Unit test
@@ -250,7 +254,9 @@ public class ContentManagerImpl implements ContentManager {
                     "update on read only Content Item (possibly a previous version of the item)",
                     accessControlManager.getCurrentUserId());
         }
+        boolean isnew = false;
         if (content.isNew()) {
+            isnew = true;
             // only when new do we update the structure.
             if (!StorageClientUtils.isRoot(path)) {
                 client.insert(keySpace, contentColumnFamily,
@@ -265,6 +271,7 @@ public class ContentManagerImpl implements ContentManager {
         LOGGER.debug("Saved {} at {} as {} ", new Object[] { path, id, toSave });
         // reset state to unmodified to take further modifications.
         content.reset();
+        eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), isnew, "op:update");        
     }
 
     public void delete(String path) throws AccessDeniedException, StorageClientException {
@@ -281,6 +288,7 @@ public class ContentManagerImpl implements ContentManager {
                 ImmutableMap.of(DELETED_FIELD, (Object) TRUE));
         client.insert(keySpace, contentColumnFamily, DELETEDITEMS_KEY,
                 ImmutableMap.of(uuid, StorageClientUtils.toStore(path)));
+        eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId());        
     }
 
     public long writeBody(String path, InputStream in) throws StorageClientException,
@@ -316,6 +324,7 @@ public class ContentManagerImpl implements ContentManager {
         }
         client.insert(keySpace, contentColumnFamily, contentId, metadata);
         long length = StorageClientUtils.toLong(metadata.get(LENGTH_FIELD));
+        eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), false, "stream", streamId);        
         return length;
 
     }
@@ -397,6 +406,7 @@ public class ContentManagerImpl implements ContentManager {
             writeBody(to, fromStream);
             fromStream.close();
         }
+        eventListener.onUpdate(Security.ZONE_CONTENT, to, accessControlManager.getCurrentUserId(), true, "op:copy");        
 
     }
 
@@ -452,6 +462,8 @@ public class ContentManagerImpl implements ContentManager {
         }
         // remove the old from.
         client.remove(keySpace, contentColumnFamily, from);
+        eventListener.onDelete(Security.ZONE_CONTENT, from, accessControlManager.getCurrentUserId(), "op:move");        
+        eventListener.onUpdate(Security.ZONE_CONTENT, to, accessControlManager.getCurrentUserId(), true, "op:move");        
 
     }
 

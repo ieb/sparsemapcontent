@@ -36,6 +36,7 @@ import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.sakaiproject.nakamura.lite.CachingManager;
+import org.sakaiproject.nakamura.lite.StoreListener;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
@@ -69,10 +70,11 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
     private User thisUser;
     private boolean closed;
     private Authenticator authenticator;
+    private StoreListener storeListener;
 
     public AuthorizableManagerImpl(User currentUser, StorageClient client,
             Configuration configuration, AccessControlManager accessControlManager,
-            Map<String, CacheHolder> sharedCache) throws StorageClientException,
+            Map<String, CacheHolder> sharedCache, StoreListener storeListener) throws StorageClientException,
             AccessDeniedException {
         super(client, sharedCache);
         this.currentUserId = currentUser.getId();
@@ -86,6 +88,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         this.authorizableColumnFamily = configuration.getAuthorizableColumnFamily();
         this.authenticator = new AuthenticatorImpl(client, configuration);
         this.closed = false;
+        this.storeListener = storeListener;
     }
 
     public User getUser() {
@@ -134,7 +137,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
          * might want to consider using a "can add this user to a group"
          * permission at some point in the future.
          */
+        String type = "type:user";
         if (authorizable instanceof Group) {
+            type = "type:group";
             Group group = (Group) authorizable;
             String[] membersAdded = group.getMembersAdded();
             Authorizable[] newMembers = new Authorizable[membersAdded.length];
@@ -222,6 +227,8 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
         putCached(keySpace, authorizableColumnFamily, id, encodedProperties);
         authorizable.reset();
+        
+        storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, accessControlManager.getCurrentUserId(), true, type);
 
     }
 
@@ -291,6 +298,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         accessControlManager.check(Security.ZONE_ADMIN, authorizableId, Permissions.CAN_DELETE);
         removeFromCache(keySpace, authorizableColumnFamily, authorizableId);
         client.remove(keySpace, authorizableColumnFamily, authorizableId);
+        storeListener.onDelete(Security.ZONE_AUTHORIZABLES, authorizableId, accessControlManager.getCurrentUserId());        
 
     }
 
@@ -324,11 +332,15 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                     StorageClientUtils.toStore(accessControlManager.getCurrentUserId()),
                     Authorizable.PASSWORD_FIELD,
                     StorageClientUtils.toStore(StorageClientUtils.secureHash(password))));
+            
+            storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, currentUserId, false, "op:change-password");        
+
         } else {
             throw new AccessDeniedException(Security.ZONE_ADMIN, id,
                     "Not allowed to change the password, must be the user or an admin user",
                     currentUserId);
         }
+        
     }
 
     public Iterator<Authorizable> findAuthorizable(String propertyName, String value,

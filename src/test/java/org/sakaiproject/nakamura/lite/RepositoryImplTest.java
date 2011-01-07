@@ -76,6 +76,7 @@ public class RepositoryImplTest {
         RepositoryImpl repository = new RepositoryImpl();
         repository.configuration = configuration;
         repository.clientPool = clientPool;
+        repository.storeListener = new LoggingStorageListener();
         Map<String, Object> properties = ImmutableMap.of("t", (Object) "x");
         repository.activate(properties);
 

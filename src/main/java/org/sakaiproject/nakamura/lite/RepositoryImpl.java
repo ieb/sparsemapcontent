@@ -46,6 +46,9 @@ public class RepositoryImpl implements Repository {
 
     @Reference
     protected StorageClientPool clientPool;
+    
+    @Reference 
+    protected StoreListener storeListener;
 
     private Map<String, CacheHolder> sharedCache;
 
@@ -102,7 +105,7 @@ public class RepositoryImpl implements Repository {
             if (currentUser == null) {
                 throw new StorageClientException("User " + username + " cant login with password");
             }
-            return new SessionImpl(this, currentUser, client, configuration, sharedCache);
+            return new SessionImpl(this, currentUser, client, configuration, sharedCache, storeListener);
         } catch (ClientPoolException e) {
             clientPool.getClient();
             throw e;
@@ -129,7 +132,7 @@ public class RepositoryImpl implements Repository {
                 throw new StorageClientException("User " + username
                         + " does not exist, cant login administratively as this user");
             }
-            return new SessionImpl(this, currentUser, client, configuration, sharedCache);
+            return new SessionImpl(this, currentUser, client, configuration, sharedCache, storeListener);
         } catch (ClientPoolException e) {
             clientPool.getClient();
             throw e;

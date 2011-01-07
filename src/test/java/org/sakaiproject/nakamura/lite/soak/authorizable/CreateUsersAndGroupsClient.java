@@ -24,6 +24,7 @@ import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
+import org.sakaiproject.nakamura.lite.LoggingStorageListener;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
@@ -54,10 +55,10 @@ public class CreateUsersAndGroupsClient extends AbstractScalingClient {
             User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
             AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
-                    client, currentUser, configuration, sharedCache);
+                    client, currentUser, configuration, sharedCache,  new LoggingStorageListener());
 
             AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
-                    client, configuration, accessControlManagerImpl, sharedCache);
+                    client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
 
             for (int i = 0; i < nusers; i++) {
                 String userId = tname + "_" + i;

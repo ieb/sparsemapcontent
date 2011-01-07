@@ -31,6 +31,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.lite.ConfigurationImpl;
+import org.sakaiproject.nakamura.lite.LoggingStorageListener;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
@@ -89,10 +90,10 @@ public abstract class AbstractContentManagerTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, null);
+                currentUser, configuration, null,  new LoggingStorageListener());
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration);
+                configuration,  new LoggingStorageListener());
         contentManager.update(new Content("/", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/test", ImmutableMap.of("prop1", (Object) "value2")));
         contentManager
@@ -125,10 +126,10 @@ public abstract class AbstractContentManagerTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache);
+                currentUser, configuration, sharedCache,  new LoggingStorageListener());
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration);
+                configuration,  new LoggingStorageListener());
         contentManager.update(new Content("/", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/test", ImmutableMap.of("prop1", (Object) "value2")));
         contentManager
@@ -165,10 +166,10 @@ public abstract class AbstractContentManagerTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache);
+                currentUser, configuration, sharedCache,  new LoggingStorageListener());
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration);
+                configuration,  new LoggingStorageListener());
         contentManager.update(new Content("/", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/test", ImmutableMap.of("prop1", (Object) "value2")));
         contentManager
@@ -212,10 +213,10 @@ public abstract class AbstractContentManagerTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache);
+                currentUser, configuration, sharedCache,  new LoggingStorageListener());
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration);
+                configuration,  new LoggingStorageListener());
         contentManager.update(new Content("/", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/test", ImmutableMap.of("prop1", (Object) "value2")));
         contentManager
@@ -283,10 +284,10 @@ public abstract class AbstractContentManagerTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache);
+                currentUser, configuration, sharedCache,  new LoggingStorageListener());
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration);
+                configuration,  new LoggingStorageListener());
         contentManager.update(new Content("/", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/test", ImmutableMap.of("prop1", (Object) "value2")));
         contentManager
