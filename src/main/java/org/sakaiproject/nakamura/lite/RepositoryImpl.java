@@ -156,4 +156,9 @@ public class RepositoryImpl implements Repository {
         this.clientPool = connectionPool;
     }
 
+    public void setStorageListener(StoreListener storeListener) {
+        this.storeListener = storeListener;
+        
+    }
+
 }
