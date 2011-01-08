@@ -9,7 +9,10 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
+import org.sakaiproject.nakamura.api.lite.StoreListener;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
@@ -18,12 +21,11 @@ import java.util.Map;
 @Component(immediate = true, metatype = true)
 @Service
 public class OSGiStoreListener implements StoreListener {
-    private static final String TOPIC_BASE = "org/sakaiproject/nakamura/lite/";
-    private static final String DEFAULT_DELETE_TOPIC = TOPIC_BASE + "DELETE";
-    private static final String LOGIN_TOPIC = TOPIC_BASE + "LOGIN";
-    private static final String LOGOUT_TOPIC = TOPIC_BASE + "LOGOUT";
-    private static final String DEFAULT_CREATE_TOPIC = TOPIC_BASE + "ADDED";
-    private static final String DEFAULT_UPDATE_TOPIC = TOPIC_BASE + "UPDATED";
+ 
+    private static final Logger LOGGER = LoggerFactory.getLogger(OSGiStoreListener.class);
+    public static final String DEFAULT_DELETE_TOPIC = TOPIC_BASE + DELETE_TOPIC;
+    public static final String DEFAULT_CREATE_TOPIC = TOPIC_BASE + ADDED_TOPIC;
+    public static final String DEFAULT_UPDATE_TOPIC = TOPIC_BASE + UPDATED_TOPIC;
     @Reference
     protected EventAdmin eventAdmin;
     private static Map<String, String> deleteTopics;
@@ -83,13 +85,12 @@ public class OSGiStoreListener implements StoreListener {
         postEvent(topic, path, user, attributes);
     }
 
-    public void onLogin(String userid, String sessoionID) {
-        postEvent(LOGIN_TOPIC, null, userid, new String[] { "session:" + sessoionID });
-
+    public void onLogin(String userid, String sessionID) {
+        LOGGER.debug("Login {} {} ", userid, sessionID);
     }
 
-    public void onLogout(String userid, String sessoionID) {
-        postEvent(LOGOUT_TOPIC, null, userid, new String[] { "session:" + sessoionID });
+    public void onLogout(String userid, String sessionID) {
+        LOGGER.debug("Logout {} {} ", userid, sessionID);
     }
 
     private void postEvent(String topic, String path, String user, String[] attributes) {

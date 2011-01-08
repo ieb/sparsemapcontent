@@ -1,5 +1,6 @@
 package org.sakaiproject.nakamura.lite;
 
+import org.sakaiproject.nakamura.api.lite.StoreListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
