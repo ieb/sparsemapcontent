@@ -34,28 +34,28 @@ public class OSGiStoreListener implements StoreListener {
 
     static {
         Builder<String, String> deleteTopicsBuilder = ImmutableMap.builder();
-        deleteTopicsBuilder.put(Security.ADMIN_AUTHORIZABLES, TOPIC_BASE + "authorizables/DELETE");
-        deleteTopicsBuilder.put(Security.ADMIN_GROUPS, TOPIC_BASE + "groups/DELETE");
-        deleteTopicsBuilder.put(Security.ADMIN_USERS, TOPIC_BASE + "users/DELETE");
-        deleteTopicsBuilder.put(Security.ZONE_ADMIN, TOPIC_BASE + "admin/DELETE");
-        deleteTopicsBuilder.put(Security.ZONE_AUTHORIZABLES, TOPIC_BASE + "authorizables/DELETE");
-        deleteTopicsBuilder.put(Security.ZONE_CONTENT, TOPIC_BASE + "content/DELETE");
+        deleteTopicsBuilder.put(Security.ADMIN_AUTHORIZABLES, TOPIC_BASE + "authorizables/" + DELETE_TOPIC);
+        deleteTopicsBuilder.put(Security.ADMIN_GROUPS, TOPIC_BASE + "groups/" + DELETE_TOPIC);
+        deleteTopicsBuilder.put(Security.ADMIN_USERS, TOPIC_BASE + "users/" + DELETE_TOPIC);
+        deleteTopicsBuilder.put(Security.ZONE_ADMIN, TOPIC_BASE + "admin/" + DELETE_TOPIC);
+        deleteTopicsBuilder.put(Security.ZONE_AUTHORIZABLES, TOPIC_BASE + "authorizables/" + DELETE_TOPIC);
+        deleteTopicsBuilder.put(Security.ZONE_CONTENT, TOPIC_BASE + "content/" + DELETE_TOPIC);
         deleteTopics = deleteTopicsBuilder.build();
         Builder<String, String> createTopicsBuilder = ImmutableMap.builder();
-        createTopicsBuilder.put(Security.ADMIN_AUTHORIZABLES, TOPIC_BASE + "authorizables/CREATE");
-        createTopicsBuilder.put(Security.ADMIN_GROUPS, TOPIC_BASE + "groups/CREATE");
-        createTopicsBuilder.put(Security.ADMIN_USERS, TOPIC_BASE + "users/CREATE");
-        createTopicsBuilder.put(Security.ZONE_ADMIN, TOPIC_BASE + "admin/CREATE");
-        createTopicsBuilder.put(Security.ZONE_AUTHORIZABLES, TOPIC_BASE + "authorizables/CREATE");
-        createTopicsBuilder.put(Security.ZONE_CONTENT, TOPIC_BASE + "content/CREATE");
+        createTopicsBuilder.put(Security.ADMIN_AUTHORIZABLES, TOPIC_BASE + "authorizables/"+ ADDED_TOPIC);
+        createTopicsBuilder.put(Security.ADMIN_GROUPS, TOPIC_BASE + "groups/"+ ADDED_TOPIC);
+        createTopicsBuilder.put(Security.ADMIN_USERS, TOPIC_BASE + "users/"+ ADDED_TOPIC);
+        createTopicsBuilder.put(Security.ZONE_ADMIN, TOPIC_BASE + "admin/"+ ADDED_TOPIC);
+        createTopicsBuilder.put(Security.ZONE_AUTHORIZABLES, TOPIC_BASE + "authorizables/"+ ADDED_TOPIC);
+        createTopicsBuilder.put(Security.ZONE_CONTENT, TOPIC_BASE + "content/"+ ADDED_TOPIC);
         createTopics = createTopicsBuilder.build();
         Builder<String, String> updateTopicsBuilder = ImmutableMap.builder();
-        updateTopicsBuilder.put(Security.ADMIN_AUTHORIZABLES, TOPIC_BASE + "authorizables/CHANGE");
-        updateTopicsBuilder.put(Security.ADMIN_GROUPS, TOPIC_BASE + "groups/CHANGE");
-        updateTopicsBuilder.put(Security.ADMIN_USERS, TOPIC_BASE + "users/CHANGE");
-        updateTopicsBuilder.put(Security.ZONE_ADMIN, TOPIC_BASE + "admin/CHANGE");
-        updateTopicsBuilder.put(Security.ZONE_AUTHORIZABLES, TOPIC_BASE + "authorizables/CHANGE");
-        updateTopicsBuilder.put(Security.ZONE_CONTENT, TOPIC_BASE + "content/CHANGE");
+        updateTopicsBuilder.put(Security.ADMIN_AUTHORIZABLES, TOPIC_BASE + "authorizables/"+ UPDATED_TOPIC);
+        updateTopicsBuilder.put(Security.ADMIN_GROUPS, TOPIC_BASE + "groups/"+ UPDATED_TOPIC);
+        updateTopicsBuilder.put(Security.ADMIN_USERS, TOPIC_BASE + "users/"+ UPDATED_TOPIC);
+        updateTopicsBuilder.put(Security.ZONE_ADMIN, TOPIC_BASE + "admin/"+ UPDATED_TOPIC);
+        updateTopicsBuilder.put(Security.ZONE_AUTHORIZABLES, TOPIC_BASE + "authorizables/"+ UPDATED_TOPIC);
+        updateTopicsBuilder.put(Security.ZONE_CONTENT, TOPIC_BASE + "content/"+ UPDATED_TOPIC);
         updateTopics = updateTopicsBuilder.build();
 
     }
