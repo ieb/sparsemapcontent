@@ -95,6 +95,17 @@
       <artifactId>google-collections</artifactId>
       <version>0.8</version>
     </dependency>
+    
+    <!-- osgi for events -->
+    <dependency>
+      <groupId>org.apache.felix</groupId>
+      <artifactId>org.osgi.core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.felix</groupId>
+      <artifactId>org.osgi.compendium</artifactId>
+    </dependency>
+    
 
     <!-- We also need slf4j -->
     <dependency>
@@ -104,6 +115,11 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <version>1.8.5</version>
     </dependency>
 
     <!--  Since we will be running in OSGi we also include the following -->

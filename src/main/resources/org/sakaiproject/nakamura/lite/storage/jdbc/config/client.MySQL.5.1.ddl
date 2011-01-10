@@ -6,50 +6,54 @@
 
 DROP TABLE IF EXISTS `css`;
 
-# Central store
-
 CREATE TABLE  `css` (
+  `id` int(11) NOT NULL auto_increment,
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
+  PRIMARY KEY  (`id`),
   KEY `rowkey` USING BTREE (`rid`,`cid`),
   KEY `cid_locate_i` (`v`(255),`cid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 DROP TABLE IF EXISTS `au_css`;
 
-# Store just for Authorizables
 CREATE TABLE  `au_css` (
+  `id` int(11) NOT NULL auto_increment,
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
+  PRIMARY KEY  (`id`),
   KEY `rowkey` USING BTREE (`rid`,`cid`),
   KEY `cid_locate_i` (`v`(255),`cid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `cn_css`;
 
-# Store just for Content
 CREATE TABLE  `cn_css` (
+  `id` int(11) NOT NULL auto_increment,
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
+  PRIMARY KEY  (`id`),
   KEY `rowkey` USING BTREE (`rid`,`cid`),
   KEY `cid_locate_i` (`v`(255),`cid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 DROP TABLE IF EXISTS `ac_css`;
 
-# Store just for Access Control
 CREATE TABLE  `ac_css` (
+  `id` int(11) NOT NULL auto_increment,
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
+  PRIMARY KEY  (`id`),
   KEY `rowkey` USING BTREE (`rid`,`cid`),
   KEY `cid_locate_i` (`v`(255),`cid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 
 
 # Body Store. In some cases we want to store the bodies of the objects in a binary serialized lump
@@ -60,38 +64,38 @@ CREATE TABLE  `ac_css` (
 CREATE TABLE  `css_b` (
   `rid` varchar(32) NOT NULL,
   `b` blob,
-  KEY `rowkey` USING BTREE (`rid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`rid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 # Central Store for Object bodies, serialized content maps rather than columns
 CREATE TABLE  `cn_css_b` (
   `rid` varchar(32) NOT NULL,
   `b` blob,
-  KEY `rowkey` USING BTREE (`rid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`rid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 # Central Store for Object bodies, serialized content maps rather than columns
 CREATE TABLE  `au_css_b` (
   `rid` varchar(32) NOT NULL,
   `b` blob,
-  KEY `rowkey` USING BTREE (`rid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`rid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 # Central Store for Object bodies, serialized content maps rather than columns
 CREATE TABLE  `ac_css_b` (
   `rid` varchar(32) NOT NULL,
   `b` blob,
-  KEY `rowkey` USING BTREE (`rid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`rid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-# Columns that need to be indexed
+# This table stores the colunms that are indexed
+
 CREATE TABLE  `index_cols` (
   `cid` varchar(64) NOT NULL,
   PRIMARY KEY  (`cid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-insert into index_cols (cid) values ('au:rep:principalName');
-insert into index_cols (cid) values ('au:type');
+insert into index_cols (cid) values ('au:firstName');
 
 

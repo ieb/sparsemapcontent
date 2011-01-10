@@ -37,6 +37,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.ConfigurationImpl;
+import org.sakaiproject.nakamura.lite.LoggingStorageListener;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
@@ -89,7 +90,7 @@ public abstract class AbstractAccessControlManagerImplTest {
         String u3 = "user3-"+System.currentTimeMillis();
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, null);
+                currentUser, configuration, null, new LoggingStorageListener());
         AclModification user1 = new AclModification(u1, Permissions.CAN_ANYTHING.combine(
                 Permissions.CAN_ANYTHING_ACL).getPermission(), AclModification.Operation.OP_REPLACE);
         AclModification user2 = new AclModification(u2, Permissions.CAN_READ
@@ -129,7 +130,7 @@ public abstract class AbstractAccessControlManagerImplTest {
         String basepath = "testpath"+System.currentTimeMillis();
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, null);
+                currentUser, configuration, null,  new LoggingStorageListener());
         AclModification user1CanAnything = new AclModification(AclModification.grantKey(u1),
                 Permissions.CAN_ANYTHING.combine(Permissions.CAN_ANYTHING_ACL).getPermission(),
                 AclModification.Operation.OP_REPLACE);
@@ -177,7 +178,7 @@ public abstract class AbstractAccessControlManagerImplTest {
                 sortToArray(acl.keySet()));
 
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser, client,
-                configuration, accessControlManagerImpl, null);
+                configuration, accessControlManagerImpl, null,  new LoggingStorageListener());
         authorizableManager.createUser(u1, "User 1", "test",
                 ImmutableMap.of("test", StorageClientUtils.toStore("test")));
         authorizableManager.createUser(u2, "User 2", "test",
@@ -285,7 +286,7 @@ public abstract class AbstractAccessControlManagerImplTest {
 
     private void checkPermissions(User u, String[] testPath, Object[][] expectedPermissions,
             String[][] readers, String[][] deniedReaders) throws StorageClientException {
-        AccessControlManagerImpl acmU = new AccessControlManagerImpl(client, u, configuration, null);
+        AccessControlManagerImpl acmU = new AccessControlManagerImpl(client, u, configuration, null,  new LoggingStorageListener());
 
         for (int i = 0; i < testPath.length; i++) {
             Permission[] p = acmU.getPemissions(Security.ZONE_CONTENT, testPath[i]);

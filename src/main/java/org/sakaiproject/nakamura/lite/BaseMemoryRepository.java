@@ -46,6 +46,7 @@ public class BaseMemoryRepository {
         repository = new RepositoryImpl();
         repository.configuration = configuration;
         repository.clientPool = clientPool;
+        repository.storeListener = new LoggingStorageListener();
         Map<String, Object> repoProperties = ImmutableMap.of("t", (Object) "x");
         repository.activate(repoProperties);
 

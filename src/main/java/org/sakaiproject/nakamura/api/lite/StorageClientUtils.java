@@ -27,6 +27,12 @@ import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -491,6 +497,51 @@ public class StorageClientUtils {
             return new String[0];
         }
         return parameterValues;
+    }
+
+    /**
+     * Load a Map from binary stream
+     * @param map
+     * @param binaryStream
+     * @throws IOException
+     */
+    public static void loadFromStream(String key, Map<String, Object> map, InputStream binaryStream) throws IOException {
+        DataInputStream dis = new DataInputStream(binaryStream);
+        String ckey = dis.readUTF();
+        if ( !key.equals(ckey) ) {
+            throw new IOException("Body Key does not match row key, unable to read");
+        }
+        int size = dis.readInt();
+        for ( int i = 0; i < size; i++ ) {
+            String k = dis.readUTF();
+            String v = dis.readUTF();
+            map.put(k,v);
+        }
+        dis.close();
+        binaryStream.close();
+    }
+
+    /**
+     * Save a map to a binary stream
+     * @param m expected to contain strings throughout
+     * @return
+     * @throws IOException
+     */
+    public static InputStream storeMapToStream(String key, Map<String, Object> m) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(baos);
+        dos.writeUTF(key);
+        dos.writeInt(m.size());
+        for ( Entry<String,Object> e : m.entrySet()) {
+            dos.writeUTF(e.getKey());
+            dos.writeUTF((String) e.getValue());
+        }
+        dos.flush();
+        baos.flush();
+        byte[] b = baos.toByteArray();
+        baos.close();
+        dos.close();
+        return new ByteArrayInputStream(b);
     }
 
 }

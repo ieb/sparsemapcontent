@@ -31,6 +31,7 @@ import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.ConfigurationImpl;
+import org.sakaiproject.nakamura.lite.LoggingStorageListener;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
@@ -85,10 +86,10 @@ public abstract class AbstractAuthorizableManagerImplTest {
         Assert.assertNotNull(currentUser);
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache);
+                currentUser, configuration, sharedCache,  new LoggingStorageListener());
 
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
-                client, configuration, accessControlManagerImpl, sharedCache);
+                client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
 
         Assert.assertNotNull(authorizableManager.findAuthorizable(User.ADMIN_USER));
         Assert.assertNotNull(authorizableManager.findAuthorizable(User.ANON_USER));
@@ -120,10 +121,10 @@ public abstract class AbstractAuthorizableManagerImplTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache);
+                currentUser, configuration, sharedCache,  new LoggingStorageListener());
 
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
-                client, configuration, accessControlManagerImpl, sharedCache);
+                client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
 
         Authorizable a = authorizableManager.findAuthorizable(User.ADMIN_USER);
         Authorizable an = authorizableManager.findAuthorizable(User.ANON_USER);
@@ -154,10 +155,10 @@ public abstract class AbstractAuthorizableManagerImplTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache);
+                currentUser, configuration, sharedCache,  new LoggingStorageListener());
 
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
-                client, configuration, accessControlManagerImpl, sharedCache);
+                client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
 
         authorizableManager.delete("testuser");
 
@@ -188,10 +189,10 @@ public abstract class AbstractAuthorizableManagerImplTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache);
+                currentUser, configuration, sharedCache,  new LoggingStorageListener());
 
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
-                client, configuration, accessControlManagerImpl, sharedCache);
+                client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
 
         authorizableManager.delete("testuser2");
 
@@ -213,9 +214,9 @@ public abstract class AbstractAuthorizableManagerImplTest {
         Assert.assertFalse(user.isAdmin());
 
         AccessControlManagerImpl userAccessControlManagerImpl = new AccessControlManagerImpl(
-                client, user, configuration, sharedCache);
+                client, user, configuration, sharedCache,  new LoggingStorageListener());
         AuthorizableManagerImpl userAuthorizableManager = new AuthorizableManagerImpl(user, client,
-                configuration, userAccessControlManagerImpl, sharedCache);
+                configuration, userAccessControlManagerImpl, sharedCache,  new LoggingStorageListener());
 
         try {
             userAuthorizableManager.createUser("testuser3", "Test User", "test", ImmutableMap.of(
@@ -243,10 +244,10 @@ public abstract class AbstractAuthorizableManagerImplTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache);
+                currentUser, configuration, sharedCache,  new LoggingStorageListener());
 
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
-                client, configuration, accessControlManagerImpl, sharedCache);
+                client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
 
         authorizableManager.delete("user3");
         authorizableManager.delete("testgroup");
@@ -318,10 +319,10 @@ public abstract class AbstractAuthorizableManagerImplTest {
             User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
             AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
-                    client, currentUser, configuration, sharedCache);
+                    client, currentUser, configuration, sharedCache,  new LoggingStorageListener());
 
             AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
-                    client, configuration, accessControlManagerImpl, sharedCache);
+                    client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
 
             for (int i = 0; i < 10; i++) {
                 authorizableManager.delete("testfinduser" + i);
