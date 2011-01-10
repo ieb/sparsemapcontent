@@ -267,7 +267,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         return true;
     }
 
-    public Permission[] getPemissions(String objectType, String path) throws StorageClientException {
+    public Permission[] getPermissions(String objectType, String path) throws StorageClientException {
         int[] perms = compilePermission(this.user, objectType, path, 0);
         List<Permission> permissions = Lists.newArrayList();
         for (Permission p : Permissions.PRIMARY_PERMISSIONS) {

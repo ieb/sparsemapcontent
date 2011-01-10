@@ -289,7 +289,7 @@ public abstract class AbstractAccessControlManagerImplTest {
         AccessControlManagerImpl acmU = new AccessControlManagerImpl(client, u, configuration, null,  new LoggingStorageListener());
 
         for (int i = 0; i < testPath.length; i++) {
-            Permission[] p = acmU.getPemissions(Security.ZONE_CONTENT, testPath[i]);
+            Permission[] p = acmU.getPermissions(Security.ZONE_CONTENT, testPath[i]);
             LOGGER.info("Got {} {} {} ",
                     new Object[] { u.getId(), testPath[i], Arrays.toString(p) });
             Assert.assertArrayEquals(expectedPermissions[i], p);
