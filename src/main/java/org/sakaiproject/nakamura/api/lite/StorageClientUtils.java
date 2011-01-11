@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Maps;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.FastDateFormat;
 import org.sakaiproject.nakamura.api.lite.util.Type1UUID;
 import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
 import org.slf4j.Logger;
@@ -36,9 +37,15 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TimeZone;
 
 /**
  * Utilites for managing storage related to the Sparse Map Content Store.
@@ -60,6 +67,13 @@ public class StorageClientUtils {
      */
     public static final char[] URL_SAFE_ENCODING = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
             .toCharArray();
+    /**
+     * Based on JackRabbit: Jackrabbit uses a subset of 8601 (8601:2000) for their date times.
+     */
+    public static String ISO8601_JCR_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSZZ";
+    private final static FastDateFormat ISO8601_JCR_FORMAT = FastDateFormat.getInstance(
+        ISO8601_JCR_PATTERN, TimeZone.getTimeZone("UTC"), Locale.ROOT);
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StorageClientUtils.class);
 
     /**
@@ -131,6 +145,17 @@ public class StorageClientUtils {
                 sout[i] = StorageClientUtils.arrayEscape(sin[i]);
             }
             return StringUtils.join(sout, ',');
+        } else if (object instanceof Calendar) {
+          final Calendar c = (Calendar) object;
+          return ISO8601_JCR_FORMAT.format(c.getTime());
+        } else if (object instanceof Calendar[]) {
+          final Calendar[] calendars = (Calendar[]) object;
+          final String[] strings = new String[calendars.length];
+          for (int i = 0; i < calendars.length; i++) {
+            final Calendar calendar = calendars[i];
+            strings[i] = (String) toStore(calendar);
+          }
+          return toStore(strings);
         } else {
             LOGGER.warn("Converting " + object.getClass() + " to byte[] via string");
             return String.valueOf(object);
@@ -400,6 +425,24 @@ public class StorageClientUtils {
     }
 
     /**
+     * @param object
+     * @return the store object as a {@link Calendar}
+     * @throws ParseException 
+     */
+    public static Calendar toCalendar(Object object) throws ParseException {
+        if (object instanceof Calendar) {
+            return (Calendar) object;
+        } else if (object == null || object instanceof RemoveProperty) {
+            return null;
+        }
+        final SimpleDateFormat sdf = new SimpleDateFormat(ISO8601_JCR_PATTERN, Locale.ROOT);
+        final Date date = sdf.parse(toString(object));
+        final Calendar c = Calendar.getInstance();
+        c.setTime(date);
+        return c;
+    }
+
+    /**
      * @param path
      * @param child
      * @return create a new path by appending the child to the parent path.
@@ -484,6 +527,24 @@ public class StorageClientUtils {
             v[i] = StorageClientUtils.arrayUnEscape(v[i]);
         }
         return v;
+    }
+
+    /**
+     * @param object
+     * @return null or the store object converted to a string[]
+     * @throws ParseException 
+     */
+    // TODO: Unit test
+    public static Calendar[] toCalendarArray(Object object) throws ParseException {
+        if (object == null) {
+            return null;
+        }
+        String[] v = StringUtils.split(StorageClientUtils.toString(object), ',');
+        Calendar[] c = new Calendar[v.length];
+        for (int i = 0; i < v.length; i++) {
+            c[i] = toCalendar(arrayUnEscape(v[i]));
+        }
+        return c;
     }
 
     /**
