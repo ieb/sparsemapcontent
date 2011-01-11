@@ -676,7 +676,7 @@ public class ContentManagerImpl implements ContentManager {
                                 new Object[] { path, versionHistoryId, versionHistory });
                     }
                 } else {
-                    LOGGER.debug("History Id null for path {} {} ", path, versionHistoryId);
+                    LOGGER.debug("History Id null for path {} ", path);
                 }
             }
         }

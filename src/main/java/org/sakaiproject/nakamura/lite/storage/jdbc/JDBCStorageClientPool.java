@@ -20,6 +20,8 @@ package org.sakaiproject.nakamura.lite.storage.jdbc;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.felix.scr.annotations.Activate;
@@ -123,6 +125,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
     private Timer timer;
 
     @Activate
+    @SuppressWarnings(value={"NP_CLOSING_NULL"},justification="Invalid report, if this was the case then nothing would work")
     public void activate(Map<String, Object> properties) throws ClassNotFoundException {
         this.properties = properties;
         super.activate(properties);
