@@ -71,6 +71,11 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         String key = this.getAclKey(objectType, objectPath);
         return getCached(keySpace, aclColumnFamily, key);
     }
+    
+    public Map<String, Object> getEffectiveAcl(String objectType, String objectPath)
+            throws StorageClientException, AccessDeniedException {
+        throw new UnsupportedOperationException("Nag someone to implement this");
+    }
 
     public void setAcl(String objectType, String objectPath, AclModification[] aclModifications)
             throws StorageClientException, AccessDeniedException {

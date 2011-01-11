@@ -1,5 +1,7 @@
 package org.sakaiproject.nakamura.api.lite.accesscontrol;
 
+import com.google.common.collect.Lists;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -169,6 +171,29 @@ public class AclModification {
                 modifications.add(new AclModification(key, perm, op));
             }
         }
+    }
+
+    // TODO: Unit test
+    public static String getPrincipal(String principalKey) {
+        if ( principalKey == null) {
+            return principalKey;
+        }
+        if (principalKey.length() <= GRANTED_MARKER.length()) {
+            return null;
+        }
+        return principalKey.substring(0, principalKey.length()-GRANTED_MARKER.length());
+    }
+    
+    
+    // TODO: Unit test
+    public static Permission[] listPermissions(int perms) {
+        List<Permission> permissions = Lists.newArrayList();
+        for (Permission p : Permissions.PRIMARY_PERMISSIONS) {
+            if ((perms & p.getPermission()) == p.getPermission()) {
+                permissions.add(p);
+            }
+        }
+        return permissions.toArray(new Permission[permissions.size()]);
     }
 
 }
