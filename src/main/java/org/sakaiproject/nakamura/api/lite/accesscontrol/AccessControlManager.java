@@ -40,6 +40,18 @@ public interface AccessControlManager {
      */
     Map<String, Object> getAcl(String objectType, String objectPath) throws StorageClientException,
             AccessDeniedException;
+    
+    
+    /**
+     * Get the effective ACL for the path
+     * @param objectType
+     * @param objectPath
+     * @return
+     * @throws StorageClientException
+     * @throws AccessDeniedException
+     */
+    Map<String, Object> getEffectiveAcl(String objectType, String objectPath) throws StorageClientException,
+    AccessDeniedException;
 
     /**
      * Set and ACL using ACL modifications operating on the existing ACL at teh
@@ -122,5 +134,6 @@ public interface AccessControlManager {
      * @throws StorageClientException 
      */
     String[] findPrincipals(String objectType, String objectPath, int permission, boolean granted) throws StorageClientException;
+
 
 }
