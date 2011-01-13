@@ -17,6 +17,11 @@
  */
 package org.sakaiproject.nakamura.api.lite.accesscontrol;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
+
+import java.util.Map;
+
 /**
  * Defines standard permissions used in the system and some usefull aggregates.
  */
@@ -36,4 +41,50 @@ public class Permissions {
 
     public static final Permission[] PRIMARY_PERMISSIONS = new Permission[] { CAN_READ, CAN_WRITE,
             CAN_DELETE, CAN_READ_ACL, CAN_WRITE_ACL, CAN_DELETE_ACL, CAN_MANAGE, ALL };
+
+    private static final Map<String, Permission> FROM_JCR_PRIVILEGES = createConvertToPermissions();
+    private static final Map<String, Permission> FROM_SPARSE_NAMES = createConvertToSparsePermissions();
+
+    private static Map<String, Permission> createConvertToPermissions() {
+        Builder<String, Permission> b = ImmutableMap.builder();
+        b.put("jcr:read", Permissions.CAN_READ);
+        b.put("jcr:modifyProperties", Permissions.CAN_WRITE);
+        b.put("jcr:addChildNodes", Permissions.CAN_WRITE);
+        b.put("jcr:removeNode", Permissions.CAN_DELETE);
+        b.put("jcr:removeChildNodes", Permissions.CAN_DELETE);
+        b.put("jcr:write", Permissions.CAN_WRITE);
+        b.put("jcr:readAccessControl", Permissions.CAN_READ_ACL);
+        b.put("jcr:modifyAccessControl", Permissions.CAN_ANYTHING_ACL);
+        b.put("jcr:versionManagement", Permissions.CAN_WRITE);
+        b.put("jcr:all", Permissions.ALL);
+        return b.build();
+        // jcr:lockManagement, jcr:nodeTypeManagement, jcr:retentionManagement, jcr:lifecycleManagement are not implemented in Sparse.
+
+    }
+
+    private static Map<String, Permission> createConvertToSparsePermissions() {
+        Builder<String, Permission> b = ImmutableMap.builder();
+        b.put("read", Permissions.CAN_READ);
+        b.put("write", Permissions.CAN_WRITE);
+        b.put("delete", Permissions.CAN_DELETE);
+        b.put("view", Permissions.CAN_READ);
+        b.put("manage", Permissions.CAN_MANAGE);
+        b.put("all", Permissions.ALL);
+        b.put("read-acl", Permissions.CAN_READ_ACL);
+        b.put("write-acl", Permissions.CAN_WRITE_ACL);
+        b.put("delete-acl", Permissions.CAN_DELETE_ACL);
+        b.put("manage-acl", Permissions.CAN_ANYTHING_ACL);
+        return b.build();
+    }
+
+    public static Permission parse(String name) {
+        if (FROM_JCR_PRIVILEGES.containsKey(name)) {
+            return FROM_JCR_PRIVILEGES.get(name);
+        }
+        if (FROM_SPARSE_NAMES.containsKey(name)) {
+            return FROM_SPARSE_NAMES.get(name);
+        }
+        return null;
+    }
+
 }
