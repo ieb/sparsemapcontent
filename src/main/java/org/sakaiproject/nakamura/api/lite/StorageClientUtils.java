@@ -35,6 +35,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
@@ -46,6 +48,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TimeZone;
+
 
 /**
  * Utilites for managing storage related to the Sparse Map Content Store.
@@ -68,11 +71,12 @@ public class StorageClientUtils {
     public static final char[] URL_SAFE_ENCODING = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
             .toCharArray();
     /**
-     * Based on JackRabbit: Jackrabbit uses a subset of 8601 (8601:2000) for their date times.
+     * Based on JackRabbit: Jackrabbit uses a subset of 8601 (8601:2000) for
+     * their date times.
      */
     public static String ISO8601_JCR_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSZZ";
     private final static FastDateFormat ISO8601_JCR_FORMAT = FastDateFormat.getInstance(
-        ISO8601_JCR_PATTERN, TimeZone.getTimeZone("UTC"), Locale.ROOT);
+            ISO8601_JCR_PATTERN, TimeZone.getTimeZone("UTC"), Locale.ROOT);
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StorageClientUtils.class);
 
@@ -146,16 +150,16 @@ public class StorageClientUtils {
             }
             return StringUtils.join(sout, ',');
         } else if (object instanceof Calendar) {
-          final Calendar c = (Calendar) object;
-          return ISO8601_JCR_FORMAT.format(c.getTime());
+            final Calendar c = (Calendar) object;
+            return ISO8601_JCR_FORMAT.format(c.getTime());
         } else if (object instanceof Calendar[]) {
-          final Calendar[] calendars = (Calendar[]) object;
-          final String[] strings = new String[calendars.length];
-          for (int i = 0; i < calendars.length; i++) {
-            final Calendar calendar = calendars[i];
-            strings[i] = (String) toStore(calendar);
-          }
-          return toStore(strings);
+            final Calendar[] calendars = (Calendar[]) object;
+            final String[] strings = new String[calendars.length];
+            for (int i = 0; i < calendars.length; i++) {
+                final Calendar calendar = calendars[i];
+                strings[i] = (String) toStore(calendar);
+            }
+            return toStore(strings);
         } else {
             LOGGER.warn("Converting " + object.getClass() + " to byte[] via string");
             return String.valueOf(object);
@@ -427,7 +431,7 @@ public class StorageClientUtils {
     /**
      * @param object
      * @return the store object as a {@link Calendar}
-     * @throws ParseException 
+     * @throws ParseException
      */
     public static Calendar toCalendar(Object object) throws ParseException {
         if (object instanceof Calendar) {
@@ -484,6 +488,8 @@ public class StorageClientUtils {
      *         the shard where base is the cardinality of the encoding of the
      *         ID.
      */
+    // TODO: There is no reason to use this method in sparse (or very little), check usage.
+    // For instance the SparsePrincipal uses it.
     public static String shardPath(String id) {
         String hash = insecureHash(id);
         return hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, 6) + "/"
@@ -532,7 +538,7 @@ public class StorageClientUtils {
     /**
      * @param object
      * @return null or the store object converted to a string[]
-     * @throws ParseException 
+     * @throws ParseException
      */
     // TODO: Unit test
     public static Calendar[] toCalendarArray(Object object) throws ParseException {
@@ -562,21 +568,23 @@ public class StorageClientUtils {
 
     /**
      * Load a Map from binary stream
+     * 
      * @param map
      * @param binaryStream
      * @throws IOException
      */
-    public static void loadFromStream(String key, Map<String, Object> map, InputStream binaryStream) throws IOException {
+    public static void loadFromStream(String key, Map<String, Object> map, InputStream binaryStream)
+            throws IOException {
         DataInputStream dis = new DataInputStream(binaryStream);
         String ckey = dis.readUTF();
-        if ( !key.equals(ckey) ) {
+        if (!key.equals(ckey)) {
             throw new IOException("Body Key does not match row key, unable to read");
         }
         int size = dis.readInt();
-        for ( int i = 0; i < size; i++ ) {
+        for (int i = 0; i < size; i++) {
             String k = dis.readUTF();
             String v = dis.readUTF();
-            map.put(k,v);
+            map.put(k, v);
         }
         dis.close();
         binaryStream.close();
@@ -584,16 +592,19 @@ public class StorageClientUtils {
 
     /**
      * Save a map to a binary stream
-     * @param m expected to contain strings throughout
+     * 
+     * @param m
+     *            expected to contain strings throughout
      * @return
      * @throws IOException
      */
-    public static InputStream storeMapToStream(String key, Map<String, Object> m) throws IOException {
+    public static InputStream storeMapToStream(String key, Map<String, Object> m)
+            throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
         dos.writeUTF(key);
         dos.writeInt(m.size());
-        for ( Entry<String,Object> e : m.entrySet()) {
+        for (Entry<String, Object> e : m.entrySet()) {
             dos.writeUTF(e.getKey());
             dos.writeUTF((String) e.getValue());
         }
@@ -603,6 +614,43 @@ public class StorageClientUtils {
         baos.close();
         dos.close();
         return new ByteArrayInputStream(b);
+    }
+
+    /**
+     * Adapt an object to a session. I haven't used typing here becuase I don't
+     * want to bind to the Jars in question and create dependencies.
+     * 
+     * @param source
+     *            the input object that the method
+     * @return
+     */
+    public static Session adaptToSession(Object source) {
+        if (source instanceof SessionAdaptable) {
+            return ((SessionAdaptable) source).getSession();
+        } else {
+            // assume this is a JCR session of someform, in which case there should be a SparseUserManager
+            Object userManager = safeMethod(source, "getUserManager", new Object[0],
+                    new Class[0]);
+            if (userManager != null) {
+                return (Session) safeMethod(userManager, "getSession", new Object[0],
+                        new Class[0]);
+            }
+            return null;
+        }
+    }
+
+    private static Object safeMethod(Object target, String methodName, Object[] args,
+            @SuppressWarnings("rawtypes") Class[] argsTypes) {
+        try {
+            Method m = target.getClass().getMethod(methodName, argsTypes);
+            if (!m.isAccessible()) {
+                m.setAccessible(true);
+            }
+            return m.invoke(target, args);
+        } catch (Throwable e) {
+            LOGGER.info("Failed to invoke method " + methodName + " " + target, e);
+        }
+        return null;
     }
 
 }

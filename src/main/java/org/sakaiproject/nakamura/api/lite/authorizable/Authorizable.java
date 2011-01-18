@@ -21,10 +21,19 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 import org.apache.commons.lang.StringUtils;
+import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.util.Iterables;
+import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -61,6 +70,8 @@ public class Authorizable {
 
     public static final String NO_PASSWORD = "--none--";
 
+    protected static final Logger LOGGER = LoggerFactory.getLogger(Authorizable.class);
+
     protected Map<String, Object> authorizableMap;
     protected Set<String> principals;
 
@@ -93,7 +104,7 @@ public class Authorizable {
 
     // TODO: Unit test
     public Map<String, Object> getSafeProperties() {
-        if ( principalsModified ) {
+        if (principalsModified) {
             authorizableMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
         }
         return StorageClientUtils.getFilterMap(authorizableMap, null, FILTER_PROPERTIES);
@@ -135,7 +146,7 @@ public class Authorizable {
 
     public void removeProperty(String key) {
         if (authorizableMap.containsKey(key)) {
-            authorizableMap.put(key,new RemoveProperty());
+            authorizableMap.put(key, new RemoveProperty());
             propertiesModified.add(key);
         }
     }
@@ -144,7 +155,7 @@ public class Authorizable {
         if (!principals.contains(principal)) {
             principals.add(principal);
             principalsModified = true;
-            
+
         }
     }
 
@@ -156,11 +167,12 @@ public class Authorizable {
     }
 
     public Map<String, Object> getPropertiesForUpdate() {
-        if ( principalsModified ) {
+        if (principalsModified) {
             authorizableMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
             propertiesModified.add(PRINCIPALS_FIELD);
         }
-        return StorageClientUtils.getFilterMap(authorizableMap, propertiesModified, FILTER_PROPERTIES);
+        return StorageClientUtils.getFilterMap(authorizableMap, propertiesModified,
+                FILTER_PROPERTIES);
     }
 
     public void reset() {
@@ -174,6 +186,45 @@ public class Authorizable {
 
     public boolean hasProperty(String name) {
         return authorizableMap.containsKey(name);
+    }
+
+    public Iterator<Group> memberOf(final AuthorizableManager authorizableManager) {
+        final List<String> memberIds = new ArrayList<String>();
+        Collections.addAll(memberIds, getPrincipals());
+        return new PreemptiveIterator<Group>() {
+
+            private int p;
+            private Group group;
+
+            protected boolean internalHasNext() {
+                while (p < memberIds.size()) {
+                    String id = memberIds.get(p);
+                    p++;
+                    try {
+                        Authorizable a = authorizableManager.findAuthorizable(id);
+                        if (a instanceof Group) {
+                            group = (Group) a;
+                            for (String pid : a.getPrincipals()) {
+                                if (!memberIds.contains(pid)) {
+                                    memberIds.add(pid);
+                                }
+                            }
+                            return true;
+                        }
+                    } catch (AccessDeniedException e) {
+                        LOGGER.debug(e.getMessage(), e);
+                    } catch (StorageClientException e) {
+                        LOGGER.debug(e.getMessage(), e);
+                    }
+                }
+                return false;
+            }
+
+            protected Group internalNext() {
+                return group;
+            }
+
+        };
     }
 
 }
