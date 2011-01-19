@@ -91,7 +91,11 @@ public class FileStreamContentHelper implements StreamedContentHelper {
         LOGGER.debug("Reading from {} as body of {}:{}:{} ", new Object[] { path, keySpace,
                 columnFamily, contentBlockId });
         File file = new File(fileStore + "/" + path);
-        return new FileInputStream(file);
+        if ( file.exists() ) {
+            return new FileInputStream(file);
+        } else {
+            return null;
+        }
     }
 
 }
