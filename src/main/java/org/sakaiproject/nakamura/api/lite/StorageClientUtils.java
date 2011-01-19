@@ -639,18 +639,20 @@ public class StorageClientUtils {
         }
     }
 
-    private static Object safeMethod(Object target, String methodName, Object[] args,
-            @SuppressWarnings("rawtypes") Class[] argsTypes) {
-        try {
-            Method m = target.getClass().getMethod(methodName, argsTypes);
-            if (!m.isAccessible()) {
-                m.setAccessible(true);
-            }
-            return m.invoke(target, args);
-        } catch (Throwable e) {
-            LOGGER.info("Failed to invoke method " + methodName + " " + target, e);
+  private static Object safeMethod(Object target, String methodName, Object[] args,
+      @SuppressWarnings("rawtypes") Class[] argsTypes) {
+    if (target != null) {
+      try {
+        Method m = target.getClass().getMethod(methodName, argsTypes);
+        if (!m.isAccessible()) {
+          m.setAccessible(true);
         }
-        return null;
+        return m.invoke(target, args);
+      } catch (Throwable e) {
+        LOGGER.info("Failed to invoke method " + methodName + " " + target, e);
+      }
     }
+    return null;
+  }
 
 }
