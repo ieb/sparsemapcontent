@@ -383,4 +383,31 @@ public abstract class AbstractAuthorizableManagerImplTest {
 
     }
 
+    @Test
+    public void testAuthorizableManagerNullProperties() throws StorageClientException,
+            AccessDeniedException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+        AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
+                currentUser, configuration, sharedCache,  new LoggingStorageListener());
+
+        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
+                client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
+
+        authorizableManager.delete("testuser");
+
+        Assert.assertTrue(authorizableManager.createUser("testuser", "Test User", "test",
+                null));
+        Authorizable user = authorizableManager.findAuthorizable("testuser");
+        Assert.assertNotNull(user);
+        Assert.assertTrue(user instanceof User);
+
+        authorizableManager.delete("testgroup");
+        Assert.assertTrue(authorizableManager.createGroup("testgroup", "Test Group", null));
+        Authorizable group = authorizableManager.findAuthorizable("testgroup");
+        Assert.assertNotNull(group);
+        Assert.assertTrue(group instanceof Group);
+    }
+
 }

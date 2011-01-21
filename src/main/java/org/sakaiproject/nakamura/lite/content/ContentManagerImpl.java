@@ -278,17 +278,19 @@ public class ContentManagerImpl implements ContentManager {
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_DELETE);
         Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
-        String uuid = StorageClientUtils.toString(structure.get(STRUCTURE_UUID_FIELD));
-        client.remove(keySpace, contentColumnFamily, path);
-        Map<String, Object> m = new HashMap<String, Object>();
-        m.put(StorageClientUtils.getObjectName(path), null);
-        client.insert(keySpace, contentColumnFamily, StorageClientUtils.getParentObjectPath(path),
-                m);
-        client.insert(keySpace, contentColumnFamily, uuid,
-                ImmutableMap.of(DELETED_FIELD, (Object) TRUE));
-        client.insert(keySpace, contentColumnFamily, DELETEDITEMS_KEY,
-                ImmutableMap.of(uuid, StorageClientUtils.toStore(path)));
-        eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId());        
+        if ( structure != null && structure.size() > 0 ) {
+            String uuid = StorageClientUtils.toString(structure.get(STRUCTURE_UUID_FIELD));
+            client.remove(keySpace, contentColumnFamily, path);
+            Map<String, Object> m = new HashMap<String, Object>();
+            m.put(StorageClientUtils.getObjectName(path), null);
+            client.insert(keySpace, contentColumnFamily, StorageClientUtils.getParentObjectPath(path),
+                    m);
+            client.insert(keySpace, contentColumnFamily, uuid,
+                    ImmutableMap.of(DELETED_FIELD, (Object) TRUE));
+            client.insert(keySpace, contentColumnFamily, DELETEDITEMS_KEY,
+                    ImmutableMap.of(uuid, StorageClientUtils.toStore(path)));
+            eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId());
+        }
     }
 
     public long writeBody(String path, InputStream in) throws StorageClientException,

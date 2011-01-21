@@ -51,9 +51,9 @@ import java.util.Set;
 /**
  * An Authourizable Manager bound to a user, on creation the user ID specified
  * by the caller is trusted.
- * 
+ *
  * @author ieb
- * 
+ *
  */
 public class AuthorizableManagerImpl extends CachingManager implements AuthorizableManager {
 
@@ -217,8 +217,8 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             }
             LOGGER.debug(" Finished Updating other principals, made {} changes, Saving Changes to {} ", changes, id);
         }
-        
-        
+
+
         Map<String, Object> encodedProperties = StorageClientUtils.getFilteredAndEcodedMap(
                 authorizable.getPropertiesForUpdate(), FILTER_ON_UPDATE);
         encodedProperties.put(Authorizable.LASTMODIFIED,
@@ -227,7 +227,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
         putCached(keySpace, authorizableColumnFamily, id, encodedProperties);
         authorizable.reset();
-        
+
         storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, accessControlManager.getCurrentUserId(), true, type);
 
     }
@@ -235,6 +235,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
     public boolean createAuthorizable(String authorizableId, String authorizableName,
             String password, Map<String, Object> properties) throws AccessDeniedException,
             StorageClientException {
+        if (properties == null) {
+          properties = Maps.newHashMap();
+        }
         checkOpen();
         if (Authorizable.isAUser(properties)) {
             accessControlManager.check(Security.ZONE_ADMIN, Security.ADMIN_USERS,
@@ -273,6 +276,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
 
     public boolean createUser(String authorizableId, String authorizableName, String password,
             Map<String, Object> properties) throws AccessDeniedException, StorageClientException {
+        if (properties == null) {
+            properties = Maps.newHashMap();
+        }
         checkOpen();
         if (!Authorizable.isAUser(properties)) {
             Map<String, Object> m = Maps.newHashMap(properties);
@@ -284,6 +290,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
 
     public boolean createGroup(String authorizableId, String authorizableName,
             Map<String, Object> properties) throws AccessDeniedException, StorageClientException {
+        if (properties == null) {
+            properties = Maps.newHashMap();
+        }
         checkOpen();
         if (!Authorizable.isAGroup(properties)) {
             Map<String, Object> m = Maps.newHashMap(properties);
@@ -298,7 +307,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         accessControlManager.check(Security.ZONE_ADMIN, authorizableId, Permissions.CAN_DELETE);
         removeFromCache(keySpace, authorizableColumnFamily, authorizableId);
         client.remove(keySpace, authorizableColumnFamily, authorizableId);
-        storeListener.onDelete(Security.ZONE_AUTHORIZABLES, authorizableId, accessControlManager.getCurrentUserId());        
+        storeListener.onDelete(Security.ZONE_AUTHORIZABLES, authorizableId, accessControlManager.getCurrentUserId());
 
     }
 
@@ -332,15 +341,15 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                     StorageClientUtils.toStore(accessControlManager.getCurrentUserId()),
                     Authorizable.PASSWORD_FIELD,
                     StorageClientUtils.toStore(StorageClientUtils.secureHash(password))));
-            
-            storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, currentUserId, false, "op:change-password");        
+
+            storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, currentUserId, false, "op:change-password");
 
         } else {
             throw new AccessDeniedException(Security.ZONE_ADMIN, id,
                     "Not allowed to change the password, must be the user or an admin user",
                     currentUserId);
         }
-        
+
     }
 
     public Iterator<Authorizable> findAuthorizable(String propertyName, String value,
