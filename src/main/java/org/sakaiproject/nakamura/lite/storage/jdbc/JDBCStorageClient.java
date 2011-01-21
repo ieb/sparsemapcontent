@@ -660,22 +660,24 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         checkClosed();
         final InputStream in = streamedContentHelper.readBody(keySpace, columnFamily,
                 contentBlockId, streamId, content);
-        registerDisposable(new Disposable() {
-
-            private boolean open = true;
-
-            public void close() {
-                if (open && in != null) {
-                    try {
-                        in.close();
-                    } catch (IOException e) {
-                        LOGGER.warn(e.getMessage(), e);
+        if ( in != null ) {
+            registerDisposable(new Disposable() {
+    
+                private boolean open = true;
+    
+                public void close() {
+                    if (open && in != null) {
+                        try {
+                            in.close();
+                        } catch (IOException e) {
+                            LOGGER.warn(e.getMessage(), e);
+                        }
+                        open = false;
                     }
-                    open = false;
+    
                 }
-
-            }
-        });
+            });
+        }
         return in;
     }
 
