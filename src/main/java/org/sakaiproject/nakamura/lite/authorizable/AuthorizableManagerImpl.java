@@ -112,9 +112,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             return null;
         }
         if (Authorizable.isAUser(authorizableMap)) {
-            return new User(authorizableMap);
+            return new UserInternal(authorizableMap, false);
         } else if (Authorizable.isAGroup(authorizableMap)) {
-            return new Group(authorizableMap);
+            return new GroupInternal(authorizableMap, false);
         }
         return null;
     }
@@ -188,7 +188,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                                 .getFilteredAndEcodedMap(newMember.getPropertiesForUpdate(),
                                         FILTER_ON_UPDATE);
                         putCached(keySpace, authorizableColumnFamily, newMember.getId(),
-                                encodedProperties);
+                                encodedProperties, newMember.isNew());
                         LOGGER.debug("Updated {} with principal {} {} ",new Object[]{newMember.getId(), group.getId(), encodedProperties});
                         findAuthorizable(newMember.getId());
                         changes++;
@@ -206,7 +206,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                                 .getFilteredAndEcodedMap(retiredMember.getPropertiesForUpdate(),
                                         FILTER_ON_UPDATE);
                         putCached(keySpace, authorizableColumnFamily, retiredMember.getId(),
-                                encodedProperties);
+                                encodedProperties, retiredMember.isNew());
                         changes++;
                         LOGGER.debug("Update {} and removed principal {} ",retiredMember.getId(), group.getId());
                     } else {
@@ -225,7 +225,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 StorageClientUtils.toStore(System.currentTimeMillis()));
         encodedProperties.put(Authorizable.LASTMODIFIED_BY,
                 StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
-        putCached(keySpace, authorizableColumnFamily, id, encodedProperties);
+        putCached(keySpace, authorizableColumnFamily, id, encodedProperties, authorizable.isNew());
         authorizable.reset();
 
         storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, accessControlManager.getCurrentUserId(), true, type);
@@ -270,7 +270,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 StorageClientUtils.toStore(System.currentTimeMillis()));
         encodedProperties.put(Authorizable.CREATED_BY,
                 StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
-        putCached(keySpace, authorizableColumnFamily, authorizableId, encodedProperties);
+        putCached(keySpace, authorizableColumnFamily, authorizableId, encodedProperties, true);
         return true;
     }
 
@@ -340,7 +340,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                     Authorizable.LASTMODIFIED_BY,
                     StorageClientUtils.toStore(accessControlManager.getCurrentUserId()),
                     Authorizable.PASSWORD_FIELD,
-                    StorageClientUtils.toStore(StorageClientUtils.secureHash(password))));
+                    StorageClientUtils.toStore(StorageClientUtils.secureHash(password))), false);
 
             storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, currentUserId, false, "op:change-password");
 
@@ -385,10 +385,10 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                                             .toString(authMap.get(Authorizable.ID_FIELD)),
                                             Permissions.CAN_READ);
                             if (Authorizable.isAUser(authMap)) {
-                                authorizable = new User(authMap);
+                                authorizable = new UserInternal(authMap, false);
                                 return true;
                             } else if (Authorizable.isAGroup(authMap))
-                                authorizable = new Group(authMap);
+                                authorizable = new GroupInternal(authMap, false);
                             return true;
                         } catch (AccessDeniedException e) {
                             LOGGER.debug("Search result filtered ", e.getMessage());

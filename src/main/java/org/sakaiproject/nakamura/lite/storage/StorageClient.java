@@ -30,7 +30,7 @@ public interface StorageClient {
     Map<String, Object> get(String keySpace, String columnFamily, String key)
             throws StorageClientException;
 
-    void insert(String keySpace, String columnFamily, String key, Map<String, Object> values)
+    void insert(String keySpace, String columnFamily, String key, Map<String, Object> values, boolean probablyNew)
             throws StorageClientException;
 
     void remove(String keySpace, String columnFamily, String key) throws StorageClientException;

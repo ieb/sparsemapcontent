@@ -98,7 +98,7 @@ public class BlockSetContentHelper implements BlockContentHelper {
             client.insert(keySpace, contentColumnFamily, key, ImmutableMap.of(Content.UUID_FIELD,
                     StorageClientUtils.toStore(contentId), NUMBLOCKS_FIELD,
                     StorageClientUtils.toStore(bodyNum + 1), blockLengthKey,
-                    StorageClientUtils.toStore(bufferLength), bodyKey, saveBuffer));
+                    StorageClientUtils.toStore(bufferLength), bodyKey, saveBuffer), false);
             bodyNum++;
             if (bodyNum > maxChunksPerBlockSet) {
                 bodyNum = 0;

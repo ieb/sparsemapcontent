@@ -96,7 +96,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
             }
         }
         LOGGER.debug("Updating ACL {} {} ", key, modifications);
-        putCached(keySpace, aclColumnFamily, key, modifications);
+        putCached(keySpace, aclColumnFamily, key, modifications, (currentAcl == null || currentAcl.size() == 0));
         storeListener.onUpdate(objectType, objectPath,  getCurrentUserId(), false, "op:acl");
     }
 

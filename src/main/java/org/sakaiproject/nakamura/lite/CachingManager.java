@@ -76,10 +76,10 @@ public class CachingManager {
     }
 
     protected void putCached(String keySpace, String columnFamily, String key,
-            Map<String, Object> encodedProperties) throws StorageClientException {
+            Map<String, Object> encodedProperties, boolean probablyNew) throws StorageClientException {
         removeFromCache(keySpace, columnFamily, key);
         LOGGER.debug("Updating {} with {}  ",key, encodedProperties);
-        client.insert(keySpace, columnFamily, key, encodedProperties);
+        client.insert(keySpace, columnFamily, key, encodedProperties, probablyNew);
     }
 
 }

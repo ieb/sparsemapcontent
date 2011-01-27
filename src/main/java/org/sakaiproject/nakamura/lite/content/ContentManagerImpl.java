@@ -261,13 +261,13 @@ public class ContentManagerImpl implements ContentManager {
             if (!StorageClientUtils.isRoot(path)) {
                 client.insert(keySpace, contentColumnFamily,
                         StorageClientUtils.getParentObjectPath(path),
-                        ImmutableMap.of(StorageClientUtils.getObjectName(path), idStore));
+                        ImmutableMap.of(StorageClientUtils.getObjectName(path), idStore), true);
             }
             client.insert(keySpace, contentColumnFamily, path,
-                    ImmutableMap.of(STRUCTURE_UUID_FIELD, idStore));
+                    ImmutableMap.of(STRUCTURE_UUID_FIELD, idStore), true);
         }
         // save the content id.
-        client.insert(keySpace, contentColumnFamily, id, toSave);
+        client.insert(keySpace, contentColumnFamily, id, toSave, isnew);
         LOGGER.debug("Saved {} at {} as {} ", new Object[] { path, id, toSave });
         // reset state to unmodified to take further modifications.
         content.reset();
@@ -284,11 +284,11 @@ public class ContentManagerImpl implements ContentManager {
             Map<String, Object> m = new HashMap<String, Object>();
             m.put(StorageClientUtils.getObjectName(path), null);
             client.insert(keySpace, contentColumnFamily, StorageClientUtils.getParentObjectPath(path),
-                    m);
+                    m, false);
             client.insert(keySpace, contentColumnFamily, uuid,
-                    ImmutableMap.of(DELETED_FIELD, (Object) TRUE));
+                    ImmutableMap.of(DELETED_FIELD, (Object) TRUE), false);
             client.insert(keySpace, contentColumnFamily, DELETEDITEMS_KEY,
-                    ImmutableMap.of(uuid, StorageClientUtils.toStore(path)));
+                    ImmutableMap.of(uuid, StorageClientUtils.toStore(path)), false);
             eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId());
         }
     }
@@ -324,7 +324,7 @@ public class ContentManagerImpl implements ContentManager {
             metadata.put(StorageClientUtils.getAltField(BODY_CREATED_BY, streamId),
                     StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
         }
-        client.insert(keySpace, contentColumnFamily, contentId, metadata);
+        client.insert(keySpace, contentColumnFamily, contentId, metadata, isnew);
         long length = StorageClientUtils.toLong(metadata.get(LENGTH_FIELD));
         eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), false, "stream", streamId);        
         return length;
@@ -446,21 +446,21 @@ public class ContentManagerImpl implements ContentManager {
             }
 
             client.insert(keySpace, contentColumnFamily, parent,
-                    ImmutableMap.of(StorageClientUtils.getObjectName(to), idStore));
+                    ImmutableMap.of(StorageClientUtils.getObjectName(to), idStore), true);
         }
         // update the content data to reflect the new primary location.
         client.insert(keySpace, contentColumnFamily, StorageClientUtils.toString(idStore),
-                ImmutableMap.of(PATH_FIELD, StorageClientUtils.toStore(to)));
+                ImmutableMap.of(PATH_FIELD, StorageClientUtils.toStore(to)), false);
 
         // insert the new to Structure and remove the from
-        client.insert(keySpace, contentColumnFamily, to, fromStructure);
+        client.insert(keySpace, contentColumnFamily, to, fromStructure, true);
 
         // now remove the old location.
         if (!StorageClientUtils.isRoot(from)) {
             // if it was not a root, then modify the old parent location.
             String fromParent = StorageClientUtils.getParentObjectPath(from);
             client.insert(keySpace, contentColumnFamily, fromParent, ImmutableMap.of(
-                    StorageClientUtils.getObjectName(from), (Object) new RemoveProperty()));
+                    StorageClientUtils.getObjectName(from), (Object) new RemoveProperty()), false);
         }
         // remove the old from.
         client.remove(keySpace, contentColumnFamily, from);
@@ -508,10 +508,10 @@ public class ContentManagerImpl implements ContentManager {
         }
 
         client.insert(keySpace, contentColumnFamily, parent,
-                ImmutableMap.of(StorageClientUtils.getObjectName(from), idStore));
+                ImmutableMap.of(StorageClientUtils.getObjectName(from), idStore), false);
         // create the new object for the path, pointing to the Object
         client.insert(keySpace, contentColumnFamily, from, ImmutableMap.of(STRUCTURE_UUID_FIELD,
-                idStore, LINKED_PATH_FIELD, StorageClientUtils.toStore(to)));
+                idStore, LINKED_PATH_FIELD, StorageClientUtils.toStore(to)), true);
 
     }
 
@@ -559,16 +559,16 @@ public class ContentManagerImpl implements ContentManager {
         Object versionNumber = StorageClientUtils.toStore(System.currentTimeMillis());
         saveVersion.put(VERSION_NUMBER, versionNumber);
 
-        client.insert(keySpace, contentColumnFamily, saveVersionId, saveVersion);
-        client.insert(keySpace, contentColumnFamily, newVersionId, newVersion);
+        client.insert(keySpace, contentColumnFamily, saveVersionId, saveVersion, false);
+        client.insert(keySpace, contentColumnFamily, newVersionId, newVersion, true);
         client.insert(keySpace, contentColumnFamily, versionHistoryId,
-                ImmutableMap.of(saveVersionId, versionNumber));
+                ImmutableMap.of(saveVersionId, versionNumber), true);
         client.insert(keySpace, contentColumnFamily, path,
-                ImmutableMap.of(STRUCTURE_UUID_FIELD, newVersionIdS));
+                ImmutableMap.of(STRUCTURE_UUID_FIELD, newVersionIdS), true);
         if (!path.equals("/")) {
             client.insert(keySpace, contentColumnFamily,
                     StorageClientUtils.getParentObjectPath(path),
-                    ImmutableMap.of(StorageClientUtils.getObjectName(path), newVersionIdS));
+                    ImmutableMap.of(StorageClientUtils.getObjectName(path), newVersionIdS), true);
         }
         LOGGER.debug("Saved Version History  {} {} ", versionHistoryId,
                 client.get(keySpace, contentColumnFamily, versionHistoryId));

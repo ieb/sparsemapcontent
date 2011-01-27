@@ -168,7 +168,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 StorageClientUtils.URL_SAFE_ENCODING);
     }
 
-    public void insert(String keySpace, String columnFamily, String key, Map<String, Object> values)
+    public void insert(String keySpace, String columnFamily, String key, Map<String, Object> values, boolean probablyNew)
             throws StorageClientException {
         checkClosed();
         Map<String, PreparedStatement> statementCache = Maps.newHashMap();
@@ -194,28 +194,57 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     m.put(k, o);
                 }
             }
-            PreparedStatement updateBlockRow = getStatement(keySpace, columnFamily,
-                    SQL_BLOCK_UPDATE_ROW, rid, statementCache);
-            updateBlockRow.clearWarnings();
-            updateBlockRow.clearParameters();
-            updateBlockRow.setString(2, rid);
-            updateBlockRow.setBinaryStream(1, StorageClientUtils.storeMapToStream(rid, m));
-            if (updateBlockRow.executeUpdate() == 0) {
+            if ( probablyNew ) {
                 PreparedStatement insertBlockRow = getStatement(keySpace, columnFamily,
                         SQL_BLOCK_INSERT_ROW, rid, statementCache);
                 insertBlockRow.clearWarnings();
                 insertBlockRow.clearParameters();
                 insertBlockRow.setString(1, rid);
                 insertBlockRow.setBinaryStream(2, StorageClientUtils.storeMapToStream(rid, m));
-                if (insertBlockRow.executeUpdate() == 0) {
-                    throw new StorageClientException("Failed to save " + rid);
-                } else {
-                    LOGGER.debug("Inserted {} ", rid);
+                int rowsInserted = 0;
+                try {
+                    rowsInserted = insertBlockRow.executeUpdate();
+                } catch ( SQLException e ) {
+                    LOGGER.debug(e.getMessage(),e);
                 }
+                if ( rowsInserted == 0 ) {
+                    PreparedStatement updateBlockRow = getStatement(keySpace, columnFamily,
+                            SQL_BLOCK_UPDATE_ROW, rid, statementCache);
+                    updateBlockRow.clearWarnings();
+                    updateBlockRow.clearParameters();
+                    updateBlockRow.setString(2, rid);
+                    updateBlockRow.setBinaryStream(1, StorageClientUtils.storeMapToStream(rid, m));
+                    if( updateBlockRow.executeUpdate() == 0) {
+                        throw new StorageClientException("Failed to save " + rid);
+                    } else {
+                        LOGGER.debug("Updated {} ", rid);
+                    }
+                } else {
+                    LOGGER.debug("Inserted {} ", rid);                    
+                }                
             } else {
-                LOGGER.debug("Updated {} ", rid);
+                PreparedStatement updateBlockRow = getStatement(keySpace, columnFamily,
+                        SQL_BLOCK_UPDATE_ROW, rid, statementCache);
+                updateBlockRow.clearWarnings();
+                updateBlockRow.clearParameters();
+                updateBlockRow.setString(2, rid);
+                updateBlockRow.setBinaryStream(1, StorageClientUtils.storeMapToStream(rid, m));
+                if (updateBlockRow.executeUpdate() == 0) {
+                    PreparedStatement insertBlockRow = getStatement(keySpace, columnFamily,
+                            SQL_BLOCK_INSERT_ROW, rid, statementCache);
+                    insertBlockRow.clearWarnings();
+                    insertBlockRow.clearParameters();
+                    insertBlockRow.setString(1, rid);
+                    insertBlockRow.setBinaryStream(2, StorageClientUtils.storeMapToStream(rid, m));
+                    if (insertBlockRow.executeUpdate() == 0) {
+                        throw new StorageClientException("Failed to save " + rid);
+                    } else {
+                        LOGGER.debug("Inserted {} ", rid);
+                    }
+                } else {
+                    LOGGER.debug("Updated {} ", rid);
+                }
             }
-
             if ("1".equals(getSql(USE_BATCH_INSERTS))) {
                 Connection connection = jcbcStorageClientConnection.getConnection();
                 boolean autoCommit = connection.getAutoCommit();
