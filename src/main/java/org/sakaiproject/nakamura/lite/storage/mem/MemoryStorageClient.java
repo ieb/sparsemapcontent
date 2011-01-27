@@ -88,7 +88,7 @@ public class MemoryStorageClient implements StorageClient {
         return keySpace + ":" + columnFamily + ":" + key;
     }
 
-    public void insert(String keySpace, String columnFamily, String key, Map<String, Object> values)
+    public void insert(String keySpace, String columnFamily, String key, Map<String, Object> values, boolean probablyNew)
             throws StorageClientException {
         Map<String, Object> row = get(keySpace, columnFamily, key);
 

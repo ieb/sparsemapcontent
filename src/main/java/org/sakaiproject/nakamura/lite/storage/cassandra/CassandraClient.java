@@ -147,7 +147,7 @@ public class CassandraClient extends Client implements StorageClient {
         }
     }
 
-    public void insert(String keySpace, String columnFamily, String key, Map<String, Object> values)
+    public void insert(String keySpace, String columnFamily, String key, Map<String, Object> values, boolean probablyNew)
             throws StorageClientException {
         try {
             Map<String, Map<String, List<Mutation>>> mutation = new HashMap<String, Map<String, List<Mutation>>>();

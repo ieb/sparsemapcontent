@@ -64,7 +64,7 @@ public class AuthorizableActivator {
             LOGGER.debug("Creating System User user as {} with {} ",
                     Authorizable.ADMINISTRATORS_GROUP, group);
             client.insert(keySpace, authorizableColumnFamily, Authorizable.ADMINISTRATORS_GROUP,
-                    group);
+                    group, true);
         } else {
             LOGGER.debug("System User user exists as {} with {} ",
                     Authorizable.ADMINISTRATORS_GROUP, authorizableMap);
@@ -82,7 +82,7 @@ public class AuthorizableActivator {
                     StorageClientUtils.toStore("--no-password--"),
                     Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.USER_VALUE);
             LOGGER.debug("Creating System User user as {} with {} ", User.SYSTEM_USER, user);
-            client.insert(keySpace, authorizableColumnFamily, User.SYSTEM_USER, user);
+            client.insert(keySpace, authorizableColumnFamily, User.SYSTEM_USER, user, true);
         } else {
             LOGGER.debug("System User user exists as {} with {} ", User.SYSTEM_USER, authorizableMap);
 
@@ -99,7 +99,7 @@ public class AuthorizableActivator {
                     StorageClientUtils.toStore(StorageClientUtils.secureHash("admin")),
                     Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.USER_VALUE);
             LOGGER.debug("Creating Admin User user as {} with {} ", User.ADMIN_USER, user);
-            client.insert(keySpace, authorizableColumnFamily, User.ADMIN_USER, user);
+            client.insert(keySpace, authorizableColumnFamily, User.ADMIN_USER, user, true);
         } else {
             LOGGER.debug("Admin User user exists as {} with {} ", User.ADMIN_USER, authorizableMap);
         }
@@ -115,7 +115,7 @@ public class AuthorizableActivator {
                     StorageClientUtils.toStore(Authorizable.NO_PASSWORD),
                     Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.USER_VALUE);
             LOGGER.debug("Creating Anon user as {} with {} ", User.ANON_USER, user);
-            client.insert(keySpace, authorizableColumnFamily, User.ANON_USER, user);
+            client.insert(keySpace, authorizableColumnFamily, User.ANON_USER, user, true);
         } else {
             LOGGER.debug("Anon User user exists as {} with {} ", User.ANON_USER, authorizableMap);
         }

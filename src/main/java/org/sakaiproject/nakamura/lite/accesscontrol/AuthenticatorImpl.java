@@ -22,6 +22,7 @@ import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Authenticator;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
+import org.sakaiproject.nakamura.lite.authorizable.UserInternal;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,7 @@ public class AuthenticatorImpl implements Authenticator {
             String storedPassword = StorageClientUtils.toString(userAuthMap
                     .get(User.PASSWORD_FIELD));
             if (passwordHash.equals(storedPassword)) {
-                return new User(userAuthMap);
+                return new UserInternal(userAuthMap, false);
             }
             LOGGER.debug("Failed to authentication, passwords did not match");
         } catch (StorageClientException e) {
@@ -72,7 +73,7 @@ public class AuthenticatorImpl implements Authenticator {
                 LOGGER.debug("User was not found {}", userid);
                 return null;
             }
-            return new User(userAuthMap);
+            return new UserInternal(userAuthMap, false);
         } catch (StorageClientException e) {
             LOGGER.debug("Failed To system authenticate user " + e.getMessage(), e);
         }

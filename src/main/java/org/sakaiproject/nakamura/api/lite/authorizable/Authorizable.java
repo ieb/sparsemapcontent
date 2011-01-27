@@ -80,6 +80,8 @@ public class Authorizable {
     protected Set<String> propertiesModified;
     protected boolean principalsModified;
 
+    private boolean isObjectNew = true;
+
     public Authorizable(Map<String, Object> autorizableMap) {
         this.authorizableMap = autorizableMap;
         Object principalsB = authorizableMap.get(PRINCIPALS_FIELD);
@@ -225,6 +227,14 @@ public class Authorizable {
             }
 
         };
+    }
+    
+    protected void setObjectNew(boolean isObjectNew) {
+        this.isObjectNew = isObjectNew;
+    }
+
+    public boolean isNew() {
+        return isObjectNew;
     }
 
 }
