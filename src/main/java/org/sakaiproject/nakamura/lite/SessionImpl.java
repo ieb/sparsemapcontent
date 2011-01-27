@@ -58,7 +58,7 @@ public class SessionImpl implements Session {
         authorizableManager = new AuthorizableManagerImpl(currentUser, client, configuration,
                 accessControlManager, sharedCache, storeListener);
 
-        contentManager = new ContentManagerImpl(client, accessControlManager, configuration, storeListener);
+        contentManager = new ContentManagerImpl(client, accessControlManager, configuration, sharedCache, storeListener);
 
         authenticator = new AuthenticatorImpl(client, configuration);
         this.storeListener = storeListener;

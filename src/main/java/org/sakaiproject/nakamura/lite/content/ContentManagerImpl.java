@@ -59,6 +59,8 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
+import org.sakaiproject.nakamura.lite.CachingManager;
+import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
@@ -134,7 +136,7 @@ import java.util.Set;
  * @author ieb
  * 
  */
-public class ContentManagerImpl implements ContentManager {
+public class ContentManagerImpl extends CachingManager implements ContentManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentManagerImpl.class);
 
@@ -168,7 +170,8 @@ public class ContentManagerImpl implements ContentManager {
     private StoreListener eventListener;
 
     public ContentManagerImpl(StorageClient client, AccessControlManager accessControlManager,
-            Configuration config, StoreListener eventListener) {
+            Configuration config,  Map<String, CacheHolder> sharedCache, StoreListener eventListener) {
+        super(client, sharedCache);
         this.client = client;
         this.accessControlManager = accessControlManager;
         keySpace = config.getKeySpace();
@@ -181,7 +184,7 @@ public class ContentManagerImpl implements ContentManager {
     public boolean exists(String path) {
         try {
             accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
-            Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
+            Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
             return (structure != null && structure.size() > 0);
         } catch (AccessDeniedException e) {
             LOGGER.debug(e.getMessage(), e);
@@ -194,10 +197,10 @@ public class ContentManagerImpl implements ContentManager {
     public Content get(String path) throws StorageClientException, AccessDeniedException {
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
-        Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
+        Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
         if (structure != null && structure.size() > 0) {
             String contentId = StorageClientUtils.toString(structure.get(STRUCTURE_UUID_FIELD));
-            Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
+            Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
             if (content != null && content.size() > 0) {
                 Content contentObject = new Content(path, content);
                 ((InternalContent) contentObject).internalize(structure, this, false);
@@ -248,7 +251,7 @@ public class ContentManagerImpl implements ContentManager {
             return;
         }
 
-        Map<String, Object> checkContent = client.get(keySpace, contentColumnFamily, id);
+        Map<String, Object> checkContent = getCached(keySpace, contentColumnFamily, id);
         if (TRUE.equals(StorageClientUtils.toString(checkContent.get(READONLY_FIELD)))) {
             throw new AccessDeniedException(Security.ZONE_CONTENT, path,
                     "update on read only Content Item (possibly a previous version of the item)",
@@ -259,15 +262,15 @@ public class ContentManagerImpl implements ContentManager {
             isnew = true;
             // only when new do we update the structure.
             if (!StorageClientUtils.isRoot(path)) {
-                client.insert(keySpace, contentColumnFamily,
+                putCached(keySpace, contentColumnFamily,
                         StorageClientUtils.getParentObjectPath(path),
                         ImmutableMap.of(StorageClientUtils.getObjectName(path), idStore), true);
             }
-            client.insert(keySpace, contentColumnFamily, path,
+            putCached(keySpace, contentColumnFamily, path,
                     ImmutableMap.of(STRUCTURE_UUID_FIELD, idStore), true);
         }
         // save the content id.
-        client.insert(keySpace, contentColumnFamily, id, toSave, isnew);
+        putCached(keySpace, contentColumnFamily, id, toSave, isnew);
         LOGGER.debug("Saved {} at {} as {} ", new Object[] { path, id, toSave });
         // reset state to unmodified to take further modifications.
         content.reset();
@@ -277,17 +280,18 @@ public class ContentManagerImpl implements ContentManager {
     public void delete(String path) throws AccessDeniedException, StorageClientException {
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_DELETE);
-        Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
+        Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
         if ( structure != null && structure.size() > 0 ) {
             String uuid = StorageClientUtils.toString(structure.get(STRUCTURE_UUID_FIELD));
+            removeFromCache(keySpace, contentColumnFamily, path);
             client.remove(keySpace, contentColumnFamily, path);
             Map<String, Object> m = new HashMap<String, Object>();
             m.put(StorageClientUtils.getObjectName(path), null);
-            client.insert(keySpace, contentColumnFamily, StorageClientUtils.getParentObjectPath(path),
+            putCached(keySpace, contentColumnFamily, StorageClientUtils.getParentObjectPath(path),
                     m, false);
-            client.insert(keySpace, contentColumnFamily, uuid,
+            putCached(keySpace, contentColumnFamily, uuid,
                     ImmutableMap.of(DELETED_FIELD, (Object) TRUE), false);
-            client.insert(keySpace, contentColumnFamily, DELETEDITEMS_KEY,
+            putCached(keySpace, contentColumnFamily, DELETEDITEMS_KEY,
                     ImmutableMap.of(uuid, StorageClientUtils.toStore(path)), false);
             eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId());
         }
@@ -302,9 +306,9 @@ public class ContentManagerImpl implements ContentManager {
             throws StorageClientException, AccessDeniedException, IOException {
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_WRITE);
-        Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
+        Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
         String contentId = StorageClientUtils.toString(structure.get(STRUCTURE_UUID_FIELD));
-        Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
+        Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
         boolean isnew = true;
         String blockIdField = StorageClientUtils.getAltField(BLOCKID_FIELD, streamId);
         if (content.containsKey(blockIdField)) {
@@ -324,7 +328,7 @@ public class ContentManagerImpl implements ContentManager {
             metadata.put(StorageClientUtils.getAltField(BODY_CREATED_BY, streamId),
                     StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
         }
-        client.insert(keySpace, contentColumnFamily, contentId, metadata, isnew);
+        putCached(keySpace, contentColumnFamily, contentId, metadata, isnew);
         long length = StorageClientUtils.toLong(metadata.get(LENGTH_FIELD));
         eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), false, "stream", streamId);        
         return length;
@@ -340,7 +344,7 @@ public class ContentManagerImpl implements ContentManager {
             AccessDeniedException, IOException {
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
-        Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
+        Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
         LOGGER.debug("Structure Loaded {} {} ", path, structure);
         String contentId = StorageClientUtils.toString(structure.get(STRUCTURE_UUID_FIELD));
         return internalGetInputStream(contentId, streamId);
@@ -348,7 +352,7 @@ public class ContentManagerImpl implements ContentManager {
 
     private InputStream internalGetInputStream(String contentId, String streamId)
             throws StorageClientException, AccessDeniedException, IOException {
-        Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
+        Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
         String contentBlockId = StorageClientUtils.toString(content.get(StorageClientUtils
                 .getAltField(BLOCKID_FIELD, streamId)));
         return client.streamBodyOut(keySpace, contentColumnFamily, contentId, contentBlockId, streamId,
@@ -420,12 +424,12 @@ public class ContentManagerImpl implements ContentManager {
         accessControlManager.check(Security.ZONE_CONTENT, from, Permissions.CAN_ANYTHING);
         accessControlManager.check(Security.ZONE_CONTENT, to,
                 Permissions.CAN_READ.combine(Permissions.CAN_WRITE));
-        Map<String, Object> fromStructure = client.get(keySpace, contentColumnFamily, from);
+        Map<String, Object> fromStructure = getCached(keySpace, contentColumnFamily, from);
         if (fromStructure == null || fromStructure.size() == 0) {
             throw new StorageClientException("The source content to move from " + from
                     + " does not exist, move operation failed");
         }
-        Map<String, Object> toStructure = client.get(keySpace, contentColumnFamily, to);
+        Map<String, Object> toStructure = getCached(keySpace, contentColumnFamily, to);
         if (toStructure != null && toStructure.size() > 0) {
             throw new StorageClientException("The destination content to move to " + to
                     + "  exists, move operation failed");
@@ -437,7 +441,7 @@ public class ContentManagerImpl implements ContentManager {
             // if not a root, modify the new parent location, creating the
             // structured if necessary
             String parent = StorageClientUtils.getParentObjectPath(to);
-            Map<String, Object> parentToStructure = client.get(keySpace, contentColumnFamily,
+            Map<String, Object> parentToStructure = getCached(keySpace, contentColumnFamily,
                     parent);
             if (parentToStructure == null || parentToStructure.size() == 0) {
                 // create a new parent
@@ -445,24 +449,25 @@ public class ContentManagerImpl implements ContentManager {
                 update(content);
             }
 
-            client.insert(keySpace, contentColumnFamily, parent,
+            putCached(keySpace, contentColumnFamily, parent,
                     ImmutableMap.of(StorageClientUtils.getObjectName(to), idStore), true);
         }
         // update the content data to reflect the new primary location.
-        client.insert(keySpace, contentColumnFamily, StorageClientUtils.toString(idStore),
+        putCached(keySpace, contentColumnFamily, StorageClientUtils.toString(idStore),
                 ImmutableMap.of(PATH_FIELD, StorageClientUtils.toStore(to)), false);
 
         // insert the new to Structure and remove the from
-        client.insert(keySpace, contentColumnFamily, to, fromStructure, true);
+        putCached(keySpace, contentColumnFamily, to, fromStructure, true);
 
         // now remove the old location.
         if (!StorageClientUtils.isRoot(from)) {
             // if it was not a root, then modify the old parent location.
             String fromParent = StorageClientUtils.getParentObjectPath(from);
-            client.insert(keySpace, contentColumnFamily, fromParent, ImmutableMap.of(
+            putCached(keySpace, contentColumnFamily, fromParent, ImmutableMap.of(
                     StorageClientUtils.getObjectName(from), (Object) new RemoveProperty()), false);
         }
         // remove the old from.
+        removeFromCache(keySpace, contentColumnFamily, from);
         client.remove(keySpace, contentColumnFamily, from);
         eventListener.onDelete(Security.ZONE_CONTENT, from, accessControlManager.getCurrentUserId(), "op:move");        
         eventListener.onUpdate(Security.ZONE_CONTENT, to, accessControlManager.getCurrentUserId(), true, "op:move");        
@@ -478,12 +483,12 @@ public class ContentManagerImpl implements ContentManager {
         accessControlManager.check(Security.ZONE_CONTENT, to, Permissions.CAN_READ);
         accessControlManager.check(Security.ZONE_CONTENT, from,
                 Permissions.CAN_READ.combine(Permissions.CAN_WRITE));
-        Map<String, Object> toStructure = client.get(keySpace, contentColumnFamily, to);
+        Map<String, Object> toStructure = getCached(keySpace, contentColumnFamily, to);
         if (toStructure == null || toStructure.size() == 0) {
             throw new StorageClientException("The source content to link from " + to
                     + " does not exist, link operation failed");
         }
-        Map<String, Object> fromStructure = client.get(keySpace, contentColumnFamily, from);
+        Map<String, Object> fromStructure = getCached(keySpace, contentColumnFamily, from);
         if (fromStructure != null && fromStructure.size() > 0) {
             throw new StorageClientException("The destination content to link to " + from
                     + "  exists, link operation failed");
@@ -500,17 +505,17 @@ public class ContentManagerImpl implements ContentManager {
         // if not a root, modify the new parent location, creating the
         // structured if necessary
         String parent = StorageClientUtils.getParentObjectPath(from);
-        Map<String, Object> parentToStructure = client.get(keySpace, contentColumnFamily, parent);
+        Map<String, Object> parentToStructure = getCached(keySpace, contentColumnFamily, parent);
         if (parentToStructure == null || parentToStructure.size() == 0) {
             // create a new parent
             Content content = new Content(parent, null);
             update(content);
         }
 
-        client.insert(keySpace, contentColumnFamily, parent,
+        putCached(keySpace, contentColumnFamily, parent,
                 ImmutableMap.of(StorageClientUtils.getObjectName(from), idStore), false);
         // create the new object for the path, pointing to the Object
-        client.insert(keySpace, contentColumnFamily, from, ImmutableMap.of(STRUCTURE_UUID_FIELD,
+        putCached(keySpace, contentColumnFamily, from, ImmutableMap.of(STRUCTURE_UUID_FIELD,
                 idStore, LINKED_PATH_FIELD, StorageClientUtils.toStore(to)), true);
 
     }
@@ -518,9 +523,9 @@ public class ContentManagerImpl implements ContentManager {
     public String saveVersion(String path) throws StorageClientException, AccessDeniedException {
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_WRITE);
-        Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
+        Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
         String contentId = StorageClientUtils.toString(structure.get(STRUCTURE_UUID_FIELD));
-        Map<String, Object> saveVersion = client.get(keySpace, contentColumnFamily, contentId);
+        Map<String, Object> saveVersion = getCached(keySpace, contentColumnFamily, contentId);
 
         // versionHistoryId is the UUID of the version history for this node.
 
@@ -559,26 +564,28 @@ public class ContentManagerImpl implements ContentManager {
         Object versionNumber = StorageClientUtils.toStore(System.currentTimeMillis());
         saveVersion.put(VERSION_NUMBER, versionNumber);
 
-        client.insert(keySpace, contentColumnFamily, saveVersionId, saveVersion, false);
-        client.insert(keySpace, contentColumnFamily, newVersionId, newVersion, true);
-        client.insert(keySpace, contentColumnFamily, versionHistoryId,
+        putCached(keySpace, contentColumnFamily, saveVersionId, saveVersion, false);
+        putCached(keySpace, contentColumnFamily, newVersionId, newVersion, true);
+        putCached(keySpace, contentColumnFamily, versionHistoryId,
                 ImmutableMap.of(saveVersionId, versionNumber), true);
-        client.insert(keySpace, contentColumnFamily, path,
+        putCached(keySpace, contentColumnFamily, path,
                 ImmutableMap.of(STRUCTURE_UUID_FIELD, newVersionIdS), true);
         if (!path.equals("/")) {
-            client.insert(keySpace, contentColumnFamily,
+            putCached(keySpace, contentColumnFamily,
                     StorageClientUtils.getParentObjectPath(path),
                     ImmutableMap.of(StorageClientUtils.getObjectName(path), newVersionIdS), true);
         }
-        LOGGER.debug("Saved Version History  {} {} ", versionHistoryId,
-                client.get(keySpace, contentColumnFamily, versionHistoryId));
-        LOGGER.debug("Saved Version [{}] {}", saveVersionId, saveVersion);
-        LOGGER.debug("New Version [{}] {}", newVersionId, newVersion);
-        LOGGER.debug("Structure {} ", client.get(keySpace, contentColumnFamily, path));
-        LOGGER.debug(
-                "Parent Structure {} ",
-                client.get(keySpace, contentColumnFamily,
-                        StorageClientUtils.getParentObjectPath(path)));
+        if ( LOGGER.isDebugEnabled() ) {
+            LOGGER.debug("Saved Version History  {} {} ", versionHistoryId,
+                    getCached(keySpace, contentColumnFamily, versionHistoryId));
+            LOGGER.debug("Saved Version [{}] {}", saveVersionId, saveVersion);
+            LOGGER.debug("New Version [{}] {}", newVersionId, newVersion);
+            LOGGER.debug("Structure {} ", getCached(keySpace, contentColumnFamily, path));
+            LOGGER.debug(
+                    "Parent Structure {} ",
+                    getCached(keySpace, contentColumnFamily,
+                            StorageClientUtils.getParentObjectPath(path)));
+        }
         return saveVersionId;
     }
 
@@ -586,15 +593,15 @@ public class ContentManagerImpl implements ContentManager {
             StorageClientException {
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
-        Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
+        Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
         if (structure != null && structure.size() > 0) {
             String contentId = StorageClientUtils.toString(structure.get(STRUCTURE_UUID_FIELD));
-            Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
+            Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
             if (content != null && content.size() > 0) {
                 String versionHistoryId = StorageClientUtils.toString(content
                         .get(VERSION_HISTORY_ID_FIELD));
                 if (versionHistoryId != null) {
-                    final Map<String, Object> versionHistory = client.get(keySpace,
+                    final Map<String, Object> versionHistory = getCached(keySpace,
                             contentColumnFamily, versionHistoryId);
                     LOGGER.debug("Loaded Version History  {} {} ", versionHistoryId, versionHistory);
                     return Lists.sortedCopy(versionHistory.keySet(), new Comparator<String>() {
@@ -628,15 +635,15 @@ public class ContentManagerImpl implements ContentManager {
             throws AccessDeniedException, StorageClientException, IOException {
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
         checkOpen();
-        Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
+        Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
         if (structure != null && structure.size() > 0) {
             String contentId = StorageClientUtils.toString(structure.get(STRUCTURE_UUID_FIELD));
-            Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
+            Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
             if (content != null && content.size() > 0) {
                 String versionHistoryId = StorageClientUtils.toString(content
                         .get(VERSION_HISTORY_ID_FIELD));
                 if (versionHistoryId != null) {
-                    Map<String, Object> versionHistory = client.get(keySpace, contentColumnFamily,
+                    Map<String, Object> versionHistory = getCached(keySpace, contentColumnFamily,
                             versionHistoryId);
                     if (versionHistory != null && versionHistory.containsKey(versionId)) {
                         return internalGetInputStream(versionId, streamId);
@@ -651,18 +658,18 @@ public class ContentManagerImpl implements ContentManager {
             AccessDeniedException {
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
-        Map<String, Object> structure = client.get(keySpace, contentColumnFamily, path);
+        Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
         if (structure != null && structure.size() > 0) {
             String contentId = StorageClientUtils.toString(structure.get(STRUCTURE_UUID_FIELD));
-            Map<String, Object> content = client.get(keySpace, contentColumnFamily, contentId);
+            Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
             if (content != null && content.size() > 0) {
                 String versionHistoryId = StorageClientUtils.toString(content
                         .get(VERSION_HISTORY_ID_FIELD));
                 if (versionHistoryId != null) {
-                    Map<String, Object> versionHistory = client.get(keySpace, contentColumnFamily,
+                    Map<String, Object> versionHistory = getCached(keySpace, contentColumnFamily,
                             versionHistoryId);
                     if (versionHistory != null && versionHistory.containsKey(versionId)) {
-                        Map<String, Object> versionContent = client.get(keySpace,
+                        Map<String, Object> versionContent = getCached(keySpace,
                                 contentColumnFamily, versionId);
                         if (versionContent != null && versionContent.size() > 0) {
                             Content contentObject = new Content(path, versionContent);

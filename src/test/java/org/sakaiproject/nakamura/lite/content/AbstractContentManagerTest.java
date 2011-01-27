@@ -93,7 +93,7 @@ public abstract class AbstractContentManagerTest {
                 currentUser, configuration, null,  new LoggingStorageListener());
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration,  new LoggingStorageListener());
+                configuration, null,  new LoggingStorageListener());
         contentManager.update(new Content("/", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/test", ImmutableMap.of("prop1", (Object) "value2")));
         contentManager
@@ -129,7 +129,7 @@ public abstract class AbstractContentManagerTest {
                 currentUser, configuration, sharedCache,  new LoggingStorageListener());
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration,  new LoggingStorageListener());
+                configuration,  sharedCache, new LoggingStorageListener());
         contentManager.update(new Content("/", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/test", ImmutableMap.of("prop1", (Object) "value2")));
         contentManager
@@ -169,7 +169,7 @@ public abstract class AbstractContentManagerTest {
                 currentUser, configuration, sharedCache,  new LoggingStorageListener());
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration,  new LoggingStorageListener());
+                configuration,  sharedCache, new LoggingStorageListener());
         contentManager.update(new Content("/", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/test", ImmutableMap.of("prop1", (Object) "value2")));
         contentManager
@@ -216,7 +216,7 @@ public abstract class AbstractContentManagerTest {
                 currentUser, configuration, sharedCache,  new LoggingStorageListener());
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration,  new LoggingStorageListener());
+                configuration,  sharedCache, new LoggingStorageListener());
         contentManager.update(new Content("/", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/test", ImmutableMap.of("prop1", (Object) "value2")));
         contentManager
@@ -287,7 +287,7 @@ public abstract class AbstractContentManagerTest {
                 currentUser, configuration, sharedCache,  new LoggingStorageListener());
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration,  new LoggingStorageListener());
+                configuration,  sharedCache, new LoggingStorageListener());
         contentManager.update(new Content("/", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/test", ImmutableMap.of("prop1", (Object) "value2")));
         contentManager
