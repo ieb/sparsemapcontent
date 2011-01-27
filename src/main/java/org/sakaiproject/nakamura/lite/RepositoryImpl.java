@@ -31,7 +31,6 @@ import org.sakaiproject.nakamura.api.lite.StoreListener;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
-import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
@@ -51,7 +50,6 @@ public class RepositoryImpl implements Repository {
     @Reference 
     protected StoreListener storeListener;
 
-    private Map<String, CacheHolder> sharedCache;
 
     public RepositoryImpl() {
     }
@@ -69,7 +67,6 @@ public class RepositoryImpl implements Repository {
             client.close();
             clientPool.getClient();
         }
-        sharedCache = clientPool.getSharedCache();
     }
 
     @Deactivate
@@ -106,7 +103,7 @@ public class RepositoryImpl implements Repository {
             if (currentUser == null) {
                 throw new StorageClientException("User " + username + " cant login with password");
             }
-            return new SessionImpl(this, currentUser, client, configuration, sharedCache, storeListener);
+            return new SessionImpl(this, currentUser, client, configuration, clientPool.getStorageCacheManager(), storeListener);
         } catch (ClientPoolException e) {
             clientPool.getClient();
             throw e;
@@ -133,7 +130,7 @@ public class RepositoryImpl implements Repository {
                 throw new StorageClientException("User " + username
                         + " does not exist, cant login administratively as this user");
             }
-            return new SessionImpl(this, currentUser, client, configuration, sharedCache, storeListener);
+            return new SessionImpl(this, currentUser, client, configuration,  clientPool.getStorageCacheManager(), storeListener);
         } catch (ClientPoolException e) {
             clientPool.getClient();
             throw e;

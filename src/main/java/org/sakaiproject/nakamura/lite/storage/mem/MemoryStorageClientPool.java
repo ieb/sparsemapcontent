@@ -23,7 +23,8 @@ import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Service;
-import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
+import org.sakaiproject.nakamura.api.lite.CacheHolder;
+import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
@@ -78,8 +79,23 @@ public class MemoryStorageClientPool extends AbstractClientConnectionPool {
 
     private Map<String, Map<String, Object>> store;
     private Map<String, Object> properties;
+    private StorageCacheManager defaultStorageManagerCache;
 
     public MemoryStorageClientPool() {
+        defaultStorageManagerCache = new StorageCacheManager() {
+            
+            public Map<String, CacheHolder> getContentCache() {
+                return null;
+            }
+            
+            public Map<String, CacheHolder> getAuthorizableCache() {
+                return null;
+            }
+            
+            public Map<String, CacheHolder> getAccessControlCache() {
+                return null;
+            }
+        };
     }
 
     @Activate
@@ -100,9 +116,10 @@ public class MemoryStorageClientPool extends AbstractClientConnectionPool {
         return new ClientConnectionPoolFactory(this, store, properties);
     }
 
-    public Map<String, CacheHolder> getSharedCache() {
-        // no point in having a L2 cache for memory.
-        return null;
+    
+    public StorageCacheManager getStorageCacheManager() {
+        return defaultStorageManagerCache;
     }
+
 
 }

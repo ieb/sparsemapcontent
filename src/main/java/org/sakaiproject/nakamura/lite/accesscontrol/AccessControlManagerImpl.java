@@ -20,6 +20,7 @@ package org.sakaiproject.nakamura.lite.accesscontrol;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;

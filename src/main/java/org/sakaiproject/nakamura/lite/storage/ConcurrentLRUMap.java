@@ -106,6 +106,7 @@ public class ConcurrentLRUMap<K, V> implements Map<K, V> {
 
     public V put(K key, V value) {
         if (delegate.size() > maxSize) {
+            // this is horribly slow for large sets
             List<Holder<V>> l = new ArrayList<Holder<V>>(delegate.values());
             Collections.sort(l, new Comparator<Holder<V>>() {
 
@@ -114,7 +115,7 @@ public class ConcurrentLRUMap<K, V> implements Map<K, V> {
                 }
             });
             int i = 0;
-            while (delegate.size() > maxSize && i < l.size()) {
+            while (delegate.size() > ((75*maxSize)/100) && i < l.size()) {
                 delegate.remove(l.get(i++).key);
             }
         }
