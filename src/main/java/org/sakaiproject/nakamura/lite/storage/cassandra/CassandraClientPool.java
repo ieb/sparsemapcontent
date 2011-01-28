@@ -24,14 +24,18 @@ import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.ReferenceCardinality;
+import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
+import org.sakaiproject.nakamura.api.lite.CacheHolder;
+import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
-import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
@@ -47,6 +51,10 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
     private static final Logger LOGGER = LoggerFactory.getLogger(CassandraClientPool.class);
     @Property(value = { "localhost:9610" })
     private static final String CONNECTION_POOL = "conection-pool";
+    
+    @Reference(cardinality=ReferenceCardinality.OPTIONAL_UNARY, policy=ReferencePolicy.DYNAMIC)
+    private StorageCacheManager storageManagerCache;
+
 
     public static class ClientConnectionPoolFactory extends BasePoolableObjectFactory {
 
@@ -156,6 +164,7 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
     private String[] connections;
     private Map<String, Object> properties;
     private Map<String, CacheHolder> sharedCache;
+    private StorageCacheManager defaultStorageManagerCache;
 
     public CassandraClientPool() {
     }
@@ -168,6 +177,20 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
         super.activate(properties);
         // this should come from the memory service ultimately.
         sharedCache = new ConcurrentLRUMap<String, CacheHolder>(10000);
+        defaultStorageManagerCache = new StorageCacheManager() {
+            
+            public Map<String, CacheHolder> getContentCache() {
+                return sharedCache;
+            }
+            
+            public Map<String, CacheHolder> getAuthorizableCache() {
+                return sharedCache;
+            }
+            
+            public Map<String, CacheHolder> getAccessControlCache() {
+                return sharedCache;
+            }
+        };
 
     }
 
@@ -181,7 +204,13 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
         return new ClientConnectionPoolFactory(this, connections, properties);
     }
 
-    public Map<String, CacheHolder> getSharedCache() {
-        return sharedCache;
+    public StorageCacheManager getStorageCacheManager() {
+        if ( storageManagerCache != null ) {
+            if ( sharedCache.size() > 0 ) {
+                sharedCache.clear(); // dump any memory consumed by the default cache.
+            }
+            return storageManagerCache ;
+        }
+        return defaultStorageManagerCache;
     }
 }

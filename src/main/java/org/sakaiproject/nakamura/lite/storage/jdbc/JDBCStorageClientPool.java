@@ -28,11 +28,15 @@ import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.ReferenceCardinality;
+import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.felix.scr.annotations.Service;
+import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
-import org.sakaiproject.nakamura.lite.accesscontrol.CacheHolder;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
@@ -65,6 +69,10 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
     private static final String USERNAME = "username";
     @Property(value = { "" })
     private static final String PASSWORD = "password";
+ 
+    @Reference(cardinality=ReferenceCardinality.OPTIONAL_UNARY, policy=ReferencePolicy.DYNAMIC)
+    private StorageCacheManager storageManagerCache;
+
 
     private static final String BASESQLPATH = "org/sakaiproject/nakamura/lite/storage/jdbc/config/client";
 
@@ -110,8 +118,6 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
     private Map<String, Object> sqlConfig;
     private Object sqlConfigLock = new Object();
 
-    private Map<String, CacheHolder> sharedCache;
-
     private Properties connectionProperties;
 
     private String username;
@@ -124,6 +130,11 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
 
     private Timer timer;
 
+    private StorageCacheManager defaultStorageManagerCache;
+
+    private Map<String, CacheHolder> sharedCache;
+
+
     @Activate
     @SuppressWarnings(value={"NP_CLOSING_NULL"},justification="Invalid report, if this was the case then nothing would work")
     public void activate(Map<String, Object> properties) throws ClassNotFoundException {
@@ -135,6 +146,21 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
         timer.schedule(connectionManager, 30000L, 30000L);
 
         sharedCache = new ConcurrentLRUMap<String, CacheHolder>(10000);
+        // this is a default cache used where none has been provided.
+        defaultStorageManagerCache = new StorageCacheManager() {
+            
+            public Map<String, CacheHolder> getContentCache() {
+                return sharedCache;
+            }
+            
+            public Map<String, CacheHolder> getAuthorizableCache() {
+                return sharedCache;
+            }
+            
+            public Map<String, CacheHolder> getAccessControlCache() {
+                return sharedCache;
+            }
+        };
 
         String jdbcDriver = (String) properties.get(JDBC_DRIVER);
         Class<?> clazz = Class.forName(jdbcDriver);
@@ -278,8 +304,14 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
         return new JCBCStorageClientConnection();
     }
 
-    public Map<String, CacheHolder> getSharedCache() {
-        return sharedCache;
+    public StorageCacheManager getStorageCacheManager() {
+        if ( storageManagerCache != null ) {
+            if ( sharedCache.size() > 0 ) {
+                sharedCache.clear(); // dump any memory consumed by the default cache.
+            }
+            return storageManagerCache ;
+        }
+        return defaultStorageManagerCache;
     }
 
     public Connection getConnection() throws SQLException {
