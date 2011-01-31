@@ -30,8 +30,10 @@ public interface AuthorizableManager {
 
     /**
      * Find an Authorizable by ID.
+     *
      * @param authorizableId
-     * @return the authorizable object.
+     *          ID of the authorizable to find.
+     * @return the authorizable object. null if none found
      * @throws AccessDeniedException
      * @throws StorageClientException
      */
@@ -61,11 +63,12 @@ public interface AuthorizableManager {
 
     /**
      * Create a user
+     *
      * @param userId the user ID
      * @param userName the user name
      * @param password the password (unencoded, null if no password)
      * @param properties initial properties of the user.
-     * @return true if created.
+     * @return true if created. false otherwise.
      * @throws AccessDeniedException
      * @throws StorageClientException
      */
