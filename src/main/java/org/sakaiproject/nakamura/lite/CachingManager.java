@@ -41,13 +41,16 @@ public class CachingManager {
 
     protected Map<String, Object> getCached(String keySpace, String columnFamily, String key)
             throws StorageClientException {
-        Map<String, Object> m;
+        Map<String, Object> m = null;
         String cacheKey = getCacheKey(keySpace, columnFamily, key);
         if (sharedCache != null && sharedCache.containsKey(cacheKey)) {
             CacheHolder aclCacheHolder = sharedCache.get(cacheKey);
-            m = aclCacheHolder.get();
-            hit++;
-        } else {
+            if ( aclCacheHolder != null ) {
+                m = aclCacheHolder.get();
+                hit++;
+            }
+        }
+        if ( m == null ) {
             m = client.get(keySpace, columnFamily, key);
             miss++;
             if (sharedCache != null) {
