@@ -42,7 +42,7 @@ public class Group extends Authorizable {
      * The ID of the everyone group. Includes all users except anon.
      */
     public static final String EVERYONE = "everyone";
-    public static final Group EVERYONE_GROUP = new GroupInternal(ImmutableMap.of("id",StorageClientUtils.toStore(EVERYONE)), false, false);
+    public static final Group EVERYONE_GROUP = new GroupInternal(ImmutableMap.of("id",StorageClientUtils.toStore(EVERYONE)), false, true);
     private Set<String> members;
     private Set<String> membersAdded;
     private Set<String> membersRemoved;
@@ -59,7 +59,7 @@ public class Group extends Authorizable {
 
     @Override
     public Map<String, Object> getPropertiesForUpdate() {
-        if ( membersModified ) {
+        if ( !readOnly && membersModified ) {
             authorizableMap.put(MEMBERS_FIELD, StringUtils.join(members, ';'));
             propertiesModified.add(MEMBERS_FIELD);
         }
@@ -69,7 +69,7 @@ public class Group extends Authorizable {
     @Override
     // TODO: Unit test
     public Map<String, Object> getSafeProperties() {
-        if ( membersModified ) {
+        if ( !readOnly && membersModified ) {
             authorizableMap.put(MEMBERS_FIELD, StringUtils.join(members, ';'));
             propertiesModified.add(MEMBERS_FIELD);
         }
@@ -79,7 +79,7 @@ public class Group extends Authorizable {
     @Override
     // TODO: Unit test
     public boolean isModified() {
-        return membersModified || super.isModified();
+        return !readOnly && (membersModified || super.isModified());
     }
 
     public String[] getMembers() {
@@ -87,7 +87,7 @@ public class Group extends Authorizable {
     }
 
     public void addMember(String member) {
-        if (!members.contains(member)) {
+        if (!readOnly && !members.contains(member)) {
             members.add(member);
             membersAdded.add(member);
             membersRemoved.remove(member);
@@ -96,7 +96,7 @@ public class Group extends Authorizable {
     }
 
     public void removeMember(String member) {
-        if (members.contains(member)) {
+        if (!readOnly && members.contains(member)) {
             members.remove(member);
             membersAdded.remove(member);
             membersRemoved.add(member);
@@ -113,10 +113,12 @@ public class Group extends Authorizable {
     }
 
     public void reset() {
-        super.reset();
-        membersAdded.clear();
-        membersRemoved.clear();
-        membersModified = false;
+        if (!readOnly ) {
+            super.reset();
+            membersAdded.clear();
+            membersRemoved.clear();
+            membersModified = false;
+        }
     }
 
 }

@@ -82,7 +82,7 @@ public class Authorizable {
 
     private boolean isObjectNew = true;
 
-    private boolean readOnly;
+    protected boolean readOnly;
 
     public Authorizable(Map<String, Object> autorizableMap) {
         this.authorizableMap = autorizableMap;
