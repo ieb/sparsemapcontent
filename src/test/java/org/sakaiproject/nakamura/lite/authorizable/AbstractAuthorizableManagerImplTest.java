@@ -137,13 +137,13 @@ public abstract class AbstractAuthorizableManagerImplTest {
         User user = (User) a;
         String[] principals = user.getPrincipals();
         Assert.assertNotNull(principals);
-        Assert.assertEquals(0, principals.length);
+        Assert.assertEquals(1, principals.length);
         Assert.assertTrue(user.isAdmin());
 
         User anon = (User) an;
         principals = anon.getPrincipals();
         Assert.assertNotNull(principals);
-        Assert.assertEquals(0, principals.length);
+        Assert.assertEquals(1, principals.length);
         Assert.assertFalse(anon.isAdmin());
 
     }
@@ -177,7 +177,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
         String[] principals = user.getPrincipals();
         Assert.assertNotNull(principals);
         LOGGER.info("Principals {} ", Arrays.toString(principals));
-        Assert.assertEquals(2, principals.length);
+        Assert.assertEquals(3, principals.length);
         Assert.assertTrue(user.isAdmin());
 
     }
@@ -209,7 +209,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
         User user = (User) a;
         String[] principals = user.getPrincipals();
         LOGGER.info("Principals {} ", Arrays.toString(principals));
-        Assert.assertArrayEquals(new String[] { "testers" }, principals);
+        Assert.assertArrayEquals(new String[] { "testers", Group.EVERYONE }, principals);
 
         Assert.assertFalse(user.isAdmin());
 
@@ -269,7 +269,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
         Group g = (Group) a;
         String[] principals = g.getPrincipals();
         LOGGER.info("Principals {} ", Arrays.toString(principals));
-        Assert.assertArrayEquals(new String[] { "administrators", "testers" }, principals);
+        Assert.assertArrayEquals(new String[] { "administrators", "testers", Group.EVERYONE }, principals);
         String[] members = g.getMembers();
         LOGGER.info("Members {} ", Arrays.toString(members));
         Assert.assertArrayEquals(new String[] { "user1", "user2" }, members);
@@ -294,7 +294,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
         Group g2 = (Group) a2;
         principals = g2.getPrincipals();
         LOGGER.info("Principals {} ", Arrays.toString(principals));
-        Assert.assertArrayEquals(new String[] { "administrators", "tester2" }, principals);
+        Assert.assertArrayEquals(new String[] { "administrators", "tester2", Group.EVERYONE }, principals);
         members = g2.getMembers();
         LOGGER.info("Members {} ", Arrays.toString(members));
         Assert.assertArrayEquals(new String[] { "user1", "user3" }, members);
@@ -307,7 +307,8 @@ public abstract class AbstractAuthorizableManagerImplTest {
         User u3 = (User) a3;
         principals = u3.getPrincipals();
         LOGGER.info("Principals {} ", Arrays.toString(principals));
-        Assert.assertArrayEquals(new String[] { "administrators", "testers", "testgroup" },
+        Assert.assertArrayEquals(new String[] { "administrators", "testers", "testgroup",
+            Group.EVERYONE },
                 principals);
 
     }

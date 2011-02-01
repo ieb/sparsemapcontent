@@ -91,6 +91,7 @@ public class Authorizable {
             this.principals = Sets.newLinkedHashSet(Iterables.of(StringUtils.split(
                     StorageClientUtils.toString(principalsB), ';')));
         }
+        this.principals.add(Group.EVERYONE);
         this.id = StorageClientUtils.toString(authorizableMap.get(ID_FIELD));
         propertiesModified = Sets.newHashSet();
         principalsModified = false;
@@ -170,7 +171,9 @@ public class Authorizable {
 
     public Map<String, Object> getPropertiesForUpdate() {
         if (principalsModified) {
+          principals.remove(Group.EVERYONE);
             authorizableMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
+            principals.add(Group.EVERYONE);
             propertiesModified.add(PRINCIPALS_FIELD);
         }
         return StorageClientUtils.getFilterMap(authorizableMap, propertiesModified,
