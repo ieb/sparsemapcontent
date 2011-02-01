@@ -82,6 +82,8 @@ public class Authorizable {
 
     private boolean isObjectNew = true;
 
+    private boolean readOnly;
+
     public Authorizable(Map<String, Object> autorizableMap) {
         this.authorizableMap = autorizableMap;
         Object principalsB = authorizableMap.get(PRINCIPALS_FIELD);
@@ -107,7 +109,7 @@ public class Authorizable {
 
     // TODO: Unit test
     public Map<String, Object> getSafeProperties() {
-        if (principalsModified) {
+        if (!readOnly && principalsModified) {
             authorizableMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
         }
         return StorageClientUtils.getFilterMap(authorizableMap, null, FILTER_PROPERTIES);
@@ -130,7 +132,7 @@ public class Authorizable {
     }
 
     public void setProperty(String key, Object value) {
-        if (!FILTER_PROPERTIES.contains(key)) {
+        if (!readOnly && !FILTER_PROPERTIES.contains(key)) {
             Object cv = authorizableMap.get(key);
             if (!value.equals(cv)) {
                 authorizableMap.put(key, value);
@@ -148,14 +150,14 @@ public class Authorizable {
     }
 
     public void removeProperty(String key) {
-        if (authorizableMap.containsKey(key)) {
+        if (!readOnly && authorizableMap.containsKey(key)) {
             authorizableMap.put(key, new RemoveProperty());
             propertiesModified.add(key);
         }
     }
 
     public void addPrincipal(String principal) {
-        if (!principals.contains(principal)) {
+        if (!readOnly && !principals.contains(principal)) {
             principals.add(principal);
             principalsModified = true;
 
@@ -163,14 +165,14 @@ public class Authorizable {
     }
 
     public void removePrincipal(String principal) {
-        if (principals.contains(principal)) {
+        if (!readOnly && principals.contains(principal)) {
             principals.remove(principal);
             principalsModified = true;
         }
     }
 
     public Map<String, Object> getPropertiesForUpdate() {
-        if (principalsModified) {
+        if (!readOnly && principalsModified) {
           principals.remove(Group.EVERYONE);
             authorizableMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
             principals.add(Group.EVERYONE);
@@ -181,12 +183,14 @@ public class Authorizable {
     }
 
     public void reset() {
-        principalsModified = false;
-        propertiesModified.clear();
+        if ( !readOnly ) {
+            principalsModified = false;
+            propertiesModified.clear();
+        }
     }
 
     public boolean isModified() {
-        return principalsModified || (propertiesModified.size() > 0);
+        return !readOnly && (principalsModified || (propertiesModified.size() > 0));
     }
 
     public boolean hasProperty(String name) {
@@ -238,6 +242,12 @@ public class Authorizable {
 
     public boolean isNew() {
         return isObjectNew;
+    }
+
+    protected void setReadOnly(boolean readOnly) {
+        if ( !this.readOnly ) {
+            this.readOnly = readOnly;
+        }
     }
 
 }

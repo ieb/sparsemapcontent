@@ -42,7 +42,7 @@ public class Group extends Authorizable {
      * The ID of the everyone group. Includes all users except anon.
      */
     public static final String EVERYONE = "everyone";
-    public static final Group EVERYONE_GROUP = new GroupInternal(ImmutableMap.of("id",StorageClientUtils.toStore(EVERYONE)), false);
+    public static final Group EVERYONE_GROUP = new GroupInternal(ImmutableMap.of("id",StorageClientUtils.toStore(EVERYONE)), false, false);
     private Set<String> members;
     private Set<String> membersAdded;
     private Set<String> membersRemoved;
