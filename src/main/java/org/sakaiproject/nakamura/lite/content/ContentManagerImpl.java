@@ -237,6 +237,9 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
             toSave.put(CREATED, StorageClientUtils.toStore(System.currentTimeMillis()));
             toSave.put(CREATED_BY,
                     StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
+            toSave.put(LASTMODIFIED, StorageClientUtils.toStore(System.currentTimeMillis()));
+            toSave.put(LASTMODIFIED_BY,
+                    StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
             LOGGER.debug("New Content with {} {} ", id, toSave);
         } else if (content.isUpdated()) {
             toSave = Maps.newHashMap(content.getUpdated());
