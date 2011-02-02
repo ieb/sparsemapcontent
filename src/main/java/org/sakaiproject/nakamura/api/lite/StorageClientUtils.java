@@ -159,6 +159,8 @@ public class StorageClientUtils {
                 strings[i] = (String) toStore(calendar);
             }
             return toStore(strings);
+        } else if ( object instanceof Boolean ) {
+            return ((Boolean)object).booleanValue()?"1":"0";
         } else {
             LOGGER.warn("Converting " + object.getClass() + " to byte[] via string");
             return String.valueOf(object);
@@ -653,5 +655,9 @@ public class StorageClientUtils {
     }
     return null;
   }
+
+public static boolean toBoolean(Object property) {
+    return "1".equals(StorageClientUtils.toString(property));
+}
 
 }
