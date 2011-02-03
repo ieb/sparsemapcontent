@@ -93,8 +93,10 @@ public class Authorizable {
             this.principals = Sets.newLinkedHashSet(Iterables.of(StringUtils.split(
                     StorageClientUtils.toString(principalsB), ';')));
         }
-        this.principals.add(Group.EVERYONE);
         this.id = StorageClientUtils.toString(authorizableMap.get(ID_FIELD));
+        if (!User.ANON_USER.equals(this.id)) {
+          this.principals.add(Group.EVERYONE);
+        }
         propertiesModified = Sets.newHashSet();
         principalsModified = false;
     }

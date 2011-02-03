@@ -143,7 +143,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
         User anon = (User) an;
         principals = anon.getPrincipals();
         Assert.assertNotNull(principals);
-        Assert.assertEquals(1, principals.length);
+        Assert.assertEquals(0, principals.length);
         Assert.assertFalse(anon.isAdmin());
 
     }
