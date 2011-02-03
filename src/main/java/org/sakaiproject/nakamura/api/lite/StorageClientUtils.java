@@ -160,7 +160,7 @@ public class StorageClientUtils {
             }
             return toStore(strings);
         } else if ( object instanceof Boolean ) {
-            return ((Boolean)object).booleanValue()?"1":"0";
+            return ((Boolean)object).booleanValue()?"true":"false";
         } else {
             LOGGER.warn("Converting " + object.getClass() + " to byte[] via string");
             return String.valueOf(object);
@@ -657,7 +657,7 @@ public class StorageClientUtils {
   }
 
 public static boolean toBoolean(Object property) {
-    return "1".equals(StorageClientUtils.toString(property));
+    return "true".equals(StorageClientUtils.toString(property));
 }
 
 }
