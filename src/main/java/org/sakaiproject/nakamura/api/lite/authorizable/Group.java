@@ -88,19 +88,25 @@ public class Group extends Authorizable {
 
     public void addMember(String member) {
         if (!readOnly && !members.contains(member)) {
+            LOGGER.debug(" {} adding Member {} to {} ",new Object[]{this,member, members});
             members.add(member);
             membersAdded.add(member);
             membersRemoved.remove(member);
             membersModified = true;
+        } else {
+            LOGGER.debug("{} Member {} already present in {} ",new Object[]{this,member,members});
         }
     }
 
     public void removeMember(String member) {
         if (!readOnly && members.contains(member)) {
+            LOGGER.debug(" {} removing Member {} to {} ",new Object[]{this,member, members});
             members.remove(member);
             membersAdded.remove(member);
             membersRemoved.add(member);
             membersModified = true;
+        } else {
+            LOGGER.debug("{} Member {} already not present in {} ",new Object[]{this,member,members});
         }
     }
 
@@ -115,6 +121,7 @@ public class Group extends Authorizable {
     public void reset() {
         if (!readOnly ) {
             super.reset();
+            LOGGER.debug("{} reset ",new Object[]{this});
             membersAdded.clear();
             membersRemoved.clear();
             membersModified = false;

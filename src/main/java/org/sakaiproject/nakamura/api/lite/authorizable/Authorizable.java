@@ -249,5 +249,21 @@ public class Authorizable {
             this.readOnly = readOnly;
         }
     }
+    
+    
+    @Override
+    public int hashCode() {
+        return id.hashCode();
+    }
+    
+    
+    @Override
+    public boolean equals(Object obj) {
+        if ( obj instanceof Authorizable ) {
+            Authorizable a = (Authorizable) obj;
+            return id.equals(a.getId());
+        }
+        return super.equals(obj);
+    }
 
 }
