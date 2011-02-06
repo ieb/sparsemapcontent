@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Sets;
 
-import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
+import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

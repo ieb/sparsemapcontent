@@ -24,7 +24,6 @@ import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.sakaiproject.nakamura.api.lite.util.Type1UUID;
-import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

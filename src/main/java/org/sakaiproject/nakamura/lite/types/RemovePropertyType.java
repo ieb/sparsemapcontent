@@ -1,6 +1,6 @@
 package org.sakaiproject.nakamura.lite.types;
 
-import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
+import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
