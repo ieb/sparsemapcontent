@@ -18,7 +18,6 @@
 package org.sakaiproject.nakamura.lite.content;
 
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
-import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
@@ -94,21 +93,27 @@ public class BlockContentInputStream extends InputStream {
                 throw new IOException(e.getMessage(), e);
             }
             currentBlockNumber = 0;
-            blocksInSet = StorageClientUtils
-                    .toInt(block.get(BlockSetContentHelper.NUMBLOCKS_FIELD));
+            blocksInSet = toInt(block.get(BlockSetContentHelper.NUMBLOCKS_FIELD));
             LOGGER.debug("Loaded New Block Set {}  containing {} blocks ", currentBlockSet,
                     blocksInSet);
 
         }
 
         LOGGER.debug("Loading block {} {} ", currentBlockNumber, blocksInSet);
-        blockLength = StorageClientUtils.toInt(block
+        blockLength = toInt(block
                 .get(BlockSetContentHelper.BLOCK_LENGTH_FIELD_STUB + currentBlockNumber));
         buffer = (byte[]) block.get(BlockSetContentHelper.BODY_FIELD_STUB + currentBlockNumber);
         offset = 0;
         LOGGER.debug("Loaded Buffer {} {} size {} ", new Object[] { currentBlockSet,
                 currentBlockNumber, buffer.length });
         return true;
+    }
+
+    private int toInt(Object object) {
+        if (object instanceof Integer) {
+            return ((Integer) object).intValue();
+        }
+        return 0;
     }
 
     @Override

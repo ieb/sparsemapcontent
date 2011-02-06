@@ -122,6 +122,7 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
         try {
             return (StorageClient) pool.borrowObject();
         } catch (Exception e) {
+            LOGGER.warn(e.getMessage(),e);
             throw new ClientPoolException("Failed To Borrow connection from pool ", e);
         }
     }

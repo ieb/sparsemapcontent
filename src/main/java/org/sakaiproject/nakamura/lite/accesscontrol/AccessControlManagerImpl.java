@@ -91,9 +91,9 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
                 modifications.put(name, null);
             } else {
 
-                int bitmap = StorageClientUtils.toInt(currentAcl.get(name));
+                int bitmap = toInt(currentAcl.get(name));
                 bitmap = m.modify(bitmap);
-                modifications.put(name, StorageClientUtils.toStore(bitmap));
+                modifications.put(name, bitmap);
             }
         }
         LOGGER.debug("Updating ACL {} {} ", key, modifications);
@@ -142,9 +142,9 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
 
             {
                 String principal = authorizable.getId();
-                int tg = StorageClientUtils.toInt(acl.get(principal
+                int tg = toInt(acl.get(principal
                         + AclModification.GRANTED_MARKER));
-                int td = StorageClientUtils.toInt(acl
+                int td = toInt(acl
                         .get(principal + AclModification.DENIED_MARKER));
                 grants = grants | tg;
                 denies = denies | td;
@@ -153,9 +153,9 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
 
             }
             for (String principal : authorizable.getPrincipals()) {
-                int tg = StorageClientUtils.toInt(acl.get(principal
+                int tg = toInt(acl.get(principal
                         + AclModification.GRANTED_MARKER));
-                int td = StorageClientUtils.toInt(acl
+                int td = toInt(acl
                         .get(principal + AclModification.DENIED_MARKER));
                 grants = grants | tg;
                 denies = denies | td;
@@ -166,9 +166,9 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
                 // all users except anon are in the group everyone, by default
                 // but only if not already denied or granted by a more specific
                 // permission.
-                int tg = (StorageClientUtils.toInt(acl.get(Group.EVERYONE
+                int tg = (toInt(acl.get(Group.EVERYONE
                         + AclModification.GRANTED_MARKER)) & ~denies);
-                int td = (StorageClientUtils.toInt(acl.get(Group.EVERYONE
+                int td = (toInt(acl.get(Group.EVERYONE
                         + AclModification.DENIED_MARKER)) & ~grants);
                 // LOGGER.info("Adding Permissions for Everyone {} {} ",tg,td);
                 grants = grants | tg;
@@ -235,6 +235,13 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
             return new int[] { Permissions.CAN_READ.getPermission(), 0 };
         }
         return new int[] { 0, 0 };
+    }
+
+    private int toInt(Object object) {
+        if ( object instanceof Integer ) {
+            return ((Integer) object).intValue();
+        }
+        return 0;
     }
 
     public String getCurrentUserId() {
@@ -317,9 +324,9 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
                 String principal = aceKey.substring(0, aceKey.length() - 2);
                 
                 if (!compiledPermissions.containsKey(principal)) {
-                    int tg = StorageClientUtils.toInt(acl.get(principal
+                    int tg = toInt(acl.get(principal
                             + AclModification.GRANTED_MARKER));
-                    int td = StorageClientUtils.toInt(acl.get(principal
+                    int td = toInt(acl.get(principal
                             + AclModification.DENIED_MARKER));
                     compiledPermissions.put(principal, new int[] { tg, td });
                     LOGGER.debug("added {} ",principal);

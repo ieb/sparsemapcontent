@@ -221,10 +221,8 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
 
         Map<String, Object> encodedProperties = StorageClientUtils.getFilteredAndEcodedMap(
                 authorizable.getPropertiesForUpdate(), FILTER_ON_UPDATE);
-        encodedProperties.put(Authorizable.LASTMODIFIED,
-                StorageClientUtils.toStore(System.currentTimeMillis()));
-        encodedProperties.put(Authorizable.LASTMODIFIED_BY,
-                StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
+        encodedProperties.put(Authorizable.LASTMODIFIED,System.currentTimeMillis());
+        encodedProperties.put(Authorizable.LASTMODIFIED_BY,accessControlManager.getCurrentUserId());
         putCached(keySpace, authorizableColumnFamily, id, encodedProperties, authorizable.isNew());
         authorizable.reset();
 
@@ -256,20 +254,20 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         }
         Map<String, Object> encodedProperties = StorageClientUtils.getFilteredAndEcodedMap(
                 properties, FILTER_ON_CREATE);
-        encodedProperties.put(Authorizable.ID_FIELD, StorageClientUtils.toStore(authorizableId));
+        encodedProperties.put(Authorizable.ID_FIELD, authorizableId);
         encodedProperties
-                .put(Authorizable.NAME_FIELD, StorageClientUtils.toStore(authorizableName));
+                .put(Authorizable.NAME_FIELD, authorizableName);
         if (password != null) {
             encodedProperties.put(Authorizable.PASSWORD_FIELD,
-                    StorageClientUtils.toStore(StorageClientUtils.secureHash(password)));
+                    StorageClientUtils.secureHash(password));
         } else {
             encodedProperties.put(Authorizable.PASSWORD_FIELD,
-                    StorageClientUtils.toStore(Authorizable.NO_PASSWORD));
+                    Authorizable.NO_PASSWORD);
         }
         encodedProperties.put(Authorizable.CREATED,
-                StorageClientUtils.toStore(System.currentTimeMillis()));
+                System.currentTimeMillis());
         encodedProperties.put(Authorizable.CREATED_BY,
-                StorageClientUtils.toStore(accessControlManager.getCurrentUserId()));
+                accessControlManager.getCurrentUserId());
         putCached(keySpace, authorizableColumnFamily, authorizableId, encodedProperties, true);
         return true;
     }
@@ -336,11 +334,11 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             }
             putCached(keySpace, authorizableColumnFamily, id, ImmutableMap.of(
                     Authorizable.LASTMODIFIED,
-                    StorageClientUtils.toStore(System.currentTimeMillis()),
+                    (Object)System.currentTimeMillis(),
                     Authorizable.LASTMODIFIED_BY,
-                    StorageClientUtils.toStore(accessControlManager.getCurrentUserId()),
+                    accessControlManager.getCurrentUserId(),
                     Authorizable.PASSWORD_FIELD,
-                    StorageClientUtils.toStore(StorageClientUtils.secureHash(password))), false);
+                    StorageClientUtils.secureHash(password)), false);
 
             storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, currentUserId, false, "op:change-password");
 
@@ -356,7 +354,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             Class<? extends Authorizable> authorizableType) throws StorageClientException {
         Builder<String, Object> builder = ImmutableMap.builder();
         if (value != null) {
-            builder.put(propertyName, StorageClientUtils.toStore(value));
+            builder.put(propertyName, value);
         }
         if (authorizableType.equals(User.class)) {
             builder.put(Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.USER_VALUE);
@@ -381,8 +379,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                             // will generate a sparse search problem.
                             // FIXME: put this in the query.
                             accessControlManager
-                                    .check(Security.ZONE_AUTHORIZABLES, StorageClientUtils
-                                            .toString(authMap.get(Authorizable.ID_FIELD)),
+                                    .check(Security.ZONE_AUTHORIZABLES, (String) authMap.get(Authorizable.ID_FIELD),
                                             Permissions.CAN_READ);
                             if (Authorizable.isAUser(authMap)) {
                                 authorizable = new UserInternal(authMap, false);

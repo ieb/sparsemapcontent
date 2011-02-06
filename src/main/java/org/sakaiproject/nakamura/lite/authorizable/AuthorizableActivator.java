@@ -57,9 +57,9 @@ public class AuthorizableActivator {
                 Authorizable.ADMINISTRATORS_GROUP);
         if (authorizableMap == null || authorizableMap.size() == 0) {
             Map<String, Object> group = ImmutableMap.of(Authorizable.ID_FIELD,
-                    StorageClientUtils.toStore(Authorizable.ADMINISTRATORS_GROUP),
+                    (Object)Authorizable.ADMINISTRATORS_GROUP,
                     Authorizable.NAME_FIELD,
-                    StorageClientUtils.toStore(Authorizable.ADMINISTRATORS_GROUP),
+                    Authorizable.ADMINISTRATORS_GROUP,
                     Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.GROUP_VALUE);
             LOGGER.debug("Creating System User user as {} with {} ",
                     Authorizable.ADMINISTRATORS_GROUP, group);
@@ -77,9 +77,9 @@ public class AuthorizableActivator {
                 User.SYSTEM_USER);
         if (authorizableMap == null || authorizableMap.size() == 0) {
             Map<String, Object> user = ImmutableMap.of(Authorizable.ID_FIELD,
-                    StorageClientUtils.toStore(User.SYSTEM_USER), Authorizable.NAME_FIELD,
-                    StorageClientUtils.toStore(User.SYSTEM_USER), Authorizable.PASSWORD_FIELD,
-                    StorageClientUtils.toStore("--no-password--"),
+                    User.SYSTEM_USER, Authorizable.NAME_FIELD,
+                    User.SYSTEM_USER, Authorizable.PASSWORD_FIELD,
+                    "--no-password--",
                     Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.USER_VALUE);
             LOGGER.debug("Creating System User user as {} with {} ", User.SYSTEM_USER, user);
             client.insert(keySpace, authorizableColumnFamily, User.SYSTEM_USER, user, true);
@@ -94,9 +94,9 @@ public class AuthorizableActivator {
                 User.ADMIN_USER);
         if (authorizableMap == null || authorizableMap.size() == 0) {
             Map<String, Object> user = ImmutableMap.of(Authorizable.ID_FIELD,
-                    StorageClientUtils.toStore(User.ADMIN_USER), Authorizable.NAME_FIELD,
-                    StorageClientUtils.toStore(User.ADMIN_USER), Authorizable.PASSWORD_FIELD,
-                    StorageClientUtils.toStore(StorageClientUtils.secureHash("admin")),
+                    User.ADMIN_USER, Authorizable.NAME_FIELD,
+                    User.ADMIN_USER, Authorizable.PASSWORD_FIELD,
+                    StorageClientUtils.secureHash("admin"),
                     Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.USER_VALUE);
             LOGGER.debug("Creating Admin User user as {} with {} ", User.ADMIN_USER, user);
             client.insert(keySpace, authorizableColumnFamily, User.ADMIN_USER, user, true);
@@ -110,9 +110,9 @@ public class AuthorizableActivator {
                 User.ANON_USER);
         if (authorizableMap == null || authorizableMap.size() == 0) {
             Map<String, Object> user = ImmutableMap.of(Authorizable.ID_FIELD,
-                    StorageClientUtils.toStore(User.ANON_USER), Authorizable.NAME_FIELD,
-                    StorageClientUtils.toStore(User.ANON_USER), Authorizable.PASSWORD_FIELD,
-                    StorageClientUtils.toStore(Authorizable.NO_PASSWORD),
+                    User.ANON_USER, Authorizable.NAME_FIELD,
+                    User.ANON_USER, Authorizable.PASSWORD_FIELD,
+                    Authorizable.NO_PASSWORD,
                     Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.USER_VALUE);
             LOGGER.debug("Creating Anon user as {} with {} ", User.ANON_USER, user);
             client.insert(keySpace, authorizableColumnFamily, User.ANON_USER, user, true);

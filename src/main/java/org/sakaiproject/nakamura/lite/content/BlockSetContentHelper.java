@@ -96,9 +96,9 @@ public class BlockSetContentHelper implements BlockContentHelper {
             length = length + bufferLength;
             lastBlockWrite = i;
             client.insert(keySpace, contentColumnFamily, key, ImmutableMap.of(Content.UUID_FIELD,
-                    StorageClientUtils.toStore(contentId), NUMBLOCKS_FIELD,
-                    StorageClientUtils.toStore(bodyNum + 1), blockLengthKey,
-                    StorageClientUtils.toStore(bufferLength), bodyKey, saveBuffer), false);
+                    (Object)contentId, NUMBLOCKS_FIELD,
+                    bodyNum + 1, blockLengthKey,
+                    bufferLength, bodyKey, saveBuffer), false);
             bodyNum++;
             if (bodyNum > maxChunksPerBlockSet) {
                 bodyNum = 0;
@@ -107,10 +107,10 @@ public class BlockSetContentHelper implements BlockContentHelper {
         }
         Map<String, Object> metadata = Maps.newHashMap();
 
-        metadata.put(StorageClientUtils.getAltField(Content.BLOCKID_FIELD, streamId), StorageClientUtils.toStore(contentBlockId));
-        metadata.put(StorageClientUtils.getAltField(Content.NBLOCKS_FIELD, streamId), StorageClientUtils.toStore(lastBlockWrite + 1));
-        metadata.put(StorageClientUtils.getAltField(Content.LENGTH_FIELD, streamId), StorageClientUtils.toStore(length));
-        metadata.put(StorageClientUtils.getAltField(Content.BLOCKSIZE_FIELD, streamId), StorageClientUtils.toStore(blockSize));
+        metadata.put(StorageClientUtils.getAltField(Content.BLOCKID_FIELD, streamId), contentBlockId);
+        metadata.put(StorageClientUtils.getAltField(Content.NBLOCKS_FIELD, streamId), lastBlockWrite + 1);
+        metadata.put(StorageClientUtils.getAltField(Content.LENGTH_FIELD, streamId), length);
+        metadata.put(StorageClientUtils.getAltField(Content.BLOCKSIZE_FIELD, streamId), blockSize);
 
         LOGGER.debug(
                 "Saved Last block ContentID {} BlockID {} Nblocks {}  length {}  blocksize {} ",

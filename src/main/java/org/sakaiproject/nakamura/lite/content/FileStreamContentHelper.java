@@ -68,9 +68,9 @@ public class FileStreamContentHelper implements StreamedContentHelper {
         LOGGER.debug("Wrote {} bytes to {} as body of {}:{}:{} stream {} ", new Object[] { length, path,
                 keySpace, columnFamily, contentBlockId, streamId });
         Map<String, Object> metadata = Maps.newHashMap();
-        metadata.put(StorageClientUtils.getAltField(Content.LENGTH_FIELD, streamId), StorageClientUtils.toStore(length));
-        metadata.put(StorageClientUtils.getAltField(Content.BLOCKID_FIELD, streamId), StorageClientUtils.toStore(contentBlockId));
-        metadata.put(StorageClientUtils.getAltField(STORE_LOCATION, streamId), StorageClientUtils.toStore(path));
+        metadata.put(StorageClientUtils.getAltField(Content.LENGTH_FIELD, streamId), length);
+        metadata.put(StorageClientUtils.getAltField(Content.BLOCKID_FIELD, streamId), contentBlockId);
+        metadata.put(StorageClientUtils.getAltField(STORE_LOCATION, streamId), path);
         return metadata;
     }
 
@@ -87,7 +87,7 @@ public class FileStreamContentHelper implements StreamedContentHelper {
 
     public InputStream readBody(String keySpace, String columnFamily, String contentBlockId, String streamId,
             Map<String, Object> content) throws IOException {
-        String path = StorageClientUtils.toString(content.get(StorageClientUtils.getAltField(STORE_LOCATION, streamId)));
+        String path = (String) content.get(StorageClientUtils.getAltField(STORE_LOCATION, streamId));
         LOGGER.debug("Reading from {} as body of {}:{}:{} ", new Object[] { path, keySpace,
                 columnFamily, contentBlockId });
         File file = new File(fileStore + "/" + path);

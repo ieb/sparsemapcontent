@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
 import org.apache.commons.lang.StringUtils;
-import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.util.Iterables;
 import org.sakaiproject.nakamura.lite.authorizable.GroupInternal;
 
@@ -42,7 +41,7 @@ public class Group extends Authorizable {
      * The ID of the everyone group. Includes all users except anon.
      */
     public static final String EVERYONE = "everyone";
-    public static final Group EVERYONE_GROUP = new GroupInternal(ImmutableMap.of("id",StorageClientUtils.toStore(EVERYONE)), false, true);
+    public static final Group EVERYONE_GROUP = new GroupInternal(ImmutableMap.of("id",(Object)EVERYONE), false, true);
     private Set<String> members;
     private Set<String> membersAdded;
     private Set<String> membersRemoved;
@@ -51,7 +50,7 @@ public class Group extends Authorizable {
     public Group(Map<String, Object> groupMap) {
         super(groupMap);
         this.members = Sets.newLinkedHashSet(Iterables.of(StringUtils.split(
-                StorageClientUtils.toString(authorizableMap.get(MEMBERS_FIELD)), ';')));
+                (String) authorizableMap.get(MEMBERS_FIELD), ';')));
         this.membersAdded = Sets.newHashSet();
         this.membersRemoved = Sets.newHashSet();
         membersModified = true;

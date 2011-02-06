@@ -29,6 +29,7 @@ import java.util.Map;
 
 public class StorageClientUtilsTest {
 
+    @SuppressWarnings("deprecation")
     @Test
     public void testInt() throws UnsupportedEncodingException {
         for (int i = -100000; i < 10000; i++) {
@@ -42,6 +43,7 @@ public class StorageClientUtilsTest {
         }
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void testLong() throws UnsupportedEncodingException {
         for (long i = -100000; i < 10000; i++) {
@@ -55,6 +57,7 @@ public class StorageClientUtilsTest {
         }
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void testToString() throws UnsupportedEncodingException {
         Assert.assertEquals(null, StorageClientUtils.toString(null));
@@ -63,16 +66,17 @@ public class StorageClientUtilsTest {
         Assert.assertEquals("100", StorageClientUtils.toString(100));
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void testToBytes() {
         Assert.assertEquals(null, StorageClientUtils.toStore(null));
         Assert.assertEquals("test", StorageClientUtils.toStore("test"));
-        Assert.assertEquals(Long.toString(100, StorageClientUtils.ENCODING_BASE),
+        Assert.assertEquals(100L,
                 StorageClientUtils.toStore((long) 100));
-        Assert.assertEquals(Integer.toString(100, StorageClientUtils.ENCODING_BASE),
+        Assert.assertEquals(100,
                 StorageClientUtils.toStore((int) 100));
         Object o = new Object();
-        Assert.assertEquals(String.valueOf(o), StorageClientUtils.toStore(o));
+        Assert.assertEquals(o, StorageClientUtils.toStore(o));
     }
 
     @Test

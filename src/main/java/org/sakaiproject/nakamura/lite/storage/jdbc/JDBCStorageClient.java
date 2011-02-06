@@ -34,6 +34,7 @@ import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
 import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
 import org.sakaiproject.nakamura.lite.storage.RowHasher;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
+import org.sakaiproject.nakamura.lite.types.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,7 +121,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             body = selectStringRow.executeQuery();
             inc("B");
             if (body.next()) {
-                StorageClientUtils.loadFromStream(rid, result, body.getBinaryStream(1));
+                Types.loadFromStream(rid, result, body.getBinaryStream(1));
             }
         } catch (SQLException e) {
             LOGGER.warn("Failed to perform get operation on  " + keySpace + ":" + columnFamily
@@ -200,7 +201,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 insertBlockRow.clearWarnings();
                 insertBlockRow.clearParameters();
                 insertBlockRow.setString(1, rid);
-                insertBlockRow.setBinaryStream(2, StorageClientUtils.storeMapToStream(rid, m));
+                insertBlockRow.setBinaryStream(2, Types.storeMapToStream(rid, m));
                 int rowsInserted = 0;
                 try {
                     rowsInserted = insertBlockRow.executeUpdate();
@@ -213,7 +214,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     updateBlockRow.clearWarnings();
                     updateBlockRow.clearParameters();
                     updateBlockRow.setString(2, rid);
-                    updateBlockRow.setBinaryStream(1, StorageClientUtils.storeMapToStream(rid, m));
+                    updateBlockRow.setBinaryStream(1, Types.storeMapToStream(rid, m));
                     if( updateBlockRow.executeUpdate() == 0) {
                         throw new StorageClientException("Failed to save " + rid);
                     } else {
@@ -228,14 +229,14 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 updateBlockRow.clearWarnings();
                 updateBlockRow.clearParameters();
                 updateBlockRow.setString(2, rid);
-                updateBlockRow.setBinaryStream(1, StorageClientUtils.storeMapToStream(rid, m));
+                updateBlockRow.setBinaryStream(1, Types.storeMapToStream(rid, m));
                 if (updateBlockRow.executeUpdate() == 0) {
                     PreparedStatement insertBlockRow = getStatement(keySpace, columnFamily,
                             SQL_BLOCK_INSERT_ROW, rid, statementCache);
                     insertBlockRow.clearWarnings();
                     insertBlockRow.clearParameters();
                     insertBlockRow.setString(1, rid);
-                    insertBlockRow.setBinaryStream(2, StorageClientUtils.storeMapToStream(rid, m));
+                    insertBlockRow.setBinaryStream(2, Types.storeMapToStream(rid, m));
                     if (insertBlockRow.executeUpdate() == 0) {
                         throw new StorageClientException("Failed to save " + rid);
                     } else {
@@ -769,8 +770,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             tpst.clearParameters();
             int i = 1;
             for (Object params : parameters) {
-                tpst.setObject(i, StorageClientUtils.toStore(params));
-                LOGGER.debug("Setting {} ", StorageClientUtils.toStore(params));
+                tpst.setObject(i, params);
+                LOGGER.debug("Setting {} ", params);
 
                 i++;
             }
@@ -797,7 +798,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     try {
                         if (open && rs.next()) {
                             map.clear();
-                            StorageClientUtils.loadFromStream(rs.getString(1), map,
+                            Types.loadFromStream(rs.getString(1), map,
                                     rs.getBinaryStream(2));
                             return true;
                         }

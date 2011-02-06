@@ -91,9 +91,9 @@ public class Authorizable {
             this.principals = Sets.newLinkedHashSet();
         } else {
             this.principals = Sets.newLinkedHashSet(Iterables.of(StringUtils.split(
-                    StorageClientUtils.toString(principalsB), ';')));
+                    (String) principalsB, ';')));
         }
-        this.id = StorageClientUtils.toString(authorizableMap.get(ID_FIELD));
+        this.id = (String) authorizableMap.get(ID_FIELD);
         if (!User.ANON_USER.equals(this.id)) {
           this.principals.add(Group.EVERYONE);
         }
@@ -119,14 +119,14 @@ public class Authorizable {
 
     public static boolean isAGroup(Map<String, Object> authProperties) {
         return (authProperties != null)
-                && GROUP_VALUE.equals(StorageClientUtils.toString(authProperties
-                        .get(AUTHORIZABLE_TYPE_FIELD)));
+                && GROUP_VALUE.equals(authProperties
+                        .get(AUTHORIZABLE_TYPE_FIELD));
     }
 
     public static boolean isAUser(Map<String, Object> authProperties) {
         return (authProperties != null)
-                && USER_VALUE.equals(StorageClientUtils.toString(authProperties
-                        .get(AUTHORIZABLE_TYPE_FIELD)));
+                && USER_VALUE.equals(authProperties
+                        .get(AUTHORIZABLE_TYPE_FIELD));
     }
 
     public static boolean isAuthorizable(Map<String, Object> authProperties) {

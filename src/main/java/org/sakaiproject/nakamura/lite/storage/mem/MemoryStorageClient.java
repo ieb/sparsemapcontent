@@ -128,8 +128,15 @@ public class MemoryStorageClient implements StorageClient {
             String contentBlockId, String streamId, Map<String, Object> content) throws StorageClientException,
             AccessDeniedException {
 
-        int nBlocks = StorageClientUtils.toInt(content.get(Content.NBLOCKS_FIELD));
+        int nBlocks = toInt(content.get(Content.NBLOCKS_FIELD));
         return contentHelper.readBody(keySpace, contentColumnFamily, contentBlockId, streamId, nBlocks);
+    }
+
+    private int toInt(Object object) {
+        if ( object instanceof Integer) {
+            return ((Integer) object).intValue();
+        }
+        return 0;
     }
 
     public DisposableIterator<Map<String, Object>> find(String keySpace,

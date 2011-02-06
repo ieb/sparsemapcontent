@@ -28,7 +28,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
-import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AclModification;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permission;
@@ -107,14 +106,14 @@ public abstract class AbstractAccessControlManagerImplTest {
                 basepath);
         Assert.assertEquals(Integer.toHexString(Permissions.CAN_ANYTHING.combine(
                 Permissions.CAN_ANYTHING_ACL).getPermission()), Integer
-                .toHexString(StorageClientUtils.toInt(acl.get(u1))));
+                .toHexString((Integer) acl.get(u1)));
         Assert.assertEquals(
                 Permissions.CAN_READ.combine(Permissions.CAN_WRITE).combine(Permissions.CAN_DELETE)
-                        .getPermission(), StorageClientUtils.toInt(acl.get(u2)));
+                        .getPermission(), ((Integer)acl.get(u2)).intValue());
         Assert.assertEquals(Permissions.CAN_READ.getPermission(),
-                StorageClientUtils.toInt(acl.get(u3)));
+                ((Integer)acl.get(u3)).intValue());
         for (Entry<String, Object> e : acl.entrySet()) {
-            LOGGER.info(" ACE {} : {} ", e.getKey(), StorageClientUtils.toInt(e.getValue()));
+            LOGGER.info(" ACE {} : {} ", e.getKey(), e.getValue());
         }
         LOGGER.info("Got ACL {}", acl);
 
@@ -180,11 +179,11 @@ public abstract class AbstractAccessControlManagerImplTest {
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser, client,
                 configuration, accessControlManagerImpl, null,  new LoggingStorageListener());
         authorizableManager.createUser(u1, "User 1", "test",
-                ImmutableMap.of("test", StorageClientUtils.toStore("test")));
+                ImmutableMap.of("test", (Object)"test"));
         authorizableManager.createUser(u2, "User 2", "test",
-                ImmutableMap.of("test", StorageClientUtils.toStore("test")));
+                ImmutableMap.of("test", (Object)"test"));
         authorizableManager.createUser(u3, "User 3", "test",
-                ImmutableMap.of("test", StorageClientUtils.toStore("test")));
+                ImmutableMap.of("test", (Object)"test"));
 
         User user1 = (User) authorizableManager.findAuthorizable(u1);
         User user2 = (User) authorizableManager.findAuthorizable(u2);

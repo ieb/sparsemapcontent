@@ -27,7 +27,6 @@ import org.junit.Test;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
-import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.lite.content.Content;
@@ -102,21 +101,21 @@ public abstract class AbstractContentManagerTest {
         Content content = contentManager.get("/");
         Assert.assertEquals("/", content.getPath());
         Map<String, Object> p = content.getProperties();
-        Assert.assertEquals("value1", StorageClientUtils.toString(p.get("prop1")));
+        Assert.assertEquals("value1", (String)p.get("prop1"));
         Iterator<Content> children = content.listChildren().iterator();
         Assert.assertTrue(children.hasNext());
         Content child = children.next();
         Assert.assertFalse(children.hasNext());
         Assert.assertEquals("/test", child.getPath());
         p = child.getProperties();
-        Assert.assertEquals("value2", StorageClientUtils.toString(p.get("prop1")));
+        Assert.assertEquals("value2", (String)p.get("prop1"));
         children = child.listChildren().iterator();
         Assert.assertTrue(children.hasNext());
         child = children.next();
         Assert.assertFalse(children.hasNext());
         Assert.assertEquals("/test/ing", child.getPath());
         p = child.getProperties();
-        Assert.assertEquals("value3", StorageClientUtils.toString(p.get("prop1")));
+        Assert.assertEquals("value3", (String)p.get("prop1"));
 
     }
 
@@ -138,21 +137,21 @@ public abstract class AbstractContentManagerTest {
         Content content = contentManager.get("/");
         Assert.assertEquals("/", content.getPath());
         Map<String, Object> p = content.getProperties();
-        Assert.assertEquals("value1", StorageClientUtils.toString(p.get("prop1")));
+        Assert.assertEquals("value1", (String)p.get("prop1"));
         Iterator<Content> children = content.listChildren().iterator();
         Assert.assertTrue(children.hasNext());
         Content child = children.next();
         Assert.assertFalse(children.hasNext());
         Assert.assertEquals("/test", child.getPath());
         p = child.getProperties();
-        Assert.assertEquals("value2", StorageClientUtils.toString(p.get("prop1")));
+        Assert.assertEquals("value2", (String)p.get("prop1"));
         children = child.listChildren().iterator();
         Assert.assertTrue(children.hasNext());
         child = children.next();
         Assert.assertFalse(children.hasNext());
         Assert.assertEquals("/test/ing", child.getPath());
         p = child.getProperties();
-        Assert.assertEquals("value3", StorageClientUtils.toString(p.get("prop1")));
+        Assert.assertEquals("value3", (String)p.get("prop1"));
 
         contentManager.delete("/test/ing");
         content = contentManager.get("/test/ing");
@@ -178,31 +177,31 @@ public abstract class AbstractContentManagerTest {
         Content content = contentManager.get("/");
         Assert.assertEquals("/", content.getPath());
         Map<String, Object> p = content.getProperties();
-        Assert.assertEquals("value1", StorageClientUtils.toString(p.get("prop1")));
+        Assert.assertEquals("value1", (String)p.get("prop1"));
         Iterator<Content> children = content.listChildren().iterator();
         Assert.assertTrue(children.hasNext());
         Content child = children.next();
         Assert.assertFalse(children.hasNext());
         Assert.assertEquals("/test", child.getPath());
         p = child.getProperties();
-        Assert.assertEquals("value2", StorageClientUtils.toString(p.get("prop1")));
+        Assert.assertEquals("value2", (String)p.get("prop1"));
         children = child.listChildren().iterator();
         Assert.assertTrue(children.hasNext());
         child = children.next();
         Assert.assertFalse(children.hasNext());
         Assert.assertEquals("/test/ing", child.getPath());
         p = child.getProperties();
-        Assert.assertEquals("value3", StorageClientUtils.toString(p.get("prop1")));
+        Assert.assertEquals("value3", (String)p.get("prop1"));
 
         p = content.getProperties();
-        Assert.assertNull(StorageClientUtils.toString(p.get("prop1update")));
+        Assert.assertNull((String)p.get("prop1update"));
 
         content.setProperty("prop1update", "value4");
         contentManager.update(content);
 
         content = contentManager.get(content.getPath());
         p = content.getProperties();
-        Assert.assertEquals("value4", StorageClientUtils.toString(p.get("prop1update")));
+        Assert.assertEquals("value4", (String)p.get("prop1update"));
 
     }
 
@@ -225,24 +224,24 @@ public abstract class AbstractContentManagerTest {
         Content content = contentManager.get("/");
         Assert.assertEquals("/", content.getPath());
         Map<String, Object> p = content.getProperties();
-        Assert.assertEquals("value1", StorageClientUtils.toString(p.get("prop1")));
+        Assert.assertEquals("value1", (String)p.get("prop1"));
         Iterator<Content> children = content.listChildren().iterator();
         Assert.assertTrue(children.hasNext());
         Content child = children.next();
         Assert.assertFalse(children.hasNext());
         Assert.assertEquals("/test", child.getPath());
         p = child.getProperties();
-        Assert.assertEquals("value2", StorageClientUtils.toString(p.get("prop1")));
+        Assert.assertEquals("value2", (String)p.get("prop1"));
         children = child.listChildren().iterator();
         Assert.assertTrue(children.hasNext());
         child = children.next();
         Assert.assertFalse(children.hasNext());
         Assert.assertEquals("/test/ing", child.getPath());
         p = child.getProperties();
-        Assert.assertEquals("value3", StorageClientUtils.toString(p.get("prop1")));
+        Assert.assertEquals("value3", (String)p.get("prop1"));
 
         p = content.getProperties();
-        Assert.assertNull(StorageClientUtils.toString(p.get("prop1update")));
+        Assert.assertNull((String)p.get("prop1update"));
 
         // FIXME: add some version list methods, we have no way of testing if
         // this works.
@@ -256,7 +255,7 @@ public abstract class AbstractContentManagerTest {
 
         content = contentManager.get("/");
         p = content.getProperties();
-        Assert.assertEquals("value4", StorageClientUtils.toString(p.get("prop1update")));
+        Assert.assertEquals("value4", (String)p.get("prop1update"));
 
         // just in case the machine is so fast all of that took 1ms
         Thread.sleep(50);
@@ -296,24 +295,24 @@ public abstract class AbstractContentManagerTest {
         Content content = contentManager.get("/");
         Assert.assertEquals("/", content.getPath());
         Map<String, Object> p = content.getProperties();
-        Assert.assertEquals("value1", StorageClientUtils.toString(p.get("prop1")));
+        Assert.assertEquals("value1", (String)p.get("prop1"));
         Iterator<Content> children = content.listChildren().iterator();
         Assert.assertTrue(children.hasNext());
         Content child = children.next();
         Assert.assertFalse(children.hasNext());
         Assert.assertEquals("/test", child.getPath());
         p = child.getProperties();
-        Assert.assertEquals("value2", StorageClientUtils.toString(p.get("prop1")));
+        Assert.assertEquals("value2", (String)p.get("prop1"));
         children = child.listChildren().iterator();
         Assert.assertTrue(children.hasNext());
         child = children.next();
         Assert.assertFalse(children.hasNext());
         Assert.assertEquals("/test/ing", child.getPath());
         p = child.getProperties();
-        Assert.assertEquals("value3", StorageClientUtils.toString(p.get("prop1")));
+        Assert.assertEquals("value3", (String)p.get("prop1"));
 
         p = content.getProperties();
-        Assert.assertNull(StorageClientUtils.toString(p.get("prop1update")));
+        Assert.assertNull((String)p.get("prop1update"));
 
         // FIXME: add some version list methods, we have no way of testing if
         // this works.
@@ -326,7 +325,7 @@ public abstract class AbstractContentManagerTest {
 
         content = contentManager.get(content.getPath());
         p = content.getProperties();
-        Assert.assertEquals("value4", StorageClientUtils.toString(p.get("prop1update")));
+        Assert.assertEquals("value4", (String)p.get("prop1update"));
 
         final byte[] b = new byte[20 * 1024 * 1024 + 1231];
         Random r = new Random();

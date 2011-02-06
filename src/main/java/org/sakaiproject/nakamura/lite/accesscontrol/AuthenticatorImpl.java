@@ -52,8 +52,8 @@ public class AuthenticatorImpl implements Authenticator {
             }
             String passwordHash = StorageClientUtils.secureHash(password);
 
-            String storedPassword = StorageClientUtils.toString(userAuthMap
-                    .get(User.PASSWORD_FIELD));
+            String storedPassword = (String) userAuthMap
+                    .get(User.PASSWORD_FIELD);
             if (passwordHash.equals(storedPassword)) {
                 return new UserInternal(userAuthMap, false);
             }

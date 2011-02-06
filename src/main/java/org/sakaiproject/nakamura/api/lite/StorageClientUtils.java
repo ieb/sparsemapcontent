@@ -28,12 +28,6 @@ import org.sakaiproject.nakamura.lite.storage.RemoveProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.security.MessageDigest;
@@ -47,7 +41,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TimeZone;
-
 
 /**
  * Utilites for managing storage related to the Sparse Map Content Store.
@@ -74,6 +67,7 @@ public class StorageClientUtils {
      * their date times.
      */
     public static String ISO8601_JCR_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSZZ";
+    @SuppressWarnings("unused")
     private final static FastDateFormat ISO8601_JCR_FORMAT = FastDateFormat.getInstance(
             ISO8601_JCR_PATTERN, TimeZone.getTimeZone("UTC"), Locale.ROOT);
 
@@ -89,14 +83,15 @@ public class StorageClientUtils {
      *            the storage object
      * @return a string representation of the storage object.
      */
+    @Deprecated
     public static String toString(Object object) {
         try {
-            if (object == null || object instanceof RemoveProperty) {
+            if (object instanceof String) {
+                return (String) object;
+            } else if (object == null || object instanceof RemoveProperty) {
                 return null;
             } else if (object instanceof byte[]) {
                 return new String((byte[]) object, UTF8);
-            } else if (object instanceof String) {
-                return (String) object;
             } else {
                 LOGGER.warn("Converting " + object.getClass() + " to String via toString");
                 return String.valueOf(object);
@@ -130,41 +125,9 @@ public class StorageClientUtils {
      *            the object to place in store.
      * @return the Store representation of the object.
      */
+    @Deprecated
     public static Object toStore(Object object) {
-        if (object == null || object instanceof RemoveProperty) {
-            return null;
-        } else if (object instanceof byte[]) {
-            return (byte[]) object;
-        } else if (object instanceof String) {
-            return ((String) object);
-        } else if (object instanceof Long) {
-            return Long.toString((Long) object, ENCODING_BASE);
-        } else if (object instanceof Integer) {
-            return Integer.toString((Integer) object, ENCODING_BASE);
-        } else if (object instanceof String[]) {
-            String[] sin = (String[]) object;
-            String[] sout = new String[sin.length];
-            for (int i = 0; i < sin.length; i++) {
-                sout[i] = StorageClientUtils.arrayEscape(sin[i]);
-            }
-            return StringUtils.join(sout, ',');
-        } else if (object instanceof Calendar) {
-            final Calendar c = (Calendar) object;
-            return ISO8601_JCR_FORMAT.format(c.getTime());
-        } else if (object instanceof Calendar[]) {
-            final Calendar[] calendars = (Calendar[]) object;
-            final String[] strings = new String[calendars.length];
-            for (int i = 0; i < calendars.length; i++) {
-                final Calendar calendar = calendars[i];
-                strings[i] = (String) toStore(calendar);
-            }
-            return toStore(strings);
-        } else if ( object instanceof Boolean ) {
-            return ((Boolean)object).booleanValue()?"true":"false";
-        } else {
-            LOGGER.warn("Converting " + object.getClass() + " to byte[] via string");
-            return String.valueOf(object);
-        }
+        return object;
     }
 
     /**
@@ -174,13 +137,13 @@ public class StorageClientUtils {
      *            the store object
      * @return a byte[] of the store object.
      */
+    @Deprecated
     public static byte[] toBytes(Object value) {
-        Object o = toStore(value);
-        if (o instanceof byte[]) {
-            return (byte[]) o;
+        if (value instanceof byte[]) {
+            return (byte[]) value;
         } else {
             try {
-                return ((String) o).getBytes("UTF-8");
+                return String.valueOf(value).getBytes("UTF-8");
             } catch (UnsupportedEncodingException e) {
                 return null; // no utf8.. get real!
             }
@@ -407,6 +370,7 @@ public class StorageClientUtils {
      * @param object
      * @return the store object as an int.
      */
+    @Deprecated
     public static int toInt(Object object) {
         if (object instanceof Integer) {
             return ((Integer) object).intValue();
@@ -420,6 +384,7 @@ public class StorageClientUtils {
      * @param object
      * @return the store object as a Long
      */
+    @Deprecated
     public static long toLong(Object object) {
         if (object instanceof Long) {
             return ((Long) object).longValue();
@@ -434,6 +399,7 @@ public class StorageClientUtils {
      * @return the store object as a {@link Calendar}
      * @throws ParseException
      */
+    @Deprecated
     public static Calendar toCalendar(Object object) throws ParseException {
         if (object instanceof Calendar) {
             return (Calendar) object;
@@ -489,7 +455,8 @@ public class StorageClientUtils {
      *         the shard where base is the cardinality of the encoding of the
      *         ID.
      */
-    // TODO: There is no reason to use this method in sparse (or very little), check usage.
+    // TODO: There is no reason to use this method in sparse (or very little),
+    // check usage.
     // For instance the SparsePrincipal uses it.
     public static String shardPath(String id) {
         String hash = insecureHash(id);
@@ -525,15 +492,19 @@ public class StorageClientUtils {
      * @return null or the store object converted to a string[]
      */
     // TODO: Unit test
+    @Deprecated
     public static String[] toStringArray(Object object) {
-        if (object == null) {
-            return null;
+        if ( object instanceof String[] ) {
+            return (String[]) object;
+        } else if (object == null) {
+                return null;
+        } else {
+            String[] v = StringUtils.split(StorageClientUtils.toString(object), ',');
+            for (int i = 0; i < v.length; i++) {
+                v[i] = StorageClientUtils.arrayUnEscape(v[i]);
+            }
+            return v;
         }
-        String[] v = StringUtils.split(StorageClientUtils.toString(object), ',');
-        for (int i = 0; i < v.length; i++) {
-            v[i] = StorageClientUtils.arrayUnEscape(v[i]);
-        }
-        return v;
     }
 
     /**
@@ -542,16 +513,20 @@ public class StorageClientUtils {
      * @throws ParseException
      */
     // TODO: Unit test
+    @Deprecated
     public static Calendar[] toCalendarArray(Object object) throws ParseException {
-        if (object == null) {
+        if ( object instanceof Calendar[] ) {
+            return (Calendar[]) object;
+        } else if (object == null) {
             return null;
+        } else {
+            String[] v = StringUtils.split(StorageClientUtils.toString(object), ',');
+            Calendar[] c = new Calendar[v.length];
+            for (int i = 0; i < v.length; i++) {
+                c[i] = toCalendar(arrayUnEscape(v[i]));
+            }
+            return c;
         }
-        String[] v = StringUtils.split(StorageClientUtils.toString(object), ',');
-        Calendar[] c = new Calendar[v.length];
-        for (int i = 0; i < v.length; i++) {
-            c[i] = toCalendar(arrayUnEscape(v[i]));
-        }
-        return c;
     }
 
     /**
@@ -567,55 +542,7 @@ public class StorageClientUtils {
         return parameterValues;
     }
 
-    /**
-     * Load a Map from binary stream
-     * 
-     * @param map
-     * @param binaryStream
-     * @throws IOException
-     */
-    public static void loadFromStream(String key, Map<String, Object> map, InputStream binaryStream)
-            throws IOException {
-        DataInputStream dis = new DataInputStream(binaryStream);
-        String ckey = dis.readUTF();
-        if (!key.equals(ckey)) {
-            throw new IOException("Body Key does not match row key, unable to read");
-        }
-        int size = dis.readInt();
-        for (int i = 0; i < size; i++) {
-            String k = dis.readUTF();
-            String v = dis.readUTF();
-            map.put(k, v);
-        }
-        dis.close();
-        binaryStream.close();
-    }
 
-    /**
-     * Save a map to a binary stream
-     * 
-     * @param m
-     *            expected to contain strings throughout
-     * @return
-     * @throws IOException
-     */
-    public static InputStream storeMapToStream(String key, Map<String, Object> m)
-            throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        DataOutputStream dos = new DataOutputStream(baos);
-        dos.writeUTF(key);
-        dos.writeInt(m.size());
-        for (Entry<String, Object> e : m.entrySet()) {
-            dos.writeUTF(e.getKey());
-            dos.writeUTF((String) e.getValue());
-        }
-        dos.flush();
-        baos.flush();
-        byte[] b = baos.toByteArray();
-        baos.close();
-        dos.close();
-        return new ByteArrayInputStream(b);
-    }
 
     /**
      * Adapt an object to a session. I haven't used typing here becuase I don't
@@ -629,35 +556,35 @@ public class StorageClientUtils {
         if (source instanceof SessionAdaptable) {
             return ((SessionAdaptable) source).getSession();
         } else {
-            // assume this is a JCR session of someform, in which case there should be a SparseUserManager
-            Object userManager = safeMethod(source, "getUserManager", new Object[0],
-                    new Class[0]);
+            // assume this is a JCR session of someform, in which case there
+            // should be a SparseUserManager
+            Object userManager = safeMethod(source, "getUserManager", new Object[0], new Class[0]);
             if (userManager != null) {
-                return (Session) safeMethod(userManager, "getSession", new Object[0],
-                        new Class[0]);
+                return (Session) safeMethod(userManager, "getSession", new Object[0], new Class[0]);
             }
             return null;
         }
     }
 
-  private static Object safeMethod(Object target, String methodName, Object[] args,
-      @SuppressWarnings("rawtypes") Class[] argsTypes) {
-    if (target != null) {
-      try {
-        Method m = target.getClass().getMethod(methodName, argsTypes);
-        if (!m.isAccessible()) {
-          m.setAccessible(true);
+    private static Object safeMethod(Object target, String methodName, Object[] args,
+            @SuppressWarnings("rawtypes") Class[] argsTypes) {
+        if (target != null) {
+            try {
+                Method m = target.getClass().getMethod(methodName, argsTypes);
+                if (!m.isAccessible()) {
+                    m.setAccessible(true);
+                }
+                return m.invoke(target, args);
+            } catch (Throwable e) {
+                LOGGER.info("Failed to invoke method " + methodName + " " + target, e);
+            }
         }
-        return m.invoke(target, args);
-      } catch (Throwable e) {
-        LOGGER.info("Failed to invoke method " + methodName + " " + target, e);
-      }
+        return null;
     }
-    return null;
-  }
 
-public static boolean toBoolean(Object property) {
-    return "true".equals(StorageClientUtils.toString(property));
-}
+    @Deprecated
+    public static boolean toBoolean(Object property) {
+        return "true".equals(StorageClientUtils.toString(property));
+    }
 
 }

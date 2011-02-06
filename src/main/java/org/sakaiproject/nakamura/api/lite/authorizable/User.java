@@ -20,7 +20,6 @@ package org.sakaiproject.nakamura.api.lite.authorizable;
 import com.google.common.collect.ImmutableSet;
 
 import org.apache.commons.lang.StringUtils;
-import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 
 import java.security.Principal;
 import java.util.Map;
@@ -71,7 +70,7 @@ public class User extends Authorizable {
     // TODO: Unit test
     public boolean allowImpersonate(Subject impersSubject) {
 
-        String impersonators = StorageClientUtils.toString(getProperty(IMPERSONATORS_FIELD));
+        String impersonators = (String) getProperty(IMPERSONATORS_FIELD);
         if (impersonators == null) {
             return false;
         }
