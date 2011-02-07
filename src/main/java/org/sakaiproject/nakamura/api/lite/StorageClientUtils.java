@@ -369,7 +369,6 @@ public class StorageClientUtils {
      * @param object
      * @return the store object as an int.
      */
-    @Deprecated
     public static int toInt(Object object) {
         if (object instanceof Integer) {
             return ((Integer) object).intValue();
@@ -383,7 +382,6 @@ public class StorageClientUtils {
      * @param object
      * @return the store object as a Long
      */
-    @Deprecated
     public static long toLong(Object object) {
         if (object instanceof Long) {
             return ((Long) object).longValue();
