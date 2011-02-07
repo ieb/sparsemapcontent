@@ -61,7 +61,7 @@ public class Authorizable {
 
     public static final String LASTMODIFIED = "lastModified";
     public static final String LASTMODIFIED_BY = "lastModifiedBy";
-    public static final String CREATED = "create";
+    public static final String CREATED = "created";
     public static final String CREATED_BY = "createdBy";
 
     private static final Set<String> FILTER_PROPERTIES = ImmutableSet.of(PASSWORD_FIELD, ID_FIELD);
@@ -116,22 +116,11 @@ public class Authorizable {
         }
         return StorageClientUtils.getFilterMap(authorizableMap, null, FILTER_PROPERTIES);
     }
-
-    public static boolean isAGroup(Map<String, Object> authProperties) {
-        return (authProperties != null)
-                && GROUP_VALUE.equals(authProperties
-                        .get(AUTHORIZABLE_TYPE_FIELD));
+    
+    public boolean isGroup() {
+        return false;
     }
 
-    public static boolean isAUser(Map<String, Object> authProperties) {
-        return (authProperties != null)
-                && USER_VALUE.equals(authProperties
-                        .get(AUTHORIZABLE_TYPE_FIELD));
-    }
-
-    public static boolean isAuthorizable(Map<String, Object> authProperties) {
-        return (authProperties != null) && !authProperties.containsKey(AUTHORIZABLE_TYPE_FIELD);
-    }
 
     public void setProperty(String key, Object value) {
         if (!readOnly && !FILTER_PROPERTIES.contains(key)) {

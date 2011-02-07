@@ -111,9 +111,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         if (authorizableMap == null || authorizableMap.isEmpty()) {
             return null;
         }
-        if (Authorizable.isAUser(authorizableMap)) {
+        if (isAUser(authorizableMap)) {
             return new UserInternal(authorizableMap, false);
-        } else if (Authorizable.isAGroup(authorizableMap)) {
+        } else if (isAGroup(authorizableMap)) {
             return new GroupInternal(authorizableMap, false);
         }
         return null;
@@ -237,10 +237,10 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
           properties = Maps.newHashMap();
         }
         checkOpen();
-        if (Authorizable.isAUser(properties)) {
+        if (isAUser(properties)) {
             accessControlManager.check(Security.ZONE_ADMIN, Security.ADMIN_USERS,
                     Permissions.CAN_WRITE);
-        } else if (Authorizable.isAGroup(properties)) {
+        } else if (isAGroup(properties)) {
             accessControlManager.check(Security.ZONE_ADMIN, Security.ADMIN_GROUPS,
                     Permissions.CAN_WRITE);
         } else {
@@ -278,7 +278,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             properties = Maps.newHashMap();
         }
         checkOpen();
-        if (!Authorizable.isAUser(properties)) {
+        if (!isAUser(properties)) {
             Map<String, Object> m = Maps.newHashMap(properties);
             m.put(Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.USER_VALUE);
             properties = m;
@@ -292,7 +292,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             properties = Maps.newHashMap();
         }
         checkOpen();
-        if (!Authorizable.isAGroup(properties)) {
+        if (!isAGroup(properties)) {
             Map<String, Object> m = Maps.newHashMap(properties);
             m.put(Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.GROUP_VALUE);
             properties = m;
@@ -381,10 +381,10 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                             accessControlManager
                                     .check(Security.ZONE_AUTHORIZABLES, (String) authMap.get(Authorizable.ID_FIELD),
                                             Permissions.CAN_READ);
-                            if (Authorizable.isAUser(authMap)) {
+                            if (isAUser(authMap)) {
                                 authorizable = new UserInternal(authMap, false);
                                 return true;
-                            } else if (Authorizable.isAGroup(authMap))
+                            } else if (isAGroup(authMap))
                                 authorizable = new GroupInternal(authMap, false);
                             return true;
                         } catch (AccessDeniedException e) {
@@ -408,5 +408,20 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
 
         };
     }
+    
+    
+    private boolean isAGroup(Map<String, Object> authProperties) {
+        return (authProperties != null)
+                && Authorizable.GROUP_VALUE.equals(authProperties
+                        .get(Authorizable.AUTHORIZABLE_TYPE_FIELD));
+    }
+
+    private boolean isAUser(Map<String, Object> authProperties) {
+        return (authProperties != null)
+                && Authorizable.USER_VALUE.equals(authProperties
+                        .get(Authorizable.AUTHORIZABLE_TYPE_FIELD));
+    }
+    
+    
 
 }

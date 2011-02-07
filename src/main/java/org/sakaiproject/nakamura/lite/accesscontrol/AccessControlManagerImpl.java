@@ -310,6 +310,8 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         LOGGER.debug(" Found Principals {} ",principals);
         return principals.toArray(new String[principals.size()]);
     }
+    
+
 
     private Map<String, int[]> internalCompilePrincipals(String objectType, String objectPath, int recursion) throws StorageClientException {
         Map<String, int[]> compiledPermissions = Maps.newHashMap();
