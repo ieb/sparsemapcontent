@@ -56,6 +56,12 @@ public class Group extends Authorizable {
         this.membersRemoved = Sets.newHashSet();
         membersModified = true;
     }
+    
+    @Override
+    public boolean isGroup() {
+        return true;
+    }
+
 
     @Override
     public Map<String, Object> getPropertiesForUpdate() {
