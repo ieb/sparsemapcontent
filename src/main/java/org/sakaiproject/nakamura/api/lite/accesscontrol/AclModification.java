@@ -78,6 +78,11 @@ public class AclModification {
     public String getAceKey() {
         return this.key;
     }
+    
+    @Override
+    public String toString() {
+        return key+" "+Integer.toHexString(bitmap)+" "+op;
+    }
 
     public int modify(int bits) {
         switch (this.op) {
