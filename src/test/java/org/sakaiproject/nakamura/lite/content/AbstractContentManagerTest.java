@@ -101,6 +101,7 @@ public abstract class AbstractContentManagerTest {
         Content content = contentManager.get("/");
         Assert.assertEquals("/", content.getPath());
         Map<String, Object> p = content.getProperties();
+        LOGGER.info("Properties is {}",p);
         Assert.assertEquals("value1", (String)p.get("prop1"));
         Iterator<Content> children = content.listChildren().iterator();
         Assert.assertTrue(children.hasNext());

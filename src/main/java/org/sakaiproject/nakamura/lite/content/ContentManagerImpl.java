@@ -687,4 +687,9 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         return null;
     }
 
+    @Override
+    protected Logger getLogger() {
+        return LOGGER;
+    }
+
 }

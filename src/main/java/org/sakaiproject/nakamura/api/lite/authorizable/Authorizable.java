@@ -17,7 +17,9 @@
  */
 package org.sakaiproject.nakamura.api.lite.authorizable;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import org.apache.commons.lang.StringUtils;
@@ -72,12 +74,18 @@ public class Authorizable {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(Authorizable.class);
 
-    protected Map<String, Object> authorizableMap;
+    /**
+     * A read only copy of the map, protected by an Immutable Wrapper
+     */
+    protected ImmutableMap<String, Object> authorizableMap;
     protected Set<String> principals;
 
     protected String id;
 
-    protected Set<String> propertiesModified;
+    /**
+     * Modifications to the map.
+     */
+    protected Map<String,Object> modifiedMap;
     protected boolean principalsModified;
 
     private boolean isObjectNew = true;
@@ -85,7 +93,7 @@ public class Authorizable {
     protected boolean readOnly;
 
     public Authorizable(Map<String, Object> autorizableMap) {
-        this.authorizableMap = autorizableMap;
+        this.authorizableMap = ImmutableMap.copyOf(autorizableMap);
         Object principalsB = authorizableMap.get(PRINCIPALS_FIELD);
         if (principalsB == null) {
             this.principals = Sets.newLinkedHashSet();
@@ -97,7 +105,7 @@ public class Authorizable {
         if (!User.ANON_USER.equals(this.id)) {
           this.principals.add(Group.EVERYONE);
         }
-        propertiesModified = Sets.newHashSet();
+        modifiedMap = Maps.newHashMap();
         principalsModified = false;
     }
 
@@ -112,9 +120,9 @@ public class Authorizable {
     // TODO: Unit test
     public Map<String, Object> getSafeProperties() {
         if (!readOnly && principalsModified) {
-            authorizableMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
+            modifiedMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
         }
-        return StorageClientUtils.getFilterMap(authorizableMap, null, FILTER_PROPERTIES);
+        return StorageClientUtils.getFilterMap(authorizableMap, modifiedMap, null, FILTER_PROPERTIES);
     }
     
     public boolean isGroup() {
@@ -126,8 +134,9 @@ public class Authorizable {
         if (!readOnly && !FILTER_PROPERTIES.contains(key)) {
             Object cv = authorizableMap.get(key);
             if (!value.equals(cv)) {
-                authorizableMap.put(key, value);
-                propertiesModified.add(key);
+                modifiedMap.put(key,value);
+            } else if ( modifiedMap.containsKey(key) && !value.equals(modifiedMap.get(key))) {
+                modifiedMap.put(key, value);
             }
 
         }
@@ -135,6 +144,14 @@ public class Authorizable {
 
     public Object getProperty(String key) {
         if (!PRIVATE_PROPERTIES.contains(key)) {
+            if ( modifiedMap.containsKey(key)) {
+                Object o = modifiedMap.get(key);
+                if ( o instanceof RemoveProperty ) {
+                    return null;
+                } else {
+                    return o;
+                }
+            }
             return authorizableMap.get(key);
         }
         return null;
@@ -142,8 +159,7 @@ public class Authorizable {
 
     public void removeProperty(String key) {
         if (!readOnly && authorizableMap.containsKey(key)) {
-            authorizableMap.put(key, new RemoveProperty());
-            propertiesModified.add(key);
+            modifiedMap.put(key, new RemoveProperty());
         }
     }
 
@@ -151,7 +167,6 @@ public class Authorizable {
         if (!readOnly && !principals.contains(principal)) {
             principals.add(principal);
             principalsModified = true;
-
         }
     }
 
@@ -164,27 +179,29 @@ public class Authorizable {
 
     public Map<String, Object> getPropertiesForUpdate() {
         if (!readOnly && principalsModified) {
-          principals.remove(Group.EVERYONE);
-            authorizableMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
+            principals.remove(Group.EVERYONE);
+            modifiedMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
             principals.add(Group.EVERYONE);
-            propertiesModified.add(PRINCIPALS_FIELD);
         }
-        return StorageClientUtils.getFilterMap(authorizableMap, propertiesModified,
+        return StorageClientUtils.getFilterMap(authorizableMap, modifiedMap, null,
                 FILTER_PROPERTIES);
     }
 
     public void reset() {
         if ( !readOnly ) {
             principalsModified = false;
-            propertiesModified.clear();
+            modifiedMap.clear();
         }
     }
 
     public boolean isModified() {
-        return !readOnly && (principalsModified || (propertiesModified.size() > 0));
+        return !readOnly && (principalsModified || (modifiedMap.size() > 0));
     }
 
     public boolean hasProperty(String name) {
+        if ( modifiedMap.get(name) instanceof RemoveProperty ) {
+            return false;
+        }
         return authorizableMap.containsKey(name);
     }
 

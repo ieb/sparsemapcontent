@@ -17,6 +17,7 @@
  */
 package org.sakaiproject.nakamura.lite.accesscontrol;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -70,7 +71,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         check(objectType, objectPath, Permissions.CAN_READ_ACL);
 
         String key = this.getAclKey(objectType, objectPath);
-        return getCached(keySpace, aclColumnFamily, key);
+        return ImmutableMap.copyOf(getCached(keySpace, aclColumnFamily, key));
     }
     
     public Map<String, Object> getEffectiveAcl(String objectType, String objectPath)
@@ -400,6 +401,11 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         // only store those permissions the match the requested set.]
         
 
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return LOGGER;
     }
 
 }

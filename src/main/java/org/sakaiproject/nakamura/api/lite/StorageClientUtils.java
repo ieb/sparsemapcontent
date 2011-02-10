@@ -312,18 +312,47 @@ public class StorageClientUtils {
      * @return
      */
     @SuppressWarnings("unchecked")
-    public static <K, V> Map<K, V> getFilterMap(Map<K, V> source, Set<K> include, Set<K> exclude) {
+    public static <K, V> Map<K, V> getFilterMap(Map<K, V> source, Map<K, V> modified, Set<K> include, Set<K> exclude) {
+       if ((modified == null || modified.size() == 0) && (include == null) && ( exclude == null || exclude.size() == 0)) {
+           if ( source instanceof ImmutableMap ) {
+               return source;
+           } else {
+               return ImmutableMap.copyOf(source);
+           }
+        }
         Builder<K, V> filteredMap = new ImmutableMap.Builder<K, V>();
         for (Entry<K, V> e : source.entrySet()) {
             K k = e.getKey();
             if (include == null || include.contains(k)) {
-                if (!exclude.contains(k)) {
-                    Object o = e.getValue();
-                    if (o instanceof Map) {
-                        filteredMap.put(k,
-                                (V) getFilterMap((Map<K, V>) e.getValue(), null, exclude));
+                if (exclude == null || !exclude.contains(k)) {
+                    if ( modified != null && modified.containsKey(k) ) {
+                        V o = modified.get(k);
+                        if (o instanceof Map) {
+                            filteredMap.put(k,
+                                    (V) getFilterMap((Map<K, V>) o, null, null, exclude));
+                        } else if ( !(o instanceof RemoveProperty) ) {
+                            filteredMap.put(k, o);
+                        }
                     } else {
-                        filteredMap.put(k, e.getValue());
+                        Object o = e.getValue();
+                        if (o instanceof Map) {
+                            filteredMap.put(k,
+                                    (V) getFilterMap((Map<K, V>) e.getValue(), null, null, exclude));
+                        } else {
+                            filteredMap.put(k, e.getValue());
+                        }
+                    }
+                }
+            }
+        }
+        if ( modified != null ) {
+            // process additions
+            for (Entry<K, V> e : modified.entrySet()) {
+                K k = e.getKey();
+                if ( !source.containsKey(k)) {
+                    V v = e.getValue();
+                    if ( !(v instanceof RemoveProperty) && v != null ) {
+                        filteredMap.put(k,v);
                     }
                 }
             }
@@ -349,9 +378,9 @@ public class StorageClientUtils {
                 Object o = e.getValue();
                 if (o instanceof Map) {
                     filteredMap.put(e.getKey(),
-                            getFilteredAndEcodedMap((Map<String, Object>) e.getValue(), filter));
+                            getFilteredAndEcodedMap((Map<String, Object>) o, filter));
                 } else {
-                    filteredMap.put(e.getKey(), toStore(e.getValue()));
+                    filteredMap.put(e.getKey(), o);
                 }
             }
         }

@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public class CachingManager {
+public abstract class CachingManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CachingManager.class);
     private Map<String, CacheHolder> sharedCache;
@@ -43,14 +43,16 @@ public class CachingManager {
             throws StorageClientException {
         Map<String, Object> m = null;
         String cacheKey = getCacheKey(keySpace, columnFamily, key);
+
+
         if (sharedCache != null && sharedCache.containsKey(cacheKey)) {
             CacheHolder aclCacheHolder = sharedCache.get(cacheKey);
-            if ( aclCacheHolder != null ) {
+            if (aclCacheHolder != null) {
                 m = aclCacheHolder.get();
                 hit++;
             }
         }
-        if ( m == null ) {
+        if (m == null) {
             m = client.get(keySpace, columnFamily, key);
             miss++;
             if (sharedCache != null) {
@@ -62,11 +64,13 @@ public class CachingManager {
         }
         calls++;
         if ((calls % 1000) == 0) {
-            LOGGER.info("Cache Stats Hits {} Misses {}  hit% {}", new Object[] { hit, miss,
+            getLogger().info("Cache Stats Hits {} Misses {}  hit% {}", new Object[] { hit, miss,
                     ((100 * hit) / (hit + miss)) });
         }
         return m;
     }
+
+    protected abstract Logger getLogger();
 
     private String getCacheKey(String keySpace, String columnFamily, String key) {
         return keySpace + ":" + columnFamily + ":" + key;
@@ -77,11 +81,12 @@ public class CachingManager {
             sharedCache.remove(getCacheKey(keySpace, columnFamily, key));
         }
     }
+    
 
     protected void putCached(String keySpace, String columnFamily, String key,
-            Map<String, Object> encodedProperties, boolean probablyNew) throws StorageClientException {
+            Map<String, Object> encodedProperties, boolean probablyNew)
+            throws StorageClientException {
         removeFromCache(keySpace, columnFamily, key);
-        LOGGER.debug("Updating {} with {}  ",key, encodedProperties);
         client.insert(keySpace, columnFamily, key, encodedProperties, probablyNew);
     }
 

@@ -81,10 +81,10 @@ public class AuthorizableActivator {
                     User.SYSTEM_USER, Authorizable.PASSWORD_FIELD,
                     "--no-password--",
                     Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.USER_VALUE);
-            LOGGER.debug("Creating System User user as {} with {} ", User.SYSTEM_USER, user);
+            LOGGER.info("Creating System User user as {} with {} ", User.SYSTEM_USER, user);
             client.insert(keySpace, authorizableColumnFamily, User.SYSTEM_USER, user, true);
         } else {
-            LOGGER.debug("System User user exists as {} with {} ", User.SYSTEM_USER, authorizableMap);
+            LOGGER.info("System User user exists as {} with {} ", User.SYSTEM_USER, authorizableMap);
 
         }
     }
@@ -98,10 +98,10 @@ public class AuthorizableActivator {
                     User.ADMIN_USER, Authorizable.PASSWORD_FIELD,
                     StorageClientUtils.secureHash("admin"),
                     Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.USER_VALUE);
-            LOGGER.debug("Creating Admin User user as {} with {} ", User.ADMIN_USER, user);
+            LOGGER.info("Creating Admin User user as {} with {} ", User.ADMIN_USER, user);
             client.insert(keySpace, authorizableColumnFamily, User.ADMIN_USER, user, true);
         } else {
-            LOGGER.debug("Admin User user exists as {} with {} ", User.ADMIN_USER, authorizableMap);
+            LOGGER.info("Admin User user exists as {} with {} ", User.ADMIN_USER, authorizableMap);
         }
     }
 
@@ -114,10 +114,10 @@ public class AuthorizableActivator {
                     User.ANON_USER, Authorizable.PASSWORD_FIELD,
                     Authorizable.NO_PASSWORD,
                     Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.USER_VALUE);
-            LOGGER.debug("Creating Anon user as {} with {} ", User.ANON_USER, user);
+            LOGGER.info("Creating Anon user as {} with {} ", User.ANON_USER, user);
             client.insert(keySpace, authorizableColumnFamily, User.ANON_USER, user, true);
         } else {
-            LOGGER.debug("Anon User user exists as {} with {} ", User.ANON_USER, authorizableMap);
+            LOGGER.info("Anon User user exists as {} with {} ", User.ANON_USER, authorizableMap);
         }
     }
 

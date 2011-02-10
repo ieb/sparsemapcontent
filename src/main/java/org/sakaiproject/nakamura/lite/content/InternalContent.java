@@ -188,11 +188,11 @@ public class InternalContent {
     /**
      * Map of the structure object for the content object.
      */
-    private Map<String, Object> structure;
+    private ImmutableMap<String, Object> structure;
     /**
      * Map of the content object itself.
      */
-    private Map<String, Object> content;
+    private ImmutableMap<String, Object> content;
     /**
      * Path locating this content object within the overall content structure.
      */
@@ -216,22 +216,6 @@ public class InternalContent {
     private boolean newcontent;
     private boolean readOnly;
 
-    /**
-     * Internal constructor used by the ContentManager to create the content
-     * object.
-     * 
-     * @param path
-     *            the path
-     * @param structure
-     *            the strucutre map
-     * @param content
-     *            the content map
-     * @param contentManager
-     *            the content manager manging the content.
-     */
-    InternalContent(String path, Map<String, Object> structure, Map<String, Object> content,
-            ContentManagerImpl contentManager) {
-    }
 
     /**
      * Create a new Content Object that has not been persisted
@@ -243,9 +227,9 @@ public class InternalContent {
      */
     public InternalContent(String path, Map<String, Object> content) {
         if (content == null) {
-            content = Maps.newHashMap();
+            content = ImmutableMap.of();
         }
-        this.content = content;
+        this.content = ImmutableMap.copyOf(content);
         this.updatedContent = Maps.newHashMap(content);
         this.path = path;
         updated = true;
@@ -262,7 +246,7 @@ public class InternalContent {
      *            the content manager now managing this content object.
      */
     void internalize(Map<String, Object> structure, ContentManagerImpl contentManager, boolean readOnly) {
-        this.structure = structure;
+        this.structure = ImmutableMap.copyOf(structure);
         this.contentManager = contentManager;
         updated = false;
         newcontent = false;
@@ -318,7 +302,7 @@ public class InternalContent {
      */
     public Map<String, Object> getProperties() {
         LOGGER.debug("getting properties map {}", content);
-        return ImmutableMap.copyOf(content);
+        return StorageClientUtils.getFilterMap(content, updatedContent, null, null);
     }
 
     /**
@@ -335,10 +319,12 @@ public class InternalContent {
             return;
         }
         Object o = content.get(key);
-        if (o == null || !o.equals(value)) {
-            content.put(key, value);
+        if (!value.equals(o) ) {
             updatedContent.put(key, value);
             updated = true;
+        } else if ( updatedContent.containsKey(key) && !value.equals(updatedContent.get(key)) ) {
+            updatedContent.put(key, value);
+            updated = true;            
         }
 
     }
@@ -361,6 +347,13 @@ public class InternalContent {
      */
     // TODO: Unit test
     public Object getProperty(String key) {
+        if ( updatedContent.containsKey(key)) {
+            Object o = updatedContent.get(key);
+            if ( o instanceof RemoveProperty ) {
+                return null;
+            }
+            return o;
+        }
         Object o =  content.get(key);
         if ( o instanceof RemoveProperty ) {
             return null;
@@ -373,6 +366,9 @@ public class InternalContent {
      * @return true if the property exists.
      */
     public boolean hasProperty(String key) {
+        if ( updatedContent.containsKey(key)) {
+            return !( updatedContent.get(key) instanceof RemoveProperty);
+        }
         return content.containsKey(key) && !(content.get(key) instanceof RemoveProperty);
     }
 

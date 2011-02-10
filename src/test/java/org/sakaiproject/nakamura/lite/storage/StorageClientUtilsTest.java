@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 
 import java.io.UnsupportedEncodingException;
@@ -113,17 +114,21 @@ public class StorageClientUtilsTest {
     @SuppressWarnings("unchecked")
     @Test
     public void testGetFilterMap() {
-        Map<String, Object> t = ImmutableMap.of("a", (Object) "b", "c", "d");
-        Map<String, Object> m = StorageClientUtils.getFilterMap(t, null, ImmutableSet.of("c"));
-        Assert.assertEquals(1, m.size());
+        Map<String, Object> t = ImmutableMap.of("a", (Object) "b", "c", "d", "y", "should have been removed");
+        Map<String, Object> modifications = ImmutableMap.of("a", (Object) "b", "x", "New", "y", new RemoveProperty() );
+        Map<String, Object> m = StorageClientUtils.getFilterMap(t, modifications, null, ImmutableSet.of("c"));
+        Assert.assertEquals(2, m.size());
         Assert.assertEquals("b", m.get("a"));
+        Assert.assertEquals("New", m.get("x"));
+        Assert.assertFalse(m.containsKey("y"));
         Map<String, Object> t2 = ImmutableMap.of("a", (Object) "b", "c", "d", "e", m);
-        Map<String, Object> m2 = StorageClientUtils.getFilterMap(t2, null, ImmutableSet.of("c"));
+        Map<String, Object> m2 = StorageClientUtils.getFilterMap(t2, null, null, ImmutableSet.of("c"));
         Assert.assertEquals(2, m2.size());
         Assert.assertEquals("b", m2.get("a"));
         m = (Map<String, Object>) m2.get("e");
-        Assert.assertEquals(1, m.size());
+        Assert.assertEquals(2, m.size());
         Assert.assertEquals("b", m.get("a"));
+        Assert.assertEquals("New", m.get("x"));
 
     }
 

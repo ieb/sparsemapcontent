@@ -56,6 +56,7 @@ public class Group extends Authorizable {
         membersModified = true;
     }
     
+
     @Override
     public boolean isGroup() {
         return true;
@@ -65,18 +66,17 @@ public class Group extends Authorizable {
     @Override
     public Map<String, Object> getPropertiesForUpdate() {
         if ( !readOnly && membersModified ) {
-            authorizableMap.put(MEMBERS_FIELD, StringUtils.join(members, ';'));
-            propertiesModified.add(MEMBERS_FIELD);
+            modifiedMap.put(MEMBERS_FIELD, StringUtils.join(members, ';'));
         }
-        return super.getPropertiesForUpdate();
+        Map<String, Object> propertiesForUpdate =  super.getPropertiesForUpdate();
+        return propertiesForUpdate;
     }
     
     @Override
     // TODO: Unit test
     public Map<String, Object> getSafeProperties() {
         if ( !readOnly && membersModified ) {
-            authorizableMap.put(MEMBERS_FIELD, StringUtils.join(members, ';'));
-            propertiesModified.add(MEMBERS_FIELD);
+            modifiedMap.put(MEMBERS_FIELD, StringUtils.join(members, ';'));
         }
         return super.getSafeProperties();
     }
@@ -125,6 +125,7 @@ public class Group extends Authorizable {
 
     public void reset() {
         if (!readOnly ) {
+            
             super.reset();
             LOGGER.debug("{} reset ",new Object[]{this});
             membersAdded.clear();

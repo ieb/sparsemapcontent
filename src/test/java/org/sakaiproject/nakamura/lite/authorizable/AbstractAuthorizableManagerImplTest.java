@@ -18,6 +18,7 @@
 package org.sakaiproject.nakamura.lite.authorizable;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import org.junit.After;
@@ -42,7 +43,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractAuthorizableManagerImplTest {
@@ -249,12 +252,14 @@ public abstract class AbstractAuthorizableManagerImplTest {
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
                 client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
 
+        authorizableManager.delete("user2");
         authorizableManager.delete("user3");
         authorizableManager.delete("testgroup");
 
+        Assert.assertTrue(authorizableManager.createUser("user2", "TestUser2", null, ImmutableMap
+                .of("testkey", (Object) "testvalue", "principals", "administrators;testers")));
         Assert.assertTrue(authorizableManager.createUser("user3", "TestUser", null, ImmutableMap
-                .of("testkey", (Object) "testvalue", "principals", "administrators;testers",
-                        "members", "user1;user2")));
+                .of("testkey", (Object) "testvalue", "principals", "administrators;testers")));
         Assert.assertTrue(authorizableManager.createGroup("testgroup", "Test Group", ImmutableMap
                 .of("testkey", (Object) "testvalue", "principals", "administrators;testers",
                         "members", "user1;user2")));
@@ -284,6 +289,16 @@ public abstract class AbstractAuthorizableManagerImplTest {
         g.addMember("user3");
         g.removeMember("user2");
 
+        principals = g.getPrincipals();
+        List<String> principalList = Lists.newArrayList(principals);
+        Collections.sort(principalList);
+        principals = principalList.toArray(new String[principalList.size()]);
+        LOGGER.info("Principals before save {} ", Arrays.toString(principals));
+        Assert.assertArrayEquals(new String[] { "administrators", Group.EVERYONE, "tester2"  }, principals);
+        members = g.getMembers();
+        LOGGER.info("Members {} ", Arrays.toString(members));
+        Assert.assertArrayEquals(new String[] { "user1", "user3" }, members);
+
         LOGGER.info("Updating Group with changed membership ----------------------");
         authorizableManager.updateAuthorizable(g);
         LOGGER.info("Done Updating Group with changed membership ----------------------");
@@ -294,7 +309,10 @@ public abstract class AbstractAuthorizableManagerImplTest {
         Group g2 = (Group) a2;
         principals = g2.getPrincipals();
         LOGGER.info("Principals {} ", Arrays.toString(principals));
-        Assert.assertArrayEquals(new String[] { "administrators", "tester2", Group.EVERYONE }, principals);
+        principalList = Lists.newArrayList(principals);
+        Collections.sort(principalList);
+        principals = principalList.toArray(new String[principalList.size()]);
+        Assert.assertArrayEquals(new String[] { "administrators", Group.EVERYONE, "tester2" }, principals);
         members = g2.getMembers();
         LOGGER.info("Members {} ", Arrays.toString(members));
         Assert.assertArrayEquals(new String[] { "user1", "user3" }, members);

@@ -422,6 +422,10 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                         .get(Authorizable.AUTHORIZABLE_TYPE_FIELD));
     }
     
-    
+    @Override
+    protected Logger getLogger() {
+        return LOGGER;
+    }
+
 
 }
