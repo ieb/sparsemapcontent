@@ -230,7 +230,7 @@ public class InternalContent {
             content = ImmutableMap.of();
         }
         this.content = ImmutableMap.copyOf(content);
-        this.updatedContent = Maps.newHashMap(content);
+        this.updatedContent = Maps.newHashMap();
         this.path = path;
         updated = true;
         newcontent = true;
@@ -253,27 +253,18 @@ public class InternalContent {
         this.readOnly = readOnly;
     }
 
-    /**
-     * @return get the internal content map.
-     */
-    Map<String, Object> getContent() {
-        return content;
-    }
-
-    /**
-     * @return get the updated content map.
-     */
-    Map<String, Object> getUpdated() {
-        return updatedContent;
-    }
 
     /**
      * Reset the object back to its last saved state.
      */
-    public void reset() {
-        updatedContent.clear();
-        updated = false;
-        newcontent = false;
+    public void reset(Map<String, Object> updatedMap) {
+        if ( !readOnly ) {
+            this.content = ImmutableMap.copyOf(updatedMap);
+            updatedContent.clear();
+            updated = false;
+            newcontent = false;
+            LOGGER.debug("Reset to {} ",updatedMap);
+        }
     }
 
     /**
@@ -303,6 +294,11 @@ public class InternalContent {
     public Map<String, Object> getProperties() {
         LOGGER.debug("getting properties map {}", content);
         return StorageClientUtils.getFilterMap(content, updatedContent, null, null);
+    }
+
+    public Map<String, Object> getPropertiesForUpdate() {
+        return StorageClientUtils.getFilterMap(content, updatedContent, null,
+                null);
     }
 
     /**

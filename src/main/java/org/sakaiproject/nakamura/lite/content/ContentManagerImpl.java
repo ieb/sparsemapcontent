@@ -218,7 +218,6 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_WRITE);
         String id = null;
         Map<String, Object> toSave = null;
-        Map<String, Object> contentPropertes = content.getContent();
         if (content.isNew()) {
             // create the parents if necessary
             if (!StorageClientUtils.isRoot(path)) {
@@ -228,7 +227,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                     update(new Content(parentPath, null));
                 }
             }
-            toSave = Maps.newHashMap(contentPropertes);
+            toSave =  Maps.newHashMap(content.getPropertiesForUpdate());
             id = StorageClientUtils.getUuid();
             toSave.put(UUID_FIELD, id);
             toSave.put(PATH_FIELD, path);
@@ -240,8 +239,8 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                     accessControlManager.getCurrentUserId());
             LOGGER.debug("New Content with {} {} ", id, toSave);
         } else if (content.isUpdated()) {
-            toSave = Maps.newHashMap(content.getUpdated());
-            id = (String)contentPropertes.get(UUID_FIELD);
+            toSave =  Maps.newHashMap(content.getPropertiesForUpdate());
+            id = (String)toSave.get(UUID_FIELD);
             toSave.put(LASTMODIFIED, System.currentTimeMillis());
             toSave.put(LASTMODIFIED_BY,
                     accessControlManager.getCurrentUserId());
@@ -273,7 +272,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         putCached(keySpace, contentColumnFamily, id, toSave, isnew);
         LOGGER.debug("Saved {} at {} as {} ", new Object[] { path, id, toSave });
         // reset state to unmodified to take further modifications.
-        content.reset();
+        content.reset(getCached(keySpace, contentColumnFamily, id));
         eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), isnew, "op:update");        
     }
 

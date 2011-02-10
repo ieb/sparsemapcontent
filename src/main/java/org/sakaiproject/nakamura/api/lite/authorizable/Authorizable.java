@@ -93,7 +93,13 @@ public class Authorizable {
     protected boolean readOnly;
 
     public Authorizable(Map<String, Object> autorizableMap) {
-        this.authorizableMap = ImmutableMap.copyOf(autorizableMap);
+        principalsModified = false;
+        modifiedMap = Maps.newHashMap();
+        init(autorizableMap);
+    }
+    
+    private void init(Map<String, Object> newMap) {
+        this.authorizableMap = ImmutableMap.copyOf(newMap);
         Object principalsB = authorizableMap.get(PRINCIPALS_FIELD);
         if (principalsB == null) {
             this.principals = Sets.newLinkedHashSet();
@@ -105,9 +111,18 @@ public class Authorizable {
         if (!User.ANON_USER.equals(this.id)) {
           this.principals.add(Group.EVERYONE);
         }
-        modifiedMap = Maps.newHashMap();
-        principalsModified = false;
     }
+
+    public void reset(Map<String, Object> newMap) {
+        if ( !readOnly ) {
+            principalsModified = false;
+            modifiedMap.clear();
+            init(newMap);
+            
+            LOGGER.debug("After Update to Authorizable {} ", authorizableMap);
+        }
+    }
+
 
     public String[] getPrincipals() {
         return principals.toArray(new String[principals.size()]);
@@ -187,12 +202,7 @@ public class Authorizable {
                 FILTER_PROPERTIES);
     }
 
-    public void reset() {
-        if ( !readOnly ) {
-            principalsModified = false;
-            modifiedMap.clear();
-        }
-    }
+
 
     public boolean isModified() {
         return !readOnly && (principalsModified || (modifiedMap.size() > 0));

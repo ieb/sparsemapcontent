@@ -224,7 +224,8 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         encodedProperties.put(Authorizable.LASTMODIFIED,System.currentTimeMillis());
         encodedProperties.put(Authorizable.LASTMODIFIED_BY,accessControlManager.getCurrentUserId());
         putCached(keySpace, authorizableColumnFamily, id, encodedProperties, authorizable.isNew());
-        authorizable.reset();
+        
+        authorizable.reset(getCached(keySpace, authorizableColumnFamily, id));
 
         storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, accessControlManager.getCurrentUserId(), true, type);
 

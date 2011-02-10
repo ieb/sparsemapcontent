@@ -123,11 +123,12 @@ public class Group extends Authorizable {
         return membersRemoved.toArray(new String[membersRemoved.size()]);
     }
 
-    public void reset() {
+    public void reset(Map<String, Object> newMap) {
         if (!readOnly ) {
-            
-            super.reset();
+            super.reset(newMap);
             LOGGER.debug("{} reset ",new Object[]{this});
+            this.members = Sets.newLinkedHashSet(Iterables.of(StringUtils.split(
+                    (String) authorizableMap.get(MEMBERS_FIELD), ';')));
             membersAdded.clear();
             membersRemoved.clear();
             membersModified = false;
