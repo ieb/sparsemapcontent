@@ -96,6 +96,11 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
                 int modifiedbitmap = m.modify(originalbitmap);
                 modifications.put(name, modifiedbitmap);
                 
+                // KERN-1515
+                // We need to modify the opposite key to apply the
+                // reverse of the change we just made. Otherwise,
+                // you can end up with ACLs with contradictions, like:
+                // anonymous@g=1, anonymous@d=1
                 if (currentAcl.containsKey(inverseKeyOf(name))) {
                   // XOR gives us a mask of only the bits that changed
                   int difference = originalbitmap ^ modifiedbitmap;
