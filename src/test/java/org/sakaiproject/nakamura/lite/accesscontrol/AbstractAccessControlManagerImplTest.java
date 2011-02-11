@@ -139,22 +139,13 @@ public abstract class AbstractAccessControlManagerImplTest {
       AclModification user3canWrite = new AclModification(AclModification.grantKey(u3),
           Permissions.CAN_WRITE.getPermission(), AclModification.Operation.OP_OR);
       
-      AclModification user3cannotManage = new AclModification(AclModification.denyKey(u3),
-          Permissions.CAN_MANAGE.getPermission(), AclModification.Operation.OP_OR);
-      
       AclModification user3cannotWrite = new AclModification(AclModification.denyKey(u3),
           Permissions.CAN_WRITE.getPermission(), AclModification.Operation.OP_OR);
       
       accessControlManagerImpl.setAcl(Security.ZONE_CONTENT, basepath+"/zach", 
           new AclModification[] { user3canRead, user3canWrite });
       
-      Map<String, Object> zachacl = accessControlManagerImpl
-      .getAcl(Security.ZONE_CONTENT, basepath+"/zach");
-      
-      accessControlManagerImpl.setAcl(Security.ZONE_CONTENT, basepath+"/zach", new AclModification[] { user3cannotWrite});
-      
-      zachacl = accessControlManagerImpl
-      .getAcl(Security.ZONE_CONTENT, basepath+"/zach");
+      accessControlManagerImpl.setAcl(Security.ZONE_CONTENT, basepath+"/zach", new AclModification[] { user3cannotWrite });
       
       Assert.assertFalse("User should not be able to write.", 
           accessControlManagerImpl.can(authorizableManager.findAuthorizable(u3), Security.ZONE_CONTENT, basepath+"/zach", Permissions.CAN_WRITE));
