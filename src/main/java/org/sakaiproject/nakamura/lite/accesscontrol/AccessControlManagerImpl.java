@@ -92,11 +92,17 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
                 modifications.put(name, null);
             } else {
 
-                int bitmap = toInt(currentAcl.get(name));
-                bitmap = m.modify(bitmap);
-                modifications.put(name, bitmap);
+                int originalbitmap = toInt(currentAcl.get(name));
+                int modifiedbitmap = m.modify(originalbitmap);
+                modifications.put(name, modifiedbitmap);
+                
                 if (currentAcl.containsKey(inverseKeyOf(name))) {
-                  modifications.put(inverseKeyOf(name), null);
+                  // XOR gives us a mask of only the bits that changed
+                  int difference = originalbitmap ^ modifiedbitmap;
+                  int otherbitmap = toInt(currentAcl.get(inverseKeyOf(name)));
+                  // toggle the bits that have been modified
+                  int modifiedotherbitmap = otherbitmap ^ difference;
+                  modifications.put(inverseKeyOf(name), modifiedotherbitmap);
                 }
             }
         }
@@ -104,7 +110,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         putCached(keySpace, aclColumnFamily, key, modifications, (currentAcl == null || currentAcl.size() == 0));
         storeListener.onUpdate(objectType, objectPath,  getCurrentUserId(), false, "op:acl");
     }
-
+    
     private String inverseKeyOf(String key) {
       if (key == null) {
         return null;

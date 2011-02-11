@@ -118,6 +118,49 @@ public abstract class AbstractAccessControlManagerImplTest {
         LOGGER.info("Got ACL {}", acl);
 
     }
+    
+    @Test
+    public void testKern1515() throws Exception {
+      AuthenticatorImpl authenticator = new AuthenticatorImpl(client, configuration);
+      User currentUser = authenticator.authenticate("admin", "admin");
+      String u3 = "user3-"+System.currentTimeMillis();
+      String basepath = "testpath"+System.currentTimeMillis();
+
+      AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
+              currentUser, configuration, null,  new LoggingStorageListener());
+      AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser, client,
+          configuration, accessControlManagerImpl, null,  new LoggingStorageListener());
+      authorizableManager.createUser(u3, "User 3", "test",
+          ImmutableMap.of("test", (Object)"test"));
+
+      AclModification user3canRead = new AclModification(AclModification.grantKey(u3),
+              Permissions.CAN_READ.getPermission(), AclModification.Operation.OP_OR);
+      
+      AclModification user3canWrite = new AclModification(AclModification.grantKey(u3),
+          Permissions.CAN_WRITE.getPermission(), AclModification.Operation.OP_OR);
+      
+      AclModification user3cannotManage = new AclModification(AclModification.denyKey(u3),
+          Permissions.CAN_MANAGE.getPermission(), AclModification.Operation.OP_OR);
+      
+      AclModification user3cannotWrite = new AclModification(AclModification.denyKey(u3),
+          Permissions.CAN_WRITE.getPermission(), AclModification.Operation.OP_OR);
+      
+      accessControlManagerImpl.setAcl(Security.ZONE_CONTENT, basepath+"/zach", 
+          new AclModification[] { user3canRead, user3canWrite });
+      
+      Map<String, Object> zachacl = accessControlManagerImpl
+      .getAcl(Security.ZONE_CONTENT, basepath+"/zach");
+      
+      accessControlManagerImpl.setAcl(Security.ZONE_CONTENT, basepath+"/zach", new AclModification[] { user3cannotWrite});
+      
+      zachacl = accessControlManagerImpl
+      .getAcl(Security.ZONE_CONTENT, basepath+"/zach");
+      
+      Assert.assertFalse("User should not be able to write.", 
+          accessControlManagerImpl.can(authorizableManager.findAuthorizable(u3), Security.ZONE_CONTENT, basepath+"/zach", Permissions.CAN_WRITE));
+      Assert.assertTrue("User should be able to read.", 
+          accessControlManagerImpl.can(authorizableManager.findAuthorizable(u3), Security.ZONE_CONTENT, basepath+"/zach", Permissions.CAN_READ));
+    }
 
     @Test
     public void testPrivileges() throws StorageClientException, AccessDeniedException {
@@ -149,7 +192,7 @@ public abstract class AbstractAccessControlManagerImplTest {
                         .getPermission(), AclModification.Operation.OP_REPLACE);
         AclModification user3canRead = new AclModification(AclModification.grantKey(u3),
                 Permissions.CAN_READ.getPermission(), AclModification.Operation.OP_REPLACE);
-
+        
         accessControlManagerImpl.setAcl(Security.ZONE_CONTENT, basepath+"/a/b/c",
                 new AclModification[] { user1CanAnything, user2CantReadWrite, user3cantRead,
                         denyAnon, denyEveryone });
