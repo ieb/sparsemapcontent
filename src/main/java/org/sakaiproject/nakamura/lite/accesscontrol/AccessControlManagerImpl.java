@@ -95,11 +95,27 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
                 int bitmap = toInt(currentAcl.get(name));
                 bitmap = m.modify(bitmap);
                 modifications.put(name, bitmap);
+                if (currentAcl.containsKey(inverseKeyOf(name))) {
+                  modifications.put(inverseKeyOf(name), null);
+                }
             }
         }
         LOGGER.debug("Updating ACL {} {} ", key, modifications);
         putCached(keySpace, aclColumnFamily, key, modifications, (currentAcl == null || currentAcl.size() == 0));
         storeListener.onUpdate(objectType, objectPath,  getCurrentUserId(), false, "op:acl");
+    }
+
+    private String inverseKeyOf(String key) {
+      if (key == null) {
+        return null;
+      }
+      if (AclModification.isGrant(key)) {
+        return AclModification.getPrincipal(key) + AclModification.DENIED_MARKER;
+      } else if (AclModification.isDeny(key)) {
+        return AclModification.getPrincipal(key) + AclModification.GRANTED_MARKER;
+      } else {
+        return key;
+      }
     }
 
     public void check(String objectType, String objectPath, Permission permission)
