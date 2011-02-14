@@ -151,6 +151,10 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                     if (newMembers[i] == null) {
                         LOGGER.warn("===================== Added member {} does not exist, and had been removed from the list to be added",newMember );
                         group.removeMember(newMember);
+                    } else if (isCyclicMembership(id, newMembers[i])) {
+                        LOGGER.warn("Member {} would create circular group membership and has been removed from the list to be added", newMember);
+                        newMembers[i] = null;
+                        group.removeMember(newMember);
                     }
                 } catch (AccessDeniedException e) {
                     group.removeMember(newMember);
@@ -224,7 +228,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         encodedProperties.put(Authorizable.LASTMODIFIED,System.currentTimeMillis());
         encodedProperties.put(Authorizable.LASTMODIFIED_BY,accessControlManager.getCurrentUserId());
         putCached(keySpace, authorizableColumnFamily, id, encodedProperties, authorizable.isNew());
-        
+
         authorizable.reset(getCached(keySpace, authorizableColumnFamily, id));
 
         storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, accessControlManager.getCurrentUserId(), true, type);
@@ -409,8 +413,8 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
 
         };
     }
-    
-    
+
+
     private boolean isAGroup(Map<String, Object> authProperties) {
         return (authProperties != null)
                 && Authorizable.GROUP_VALUE.equals(authProperties
@@ -422,7 +426,19 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 && Authorizable.USER_VALUE.equals(authProperties
                         .get(Authorizable.AUTHORIZABLE_TYPE_FIELD));
     }
-    
+
+    private boolean isCyclicMembership(String groupId, Authorizable newMember) {
+        if (newMember.isGroup()) {
+            Group newGroupMember = (Group) newMember;
+            for (String memberOfNewMember : newGroupMember.getMembers()) {
+                if (groupId.equals(memberOfNewMember)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     @Override
     protected Logger getLogger() {
         return LOGGER;
