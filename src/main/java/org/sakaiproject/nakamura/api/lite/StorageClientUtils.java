@@ -631,7 +631,7 @@ public class StorageClientUtils {
         Content content = contentManager.get(path);
         if (content != null) {
             for (String childPath : content.listChildPaths()) {
-                deleteTree(contentManager, childPath);
+                deleteTree(contentManager, newPath(path, childPath));
             }
         }
         contentManager.delete(path);
