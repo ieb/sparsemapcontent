@@ -23,6 +23,9 @@ import com.google.common.collect.Maps;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.api.lite.content.Content;
+import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.api.lite.util.Type1UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -611,6 +614,27 @@ public class StorageClientUtils {
     @Deprecated
     public static boolean toBoolean(Object property) {
         return "true".equals(StorageClientUtils.toString(property));
+    }
+
+    /**
+     * Delete an entire tree starting from the deepest part of the tree and
+     * working back up. Will stop the moment a permission denied is encountered
+     * either for read or for delete.
+     *
+     * @param contentManager
+     * @param path
+     * @throws AccessDeniedException
+     * @throws StorageClientException
+     */
+    public static void deleteTree(ContentManager contentManager, String path)
+            throws AccessDeniedException, StorageClientException {
+        Content content = contentManager.get(path);
+        if (content != null) {
+            for (String childPath : content.listChildPaths()) {
+                deleteTree(contentManager, childPath);
+            }
+        }
+        contentManager.delete(path);
     }
 
 }
