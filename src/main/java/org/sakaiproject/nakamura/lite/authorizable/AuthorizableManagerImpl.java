@@ -225,8 +225,8 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
 
         Map<String, Object> encodedProperties = StorageClientUtils.getFilteredAndEcodedMap(
                 authorizable.getPropertiesForUpdate(), FILTER_ON_UPDATE);
-        encodedProperties.put(Authorizable.LASTMODIFIED,System.currentTimeMillis());
-        encodedProperties.put(Authorizable.LASTMODIFIED_BY,accessControlManager.getCurrentUserId());
+        encodedProperties.put(Authorizable.LASTMODIFIED_FIELD,System.currentTimeMillis());
+        encodedProperties.put(Authorizable.LASTMODIFIED_BY_FIELD,accessControlManager.getCurrentUserId());
         putCached(keySpace, authorizableColumnFamily, id, encodedProperties, authorizable.isNew());
 
         authorizable.reset(getCached(keySpace, authorizableColumnFamily, id));
@@ -269,9 +269,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             encodedProperties.put(Authorizable.PASSWORD_FIELD,
                     Authorizable.NO_PASSWORD);
         }
-        encodedProperties.put(Authorizable.CREATED,
+        encodedProperties.put(Authorizable.CREATED_FIELD,
                 System.currentTimeMillis());
-        encodedProperties.put(Authorizable.CREATED_BY,
+        encodedProperties.put(Authorizable.CREATED_BY_FIELD,
                 accessControlManager.getCurrentUserId());
         putCached(keySpace, authorizableColumnFamily, authorizableId, encodedProperties, true);
         return true;
@@ -338,9 +338,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 }
             }
             putCached(keySpace, authorizableColumnFamily, id, ImmutableMap.of(
-                    Authorizable.LASTMODIFIED,
+                    Authorizable.LASTMODIFIED_FIELD,
                     (Object)System.currentTimeMillis(),
-                    Authorizable.LASTMODIFIED_BY,
+                    Authorizable.LASTMODIFIED_BY_FIELD,
                     accessControlManager.getCurrentUserId(),
                     Authorizable.PASSWORD_FIELD,
                     StorageClientUtils.secureHash(password)), false);

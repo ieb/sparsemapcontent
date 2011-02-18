@@ -20,6 +20,7 @@ package org.sakaiproject.nakamura.lite.content;
 import com.google.common.collect.Maps;
 
 import org.apache.commons.io.IOUtils;
+import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.content.Content;
@@ -41,7 +42,7 @@ public class FileStreamContentHelper implements StreamedContentHelper {
     private static final String DEFAULT_FILE_STORE = "store";
     private static final String CONFIG_STOREBASE = "store-base-dir";
     private static final Logger LOGGER = LoggerFactory.getLogger(FileStreamContentHelper.class);
-    private static final String STORE_LOCATION = "bodyLocation";
+    private static final String STORE_LOCATION_FIELD = Repository.SYSTEM_PROP_PREFIX + "bodyLocation";
     private String fileStore;
     private RowHasher rowHasher;
 
@@ -70,7 +71,7 @@ public class FileStreamContentHelper implements StreamedContentHelper {
         Map<String, Object> metadata = Maps.newHashMap();
         metadata.put(StorageClientUtils.getAltField(Content.LENGTH_FIELD, streamId), length);
         metadata.put(StorageClientUtils.getAltField(Content.BLOCKID_FIELD, streamId), contentBlockId);
-        metadata.put(StorageClientUtils.getAltField(STORE_LOCATION, streamId), path);
+        metadata.put(StorageClientUtils.getAltField(STORE_LOCATION_FIELD, streamId), path);
         return metadata;
     }
 
@@ -87,7 +88,7 @@ public class FileStreamContentHelper implements StreamedContentHelper {
 
     public InputStream readBody(String keySpace, String columnFamily, String contentBlockId, String streamId,
             Map<String, Object> content) throws IOException {
-        String path = (String) content.get(StorageClientUtils.getAltField(STORE_LOCATION, streamId));
+        String path = (String) content.get(StorageClientUtils.getAltField(STORE_LOCATION_FIELD, streamId));
         LOGGER.debug("Reading from {} as body of {}:{}:{} ", new Object[] { path, keySpace,
                 columnFamily, contentBlockId });
         File file = new File(fileStore + "/" + path);

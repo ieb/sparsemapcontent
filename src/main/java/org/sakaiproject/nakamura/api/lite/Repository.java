@@ -26,6 +26,13 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 public interface Repository {
 
     /**
+     * The prefix on all system properties in the repository. Anything prefixed
+     * with this is a system proper anything not prefixed with this is not a
+     * system property.
+     */
+    public static final String SYSTEM_PROP_PREFIX = "_";
+
+    /**
      * Login with a user name and password
      * 
      * @param username

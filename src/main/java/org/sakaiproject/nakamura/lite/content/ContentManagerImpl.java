@@ -18,18 +18,18 @@
 package org.sakaiproject.nakamura.lite.content;
 
 import static org.sakaiproject.nakamura.lite.content.InternalContent.BLOCKID_FIELD;
-import static org.sakaiproject.nakamura.lite.content.InternalContent.BODY_CREATED;
-import static org.sakaiproject.nakamura.lite.content.InternalContent.BODY_CREATED_BY;
-import static org.sakaiproject.nakamura.lite.content.InternalContent.BODY_LAST_MODIFIED;
-import static org.sakaiproject.nakamura.lite.content.InternalContent.BODY_LAST_MODIFIED_BY;
-import static org.sakaiproject.nakamura.lite.content.InternalContent.COPIED_DEEP;
-import static org.sakaiproject.nakamura.lite.content.InternalContent.COPIED_FROM_ID;
-import static org.sakaiproject.nakamura.lite.content.InternalContent.COPIED_FROM_PATH;
-import static org.sakaiproject.nakamura.lite.content.InternalContent.CREATED;
-import static org.sakaiproject.nakamura.lite.content.InternalContent.CREATED_BY;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.BODY_CREATED_FIELD;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.BODY_CREATED_BY_FIELD;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.BODY_LAST_MODIFIED_FIELD;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.BODY_LAST_MODIFIED_BY_FIELD;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.COPIED_DEEP_FIELD;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.COPIED_FROM_ID_FIELD;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.COPIED_FROM_PATH_FIELD;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.CREATED_FIELD;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.CREATED_BY_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.DELETED_FIELD;
-import static org.sakaiproject.nakamura.lite.content.InternalContent.LASTMODIFIED;
-import static org.sakaiproject.nakamura.lite.content.InternalContent.LASTMODIFIED_BY;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.LASTMODIFIED_FIELD;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.LASTMODIFIED_BY_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.LENGTH_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.LINKED_PATH_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.NEXT_VERSION_FIELD;
@@ -41,7 +41,7 @@ import static org.sakaiproject.nakamura.lite.content.InternalContent.STRUCTURE_U
 import static org.sakaiproject.nakamura.lite.content.InternalContent.TRUE;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.UUID_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.VERSION_HISTORY_ID_FIELD;
-import static org.sakaiproject.nakamura.lite.content.InternalContent.VERSION_NUMBER;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.VERSION_NUMBER_FIELD;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -145,8 +145,8 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
      */
     private static final String DELETEDITEMS_KEY = ":deleteditems";
 
-    private static final Set<String> DEEP_COPY_FILTER = ImmutableSet.of(LASTMODIFIED,
-            LASTMODIFIED_BY, UUID_FIELD, PATH_FIELD);
+    private static final Set<String> DEEP_COPY_FILTER = ImmutableSet.of(LASTMODIFIED_FIELD,
+            LASTMODIFIED_BY_FIELD, UUID_FIELD, PATH_FIELD);
 
     /**
      * Storage Client
@@ -231,18 +231,18 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
             id = StorageClientUtils.getUuid();
             toSave.put(UUID_FIELD, id);
             toSave.put(PATH_FIELD, path);
-            toSave.put(CREATED, System.currentTimeMillis());
-            toSave.put(CREATED_BY,
+            toSave.put(CREATED_FIELD, System.currentTimeMillis());
+            toSave.put(CREATED_BY_FIELD,
                     accessControlManager.getCurrentUserId());
-            toSave.put(LASTMODIFIED, System.currentTimeMillis());
-            toSave.put(LASTMODIFIED_BY,
+            toSave.put(LASTMODIFIED_FIELD, System.currentTimeMillis());
+            toSave.put(LASTMODIFIED_BY_FIELD,
                     accessControlManager.getCurrentUserId());
             LOGGER.debug("New Content with {} {} ", id, toSave);
         } else if (content.isUpdated()) {
             toSave =  Maps.newHashMap(content.getPropertiesForUpdate());
             id = (String)toSave.get(UUID_FIELD);
-            toSave.put(LASTMODIFIED, System.currentTimeMillis());
-            toSave.put(LASTMODIFIED_BY,
+            toSave.put(LASTMODIFIED_FIELD, System.currentTimeMillis());
+            toSave.put(LASTMODIFIED_BY_FIELD,
                     accessControlManager.getCurrentUserId());
             LOGGER.debug("Updating Content with {} {} ", id, toSave);
         } else {
@@ -317,14 +317,14 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         
         Map<String, Object> metadata = client.streamBodyIn(keySpace, contentColumnFamily,
                 contentId, contentBlockId, streamId, content, in);
-        metadata.put(StorageClientUtils.getAltField(BODY_LAST_MODIFIED, streamId),
+        metadata.put(StorageClientUtils.getAltField(BODY_LAST_MODIFIED_FIELD, streamId),
                 System.currentTimeMillis());
-        metadata.put(StorageClientUtils.getAltField(BODY_LAST_MODIFIED_BY, streamId),
+        metadata.put(StorageClientUtils.getAltField(BODY_LAST_MODIFIED_BY_FIELD, streamId),
                 accessControlManager.getCurrentUserId());
         if (isnew) {
-            metadata.put(StorageClientUtils.getAltField(BODY_CREATED, streamId),
+            metadata.put(StorageClientUtils.getAltField(BODY_CREATED_FIELD, streamId),
                     System.currentTimeMillis());
-            metadata.put(StorageClientUtils.getAltField(BODY_CREATED_BY, streamId),
+            metadata.put(StorageClientUtils.getAltField(BODY_CREATED_BY_FIELD, streamId),
                     accessControlManager.getCurrentUserId());
         }
         putCached(keySpace, contentColumnFamily, contentId, metadata, isnew);
@@ -396,9 +396,9 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         } else {
             copyProperties.putAll(f.getProperties());
         }
-        copyProperties.put(COPIED_FROM_PATH, from);
-        copyProperties.put(COPIED_FROM_ID, f.getProperty(UUID_FIELD));
-        copyProperties.put(COPIED_DEEP, deep);
+        copyProperties.put(COPIED_FROM_PATH_FIELD, from);
+        copyProperties.put(COPIED_FROM_ID_FIELD, f.getProperty(UUID_FIELD));
+        copyProperties.put(COPIED_DEEP_FIELD, deep);
         t = new Content(to, copyProperties);
         update(t);
 
@@ -556,7 +556,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         saveVersion.put(NEXT_VERSION_FIELD, newVersionId);
         saveVersion.put(READONLY_FIELD, TRUE);
         Object versionNumber = System.currentTimeMillis();
-        saveVersion.put(VERSION_NUMBER, versionNumber);
+        saveVersion.put(VERSION_NUMBER_FIELD, versionNumber);
 
         putCached(keySpace, contentColumnFamily, saveVersionId, saveVersion, false);
         putCached(keySpace, contentColumnFamily, newVersionId, newVersion, true);

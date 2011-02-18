@@ -96,6 +96,7 @@ CREATE TABLE  `index_cols` (
   PRIMARY KEY  (`cid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-insert into index_cols (cid) values ('au:firstName');
+insert into index_cols (cid) values ('au:rep:principalName');
+insert into index_cols (cid) values ('au:type');
 
 

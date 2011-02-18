@@ -63,7 +63,7 @@ public class CreateUsersAndGroupsClient extends AbstractScalingClient {
             for (int i = 0; i < nusers; i++) {
                 String userId = tname + "_" + i;
                 authorizableManager.createUser(userId, userId, "test", ImmutableMap.of(userId,
-                        (Object) "testvalue", "principals", "administrators;testers",
+                        (Object) "testvalue",  Authorizable.PRINCIPALS_FIELD, "administrators;testers",
                         Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.GROUP_VALUE));
             }
 

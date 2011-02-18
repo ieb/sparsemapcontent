@@ -20,6 +20,7 @@ package org.sakaiproject.nakamura.lite.content;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
+import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -38,15 +39,15 @@ public class BlockSetContentHelper implements BlockContentHelper {
     /**
      * The length of this block
      */
-    public static final String BLOCK_LENGTH_FIELD_STUB = "blockLength:";
+    public static final String BLOCK_LENGTH_FIELD_STUB = Repository.SYSTEM_PROP_PREFIX + "blockLength:";
     /**
      * the stub of all bodies 0..numblocks
      */
-    public static final String BODY_FIELD_STUB = "body:";
+    public static final String BODY_FIELD_STUB = Repository.SYSTEM_PROP_PREFIX + "body:";
     /**
      * The number of blocks in this block set
      */
-    public static final String NUMBLOCKS_FIELD = "numblocks";
+    public static final String NUMBLOCKS_FIELD = Repository.SYSTEM_PROP_PREFIX + "numblocks";
 
     public static final int DEFAULT_BLOCK_SIZE = 1024 * 1024;
     public static final int DEFAULT_MAX_CHUNKS_PER_BLOCK = 64;

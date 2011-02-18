@@ -166,11 +166,11 @@ public abstract class AbstractAuthorizableManagerImplTest {
         authorizableManager.delete("testuser");
 
         Assert.assertTrue(authorizableManager.createUser("testuser", "Test User", "test",
-                ImmutableMap.of("testkey", (Object) "testvalue", "principals",
+                ImmutableMap.of("testkey", (Object) "testvalue", Authorizable.PRINCIPALS_FIELD,
                         "administrators;testers", Authorizable.AUTHORIZABLE_TYPE_FIELD,
                         Authorizable.GROUP_VALUE)));
         Assert.assertFalse(authorizableManager.createUser("testuser", "Test User", "test",
-                ImmutableMap.of("testkey", (Object) "testvalue", "principals",
+                ImmutableMap.of("testkey", (Object) "testvalue", Authorizable.PRINCIPALS_FIELD,
                         "administrators;testers")));
 
         Authorizable a = authorizableManager.findAuthorizable("testuser");
@@ -200,10 +200,10 @@ public abstract class AbstractAuthorizableManagerImplTest {
         authorizableManager.delete("testuser2");
 
         Assert.assertTrue(authorizableManager.createUser("testuser2", "Test User", "test",
-                ImmutableMap.of("testkey", (Object) "testvalue", "principals", "testers",
+                ImmutableMap.of("testkey", (Object) "testvalue", Authorizable.PRINCIPALS_FIELD, "testers",
                         Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.GROUP_VALUE)));
         Assert.assertFalse(authorizableManager.createUser("testuser2", "Test User", "test",
-                ImmutableMap.of("testkey", (Object) "testvalue", "principals",
+                ImmutableMap.of("testkey", (Object) "testvalue", Authorizable.PRINCIPALS_FIELD,
                         "administrators;testers")));
 
         Authorizable a = authorizableManager.findAuthorizable("testuser2");
@@ -223,7 +223,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
 
         try {
             userAuthorizableManager.createUser("testuser3", "Test User", "test", ImmutableMap.of(
-                    "testkey", (Object) "testvalue", "principals", "administrators;testers",
+                    "testkey", (Object) "testvalue",  Authorizable.PRINCIPALS_FIELD, "administrators;testers",
                     Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.GROUP_VALUE));
             Assert.fail();
         } catch (AccessDeniedException e) {
@@ -232,7 +232,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
 
         try {
             userAuthorizableManager.createUser("testuser4", "Test User", "test", ImmutableMap.of(
-                    "testkey", (Object) "testvalue", "principals", "administrators;testers"));
+                    "testkey", (Object) "testvalue",  Authorizable.PRINCIPALS_FIELD, "administrators;testers"));
             Assert.fail();
         } catch (AccessDeniedException e) {
             LOGGER.info(" Correctly denied access {} ", e.getMessage());
@@ -257,15 +257,15 @@ public abstract class AbstractAuthorizableManagerImplTest {
         authorizableManager.delete("testgroup");
 
         Assert.assertTrue(authorizableManager.createUser("user2", "TestUser2", null, ImmutableMap
-                .of("testkey", (Object) "testvalue", "principals", "administrators;testers")));
+                .of("testkey", (Object) "testvalue",  Authorizable.PRINCIPALS_FIELD, "administrators;testers")));
         Assert.assertTrue(authorizableManager.createUser("user3", "TestUser", null, ImmutableMap
-                .of("testkey", (Object) "testvalue", "principals", "administrators;testers")));
+                .of("testkey", (Object) "testvalue",  Authorizable.PRINCIPALS_FIELD, "administrators;testers")));
         Assert.assertTrue(authorizableManager.createGroup("testgroup", "Test Group", ImmutableMap
-                .of("testkey", (Object) "testvalue", "principals", "administrators;testers",
-                        "members", "user1;user2")));
+                .of("testkey", (Object) "testvalue",  Authorizable.PRINCIPALS_FIELD, "administrators;testers",
+                        Authorizable.MEMBERS_FIELD, "user1;user2")));
         Assert.assertFalse(authorizableManager.createGroup("testgroup", "Test Group", ImmutableMap
-                .of("testkey", (Object) "testvalue", "principals", "administrators;testers",
-                        "members", "user1;user2", Authorizable.AUTHORIZABLE_TYPE_FIELD,
+                .of("testkey", (Object) "testvalue",  Authorizable.PRINCIPALS_FIELD, "administrators;testers",
+                        Authorizable.MEMBERS_FIELD, "user1;user2", Authorizable.AUTHORIZABLE_TYPE_FIELD,
                         Authorizable.GROUP_VALUE)));
 
         Authorizable a = authorizableManager.findAuthorizable("testgroup");

@@ -23,6 +23,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 
 import org.sakaiproject.nakamura.api.lite.RemoveProperty;
+import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -44,36 +45,36 @@ public class InternalContent {
     /**
      * The ID of a content item
      */
-    public static final String UUID_FIELD = "id";
+    public static final String UUID_FIELD = Repository.SYSTEM_PROP_PREFIX + "id";
     /**
      * The path of the content item (used in structure row)
      */
-    public static final String PATH_FIELD = "path";
+    public static final String PATH_FIELD = Repository.SYSTEM_PROP_PREFIX + "path";
     /**
      * content item ID referenced by a Structure item
      */
-    public static final String STRUCTURE_UUID_FIELD = ":cid";
+    public static final String STRUCTURE_UUID_FIELD = Repository.SYSTEM_PROP_PREFIX + ":cid";
     /**
      * Where a structure object is a link, this field contains the location of the target of the link
      */
-    public static final String LINKED_PATH_FIELD = ":link";
+    public static final String LINKED_PATH_FIELD = Repository.SYSTEM_PROP_PREFIX + ":link";
     /**
      * BlockID where the body of this content item is stored, if there is a body
      * (content row)
      */
-    public static final String BLOCKID_FIELD = "blockId";
+    public static final String BLOCKID_FIELD = Repository.SYSTEM_PROP_PREFIX + "blockId";
     /**
      * ID of the previous version (content row)
      */
-    public static final String PREVIOUS_VERSION_UUID_FIELD = "previousVersion";
+    public static final String PREVIOUS_VERSION_UUID_FIELD = Repository.SYSTEM_PROP_PREFIX + "previousVersion";
     /**
      * Previous Block ID. (content row)
      */
-    public static final String PREVIOUS_BLOCKID_FIELD = "previousBlockId";
+    public static final String PREVIOUS_BLOCKID_FIELD = Repository.SYSTEM_PROP_PREFIX + "previousBlockId";
     /**
      * The ID of the next version (content row)
      */
-    public static final String NEXT_VERSION_FIELD = "nextVersion";
+    public static final String NEXT_VERSION_FIELD = Repository.SYSTEM_PROP_PREFIX + "nextVersion";
     /**
      * Set to "Y" if the content item is read only. (content row)
      */
@@ -87,7 +88,7 @@ public class InternalContent {
      * The block size in bytes in each block in a block set, if body store uses
      * blocking (content row)
      */
-    public static final String BLOCKSIZE_FIELD = "blocksize";
+    public static final String BLOCKSIZE_FIELD = Repository.SYSTEM_PROP_PREFIX + "blocksize";
     /**
      * Total length of the content body (content row)
      */
@@ -95,7 +96,7 @@ public class InternalContent {
     /**
      * The number of block sets in a body (content row)
      */
-    public static final String NBLOCKS_FIELD = "nblocks";
+    public static final String NBLOCKS_FIELD = Repository.SYSTEM_PROP_PREFIX + "nblocks";
     /**
      * Yes, True, etc
      */
@@ -105,82 +106,82 @@ public class InternalContent {
      * The date (stored as GMT epoch long) the body was last modified. (content
      * row)
      */
-    public static final String BODY_LAST_MODIFIED = "bodyLastModified";
+    public static final String BODY_LAST_MODIFIED_FIELD = Repository.SYSTEM_PROP_PREFIX + "bodyLastModified";
 
     /**
      * The user ID that last modified the body. (content row)
      */
-    public static final String BODY_LAST_MODIFIED_BY = "bodyLastModifiedBy";
+    public static final String BODY_LAST_MODIFIED_BY_FIELD = Repository.SYSTEM_PROP_PREFIX + "bodyLastModifiedBy";
 
     /**
      * The date the body was created (GMT epoch long) (content row)
      */
-    public static final String BODY_CREATED = "bodyCreated";
+    public static final String BODY_CREATED_FIELD = Repository.SYSTEM_PROP_PREFIX + "bodyCreated";
 
     /**
      * The user that created the body. (content row)
      */
-    public static final String BODY_CREATED_BY = "bodyCreatedBy";
+    public static final String BODY_CREATED_BY_FIELD = Repository.SYSTEM_PROP_PREFIX + "bodyCreatedBy";
 
     /**
      * The time the item was created. (content row)
      */
-    public static final String CREATED = "created";
+    public static final String CREATED_FIELD = "created";
 
     /**
      * The user that created the item. (content row)
      */
-    public static final String CREATED_BY = "createdBy";
+    public static final String CREATED_BY_FIELD = "createdBy";
 
     /**
      * The time the item was last modified. (content row)
      */
-    public static final String LASTMODIFIED = "lastModified";
+    public static final String LASTMODIFIED_FIELD = "lastModified";
 
     /**
      * The user that lastModified the item. (content row)
      */
-    public static final String LASTMODIFIED_BY = "lastModifiedBy";
+    public static final String LASTMODIFIED_BY_FIELD = "lastModifiedBy";
 
     /**
      * The path the content object was copied from if it was copied
      */
-    public static final String COPIED_FROM_PATH = "copiedFrom";
+    public static final String COPIED_FROM_PATH_FIELD = Repository.SYSTEM_PROP_PREFIX + "copiedFrom";
 
     /**
      * The ID the content object was copied from.
      */
-    public static final String COPIED_FROM_ID = "copiedFromId";
+    public static final String COPIED_FROM_ID_FIELD = Repository.SYSTEM_PROP_PREFIX + "copiedFromId";
 
     /**
      * If the copy was deep, then true
      */
-    public static final String COPIED_DEEP = "copiedDeep";
+    public static final String COPIED_DEEP_FIELD = Repository.SYSTEM_PROP_PREFIX + "copiedDeep";
 
     /**
      * Mime type
      */
-    public static final String MIMETYPE = "mimeType";
+    public static final String MIMETYPE_FIELD = "mimeType";
 
     /**
      * Charset encoding if char based.
      */
-    public static final String ENCODING = "encoding";
+    public static final String ENCODING_FIELD = "encoding";
     
     /**
      * 
      */
-    public static final String VERSION_HISTORY_ID_FIELD = "versionHistoryId";
+    public static final String VERSION_HISTORY_ID_FIELD = Repository.SYSTEM_PROP_PREFIX + "versionHistoryId";
 
     /**
      * 
      */
-    public static final String VERSION_NUMBER = "versionNumber";
+    public static final String VERSION_NUMBER_FIELD = Repository.SYSTEM_PROP_PREFIX + "versionNumber";
     
     /**
      * The who this version was saved by
      */
-    public static final String VERSION_SAVEDBY = "versionSavedBy";
+    public static final String VERSION_SAVEDBY_FIELD = Repository.SYSTEM_PROP_PREFIX + "versionSavedBy";
 
 
 

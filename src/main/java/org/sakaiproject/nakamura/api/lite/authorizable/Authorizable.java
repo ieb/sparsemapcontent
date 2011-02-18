@@ -61,10 +61,10 @@ public class Authorizable {
 
     public static final String ADMINISTRATORS_GROUP = "administrators";
 
-    public static final String LASTMODIFIED = "lastModified";
-    public static final String LASTMODIFIED_BY = "lastModifiedBy";
-    public static final String CREATED = "created";
-    public static final String CREATED_BY = "createdBy";
+    public static final String LASTMODIFIED_FIELD = "lastModified";
+    public static final String LASTMODIFIED_BY_FIELD = "lastModifiedBy";
+    public static final String CREATED_FIELD = "created";
+    public static final String CREATED_BY_FIELD = "createdBy";
 
     private static final Set<String> FILTER_PROPERTIES = ImmutableSet.of(PASSWORD_FIELD, ID_FIELD);
 
