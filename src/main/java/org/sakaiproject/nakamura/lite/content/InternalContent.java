@@ -42,6 +42,9 @@ import java.util.Map;
 public class InternalContent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Content.class);
+    
+    
+    public static final String INTERNAL_FIELD_PREFIX = Repository.SYSTEM_PROP_PREFIX+":";
     /**
      * The ID of a content item
      */
@@ -53,11 +56,11 @@ public class InternalContent {
     /**
      * content item ID referenced by a Structure item
      */
-    public static final String STRUCTURE_UUID_FIELD = Repository.SYSTEM_PROP_PREFIX + ":cid";
+    public static final String STRUCTURE_UUID_FIELD = INTERNAL_FIELD_PREFIX + "cid";
     /**
      * Where a structure object is a link, this field contains the location of the target of the link
      */
-    public static final String LINKED_PATH_FIELD = Repository.SYSTEM_PROP_PREFIX + ":link";
+    public static final String LINKED_PATH_FIELD = INTERNAL_FIELD_PREFIX + "link";
     /**
      * BlockID where the body of this content item is stored, if there is a body
      * (content row)
@@ -424,7 +427,7 @@ public class InternalContent {
             public Iterator<String> iterator() {
                 return Iterators.filter(structure.keySet().iterator(), new Predicate<String>() {
                     public boolean apply(String input) {
-                        return input.charAt(0) != ':';
+                        return !input.startsWith(INTERNAL_FIELD_PREFIX);
                     }
                 });
             }
