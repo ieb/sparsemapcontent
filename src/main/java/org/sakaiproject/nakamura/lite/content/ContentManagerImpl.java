@@ -18,18 +18,18 @@
 package org.sakaiproject.nakamura.lite.content;
 
 import static org.sakaiproject.nakamura.lite.content.InternalContent.BLOCKID_FIELD;
-import static org.sakaiproject.nakamura.lite.content.InternalContent.BODY_CREATED_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.BODY_CREATED_BY_FIELD;
-import static org.sakaiproject.nakamura.lite.content.InternalContent.BODY_LAST_MODIFIED_FIELD;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.BODY_CREATED_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.BODY_LAST_MODIFIED_BY_FIELD;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.BODY_LAST_MODIFIED_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.COPIED_DEEP_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.COPIED_FROM_ID_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.COPIED_FROM_PATH_FIELD;
-import static org.sakaiproject.nakamura.lite.content.InternalContent.CREATED_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.CREATED_BY_FIELD;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.CREATED_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.DELETED_FIELD;
-import static org.sakaiproject.nakamura.lite.content.InternalContent.LASTMODIFIED_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.LASTMODIFIED_BY_FIELD;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.LASTMODIFIED_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.LENGTH_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.LINKED_PATH_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.NEXT_VERSION_FIELD;
@@ -51,7 +51,6 @@ import com.google.common.collect.Sets;
 
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.Configuration;
-import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.StoreListener;
@@ -61,6 +60,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
+import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.sakaiproject.nakamura.lite.CachingManager;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
@@ -70,7 +70,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -140,13 +140,10 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentManagerImpl.class);
 
-    /**
-     * Key containing deleted items.
-     */
-    private static final String DELETEDITEMS_KEY = ":deleteditems";
 
     private static final Set<String> DEEP_COPY_FILTER = ImmutableSet.of(LASTMODIFIED_FIELD,
             LASTMODIFIED_BY_FIELD, UUID_FIELD, PATH_FIELD);
+
 
     /**
      * Storage Client
@@ -203,12 +200,90 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
             Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
             if (content != null && content.size() > 0) {
                 Content contentObject = new Content(path, content);
-                ((InternalContent) contentObject).internalize(structure, this, false);
+                ((InternalContent) contentObject).internalize(this, false);
                 return contentObject;
             }
         }
         return null;
 
+    }
+
+
+    public Iterator<Content> listChildren(String path) throws StorageClientException {
+        final Iterator<Map<String, Object>> childContent = client.listChildren(keySpace,
+                contentColumnFamily, path);
+        return new PreemptiveIterator<Content>() {
+
+            private Content content;
+
+            @Override
+            protected boolean internalHasNext() {
+                while(childContent.hasNext()) {
+                    Map<String, Object> structureMap = childContent.next();
+                    LOGGER.debug("Loaded Next as {} ", structureMap);
+                    if ( structureMap != null && structureMap.size() > 0 ) {
+                        String path = (String) structureMap.get(PATH_FIELD);
+                        try {
+                            content = get(path);
+                            return true;
+                        } catch (AccessDeniedException e) {
+                            LOGGER.debug(e.getMessage(),e);
+                        } catch (StorageClientException e) {
+                            LOGGER.debug(e.getMessage(),e);
+                        }
+                    }
+                }
+                LOGGER.debug("No more");
+                content = null;
+                return false;
+            }
+
+            @Override
+            protected Content internalNext() {
+                return content;
+            }
+        };
+    }
+
+    public Iterator<String> listChildPaths(String path) throws StorageClientException {
+        final Iterator<Map<String, Object>> childContent = client.listChildren(keySpace,
+                contentColumnFamily, path);
+        return new PreemptiveIterator<String>() {
+
+            private String childPath;
+
+            @Override
+            protected boolean internalHasNext() {
+                while(childContent.hasNext()) {
+                    Map<String, Object> structureMap = childContent.next();
+                    LOGGER.debug("Loaded Next as {} ", structureMap);
+                    if ( structureMap != null && structureMap.size() > 0 ) {
+                        String testChildPath = (String) structureMap.get(PATH_FIELD);
+                        try {
+                            accessControlManager.check(Security.ZONE_CONTENT, testChildPath, Permissions.CAN_READ);
+                            childPath = testChildPath;
+                            // this is not that efficient since it requires the map is
+                            // loaded, at the moment I dont have a way round this with the
+                            // underlying index strucutre.
+                            LOGGER.debug("Got Next Child as {} ", childPath);
+                            return true;
+                        } catch (AccessDeniedException e) {
+                            LOGGER.debug(e.getMessage(),e);
+                        } catch (StorageClientException e) {
+                            LOGGER.debug(e.getMessage(),e);
+                        }
+                    }
+                }
+                LOGGER.debug("No more");
+                childPath = null;
+                return false;
+            }
+
+            @Override
+            protected String internalNext() {
+                return childPath;
+            }
+        };
     }
 
     public void update(Content excontent) throws AccessDeniedException, StorageClientException {
@@ -259,14 +334,8 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         boolean isnew = false;
         if (content.isNew()) {
             isnew = true;
-            // only when new do we update the structure.
-            if (!StorageClientUtils.isRoot(path)) {
-                putCached(keySpace, contentColumnFamily,
-                        StorageClientUtils.getParentObjectPath(path),
-                        ImmutableMap.of(StorageClientUtils.getObjectName(path), (Object)id), true);
-            }
             putCached(keySpace, contentColumnFamily, path,
-                    ImmutableMap.of(STRUCTURE_UUID_FIELD, (Object)id), true);
+                    ImmutableMap.of(STRUCTURE_UUID_FIELD, (Object)id, PATH_FIELD, path), true);
         }
         // save the content id.
         putCached(keySpace, contentColumnFamily, id, toSave, isnew);
@@ -284,14 +353,8 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
             String uuid = (String)structure.get(STRUCTURE_UUID_FIELD);
             removeFromCache(keySpace, contentColumnFamily, path);
             client.remove(keySpace, contentColumnFamily, path);
-            Map<String, Object> m = new HashMap<String, Object>();
-            m.put(StorageClientUtils.getObjectName(path), null);
-            putCached(keySpace, contentColumnFamily, StorageClientUtils.getParentObjectPath(path),
-                    m, false);
             putCached(keySpace, contentColumnFamily, uuid,
                     ImmutableMap.of(DELETED_FIELD, (Object) TRUE), false);
-            putCached(keySpace, contentColumnFamily, DELETEDITEMS_KEY,
-                    ImmutableMap.of(uuid, (Object)path), false);
             eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId());
         }
     }
@@ -423,7 +486,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         accessControlManager.check(Security.ZONE_CONTENT, from, Permissions.CAN_ANYTHING);
         accessControlManager.check(Security.ZONE_CONTENT, to,
                 Permissions.CAN_READ.combine(Permissions.CAN_WRITE));
-        Map<String, Object> fromStructure = getCached(keySpace, contentColumnFamily, from);
+        Map<String, Object> fromStructure = Maps.newHashMap(getCached(keySpace, contentColumnFamily, from));
         if (fromStructure == null || fromStructure.size() == 0) {
             throw new StorageClientException("The source content to move from " + from
                     + " does not exist, move operation failed");
@@ -448,23 +511,15 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                 update(content);
             }
 
-            putCached(keySpace, contentColumnFamily, parent,
-                    ImmutableMap.of(StorageClientUtils.getObjectName(to),(Object)idStore), true);
         }
         // update the content data to reflect the new primary location.
         putCached(keySpace, contentColumnFamily, idStore,
                 ImmutableMap.of(PATH_FIELD, (Object)to), false);
 
         // insert the new to Structure and remove the from
+        fromStructure.put(PATH_FIELD, to);
         putCached(keySpace, contentColumnFamily, to, fromStructure, true);
 
-        // now remove the old location.
-        if (!StorageClientUtils.isRoot(from)) {
-            // if it was not a root, then modify the old parent location.
-            String fromParent = StorageClientUtils.getParentObjectPath(from);
-            putCached(keySpace, contentColumnFamily, fromParent, ImmutableMap.of(
-                    StorageClientUtils.getObjectName(from), (Object) new RemoveProperty()), false);
-        }
         // remove the old from.
         removeFromCache(keySpace, contentColumnFamily, from);
         client.remove(keySpace, contentColumnFamily, from);
@@ -511,11 +566,9 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
             update(content);
         }
 
-        putCached(keySpace, contentColumnFamily, parent,
-                ImmutableMap.of(StorageClientUtils.getObjectName(from), idStore), false);
         // create the new object for the path, pointing to the Object
         putCached(keySpace, contentColumnFamily, from, ImmutableMap.of(STRUCTURE_UUID_FIELD,
-                idStore, LINKED_PATH_FIELD, to), true);
+                idStore, PATH_FIELD, from, LINKED_PATH_FIELD, to), true);
 
     }
 
@@ -564,21 +617,12 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                 ImmutableMap.of(saveVersionId, versionNumber), true);
         putCached(keySpace, contentColumnFamily, path,
                 ImmutableMap.of(STRUCTURE_UUID_FIELD, (Object)newVersionId), true);
-        if (!path.equals("/")) {
-            putCached(keySpace, contentColumnFamily,
-                    StorageClientUtils.getParentObjectPath(path),
-                    ImmutableMap.of(StorageClientUtils.getObjectName(path), (Object)newVersionId), true);
-        }
         if ( LOGGER.isDebugEnabled() ) {
             LOGGER.debug("Saved Version History  {} {} ", versionHistoryId,
                     getCached(keySpace, contentColumnFamily, versionHistoryId));
             LOGGER.debug("Saved Version [{}] {}", saveVersionId, saveVersion);
             LOGGER.debug("New Version [{}] {}", newVersionId, newVersion);
             LOGGER.debug("Structure {} ", getCached(keySpace, contentColumnFamily, path));
-            LOGGER.debug(
-                    "Parent Structure {} ",
-                    getCached(keySpace, contentColumnFamily,
-                            StorageClientUtils.getParentObjectPath(path)));
         }
         return saveVersionId;
     }
@@ -667,7 +711,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                                 contentColumnFamily, versionId);
                         if (versionContent != null && versionContent.size() > 0) {
                             Content contentObject = new Content(path, versionContent);
-                            ((InternalContent) contentObject).internalize(structure, this, true);
+                            ((InternalContent) contentObject).internalize(this, true);
                             return contentObject;
                         } else {
                             LOGGER.debug("No Content for path {} version History Null{} ", path,

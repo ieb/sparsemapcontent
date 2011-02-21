@@ -17,7 +17,6 @@
  */
 package org.sakaiproject.nakamura.lite.content;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
@@ -26,9 +25,7 @@ import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
-import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.content.Content;
-import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +50,11 @@ public class InternalContent {
      * The path of the content item (used in structure row)
      */
     public static final String PATH_FIELD = Repository.SYSTEM_PROP_PREFIX + "path";
+    /**
+     * The parent path (
+     */
+    public static final String PARENT_HASH_FIELD = INTERNAL_FIELD_PREFIX + "parenthash";
+
     /**
      * content item ID referenced by a Structure item
      */
@@ -190,10 +192,6 @@ public class InternalContent {
 
 
     /**
-     * Map of the structure object for the content object.
-     */
-    private ImmutableMap<String, Object> structure;
-    /**
      * Map of the content object itself.
      */
     private ImmutableMap<String, Object> content;
@@ -249,8 +247,7 @@ public class InternalContent {
      * @param contentManager
      *            the content manager now managing this content object.
      */
-    void internalize(Map<String, Object> structure, ContentManagerImpl contentManager, boolean readOnly) {
-        this.structure = ImmutableMap.copyOf(structure);
+    void internalize(ContentManagerImpl contentManager, boolean readOnly) {
         this.contentManager = contentManager;
         updated = false;
         newcontent = false;
@@ -386,35 +383,12 @@ public class InternalContent {
         return new Iterable<Content>() {
 
             public Iterator<Content> iterator() {
-                final Iterator<String> childIterator = listChildPaths().iterator();
-                return new PreemptiveIterator<Content>() {
-                    Content childContent;
-
-                    protected boolean internalHasNext() {
-                        childContent = null;
-                        try {
-                            while (childContent == null && childIterator.hasNext()) {
-                                String child = childIterator.next();
-                                try {
-                                    childContent = contentManager.get(StorageClientUtils.newPath(
-                                            path, child));
-                                } catch (AccessDeniedException e) {
-                                    LOGGER.debug("Unable to load {} cause {}", new Object[] {
-                                            child, e.getMessage() }, e);
-                                }
-
-                            }
-                        } catch (StorageClientException e) {
-                            LOGGER.debug("Unable to load Children cause {}", e.getMessage(), e);
-
-                        }
-                        return (childContent != null);
-                    }
-
-                    protected Content internalNext() {
-                        return childContent;
-                    }
-                };
+                try {
+                    return contentManager.listChildren(path);
+                } catch (StorageClientException e) {
+                    LOGGER.error(e.getMessage(),e);
+                }
+                return Iterators.emptyIterator();
             }
         };
     }
@@ -423,13 +397,16 @@ public class InternalContent {
      * @return an iterable of all relative child paths of this object.
      */
     public Iterable<String> listChildPaths() {
+
         return new Iterable<String>() {
+
             public Iterator<String> iterator() {
-                return Iterators.filter(structure.keySet().iterator(), new Predicate<String>() {
-                    public boolean apply(String input) {
-                        return !input.startsWith(INTERNAL_FIELD_PREFIX);
-                    }
-                });
+                try {
+                    return contentManager.listChildPaths(path);
+                } catch (StorageClientException e) {
+                    LOGGER.error(e.getMessage(),e);
+                }
+                return Iterators.emptyIterator();
             }
         };
     }

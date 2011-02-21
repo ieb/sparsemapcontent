@@ -22,6 +22,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -289,5 +290,21 @@ public interface ContentManager {
      */
     List<String> getVersionHistory(String path) throws AccessDeniedException,
             StorageClientException;
+
+    /**
+     * Gets a lazy iterator of child paths.
+     * @param path the parent path.
+     * @return
+     * @throws StorageClientException
+     */
+    Iterator<String> listChildPaths(String path) throws StorageClientException;
+
+    /**
+     * Get a lazy iterator of child content objects.
+     * @param path
+     * @return
+     * @throws StorageClientException
+     */
+    Iterator<Content> listChildren(String path) throws StorageClientException;
 
 }

@@ -48,4 +48,7 @@ public interface StorageClient {
 
     void close();
 
+    DisposableIterator<Map<String, Object>> listChildren(String keySpace, String columnFamily,
+            String key) throws StorageClientException;
+
 }

@@ -255,4 +255,8 @@ public class CassandraClient extends Client implements StorageClient {
         throw new UnsupportedOperationException();
     }
 
+    public DisposableIterator<Map<String, Object>> listChildren(String keySpace,
+            String columnFamily, String key) throws StorageClientException {
+        throw new UnsupportedOperationException();
+    }
 }

@@ -17,6 +17,8 @@
  */
 package org.sakaiproject.nakamura.lite.storage.mem;
 
+import com.google.common.collect.Maps;
+
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.felix.scr.annotations.Activate;
@@ -29,7 +31,6 @@ import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Component(enabled = false, metatype = true, inherit = true)
 @Service(value = StorageClientPool.class)
@@ -37,12 +38,12 @@ public class MemoryStorageClientPool extends AbstractClientConnectionPool {
 
     public static class ClientConnectionPoolFactory extends BasePoolableObjectFactory {
 
-        private Map<String, Map<String, Object>> store;
+        private Map<String, Object> store;
         private Map<String, Object> properties;
         private MemoryStorageClientPool pool;
 
         public ClientConnectionPoolFactory(MemoryStorageClientPool pool,
-                Map<String, Map<String, Object>> store, Map<String, Object> properties) {
+                Map<String, Object> store, Map<String, Object> properties) {
             this.store = store;
             this.pool = pool;
             this.properties = properties;
@@ -77,7 +78,7 @@ public class MemoryStorageClientPool extends AbstractClientConnectionPool {
 
     }
 
-    private Map<String, Map<String, Object>> store;
+    private Map<String, Object> store;
     private Map<String, Object> properties;
     private StorageCacheManager defaultStorageManagerCache;
 
@@ -101,7 +102,7 @@ public class MemoryStorageClientPool extends AbstractClientConnectionPool {
     @Activate
     public void activate(Map<String, Object> properties) throws ClassNotFoundException {
         this.properties = properties;
-        store = new ConcurrentHashMap<String, Map<String, Object>>();
+        store = Maps.newConcurrentHashMap();
         super.activate(properties);
     }
 

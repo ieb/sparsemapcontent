@@ -17,6 +17,8 @@
  */
 package org.sakaiproject.nakamura.lite.storage.jdbc;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -29,6 +31,7 @@ import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.sakaiproject.nakamura.lite.content.FileStreamContentHelper;
+import org.sakaiproject.nakamura.lite.content.InternalContent;
 import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
 import org.sakaiproject.nakamura.lite.storage.Disposable;
 import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
@@ -78,6 +81,10 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     private static final String SELECT_INDEX_COLUMNS = "select-index-columns";
     private static final String PROP_HASH_ALG = "rowid-hash";
     private static final String USE_BATCH_INSERTS = "use-batch-inserts";
+    private static final Set<String> AUTO_INDEX_COLUMNS = ImmutableSet.of(
+            "cn:_:parenthash",
+            "au:_:parenthash",
+            "ac:_:parenthash");
 
     private JDBCStorageClientPool jcbcStorageClientConnection;
     private Map<String, Object> sqlConfig;
@@ -283,6 +290,29 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                         }
                     }
                 }
+
+                if ( !StorageClientUtils.isRoot(key)) {
+                    // create a holding map containing a rowhash of the parent and then process the entry to generate a update operation.
+                    Map<String, Object> autoIndexMap = ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)rowHash(keySpace, columnFamily, StorageClientUtils.getParentObjectPath(key)));
+                    for ( Entry<String, Object> e : autoIndexMap.entrySet()) {
+                        PreparedStatement updateStringColumn = getStatement(keySpace,
+                                columnFamily, SQL_UPDATE_STRING_COLUMN, rid, statementCache);
+                        updateStringColumn.setString(1, (String)e.getValue());
+                        updateStringColumn.setString(2, rid);
+                        updateStringColumn.setString(3, e.getKey());
+                        updateStringColumn.addBatch();
+                        LOGGER.debug("Update {} {}", e.getKey(), e.getValue());
+                        updateSet.add(updateStringColumn);
+                        List<Entry<String, Object>> updateSeq = updateSequence
+                                .get(updateStringColumn);
+                        if (updateSeq == null) {
+                            updateSeq = Lists.newArrayList();
+                            updateSequence.put(updateStringColumn, updateSeq);
+                        }
+                        updateSeq.add(e);
+                    }
+                }
+
                 // execute the updates and add the necessary inserts.
                 Map<PreparedStatement, List<Entry<String, Object>>> insertSequence = Maps
                         .newHashMap();
@@ -304,6 +334,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                                 insertStringColumn.setString(3, k);
                                 insertStringColumn.addBatch();
                                 insertSet.add(insertStringColumn);
+                                LOGGER.debug("Insert {} {}", k, o);
                                 List<Entry<String, Object>> insertSeq = insertSequence
                                         .get(insertStringColumn);
                                 if (insertSeq == null) {
@@ -329,7 +360,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                                     e.getValue() });
                             
                         } else {
-                            LOGGER.debug("Index inserted for {} {} ", new Object[] { rid, e.getKey(),
+                            LOGGER.info("Index inserted for {} {} ", new Object[] { rid, e.getKey(),
                                     e.getValue() });
 
                         }
@@ -398,6 +429,46 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                         }
                     }
                 }
+
+                if ( !StorageClientUtils.isRoot(key)) {
+                    String parent = StorageClientUtils.getParentObjectPath(key);
+                   String hash =  rowHash(keySpace, columnFamily, parent);
+                   LOGGER.debug("Hash of {}:{}:{} is {} ",new Object[]{keySpace, columnFamily, parent, hash});
+                    Map<String, Object> autoIndexMap = ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash);
+                    for ( Entry<String, Object> e : autoIndexMap.entrySet()) {
+                        PreparedStatement updateStringColumn = getStatement(keySpace,
+                                columnFamily, SQL_UPDATE_STRING_COLUMN, rid, statementCache);
+                        updateStringColumn.clearWarnings();
+                        updateStringColumn.clearParameters();
+                        updateStringColumn.setString(1, (String) e.getValue());
+                        updateStringColumn.setString(2, rid);
+                        updateStringColumn.setString(3, e.getKey());
+
+                        if (updateStringColumn.executeUpdate() == 0) {
+                            PreparedStatement insertStringColumn = getStatement(keySpace,
+                                    columnFamily, SQL_INSERT_STRING_COLUMN, rid, statementCache);
+                            insertStringColumn.clearWarnings();
+                            insertStringColumn.clearParameters();
+                            insertStringColumn.setString(1, (String) e.getValue());
+                            insertStringColumn.setString(2, rid);
+                            insertStringColumn.setString(3, e.getKey());
+                            if (insertStringColumn.executeUpdate() == 0) {
+                                throw new StorageClientException("Failed to save "
+                                        + getRowId(keySpace, columnFamily, key) + "  column:["
+                                        + e.getKey() + "] ");
+                            } else {
+                                LOGGER.debug("Inserted Index {} {} [{}]",
+                                        new Object[] { getRowId(keySpace, columnFamily, key),
+                                                e.getKey(), e.getValue() });
+                            }
+                        } else {
+                            LOGGER.debug(
+                                    "Updated Index {} {} [{}]",
+                                    new Object[] { getRowId(keySpace, columnFamily, key), e.getKey(), e.getValue() });
+                        }
+                    }
+                }
+
             }
         } catch (SQLException e) {
             LOGGER.warn("Failed to perform insert/update operation on {}:{}:{} ", new Object[] {
@@ -413,6 +484,9 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     }
 
     private boolean shouldIndex(String keySpace, String columnFamily, String k) {
+        if ( AUTO_INDEX_COLUMNS.contains(columnFamily+":"+k)) {
+            return true;
+        }
         if (indexColumns == null) {
             PreparedStatement pst = null;
             ResultSet rs = null;
@@ -716,6 +790,13 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         return jcbcStorageClientConnection.getConnection();
     }
 
+    public DisposableIterator<Map<String, Object>> listChildren(String keySpace, String columnFamily, String key) throws StorageClientException {
+        // this will load all child object directly.
+        String hash = rowHash(keySpace, columnFamily, key);
+        LOGGER.debug("Finding {}:{}:{} as {} ",new Object[]{keySpace,columnFamily, key, hash});
+        return find(keySpace, columnFamily, ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash));
+    }
+
     public DisposableIterator<Map<String, Object>> find(String keySpace, String columnFamily,
             Map<String, Object> properties) throws StorageClientException {
         checkClosed();
@@ -800,6 +881,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                             map.clear();
                             Types.loadFromStream(rs.getString(1), map,
                                     rs.getBinaryStream(2));
+                            LOGGER.debug("Loaded {} ",map);
                             return true;
                         }
                         LOGGER.debug("No More Records ");
