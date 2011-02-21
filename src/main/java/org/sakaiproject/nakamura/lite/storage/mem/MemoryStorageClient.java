@@ -19,6 +19,7 @@ package org.sakaiproject.nakamura.lite.storage.mem;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -233,7 +234,14 @@ public class MemoryStorageClient implements StorageClient {
             }
         }
         LOGGER.debug("Matching Rowhashes is {} ", setOfRowHashes);
-        final Iterator<String> matchedRowIds = setOfRowHashes.iterator();
+
+        Iterator<String> iterator = null;
+        if ( setOfRowHashes == null ) {
+            iterator = Iterators.emptyIterator();
+        } else {
+            iterator = setOfRowHashes.iterator();
+        }
+        final Iterator<String> matchedRowIds = iterator;
          return new PreemptiveIterator<Map<String,Object>>() {
 
             private Map<String, Object> nextMap;
