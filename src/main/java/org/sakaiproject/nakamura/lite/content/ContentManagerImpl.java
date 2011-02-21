@@ -68,9 +68,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -689,6 +691,20 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
     @Override
     protected Logger getLogger() {
         return LOGGER;
+    }
+
+    public List<Content> find(Map<String, Object> searchProperties) throws StorageClientException,
+        AccessDeniedException {
+      checkOpen();
+      List<Content> rv = new ArrayList<Content>();
+      final Iterator<Map<String, Object>> results = client.find("n", contentColumnFamily, searchProperties);
+      if (results != null) {
+        while (results.hasNext()) {
+          Map<String, Object> result = results.next();
+          rv.add(new Content((String) result.get("path"), result));
+        }
+      }
+      return rv;
     }
 
 }
