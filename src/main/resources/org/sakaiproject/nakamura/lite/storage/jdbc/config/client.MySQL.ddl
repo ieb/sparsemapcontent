@@ -93,5 +93,7 @@ CREATE TABLE  `index_cols` (
 
 insert into index_cols (cid) values ('au:rep:principalName');
 insert into index_cols (cid) values ('au:type');
+insert into index_cols (cid) values ('cn:sling:resourceType');
+insert into index_cols (cid) values ('cn:sakai:pooled-content-manager');
 
 

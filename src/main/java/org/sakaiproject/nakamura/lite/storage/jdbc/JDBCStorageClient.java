@@ -265,21 +265,29 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     String k = e.getKey();
                     Object o = e.getValue();
                     if (shouldIndex(keySpace, columnFamily, k)) {
-                        if (o instanceof String) {
-                            PreparedStatement updateStringColumn = getStatement(keySpace,
-                                    columnFamily, SQL_UPDATE_STRING_COLUMN, rid, statementCache);
-                            updateStringColumn.setString(1, (String) o);
-                            updateStringColumn.setString(2, rid);
-                            updateStringColumn.setString(3, k);
-                            updateStringColumn.addBatch();
-                            updateSet.add(updateStringColumn);
-                            List<Entry<String, Object>> updateSeq = updateSequence
-                                    .get(updateStringColumn);
-                            if (updateSeq == null) {
+                        if (o instanceof String || o instanceof String[]) {
+                            String[] valueMembers;
+                            if (o instanceof String) {
+                              valueMembers = new String[] {(String)o};
+                            } else {
+                              valueMembers = (String[])o;
+                            }
+                            for (String valueMember : valueMembers) {
+                              PreparedStatement updateStringColumn = getStatement(keySpace,
+                                  columnFamily, SQL_UPDATE_STRING_COLUMN, rid, statementCache);
+                              updateStringColumn.setString(1, (String) valueMember);
+                              updateStringColumn.setString(2, rid);
+                              updateStringColumn.setString(3, k);
+                              updateStringColumn.addBatch();
+                              updateSet.add(updateStringColumn);
+                              List<Entry<String, Object>> updateSeq = updateSequence
+                              .get(updateStringColumn);
+                              if (updateSeq == null) {
                                 updateSeq = Lists.newArrayList();
                                 updateSequence.put(updateStringColumn, updateSeq);
+                              }
+                              updateSeq.add(e);
                             }
-                            updateSeq.add(e);
                         } else if (o instanceof RemoveProperty || o == null) {
                             PreparedStatement removeStringColumn = getStatement(keySpace,
                                     columnFamily, SQL_REMOVE_STRING_COLUMN, rid, statementCache);
@@ -326,22 +334,29 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                         if (res[i] <= 0) {
                             String k = e.getKey();
                             Object o = e.getValue();
-                            if (o instanceof String) {
-                                PreparedStatement insertStringColumn = getStatement(keySpace,
-                                        columnFamily, SQL_INSERT_STRING_COLUMN, rid, statementCache);
-                                insertStringColumn.setString(1, (String) o);
-                                insertStringColumn.setString(2, rid);
-                                insertStringColumn.setString(3, k);
-                                insertStringColumn.addBatch();
-                                insertSet.add(insertStringColumn);
-                                LOGGER.debug("Insert {} {}", k, o);
-                                List<Entry<String, Object>> insertSeq = insertSequence
-                                        .get(insertStringColumn);
-                                if (insertSeq == null) {
+                            if (o instanceof String || o instanceof String[]) {
+                                String[] valueMembers;
+                                if (o instanceof String) {
+                                  valueMembers = new String[]{(String)o};
+                                } else {
+                                  valueMembers = (String[])o;
+                                }
+                                for (String valueMember : valueMembers) {
+                                  PreparedStatement insertStringColumn = getStatement(keySpace,
+                                      columnFamily, SQL_INSERT_STRING_COLUMN, rid, statementCache);
+                                  insertStringColumn.setString(1, valueMember);
+                                  insertStringColumn.setString(2, rid);
+                                  insertStringColumn.setString(3, k);
+                                  insertStringColumn.addBatch();
+                                  insertSet.add(insertStringColumn);
+                                  List<Entry<String, Object>> insertSeq = insertSequence
+                                  .get(insertStringColumn);
+                                  if (insertSeq == null) {
                                     insertSeq = Lists.newArrayList();
                                     insertSequence.put(insertStringColumn, insertSeq);
+                                  }
+                                  insertSeq.add(e);
                                 }
-                                insertSeq.add(e);
                             }
                         } else {
                             LOGGER.debug("Index updated for {} {} ", new Object[] { rid, e.getKey(),

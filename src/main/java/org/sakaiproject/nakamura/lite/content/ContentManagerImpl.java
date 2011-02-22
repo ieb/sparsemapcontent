@@ -735,4 +735,38 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         return LOGGER;
     }
 
+    public Iterable<Content> find(Map<String, Object> searchProperties) throws StorageClientException,
+        AccessDeniedException {
+      checkOpen();
+      final Map<String, Object> finalSearchProperties = searchProperties;
+      return new Iterable<Content>() {
+
+        public Iterator<Content> iterator() {
+            Iterator<Content> contentResultsIterator = null;
+            try {
+              final Iterator<Map<String, Object>> clientSearchIterator = client.find(keySpace, contentColumnFamily, finalSearchProperties);
+              contentResultsIterator = new PreemptiveIterator<Content>() {
+                  Content contentResult;
+
+                  protected boolean internalHasNext() {
+                      contentResult = null;
+                          while (contentResult == null && clientSearchIterator.hasNext()) {
+                              Map<String, Object> child = clientSearchIterator.next();
+                              contentResult = new Content((String)child.get(InternalContent.PATH_FIELD), child);
+                          }
+                      return (contentResult != null);
+                  }
+
+                  protected Content internalNext() {
+                      return contentResult;
+                  }
+              };
+            } catch (StorageClientException e) {
+              LOGGER.error("Unable to iterate over sparsemap search results.", e);
+            }
+            return contentResultsIterator;
+        }
+    };
+    }
+
 }
