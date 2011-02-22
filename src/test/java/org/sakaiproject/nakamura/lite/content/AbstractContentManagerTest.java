@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.lite.content.Content;
@@ -134,6 +135,14 @@ public abstract class AbstractContentManagerTest {
         contentManager.update(new Content("/test", ImmutableMap.of("prop1", (Object) "value2")));
         contentManager
                 .update(new Content("/test/ing", ImmutableMap.of("prop1", (Object) "value3")));
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+                for (int k = 0; k < 5; k++) {
+                    contentManager.update(new Content("/test/ing/" + i + "/" + j + "/" + k,
+                            ImmutableMap.of("prop1", (Object) "value3")));
+                }
+            }
+        }
 
         Content content = contentManager.get("/");
         Assert.assertEquals("/", content.getPath());
@@ -154,9 +163,16 @@ public abstract class AbstractContentManagerTest {
         p = child.getProperties();
         Assert.assertEquals("value3", (String)p.get("prop1"));
 
-        contentManager.delete("/test/ing");
+        StorageClientUtils.deleteTree(contentManager, "/test/ing");
         content = contentManager.get("/test/ing");
         Assert.assertNull(content);
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+                for (int k = 0; k < 5; k++) {
+                    Assert.assertNull(contentManager.get("/test/ing/" + i + "/" + j + "/" + k));
+                }
+            }
+        }
 
     }
 

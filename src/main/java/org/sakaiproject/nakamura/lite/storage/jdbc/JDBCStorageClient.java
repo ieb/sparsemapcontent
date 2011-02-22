@@ -360,7 +360,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                                     e.getValue() });
                             
                         } else {
-                            LOGGER.info("Index inserted for {} {} ", new Object[] { rid, e.getKey(),
+                            LOGGER.debug("Index inserted for {} {} ", new Object[] { rid, e.getKey(),
                                     e.getValue() });
 
                         }
