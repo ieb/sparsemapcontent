@@ -61,6 +61,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
+import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.sakaiproject.nakamura.lite.CachingManager;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
@@ -68,7 +69,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -693,18 +693,38 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         return LOGGER;
     }
 
-    public List<Content> find(Map<String, Object> searchProperties) throws StorageClientException,
+    public Iterable<Content> find(Map<String, Object> searchProperties) throws StorageClientException,
         AccessDeniedException {
       checkOpen();
-      List<Content> rv = new ArrayList<Content>();
-      final Iterator<Map<String, Object>> results = client.find("n", contentColumnFamily, searchProperties);
-      if (results != null) {
-        while (results.hasNext()) {
-          Map<String, Object> result = results.next();
-          rv.add(new Content((String) result.get("path"), result));
+      final Map<String, Object> finalSearchProperties = searchProperties;
+      return new Iterable<Content>() {
+
+        public Iterator<Content> iterator() {
+            Iterator<Content> contentResultsIterator = null;
+            try {
+              final Iterator<Map<String, Object>> clientSearchIterator = client.find(keySpace, contentColumnFamily, finalSearchProperties);
+              contentResultsIterator = new PreemptiveIterator<Content>() {
+                  Content contentResult;
+
+                  protected boolean internalHasNext() {
+                      contentResult = null;
+                          while (contentResult == null && clientSearchIterator.hasNext()) {
+                              Map<String, Object> child = clientSearchIterator.next();
+                              contentResult = new Content((String)child.get(InternalContent.PATH_FIELD), child);
+                          }
+                      return (contentResult != null);
+                  }
+
+                  protected Content internalNext() {
+                      return contentResult;
+                  }
+              };
+            } catch (StorageClientException e) {
+              LOGGER.error("Unable to iterate over sparsemap search results.", e);
+            }
+            return contentResultsIterator;
         }
-      }
-      return rv;
+    };
     }
 
 }

@@ -50,11 +50,11 @@ public interface ContentManager {
      * Perform a search for content matching the given properties
      * 
      * @param searchProperties a Map of property names and values. All the properties must match to give a result
-     * @return a List of Content items in no guaranteed order
+     * @return an Iterable of Content items in no guaranteed order
      * @throws StorageClientException
      * @throws AccessDeniedException
      */
-    List<Content> find(Map<String, Object> searchProperties) throws StorageClientException, AccessDeniedException;
+    Iterable<Content> find(Map<String, Object> searchProperties) throws StorageClientException, AccessDeniedException;
 
     /**
      * Save the current version of the content object including metadata and
