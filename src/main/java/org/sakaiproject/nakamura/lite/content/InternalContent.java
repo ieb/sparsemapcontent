@@ -20,7 +20,9 @@ package org.sakaiproject.nakamura.lite.content;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
+import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -31,6 +33,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Internal Content Object for holding sparse Content objects. Has a protected
@@ -410,5 +414,22 @@ public class InternalContent {
             }
         };
     }
+
+    public Iterable<String> listStreams() {
+        final Set<String> streams = Sets.newHashSet();
+        for ( Entry<String, Object> e : content.entrySet()) {
+            String k = e.getKey();
+            String[] streamIds = StringUtils.split(k,"/", 2);
+            if ( streamIds.length == 2) {
+                streams.add(streamIds[1]);
+            }
+        }
+        return new Iterable<String>() {
+            public Iterator<String> iterator() {
+                return streams.iterator();
+            }
+        };
+    }
+
 
 }
