@@ -107,7 +107,7 @@ public class Types {
      * @param binaryStream
      * @throws IOException
      */
-    public static void loadFromStream(String key, Map<String, Object> output, InputStream binaryStream)
+    public static void loadFromStream(String key, Map<String, Object> output, InputStream binaryStream, String type)
             throws IOException {
         DataInputStream dis = new DataInputStream(binaryStream);
         String ckey = dis.readUTF();
@@ -121,6 +121,16 @@ public class Types {
             LOGGER.debug("Read key {} ",k);
             output.put(k,lookupTypeById(dis.readInt()).load(dis));
         }
+        try {
+            String cftype = dis.readUTF();
+            if (!type.equals(cftype)) {
+                throw new IOException(
+                        "Object is not of expected column family, unable to read expected [" + type
+                                + "] was [" + cftype + "]");
+            }
+        } catch (IOException e) {
+            LOGGER.debug("No type specified");
+        }
         LOGGER.debug("Finished Reading");
         dis.close();
         binaryStream.close();
@@ -129,12 +139,20 @@ public class Types {
     /**
      * Save a map to a binary stream
      * 
+     *
      * @param m
-     *            expected to contain strings throughout
+     *            expected to be keyed by string, can contain any object that
+     *            has a type.
      * @return
      * @throws IOException
      */
-    public static InputStream storeMapToStream(String key, Map<String, Object> m)
+    // IF you change this function you will have to change it in a way that
+    // either is self healing for all the data out there
+    // or write a migration script. Be warned, there could be billions of
+    // records out there, so be very careful
+    // Appending to record is possible, if you make the loader fail safe when
+    // the data isnt there. See the last writeUTF for an example.
+    public static InputStream storeMapToStream(String key, Map<String, Object> m, String type)
             throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
@@ -160,6 +178,8 @@ public class Types {
                 t.save(dos, o);
             }
         }
+        // add the type in
+        dos.writeUTF(type);
         LOGGER.debug("Finished Writen {} items",size);
         dos.flush();
         baos.flush();

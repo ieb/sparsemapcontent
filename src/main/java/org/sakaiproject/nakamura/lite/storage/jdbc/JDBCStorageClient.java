@@ -128,7 +128,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             body = selectStringRow.executeQuery();
             inc("B");
             if (body.next()) {
-                Types.loadFromStream(rid, result, body.getBinaryStream(1));
+                Types.loadFromStream(rid, result, body.getBinaryStream(1), columnFamily);
             }
         } catch (SQLException e) {
             LOGGER.warn("Failed to perform get operation on  " + keySpace + ":" + columnFamily
@@ -208,7 +208,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 insertBlockRow.clearWarnings();
                 insertBlockRow.clearParameters();
                 insertBlockRow.setString(1, rid);
-                insertBlockRow.setBinaryStream(2, Types.storeMapToStream(rid, m));
+                insertBlockRow.setBinaryStream(2, Types.storeMapToStream(rid, m, columnFamily));
                 int rowsInserted = 0;
                 try {
                     rowsInserted = insertBlockRow.executeUpdate();
@@ -221,7 +221,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     updateBlockRow.clearWarnings();
                     updateBlockRow.clearParameters();
                     updateBlockRow.setString(2, rid);
-                    updateBlockRow.setBinaryStream(1, Types.storeMapToStream(rid, m));
+                    updateBlockRow.setBinaryStream(1, Types.storeMapToStream(rid, m, columnFamily));
                     if( updateBlockRow.executeUpdate() == 0) {
                         throw new StorageClientException("Failed to save " + rid);
                     } else {
@@ -236,14 +236,14 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 updateBlockRow.clearWarnings();
                 updateBlockRow.clearParameters();
                 updateBlockRow.setString(2, rid);
-                updateBlockRow.setBinaryStream(1, Types.storeMapToStream(rid, m));
+                updateBlockRow.setBinaryStream(1, Types.storeMapToStream(rid, m, columnFamily));
                 if (updateBlockRow.executeUpdate() == 0) {
                     PreparedStatement insertBlockRow = getStatement(keySpace, columnFamily,
                             SQL_BLOCK_INSERT_ROW, rid, statementCache);
                     insertBlockRow.clearWarnings();
                     insertBlockRow.clearParameters();
                     insertBlockRow.setString(1, rid);
-                    insertBlockRow.setBinaryStream(2, Types.storeMapToStream(rid, m));
+                    insertBlockRow.setBinaryStream(2, Types.storeMapToStream(rid, m, columnFamily));
                     if (insertBlockRow.executeUpdate() == 0) {
                         throw new StorageClientException("Failed to save " + rid);
                     } else {
@@ -812,7 +812,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         return find(keySpace, columnFamily, ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash));
     }
 
-    public DisposableIterator<Map<String, Object>> find(String keySpace, String columnFamily,
+    public DisposableIterator<Map<String, Object>> find(String keySpace, final String columnFamily,
             Map<String, Object> properties) throws StorageClientException {
         checkClosed();
 
@@ -895,7 +895,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                         if (open && rs.next()) {
                             map.clear();
                             Types.loadFromStream(rs.getString(1), map,
-                                    rs.getBinaryStream(2));
+                                    rs.getBinaryStream(2), columnFamily);
                             LOGGER.debug("Loaded {} ",map);
                             return true;
                         }

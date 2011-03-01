@@ -2,8 +2,8 @@ package org.sakaiproject.nakamura.lite.types;
 
 import com.google.common.collect.Maps;
 
-import junit.framework.Assert;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -40,9 +40,9 @@ public class TestTypes {
         map.put("H", false);
         map.put("J", null);
         
-        InputStream in = Types.storeMapToStream("testkey", map);
+        InputStream in = Types.storeMapToStream("testkey", map, "testcf");
         Map<String, Object> output = Maps.newHashMap();
-        Types.loadFromStream("testkey", output, in);
+        Types.loadFromStream("testkey", output, in, "testcf");
         
         Integer a = (Integer) map.get("A");
         Assert.assertNotNull(a);
@@ -63,7 +63,7 @@ public class TestTypes {
         Assert.assertEquals(cal.getTimeZone(), e.getTimeZone());
         Double f = (Double) map.get("F");
         Assert.assertNotNull(f);
-        Assert.assertEquals(0.1, f);
+        Assert.assertEquals((double)0.1, f.doubleValue(),0.0);
         Boolean g = (Boolean) map.get("G");
         Assert.assertNotNull(g);
         Assert.assertTrue(g.booleanValue());
@@ -75,6 +75,30 @@ public class TestTypes {
         
         
         
+    }
+
+    @Test
+    public void testWriteTypesWrongFamily() throws IOException {
+        Map<String, Object> map = Maps.newHashMap();
+        map.put("A", 1);
+        map.put("B", Long.MAX_VALUE);
+        map.put("C", "String");
+        map.put("D", new BigDecimal("12345.12E23"));
+        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("BST"));
+        cal.setTimeInMillis(System.currentTimeMillis());
+        map.put("E", cal);
+        map.put("F", (double)0.1);
+        map.put("G", true);
+        map.put("H", false);
+        map.put("J", null);
+        InputStream in = Types.storeMapToStream("testkey", map, "testcf");
+        Map<String, Object> output = Maps.newHashMap();
+        try {
+            Types.loadFromStream("testkey", output, in, "not-testcf");
+            org.junit.Assert.fail();
+        } catch ( IOException e ) {
+            // Ok
+        }
     }
 
     @Test
@@ -93,9 +117,9 @@ public class TestTypes {
         map.put("G", new boolean[]{true,false});
         map.put("H", new boolean[]{false,true});
         
-        InputStream in = Types.storeMapToStream("testkey", map);
+        InputStream in = Types.storeMapToStream("testkey", map, "testcf");
         Map<String, Object> output = Maps.newHashMap();
-        Types.loadFromStream("testkey", output, in);
+        Types.loadFromStream("testkey", output, in, "testcf");
         
         int[] a = (int[]) map.get("A");
         Assert.assertNotNull(a);
@@ -129,8 +153,8 @@ public class TestTypes {
         double[] f = (double[]) map.get("F");
         Assert.assertNotNull(f);
         Assert.assertEquals(2, f.length);
-        Assert.assertEquals(0.1, f[0]);
-        Assert.assertEquals(0.2, f[1]);
+        Assert.assertEquals(0.1, f[0],0.0);
+        Assert.assertEquals(0.2, f[1],0.0);
         boolean[] g = (boolean[]) map.get("G");
         Assert.assertNotNull(g);
         Assert.assertEquals(2, g.length);
@@ -157,9 +181,9 @@ public class TestTypes {
         map.put("G", new boolean[]{});
         map.put("H", new boolean[]{});
         
-        InputStream in = Types.storeMapToStream("testkey", map);
+        InputStream in = Types.storeMapToStream("testkey", map,"testcf");
         Map<String, Object> output = Maps.newHashMap();
-        Types.loadFromStream("testkey", output, in);
+        Types.loadFromStream("testkey", output, in, "testcf");
         
         int[] a = (int[]) map.get("A");
         Assert.assertNotNull(a);
