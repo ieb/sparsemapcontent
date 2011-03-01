@@ -121,15 +121,16 @@ public class Types {
             LOGGER.debug("Read key {} ",k);
             output.put(k,lookupTypeById(dis.readInt()).load(dis));
         }
+        String cftype = null;
         try {
-            String cftype = dis.readUTF();
-            if (!type.equals(cftype)) {
-                throw new IOException(
-                        "Object is not of expected column family, unable to read expected [" + type
-                                + "] was [" + cftype + "]");
-            }
+            cftype = dis.readUTF();
         } catch (IOException e) {
             LOGGER.debug("No type specified");
+        }
+        if ( cftype != null && !cftype.equals(type)) {
+            throw new IOException(
+                    "Object is not of expected column family, unable to read expected [" + type
+                            + "] was [" + cftype + "]");
         }
         LOGGER.debug("Finished Reading");
         dis.close();
