@@ -1,5 +1,23 @@
 
-CREATE TABLE css ( 
+CREATE TABLE css (
+  rid varchar(32) NOT NULL,
+  cid varchar(64) NOT NULL,
+  v varchar(780) NOT NULL,
+  primary key(rid,cid));
+
+CREATE TABLE au_css (
+  rid varchar(32) NOT NULL,
+  cid varchar(64) NOT NULL,
+  v varchar(780) NOT NULL,
+  primary key(rid,cid));
+
+CREATE TABLE ac_css (
+  rid varchar(32) NOT NULL,
+  cid varchar(64) NOT NULL,
+  v varchar(780) NOT NULL,
+  primary key(rid,cid));
+
+CREATE TABLE cn_css (
   rid varchar(32) NOT NULL,
   cid varchar(64) NOT NULL,
   v varchar(780) NOT NULL,
@@ -13,11 +31,47 @@ CREATE TABLE  csb (
   v blob,
   primary key(rid,cid));
 
+CREATE TABLE  au_csb (
+  rid varchar(32) NOT NULL,
+  cid varchar(64) NOT NULL,
+  v blob,
+  primary key(rid,cid));
+
+CREATE TABLE  ac_csb (
+  rid varchar(32) NOT NULL,
+  cid varchar(64) NOT NULL,
+  v blob,
+  primary key(rid,cid));
+
+CREATE TABLE  cn_csb (
+  rid varchar(32) NOT NULL,
+  cid varchar(64) NOT NULL,
+  v blob,
+  primary key(rid,cid));
+
 CREATE INDEX css_locate_idx ON css (v, cid);
+CREATE INDEX css_locate_idx ON au_css (v, cid);
+CREATE INDEX css_locate_idx ON ac_css (v, cid);
+CREATE INDEX css_locate_idx ON cn_css (v, cid);
 
 
 # Central Store for Object bodies, serialized content maps rather than columns
 CREATE TABLE  css_b (
+  rid varchar(32) NOT NULL,
+  b blob,
+  primary key(rid));
+
+CREATE TABLE  au_css_b (
+  rid varchar(32) NOT NULL,
+  b blob,
+  primary key(rid));
+
+CREATE TABLE  ac_css_b (
+  rid varchar(32) NOT NULL,
+  b blob,
+  primary key(rid));
+
+CREATE TABLE  cn_css_b (
   rid varchar(32) NOT NULL,
   b blob,
   primary key(rid));
