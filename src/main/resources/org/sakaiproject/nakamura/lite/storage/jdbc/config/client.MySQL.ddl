@@ -96,8 +96,6 @@ insert into index_cols (cid) values ('au:type');
 insert into index_cols (cid) values ('cn:sling:resourceType');
 insert into index_cols (cid) values ('cn:sakai:pooled-content-manager');
 # /var/search/comments/discussions/threaded.json
-insert into index_cols (cid) values ('cn:path');
+insert into index_cols (cid) values ('cn:sakai:messagestore');
 insert into index_cols (cid) values ('cn:sakai:type');
 insert into index_cols (cid) values ('cn:sakai:marker');
-
-
