@@ -71,7 +71,7 @@ public class StorageClientUtils {
     public static String ISO8601_JCR_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSZZ";
     @SuppressWarnings("unused")
     private final static FastDateFormat ISO8601_JCR_FORMAT = FastDateFormat.getInstance(
-            ISO8601_JCR_PATTERN, TimeZone.getTimeZone("UTC"), Locale.ROOT);
+            ISO8601_JCR_PATTERN, TimeZone.getTimeZone("UTC"), Locale.ENGLISH);
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StorageClientUtils.class);
 
