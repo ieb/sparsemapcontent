@@ -435,7 +435,7 @@ public class StorageClientUtils {
         } else if (object == null || object instanceof RemoveProperty) {
             return null;
         }
-        final SimpleDateFormat sdf = new SimpleDateFormat(ISO8601_JCR_PATTERN, Locale.ROOT);
+        final SimpleDateFormat sdf = new SimpleDateFormat(ISO8601_JCR_PATTERN, Locale.ENGLISH);
         final Date date = sdf.parse(toString(object));
         final Calendar c = Calendar.getInstance();
         c.setTime(date);
