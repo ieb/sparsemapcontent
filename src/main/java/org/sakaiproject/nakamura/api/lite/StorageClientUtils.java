@@ -71,7 +71,7 @@ public class StorageClientUtils {
     public static String ISO8601_JCR_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSZZ";
     @SuppressWarnings("unused")
     private final static FastDateFormat ISO8601_JCR_FORMAT = FastDateFormat.getInstance(
-            ISO8601_JCR_PATTERN, TimeZone.getTimeZone("UTC"), Locale.ROOT);
+            ISO8601_JCR_PATTERN, TimeZone.getTimeZone("UTC"), Locale.ENGLISH);
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StorageClientUtils.class);
 
@@ -435,7 +435,7 @@ public class StorageClientUtils {
         } else if (object == null || object instanceof RemoveProperty) {
             return null;
         }
-        final SimpleDateFormat sdf = new SimpleDateFormat(ISO8601_JCR_PATTERN, Locale.ROOT);
+        final SimpleDateFormat sdf = new SimpleDateFormat(ISO8601_JCR_PATTERN, Locale.ENGLISH);
         final Date date = sdf.parse(toString(object));
         final Calendar c = Calendar.getInstance();
         c.setTime(date);

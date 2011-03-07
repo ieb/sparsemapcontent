@@ -120,6 +120,62 @@ public abstract class AbstractContentManagerTest {
         Assert.assertEquals("value3", (String)p.get("prop1"));
 
     }
+    
+    @Test
+    public void testSimpleDelete() throws AccessDeniedException, StorageClientException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+        AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+                currentUser, configuration, sharedCache,  new LoggingStorageListener());
+
+        ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
+                configuration,  sharedCache, new LoggingStorageListener());
+        String path = "/testSimpleDelete/test2/test3/test4";
+        String parentPath = "/testSimpleDelete/test2/test3";
+        contentManager.update(new Content(parentPath, ImmutableMap.of("propParent", (Object) "valueParent")));
+        contentManager.update(new Content(path, ImmutableMap.of("prop1", (Object) "value1")));
+        Content content = contentManager.get(path);
+        Assert.assertNotNull(content);
+        Assert.assertEquals("value1", content.getProperty("prop1"));
+        
+        contentManager.delete(path);
+        Assert.assertNull(contentManager.get(path));
+        content = contentManager.get(parentPath);
+        Assert.assertNotNull(content);
+        Assert.assertEquals("valueParent", content.getProperty("propParent"));
+
+        contentManager.delete("/testSimpleDelete");
+
+    }
+
+    @Test
+    public void testSimpleDeleteRoot() throws AccessDeniedException, StorageClientException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+        AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+                currentUser, configuration, sharedCache,  new LoggingStorageListener());
+
+        ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
+                configuration,  sharedCache, new LoggingStorageListener());
+        String path = "testSimpleDeleteRoot/test2/test3/test4";
+        String parentPath = "testSimpleDeleteRoot/test2/test3";
+        contentManager.update(new Content(parentPath, ImmutableMap.of("propParent", (Object) "valueParent")));
+        contentManager.update(new Content(path, ImmutableMap.of("prop1", (Object) "value1")));
+        Content content = contentManager.get(path);
+        Assert.assertNotNull(content);
+        Assert.assertEquals("value1", content.getProperty("prop1"));
+        
+        contentManager.delete(path);
+        Assert.assertNull(contentManager.get(path));
+        content = contentManager.get(parentPath);
+        Assert.assertNotNull(content);
+        Assert.assertEquals("valueParent", content.getProperty("propParent"));
+
+        contentManager.delete("testSimpleDeleteRoot");
+
+    }
 
     @Test
     public void testDeleteContent() throws StorageClientException, AccessDeniedException {
