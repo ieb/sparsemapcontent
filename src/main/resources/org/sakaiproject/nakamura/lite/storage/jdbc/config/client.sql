@@ -51,6 +51,11 @@ block-insert-row.n.cn = insert into cn_css_b (rid,b) values (?, ?)
 block-update-row.n.cn = update cn_css_b set b = ? where rid = ?
 
 
+or-block-find = select a.rid, a.b from css_b a {0} where {1} 1 = 1;, css {0} ; ({0}.cid = ? and {0}.v = ? and {0}.rid = a.rid) or
+or-block-find.n.au = select a.rid, a.b from au_css_b a {0} where {1} 1 = 0;, au_css {0} ; ({0}.cid = ? and {0}.v = ? and {0}.rid = a.rid) or
+or-block-find.n.ac = select a.rid, a.b from ac_css_b a {0} where {1} 1 = 0;, ac_css {0} ; ({0}.cid = ? and {0}.v = ? and {0}.rid = a.rid) or
+or-block-find.n.cn = select a.rid, a.b from cn_css_b a {0} where {1} 1 = 0;, cn_css {0} ; ({0}.cid = ? and {0}.v = ? and {0}.rid = a.rid) or
+
 block-find = select a.rid, a.b from css_b a {0} where {1} 1 = 1;, css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
 block-find.n.au = select a.rid, a.b from au_css_b a {0} where {1} 1 = 1;, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
 block-find.n.ac = select a.rid, a.b from ac_css_b a {0} where {1} 1 = 1;, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and

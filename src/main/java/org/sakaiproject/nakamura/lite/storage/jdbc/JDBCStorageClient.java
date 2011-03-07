@@ -811,159 +811,167 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         LOGGER.debug("Finding {}:{}:{} as {} ",new Object[]{keySpace,columnFamily, key, hash});
         return find(keySpace, columnFamily, ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash));
     }
+    
+    public DisposableIterator<Map<String, Object>> find(String keySpace, final String columnFamily,
+            Map<String, Object> properties, Boolean usesOr) throws StorageClientException {
+      checkClosed();
+
+      String statementPrefix = "";
+      if (usesOr) {
+        statementPrefix = "or-";
+      }
+      String[] keys = new String[] { statementPrefix + "block-find." + keySpace + "." + columnFamily,
+              statementPrefix + "block-find." + columnFamily, statementPrefix + "block-find" };
+
+      String sql = null;
+      for (String statementKey : keys) {
+          sql = getSql(statementKey);
+          if (sql != null) {
+              break;
+          }
+      }
+      if (sql == null) {
+          throw new StorageClientException("Failed to locate SQL statement for any of  "
+                  + Arrays.toString(keys));
+      }
+
+      String[] statementParts = StringUtils.split(sql, ';');
+
+      StringBuilder tables = new StringBuilder();
+      StringBuilder where = new StringBuilder();
+      List<Object> parameters = Lists.newArrayList();
+      int set = 0;
+      for (Entry<String, Object> e : properties.entrySet()) {
+          Object v = e.getValue();
+          String k = e.getKey();
+          if ( shouldIndex(keySpace, columnFamily, k) ) {
+              if (v != null) {
+                  String t = "a" + set;
+                  tables.append(MessageFormat.format(statementParts[1], t));
+                  where.append(MessageFormat.format(statementParts[2], t));
+                  parameters.add(k);
+                  parameters.add(v);
+                  set++;
+              }
+          } else {
+              LOGGER.warn("Search on {}:{} is not supported, filter dropped ",columnFamily,k);
+          }
+      }
+
+      final String sqlStatement = MessageFormat.format(statementParts[0], tables.toString(),
+              where.toString());
+
+      PreparedStatement tpst = null;
+      ResultSet trs = null;
+      try {
+          LOGGER.debug("Preparing {} ", sqlStatement);
+          tpst = jcbcStorageClientConnection.getConnection().prepareStatement(sqlStatement);
+          inc("iterator");
+          tpst.clearParameters();
+          int i = 1;
+          for (Object params : parameters) {
+              tpst.setObject(i, params);
+              LOGGER.debug("Setting {} ", params);
+
+              i++;
+          }
+
+          trs = tpst.executeQuery();
+          inc("iterator r");
+          LOGGER.debug("Executed ");
+
+          // pass control to the iterator.
+          final PreparedStatement pst = tpst;
+          final ResultSet rs = trs;
+          tpst = null;
+          trs = null;
+          return registerDisposable(new PreemptiveIterator<Map<String, Object>>() {
+
+              private Map<String, Object> map = Maps.newHashMap();
+              private boolean open = true;
+
+              protected Map<String, Object> internalNext() {
+                  return map;
+              }
+
+              protected boolean internalHasNext() {
+                  try {
+                      if (open && rs.next()) {
+                          map.clear();
+                          Types.loadFromStream(rs.getString(1), map,
+                                  rs.getBinaryStream(2), columnFamily);
+                          LOGGER.debug("Loaded {} ",map);
+                          return true;
+                      }
+                      LOGGER.debug("No More Records ");
+                      close();
+                      map = null;
+                      return false;
+                  } catch (SQLException e) {
+                      LOGGER.error(e.getMessage(), e);
+                      close();
+                      map = null;
+                      return false;
+                  } catch (IOException e) {
+                      LOGGER.error(e.getMessage(), e);
+                      close();
+                      map = null;
+                      return false;
+                  }
+              }
+
+              public void close() {
+                  if (open) {
+                      open = false;
+                      try {
+                          if (rs != null) {
+                              rs.close();
+                              dec("iterator r");
+                          }
+                      } catch (SQLException e) {
+                          LOGGER.warn(e.getMessage(), e);
+                      }
+                      try {
+                          if (pst != null) {
+                              pst.close();
+                              dec("iterator");
+                          }
+                      } catch (SQLException e) {
+                          LOGGER.warn(e.getMessage(), e);
+                      }
+                  }
+
+              }
+          });
+      } catch (SQLException e) {
+          LOGGER.error(e.getMessage(), e);
+          throw new StorageClientException(e.getMessage() + " SQL Statement was " + sqlStatement,
+                  e);
+      } finally {
+          // trs and tpst will only be non null if control has not been passed
+          // to the iterator.
+          try {
+              if (trs != null) {
+                  trs.close();
+                  dec("iterator r");
+              }
+          } catch (SQLException e) {
+              LOGGER.warn(e.getMessage(), e);
+          }
+          try {
+              if (tpst != null) {
+                  tpst.close();
+                  dec("iterator");
+              }
+          } catch (SQLException e) {
+              LOGGER.warn(e.getMessage(), e);
+          }
+      }
+    }
 
     public DisposableIterator<Map<String, Object>> find(String keySpace, final String columnFamily,
             Map<String, Object> properties) throws StorageClientException {
-        checkClosed();
-
-        String[] keys = new String[] { "block-find." + keySpace + "." + columnFamily,
-                "block-find." + columnFamily, "block-find" };
-
-        String sql = null;
-        for (String statementKey : keys) {
-            sql = getSql(statementKey);
-            if (sql != null) {
-                break;
-            }
-        }
-        if (sql == null) {
-            throw new StorageClientException("Failed to locate SQL statement for any of  "
-                    + Arrays.toString(keys));
-        }
-
-        String[] statementParts = StringUtils.split(sql, ';');
-
-        StringBuilder tables = new StringBuilder();
-        StringBuilder where = new StringBuilder();
-        List<Object> parameters = Lists.newArrayList();
-        int set = 0;
-        for (Entry<String, Object> e : properties.entrySet()) {
-            Object v = e.getValue();
-            String k = e.getKey();
-            if ( shouldIndex(keySpace, columnFamily, k) ) {
-                if (v != null) {
-                    String t = "a" + set;
-                    tables.append(MessageFormat.format(statementParts[1], t));
-                    where.append(MessageFormat.format(statementParts[2], t));
-                    parameters.add(k);
-                    parameters.add(v);
-                    set++;
-                }
-            } else {
-                LOGGER.warn("Search on {}:{} is not supported, filter dropped ",columnFamily,k);
-            }
-        }
-
-        final String sqlStatement = MessageFormat.format(statementParts[0], tables.toString(),
-                where.toString());
-
-        PreparedStatement tpst = null;
-        ResultSet trs = null;
-        try {
-            LOGGER.debug("Preparing {} ", sqlStatement);
-            tpst = jcbcStorageClientConnection.getConnection().prepareStatement(sqlStatement);
-            inc("iterator");
-            tpst.clearParameters();
-            int i = 1;
-            for (Object params : parameters) {
-                tpst.setObject(i, params);
-                LOGGER.debug("Setting {} ", params);
-
-                i++;
-            }
-
-            trs = tpst.executeQuery();
-            inc("iterator r");
-            LOGGER.debug("Executed ");
-
-            // pass control to the iterator.
-            final PreparedStatement pst = tpst;
-            final ResultSet rs = trs;
-            tpst = null;
-            trs = null;
-            return registerDisposable(new PreemptiveIterator<Map<String, Object>>() {
-
-                private Map<String, Object> map = Maps.newHashMap();
-                private boolean open = true;
-
-                protected Map<String, Object> internalNext() {
-                    return map;
-                }
-
-                protected boolean internalHasNext() {
-                    try {
-                        if (open && rs.next()) {
-                            map.clear();
-                            Types.loadFromStream(rs.getString(1), map,
-                                    rs.getBinaryStream(2), columnFamily);
-                            LOGGER.debug("Loaded {} ",map);
-                            return true;
-                        }
-                        LOGGER.debug("No More Records ");
-                        close();
-                        map = null;
-                        return false;
-                    } catch (SQLException e) {
-                        LOGGER.error(e.getMessage(), e);
-                        close();
-                        map = null;
-                        return false;
-                    } catch (IOException e) {
-                        LOGGER.error(e.getMessage(), e);
-                        close();
-                        map = null;
-                        return false;
-                    }
-                }
-
-                public void close() {
-                    if (open) {
-                        open = false;
-                        try {
-                            if (rs != null) {
-                                rs.close();
-                                dec("iterator r");
-                            }
-                        } catch (SQLException e) {
-                            LOGGER.warn(e.getMessage(), e);
-                        }
-                        try {
-                            if (pst != null) {
-                                pst.close();
-                                dec("iterator");
-                            }
-                        } catch (SQLException e) {
-                            LOGGER.warn(e.getMessage(), e);
-                        }
-                    }
-
-                }
-            });
-        } catch (SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new StorageClientException(e.getMessage() + " SQL Statement was " + sqlStatement,
-                    e);
-        } finally {
-            // trs and tpst will only be non null if control has not been passed
-            // to the iterator.
-            try {
-                if (trs != null) {
-                    trs.close();
-                    dec("iterator r");
-                }
-            } catch (SQLException e) {
-                LOGGER.warn(e.getMessage(), e);
-            }
-            try {
-                if (tpst != null) {
-                    tpst.close();
-                    dec("iterator");
-                }
-            } catch (SQLException e) {
-                LOGGER.warn(e.getMessage(), e);
-            }
-        }
-
+        return find(keySpace, columnFamily, properties, Boolean.FALSE);
     }
 
     private void dec(String key) {
