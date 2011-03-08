@@ -45,9 +45,6 @@ public interface StorageClient {
 
     Iterator<Map<String, Object>> find(String keySpace, String authorizableColumnFamily,
             Map<String, Object> properties) throws StorageClientException;
-    
-    Iterator<Map<String, Object>> find(String keySpace, String authorizableColumnFamily,
-        Map<String, Object> properties, Boolean usesOr) throws StorageClientException;
 
     void close();
 

@@ -53,7 +53,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -259,12 +258,5 @@ public class CassandraClient extends Client implements StorageClient {
     public DisposableIterator<Map<String, Object>> listChildren(String keySpace,
             String columnFamily, String key) throws StorageClientException {
         throw new UnsupportedOperationException();
-    }
-
-    public Iterator<Map<String, Object>> find(String keySpace,
-        String authorizableColumnFamily, Map<String, Object> properties, Boolean usesOr)
-        throws StorageClientException {
-      // TODO Auto-generated method stub
-      return null;
     }
 }

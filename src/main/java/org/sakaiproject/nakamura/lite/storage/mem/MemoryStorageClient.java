@@ -280,12 +280,5 @@ public class MemoryStorageClient implements StorageClient {
         return find(keySpace, columnFamily, ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash));
     }
 
-    public Iterator<Map<String, Object>> find(String keySpace,
-        String authorizableColumnFamily, Map<String, Object> properties, Boolean usesOr)
-        throws StorageClientException {
-      // TODO Auto-generated method stub
-      return null;
-    }
-
 
 }

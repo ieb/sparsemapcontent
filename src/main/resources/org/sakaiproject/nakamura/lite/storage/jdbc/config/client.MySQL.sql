@@ -56,11 +56,6 @@ block-find.n.au = select a.rid, a.b from au_css_b a {0} where {1} 1 = 1;, au_css
 block-find.n.cn = select a.rid, a.b from cn_css_b a {0} where {1} 1 = 1;, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
 block-find.n.ac = select a.rid, a.b from ac_css_b a {0} where {1} 1 = 1;, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
 
-or-block-find = select a.rid, a.b from css_b a {0} where {1} 1 = 0;, css {0} ; ({0}.cid = ? and {0}.v = ? and {0}.rid = a.rid) or
-or-block-find.n.au = select a.rid, a.b from au_css_b a {0} where {1} 1 = 0;, au_css {0} ; ({0}.cid = ? and {0}.v = ? and {0}.rid = a.rid) or
-or-block-find.n.cn = select a.rid, a.b from cn_css_b a {0} where {1} 1 = 0;, cn_css {0} ; ({0}.cid = ? and {0}.v = ? and {0}.rid = a.rid) or
-or-block-find.n.ac = select a.rid, a.b from ac_css_b a {0} where {1} 1 = 0;, ac_css {0} ; ({0}.cid = ? and {0}.v = ? and {0}.rid = a.rid) or
-
 
 # statement to validate the connection
 validate = select 1
