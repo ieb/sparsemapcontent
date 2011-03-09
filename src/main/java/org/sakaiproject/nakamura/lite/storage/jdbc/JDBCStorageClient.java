@@ -837,6 +837,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         StringBuilder tables = new StringBuilder();
         StringBuilder where = new StringBuilder();
         List<Object> parameters = Lists.newArrayList();
+        int set = 0;
         for (Entry<String, Object> e : properties.entrySet()) {
             Object v = e.getValue();
             String k = e.getKey();
@@ -845,34 +846,39 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                   // check for a value map and treat sub terms as for OR terms.
                   // Only go 1 level deep; don't recurse. That's just silly.
                   if (v instanceof Map) {
-                    // open the OR grouping
-                    where.append("(");
+                    // start the OR grouping
+                    where.append(" (");
                     Set<Entry<String, Object>> subterms = ((Map<String, Object>) v).entrySet();
                     for(Iterator<Entry<String, Object>> subtermsIter = subterms.iterator(); subtermsIter.hasNext();) {
                       Entry<String, Object> subterm = subtermsIter.next();
                       String subk = subterm.getKey();
                       Object subv = subterm.getValue();
+                      // check that each subterm should be indexed
                       if (shouldIndex(keySpace, columnFamily, subk)) {
-                        String t = "a" + tables.length();
+                        String t = "a" + set;
                         tables.append(MessageFormat.format(statementParts[1], t));
                         parameters.add(subk);
                         where.append(MessageFormat.format(statementParts[2], t));
                         parameters.add(subv);
 
+                        // as long as there are more add OR
                         if (subtermsIter.hasNext()) {
-                          where.append(" OR ");
+                          where.append(" OR");
                         }
+                        set++;
                       }
                     }
-                    // close the OR grouping
-                    where.append(")");
+                    // end the OR grouping
+                    where.append(") AND");
                   } else {
                     // process a first level non-map value as an AND term
-                    String t = "a" + tables.length();
+                    String t = "a" + set;
                     tables.append(MessageFormat.format(statementParts[1], t));
                     parameters.add(k);
-                    where.append(MessageFormat.format(statementParts[2], t)).append(" AND ");
+                    // concat terms together at this level with AND
+                    where.append(MessageFormat.format(statementParts[2], t)).append(" AND");
                     parameters.add(v);
+                    set++;
                   }
                 } else {
                   LOGGER.debug("Search on {}:{} filter dropped due to null value.", columnFamily, k);
