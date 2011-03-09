@@ -20,9 +20,9 @@ remove-string-column.n.ac = delete from ac_css where rid = ? and cid = ?
 remove-string-column.n.cn = delete from cn_css where rid = ? and cid = ?
 check-schema = select count(*) from css
 
-find.n.au = select a.rid, a.cid, a.v from au_css a {0} where {1} 1 = 1 ;, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
-find.n.ac = select a.rid, a.cid, a.v from ac_css a {0} where {1} 1 = 1 ;, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
-find.n.cn = select a.rid, a.cid, a.v from cn_css a {0} where {1} 1 = 1 ;, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
+find.n.au = select a.rid, a.cid, a.v from au_css a {0} where {1} 1 = 1 ;, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid
+find.n.ac = select a.rid, a.cid, a.v from ac_css a {0} where {1} 1 = 1 ;, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid
+find.n.cn = select a.rid, a.cid, a.v from cn_css a {0} where {1} 1 = 1 ;, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid
 validate = values(1)
 rowid-hash = SHA1
 
@@ -51,9 +51,9 @@ block-insert-row.n.cn = insert into cn_css_b (rid,b) values (?, ?)
 block-update-row.n.cn = update cn_css_b set b = ? where rid = ?
 
 
-block-find = select a.rid, a.b from css_b a {0} where {1} 1 = 1;, css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
-block-find.n.au = select a.rid, a.b from au_css_b a {0} where {1} 1 = 1;, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
-block-find.n.ac = select a.rid, a.b from ac_css_b a {0} where {1} 1 = 1;, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
-block-find.n.cn = select a.rid, a.b from cn_css_b a {0} where {1} 1 = 1;, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid and
+block-find = select a.rid, a.b from css_b a {0} where {1} 1 = 1;, css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid
+block-find.n.au = select a.rid, a.b from au_css_b a {0} where {1} 1 = 1;, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid
+block-find.n.ac = select a.rid, a.b from ac_css_b a {0} where {1} 1 = 1;, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid
+block-find.n.cn = select a.rid, a.b from cn_css_b a {0} where {1} 1 = 1;, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid
 
 use-batch-inserts = 0
