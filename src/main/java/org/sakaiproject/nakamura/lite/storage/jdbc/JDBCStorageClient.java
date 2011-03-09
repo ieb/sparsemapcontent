@@ -857,10 +857,24 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                       if (shouldIndex(keySpace, columnFamily, subk)) {
                         String t = "a" + set;
                         tables.append(MessageFormat.format(statementParts[1], t));
-                        parameters.add(subk);
-                        where.append(MessageFormat.format(statementParts[2], t));
-                        parameters.add(subv);
 
+                        if (subv instanceof Iterable<?>) {
+                          for (Iterator<?> subvi = ((Iterable<?>) subv).iterator(); subvi.hasNext();) {
+                            Object subvObj = subvi.next();
+                            parameters.add(subk);
+                            where.append(" (").append(MessageFormat.format(statementParts[2], t)).append(")");
+                            parameters.add(subvObj);
+
+                            // as long as there are more add OR
+                            if (subvi.hasNext()) {
+                              where.append(" OR");
+                            }
+                          }
+                        } else {
+                          parameters.add(subk);
+                          where.append(" (").append(MessageFormat.format(statementParts[2], t)).append(")");
+                          parameters.add(subv);
+                        }
                         // as long as there are more add OR
                         if (subtermsIter.hasNext()) {
                           where.append(" OR");
@@ -874,10 +888,20 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     // process a first level non-map value as an AND term
                     String t = "a" + set;
                     tables.append(MessageFormat.format(statementParts[1], t));
-                    parameters.add(k);
-                    // concat terms together at this level with AND
-                    where.append(MessageFormat.format(statementParts[2], t)).append(" AND");
-                    parameters.add(v);
+
+                    if (v instanceof Iterable<?>) {
+                      for (Iterator<?> vi = ((Iterable<?>) v).iterator(); vi.hasNext();) {
+                        Object viObj = vi.next();
+                        parameters.add(k);
+                        where.append(MessageFormat.format(statementParts[2], t)).append(" AND");
+                        parameters.add(viObj);
+                      }
+                    } else {
+                      // concat terms together at this level with AND
+                      parameters.add(k);
+                      where.append(MessageFormat.format(statementParts[2], t)).append(" AND");
+                      parameters.add(v);
+                    }
                     set++;
                   }
                 } else {

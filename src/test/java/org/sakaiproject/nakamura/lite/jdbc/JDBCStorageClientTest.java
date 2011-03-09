@@ -22,6 +22,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import junit.framework.Assert;
@@ -49,10 +50,10 @@ import java.util.Map;
 @RunWith(MockitoJUnitRunner.class)
 public class JDBCStorageClientTest {
   JDBCStorageClient client;
-  
+
   @Mock
   JDBCStorageClientPool connPool;
-  
+
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   Connection conn;
 
@@ -76,7 +77,7 @@ public class JDBCStorageClientTest {
     // have the pool return the connection we control
     when(connPool.getConnection()).thenReturn(conn);
 
- // funnel in data when the indexed columns are looked up
+    // funnel in data when the indexed columns are looked up
     when(conn.prepareStatement(anyString())).thenReturn(ps1).thenReturn(ps2);
     when(ps1.executeQuery()).thenReturn(rs1);
     when(ps2.executeQuery()).thenReturn(rs2);
@@ -112,14 +113,14 @@ public class JDBCStorageClientTest {
 
     String sqlTemplate = (String) sqlConfig.get("block-find");
     String[] statementParts = StringUtils.split(sqlTemplate, ';');
-    
+
     StringBuilder tables = new StringBuilder().append(
         MessageFormat.format(statementParts[1], "a0")).append(
         MessageFormat.format(statementParts[1], "a1"));
     StringBuilder where = new StringBuilder()
         .append(MessageFormat.format(statementParts[2], "a0")).append(" AND")
         .append(MessageFormat.format(statementParts[2], "a1")).append(" AND");
-    
+
     String expectedSql = MessageFormat.format(statementParts[0], tables.toString(),
         where.toString());
 
@@ -150,14 +151,14 @@ public class JDBCStorageClientTest {
 
     String sqlTemplate = (String) sqlConfig.get("block-find");
     String[] statementParts = StringUtils.split(sqlTemplate, ';');
-    
+
     StringBuilder tables = new StringBuilder().append(
         MessageFormat.format(statementParts[1], "a0")).append(
         MessageFormat.format(statementParts[1], "a1"));
-    StringBuilder where = new StringBuilder()
-        .append(" (").append(MessageFormat.format(statementParts[2], "a0")).append(" OR")
-        .append(MessageFormat.format(statementParts[2], "a1")).append(") AND");
-    
+    StringBuilder where = new StringBuilder().append(" ( (")
+        .append(MessageFormat.format(statementParts[2], "a0")).append(") OR (")
+        .append(MessageFormat.format(statementParts[2], "a1")).append(")) AND");
+
     String expectedSql = MessageFormat.format(statementParts[0], tables.toString(),
         where.toString());
 
@@ -169,8 +170,8 @@ public class JDBCStorageClientTest {
   public void test1TermAnd2TermsOr1TermAnd() throws Exception {
     when(rs1.next()).thenReturn(true).thenReturn(true).thenReturn(true).thenReturn(true)
         .thenReturn(false);
-    when(rs1.getString(1)).thenReturn("conjunctions:key1", "conjunctions:key2", "conjunctions:testKey1")
-        .thenReturn("conjunctions:testKey2");
+    when(rs1.getString(1)).thenReturn("conjunctions:key1", "conjunctions:key2",
+        "conjunctions:testKey1").thenReturn("conjunctions:testKey2");
 
     String keySpace = "cn";
     String columnFamily = "conjunctions";
@@ -199,17 +200,18 @@ public class JDBCStorageClientTest {
 
     String sqlTemplate = (String) sqlConfig.get("block-find");
     String[] statementParts = StringUtils.split(sqlTemplate, ';');
-    
-    StringBuilder tables = new StringBuilder().append(
-        MessageFormat.format(statementParts[1], "a0")).append(
-        MessageFormat.format(statementParts[1], "a1")).append(
-        MessageFormat.format(statementParts[1], "a2")).append(
-        MessageFormat.format(statementParts[1], "a3"));
+
+    StringBuilder tables = new StringBuilder()
+        .append(MessageFormat.format(statementParts[1], "a0"))
+        .append(MessageFormat.format(statementParts[1], "a1"))
+        .append(MessageFormat.format(statementParts[1], "a2"))
+        .append(MessageFormat.format(statementParts[1], "a3"));
     StringBuilder where = new StringBuilder()
         .append(MessageFormat.format(statementParts[2], "a0")).append(" AND")
-        .append(" (").append(MessageFormat.format(statementParts[2], "a1")).append(" OR")
-        .append(MessageFormat.format(statementParts[2], "a2")).append(") AND")
-        .append(MessageFormat.format(statementParts[2], "a3")).append(" AND");
+        .append(" ( (").append(MessageFormat.format(statementParts[2], "a1"))
+        .append(") OR (").append(MessageFormat.format(statementParts[2], "a2"))
+        .append(")) AND").append(MessageFormat.format(statementParts[2], "a3"))
+        .append(" AND");
 
     String expectedSql = MessageFormat.format(statementParts[0], tables.toString(),
         where.toString());
@@ -260,21 +262,22 @@ public class JDBCStorageClientTest {
 
     String sqlTemplate = (String) sqlConfig.get("block-find");
     String[] statementParts = StringUtils.split(sqlTemplate, ';');
-    
-    StringBuilder tables = new StringBuilder().append(
-        MessageFormat.format(statementParts[1], "a0")).append(
-        MessageFormat.format(statementParts[1], "a1")).append(
-        MessageFormat.format(statementParts[1], "a2")).append(
-        MessageFormat.format(statementParts[1], "a3")).append(
-        MessageFormat.format(statementParts[1], "a4")).append(
-        MessageFormat.format(statementParts[1], "a5"));
+
+    StringBuilder tables = new StringBuilder()
+        .append(MessageFormat.format(statementParts[1], "a0"))
+        .append(MessageFormat.format(statementParts[1], "a1"))
+        .append(MessageFormat.format(statementParts[1], "a2"))
+        .append(MessageFormat.format(statementParts[1], "a3"))
+        .append(MessageFormat.format(statementParts[1], "a4"))
+        .append(MessageFormat.format(statementParts[1], "a5"));
     StringBuilder where = new StringBuilder()
         .append(MessageFormat.format(statementParts[2], "a0")).append(" AND")
         .append(MessageFormat.format(statementParts[2], "a1")).append(" AND")
-        .append(" (").append(MessageFormat.format(statementParts[2], "a2")).append(" OR")
-        .append(MessageFormat.format(statementParts[2], "a3")).append(") AND")
-        .append(" (").append(MessageFormat.format(statementParts[2], "a4")).append(" OR")
-        .append(MessageFormat.format(statementParts[2], "a5")).append(") AND");
+        .append(" ( (").append(MessageFormat.format(statementParts[2], "a2"))
+        .append(") OR (").append(MessageFormat.format(statementParts[2], "a3"))
+        .append(")) AND").append(" ( (")
+        .append(MessageFormat.format(statementParts[2], "a4")).append(") OR (")
+        .append(MessageFormat.format(statementParts[2], "a5")).append(")) AND");
 
     String expectedSql = MessageFormat.format(statementParts[0], tables.toString(),
         where.toString());
@@ -302,12 +305,94 @@ public class JDBCStorageClientTest {
 
     String sqlTemplate = (String) sqlConfig.get("block-find");
     String[] statementParts = StringUtils.split(sqlTemplate, ';');
-    
+
+    StringBuilder tables = new StringBuilder().append(MessageFormat.format(
+        statementParts[1], "a0"));
+    StringBuilder where = new StringBuilder().append(
+        MessageFormat.format(statementParts[2], "a0")).append(" AND");
+
+    String expectedSql = MessageFormat.format(statementParts[0], tables.toString(),
+        where.toString());
+
+    String sql = sqlCaptor.getValue();
+    Assert.assertEquals(expectedSql, sql);
+  }
+
+  @Test
+  public void test2TermsMultivalueAnd() throws Exception {
+    when(rs1.next()).thenReturn(true, true, false);
+    when(rs1.getString(1)).thenReturn("conjunctions:key1", "conjunctions:key2");
+
+    String keySpace = "cn";
+    String columnFamily = "conjunctions";
+    Map<String, Object> props = Maps.newLinkedHashMap();
+    props.put("key1", Lists.immutableList("val1", "val2"));
+    props.put("key2", "val2");
+    client.find(keySpace, columnFamily, props);
+
+    ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+    verify(conn, atLeastOnce()).prepareStatement(sqlCaptor.capture());
+    int i = 0;
+    verify(ps2).setObject(++i, "key1");
+    verify(ps2).setObject(++i, "val1");
+    verify(ps2).setObject(++i, "key1");
+    verify(ps2).setObject(++i, "val2");
+    verify(ps2).setObject(++i, "key2");
+    verify(ps2).setObject(++i, "val2");
+
+    String sqlTemplate = (String) sqlConfig.get("block-find");
+    String[] statementParts = StringUtils.split(sqlTemplate, ';');
+
     StringBuilder tables = new StringBuilder().append(
-        MessageFormat.format(statementParts[1], "a0"));
+        MessageFormat.format(statementParts[1], "a0")).append(
+        MessageFormat.format(statementParts[1], "a1"));
     StringBuilder where = new StringBuilder()
-        .append(MessageFormat.format(statementParts[2], "a0")).append(" AND");
-    
+        .append(MessageFormat.format(statementParts[2], "a0")).append(" AND")
+        .append(MessageFormat.format(statementParts[2], "a0")).append(" AND")
+        .append(MessageFormat.format(statementParts[2], "a1")).append(" AND");
+
+    String expectedSql = MessageFormat.format(statementParts[0], tables.toString(),
+        where.toString());
+
+    String sql = sqlCaptor.getValue();
+    Assert.assertEquals(expectedSql, sql);
+  }
+
+  @Test
+  public void test2TermsMultivalueOr() throws Exception {
+    when(rs1.next()).thenReturn(true, true, false);
+    when(rs1.getString(1)).thenReturn("conjunctions:key1", "conjunctions:key2");
+
+    String keySpace = "cn";
+    String columnFamily = "conjunctions";
+    Map<String, Object> container = Maps.newHashMap();
+    Map<String, Object> orSet = Maps.newLinkedHashMap();
+    orSet.put("key1", Lists.immutableList("val1", "val2"));
+    orSet.put("key2", "val2");
+    container.put("orSet", orSet);
+    client.find(keySpace, columnFamily, container);
+
+    ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+    verify(conn, atLeastOnce()).prepareStatement(sqlCaptor.capture());
+    int i = 0;
+    verify(ps2).setObject(++i, "key1");
+    verify(ps2).setObject(++i, "val1");
+    verify(ps2).setObject(++i, "key1");
+    verify(ps2).setObject(++i, "val2");
+    verify(ps2).setObject(++i, "key2");
+    verify(ps2).setObject(++i, "val2");
+
+    String sqlTemplate = (String) sqlConfig.get("block-find");
+    String[] statementParts = StringUtils.split(sqlTemplate, ';');
+
+    StringBuilder tables = new StringBuilder().append(
+        MessageFormat.format(statementParts[1], "a0")).append(
+        MessageFormat.format(statementParts[1], "a1"));
+    StringBuilder where = new StringBuilder().append(" ( (")
+        .append(MessageFormat.format(statementParts[2], "a0")).append(") OR (")
+        .append(MessageFormat.format(statementParts[2], "a0")).append(") OR (")
+        .append(MessageFormat.format(statementParts[2], "a1")).append(")) AND");
+
     String expectedSql = MessageFormat.format(statementParts[0], tables.toString(),
         where.toString());
 
