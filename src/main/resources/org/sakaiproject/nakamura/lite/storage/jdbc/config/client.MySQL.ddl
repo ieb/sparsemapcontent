@@ -9,10 +9,12 @@ DROP TABLE IF EXISTS `css`;
 # Central store
 
 CREATE TABLE  `css` (
+  `id` varchar(32) NOT NULL,
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
-  primary key USING HASH (`rid`,`cid`),
+  PRIMARY KEY  (`id`),
+  KEY `rowkey` USING HASH (`rid`,`cid`),
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -21,10 +23,12 @@ DROP TABLE IF EXISTS `au_css`;
 
 # Store just for Authorizables
 CREATE TABLE  `au_css` (
+  `id` varchar(32) NOT NULL,
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
-  primary key USING HASH (`rid`,`cid`),
+  PRIMARY KEY  (`id`),
+  KEY `rowkey` USING HASH (`rid`,`cid`),
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -32,10 +36,12 @@ DROP TABLE IF EXISTS `cn_css`;
 
 # Store just for Content
 CREATE TABLE  `cn_css` (
+  `id` varchar(32) NOT NULL,
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
-  primary key USING HASH (`rid`,`cid`),
+  PRIMARY KEY  (`id`),
+  KEY `rowkey` USING HASH (`rid`,`cid`),
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -44,10 +50,12 @@ DROP TABLE IF EXISTS `ac_css`;
 
 # Store just for Access Control
 CREATE TABLE  `ac_css` (
+  `id` varchar(32) NOT NULL,
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
-  primary key USING HASH (`rid`,`cid`),
+  PRIMARY KEY  (`id`),
+  KEY `rowkey` USING HASH (`rid`,`cid`),
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 

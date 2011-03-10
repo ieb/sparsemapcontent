@@ -7,7 +7,7 @@
 DROP TABLE IF EXISTS `css`;
 
 CREATE TABLE  `css` (
-  `id` int(11) NOT NULL auto_increment,
+  `id` varchar(32) NOT NULL,
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE  `css` (
 DROP TABLE IF EXISTS `au_css`;
 
 CREATE TABLE  `au_css` (
-  `id` int(11) NOT NULL auto_increment,
+  `id` varchar(32) NOT NULL,
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE  `au_css` (
 DROP TABLE IF EXISTS `cn_css`;
 
 CREATE TABLE  `cn_css` (
-  `id` int(11) NOT NULL auto_increment,
+  `id` varchar(32) NOT NULL,
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,

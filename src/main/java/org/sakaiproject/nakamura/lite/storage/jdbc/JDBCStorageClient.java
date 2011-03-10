@@ -60,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class JDBCStorageClient implements StorageClient, RowHasher {
@@ -349,6 +350,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                                   insertStringColumn.setString(2, rid);
                                   insertStringColumn.setString(3, k);
                                   insertStringColumn.addBatch();
+                                  insertStringColumn.setString(4, StringUtils.remove(UUID.randomUUID().toString(), '-'));
                                   insertSet.add(insertStringColumn);
                                   List<Entry<String, Object>> insertSeq = insertSequence
                                   .get(insertStringColumn);
@@ -417,6 +419,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                                   insertStringColumn.setString(1, (String) ov);
                                   insertStringColumn.setString(2, rid);
                                   insertStringColumn.setString(3, k);
+                                  insertStringColumn.setString(4, StringUtils.remove(UUID.randomUUID().toString(), '-'));
                                   if (insertStringColumn.executeUpdate() == 0) {
                                       throw new StorageClientException("Failed to save "
                                               + getRowId(keySpace, columnFamily, key) + "  column:["
@@ -476,6 +479,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                             insertStringColumn.setString(1, (String) e.getValue());
                             insertStringColumn.setString(2, rid);
                             insertStringColumn.setString(3, e.getKey());
+                            insertStringColumn.setString(4, StringUtils.remove(UUID.randomUUID().toString(), '-'));
                             if (insertStringColumn.executeUpdate() == 0) {
                                 throw new StorageClientException("Failed to save "
                                         + getRowId(keySpace, columnFamily, key) + "  column:["

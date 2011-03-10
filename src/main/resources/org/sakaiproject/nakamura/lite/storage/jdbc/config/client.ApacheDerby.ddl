@@ -1,35 +1,35 @@
 
 CREATE TABLE css (
-  id char(32) NOT NULL,
+  id varchar(32) NOT NULL,
   rid varchar(32) NOT NULL,
   cid varchar(64) NOT NULL,
   v varchar(780) NOT NULL,
-  primary key(id);
+  primary key(id));
 CREATE INDEX css_i ON css (rid, cid);
 
 CREATE TABLE au_css (
-  id char(32) NOT NULL,
+  id varchar(32) NOT NULL,
   rid varchar(32) NOT NULL,
   cid varchar(64) NOT NULL,
   v varchar(780) NOT NULL,
-  primary key(id);
-CREATE INDEX css_i ON css (rid, cid);
+  primary key(id));
+CREATE INDEX au_css_i ON au_css (rid, cid);
 
 CREATE TABLE ac_css (
-  id char(32) NOT NULL,
+  id varchar(32) NOT NULL,
   rid varchar(32) NOT NULL,
   cid varchar(64) NOT NULL,
   v varchar(780) NOT NULL,
-  primary key(id);
-CREATE INDEX css_i ON css (rid, cid);
+  primary key(id));
+CREATE INDEX ac_css_i ON ac_css (rid, cid);
 
 CREATE TABLE cn_css (
-  id char(32) NOT NULL,
+  id varchar(32) NOT NULL,
   rid varchar(32) NOT NULL,
   cid varchar(64) NOT NULL,
   v varchar(780) NOT NULL,
-  primary key(id);
-CREATE INDEX css_i ON css (rid, cid);
+  primary key(id));
+CREATE INDEX cn_css_i ON cn_css (rid, cid);
 
 
 
@@ -58,9 +58,9 @@ CREATE TABLE  cn_csb (
   primary key(rid,cid));
 
 CREATE INDEX css_locate_idx ON css (v, cid);
-CREATE INDEX css_locate_idx ON au_css (v, cid);
-CREATE INDEX css_locate_idx ON ac_css (v, cid);
-CREATE INDEX css_locate_idx ON cn_css (v, cid);
+CREATE INDEX au_css_locate_idx ON au_css (v, cid);
+CREATE INDEX ac_css_locate_idx ON ac_css (v, cid);
+CREATE INDEX cn_css_locate_idx ON cn_css (v, cid);
 
 
 # Central Store for Object bodies, serialized content maps rather than columns
