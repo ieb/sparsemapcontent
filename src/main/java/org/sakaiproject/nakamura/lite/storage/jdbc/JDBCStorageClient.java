@@ -395,36 +395,42 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     String k = e.getKey();
                     Object o = e.getValue();
                     if (shouldIndex(keySpace, columnFamily, k)) {
-                        if (o instanceof String) {
-                            PreparedStatement updateStringColumn = getStatement(keySpace,
-                                    columnFamily, SQL_UPDATE_STRING_COLUMN, rid, statementCache);
-                            updateStringColumn.clearWarnings();
-                            updateStringColumn.clearParameters();
-                            updateStringColumn.setString(1, (String) o);
-                            updateStringColumn.setString(2, rid);
-                            updateStringColumn.setString(3, k);
+                        if (o instanceof String || o instanceof String[]) {
+                            if (o instanceof String) {
+                              o = new String[] { (String) o };
+                            }
+                            String[] os = (String[]) o;
+                            for (String ov : os) {
+                              PreparedStatement updateStringColumn = getStatement(keySpace,
+                                      columnFamily, SQL_UPDATE_STRING_COLUMN, rid, statementCache);
+                              updateStringColumn.clearWarnings();
+                              updateStringColumn.clearParameters();
+                              updateStringColumn.setString(1, (String) ov);
+                              updateStringColumn.setString(2, rid);
+                              updateStringColumn.setString(3, k);
 
-                            if (updateStringColumn.executeUpdate() == 0) {
-                                PreparedStatement insertStringColumn = getStatement(keySpace,
-                                        columnFamily, SQL_INSERT_STRING_COLUMN, rid, statementCache);
-                                insertStringColumn.clearWarnings();
-                                insertStringColumn.clearParameters();
-                                insertStringColumn.setString(1, (String) o);
-                                insertStringColumn.setString(2, rid);
-                                insertStringColumn.setString(3, k);
-                                if (insertStringColumn.executeUpdate() == 0) {
-                                    throw new StorageClientException("Failed to save "
-                                            + getRowId(keySpace, columnFamily, key) + "  column:["
-                                            + k + "] ");
-                                } else {
-                                    LOGGER.debug("Inserted Index {} {} [{}]",
-                                            new Object[] { getRowId(keySpace, columnFamily, key),
-                                                    k, o });
-                                }
-                            } else {
-                                LOGGER.debug(
-                                        "Updated Index {} {} [{}]",
-                                        new Object[] { getRowId(keySpace, columnFamily, key), k, o });
+                              if (updateStringColumn.executeUpdate() == 0) {
+                                  PreparedStatement insertStringColumn = getStatement(keySpace,
+                                          columnFamily, SQL_INSERT_STRING_COLUMN, rid, statementCache);
+                                  insertStringColumn.clearWarnings();
+                                  insertStringColumn.clearParameters();
+                                  insertStringColumn.setString(1, (String) ov);
+                                  insertStringColumn.setString(2, rid);
+                                  insertStringColumn.setString(3, k);
+                                  if (insertStringColumn.executeUpdate() == 0) {
+                                      throw new StorageClientException("Failed to save "
+                                              + getRowId(keySpace, columnFamily, key) + "  column:["
+                                              + k + "] ");
+                                  } else {
+                                      LOGGER.debug("Inserted Index {} {} [{}]",
+                                              new Object[] { getRowId(keySpace, columnFamily, key),
+                                                      k, ov });
+                                  }
+                              } else {
+                                  LOGGER.debug(
+                                          "Updated Index {} {} [{}]",
+                                          new Object[] { getRowId(keySpace, columnFamily, key), k, ov });
+                              }
                             }
                         } else if (o instanceof RemoveProperty || o == null) {
                             PreparedStatement removeStringColumn = getStatement(keySpace,
@@ -442,6 +448,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                                 LOGGER.debug("Removed Index {} {} ",
                                         getRowId(keySpace, columnFamily, key), k);
                             }
+                        } else {
+                          LOGGER.warn("Index value type not handled [type={}]", o.getClass());
                         }
                     }
                 }

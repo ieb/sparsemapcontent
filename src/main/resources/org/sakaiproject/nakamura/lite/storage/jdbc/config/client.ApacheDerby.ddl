@@ -1,27 +1,35 @@
 
 CREATE TABLE css (
+  id char(32) NOT NULL,
   rid varchar(32) NOT NULL,
   cid varchar(64) NOT NULL,
   v varchar(780) NOT NULL,
-  primary key(rid,cid));
+  primary key(id);
+CREATE INDEX css_i ON css (rid, cid);
 
 CREATE TABLE au_css (
+  id char(32) NOT NULL,
   rid varchar(32) NOT NULL,
   cid varchar(64) NOT NULL,
   v varchar(780) NOT NULL,
-  primary key(rid,cid));
+  primary key(id);
+CREATE INDEX css_i ON css (rid, cid);
 
 CREATE TABLE ac_css (
+  id char(32) NOT NULL,
   rid varchar(32) NOT NULL,
   cid varchar(64) NOT NULL,
   v varchar(780) NOT NULL,
-  primary key(rid,cid));
+  primary key(id);
+CREATE INDEX css_i ON css (rid, cid);
 
 CREATE TABLE cn_css (
+  id char(32) NOT NULL,
   rid varchar(32) NOT NULL,
   cid varchar(64) NOT NULL,
   v varchar(780) NOT NULL,
-  primary key(rid,cid));
+  primary key(id);
+CREATE INDEX css_i ON css (rid, cid);
 
 
 

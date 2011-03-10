@@ -135,6 +135,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
     private Map<String, CacheHolder> sharedCache;
 
 
+    @Override
     @Activate
     @SuppressWarnings(value={"NP_CLOSING_NULL"},justification="Invalid report, if this was the case then nothing would work")
     public void activate(Map<String, Object> properties) throws ClassNotFoundException {
@@ -180,11 +181,14 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
         } catch (ClientPoolException e) {
             LOGGER.warn("Failed to check Schema", e);
         } finally {
+          if (client != null) {
             client.close();
+          }
         }
 
     }
 
+    @Override
     @Deactivate
     public void deactivate(Map<String, Object> properties) {
         super.deactivate(properties);
