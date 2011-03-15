@@ -104,3 +104,5 @@ insert into index_cols (cid) values ('cn:sakai:pooled-content-manager');
 insert into index_cols (cid) values ('cn:sakai:messagestore');
 insert into index_cols (cid) values ('cn:sakai:type');
 insert into index_cols (cid) values ('cn:sakai:marker');
+# *.tagged.json 
+insert into index_cols (cid) values ('cn:sakai:tag-uuid'); 
