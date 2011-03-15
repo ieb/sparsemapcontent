@@ -349,8 +349,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                                   insertStringColumn.setString(1, valueMember);
                                   insertStringColumn.setString(2, rid);
                                   insertStringColumn.setString(3, k);
-                                  insertStringColumn.addBatch();
                                   insertStringColumn.setString(4, StringUtils.remove(UUID.randomUUID().toString(), '-'));
+                                  insertStringColumn.addBatch();
                                   insertSet.add(insertStringColumn);
                                   List<Entry<String, Object>> insertSeq = insertSequence
                                   .get(insertStringColumn);
