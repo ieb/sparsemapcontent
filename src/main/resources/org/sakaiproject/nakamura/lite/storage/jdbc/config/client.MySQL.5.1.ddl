@@ -105,4 +105,7 @@ insert into index_cols (cid) values ('cn:sakai:messagestore');
 insert into index_cols (cid) values ('cn:sakai:type');
 insert into index_cols (cid) values ('cn:sakai:marker');
 # *.tagged.json 
-insert into index_cols (cid) values ('cn:sakai:tag-uuid'); 
+insert into index_cols (cid) values ('cn:sakai:tag-uuid');
+# /var/contacts/findstate.json
+insert into index_cols (cid) values ('cn:sakai:contactstorepath');
+insert into index_cols (cid) values ('cn:sakai:state');
