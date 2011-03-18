@@ -98,3 +98,5 @@ insert into index_cols (cid) values ('cn:sakai:type');
 insert into index_cols (cid) values ('cn:sakai:marker');
 # *.tagged.json 
 insert into index_cols (cid) values ('cn:sakai:tag-uuid'); 
+# content sorting
+insert into index_cols (cid) values ('cn:created');
