@@ -111,3 +111,6 @@ insert into index_cols (cid) values ('cn:sakai:contactstorepath');
 insert into index_cols (cid) values ('cn:sakai:state');
 # content sorting
 insert into index_cols (cid) values ('cn:created');
+# /var/message/boxcategory.json
+insert into index_cols (cid) values ('cn:sakai:category');
+insert into index_cols (cid) values ('cn:sakai:messagebox');
