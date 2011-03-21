@@ -431,5 +431,8 @@ public class InternalContent {
         };
     }
 
-
+    @Override
+    public String toString() {
+        return "Path: " + getPath() + "; Properties: " + getProperties();
+    }
 }
