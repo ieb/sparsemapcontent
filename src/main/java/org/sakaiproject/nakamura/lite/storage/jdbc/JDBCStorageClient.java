@@ -181,8 +181,11 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     public void insert(String keySpace, String columnFamily, String key, Map<String, Object> values, boolean probablyNew)
             throws StorageClientException {
         checkClosed();
+
         Map<String, PreparedStatement> statementCache = Maps.newHashMap();
+        boolean autoCommit = true;
         try {
+            autoCommit = startBlock();
             String rid = rowHash(keySpace, columnFamily, key);
             for (Entry<String, Object> e : values.entrySet()) {
                 String k = e.getKey();
@@ -204,6 +207,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     m.put(k, o);
                 }
             }
+            LOGGER.debug("Saving {} {} {} ", new Object[]{key, rid, m});
             if ( probablyNew ) {
                 PreparedStatement insertBlockRow = getStatement(keySpace, columnFamily,
                         SQL_BLOCK_INSERT_ROW, rid, statementCache);
@@ -256,9 +260,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 }
             }
             if ("1".equals(getSql(USE_BATCH_INSERTS))) {
-                Connection connection = jcbcStorageClientConnection.getConnection();
-                boolean autoCommit = connection.getAutoCommit();
-                connection.setAutoCommit(false);
                 Set<PreparedStatement> updateSet = Sets.newHashSet();
                 Map<PreparedStatement, List<Entry<String, Object>>> updateSequence = Maps
                         .newHashMap();
@@ -387,10 +388,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 for (PreparedStatement pst : removeSet) {
                     pst.executeBatch();
                 }
-                if (autoCommit) {
-                    connection.commit();
-                    connection.setAutoCommit(autoCommit);
-                }
 
             } else {
                 for (Entry<String, Object> e : values.entrySet()) {
@@ -494,11 +491,14 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 }
 
             }
+            endBlock(autoCommit);
         } catch (SQLException e) {
+            abandonBlock(autoCommit);
             LOGGER.warn("Failed to perform insert/update operation on {}:{}:{} ", new Object[] {
                     keySpace, columnFamily, key }, e);
             throw new StorageClientException(e.getMessage(), e);
         } catch (IOException e) {
+            abandonBlock(autoCommit);
             LOGGER.warn("Failed to perform insert/update operation on {}:{}:{} ", new Object[] {
                     keySpace, columnFamily, key }, e);
             throw new StorageClientException(e.getMessage(), e);
@@ -506,6 +506,33 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             close(statementCache);
         }
     }
+
+    private void abandonBlock(boolean autoCommit) {
+        if (autoCommit) {
+            try {
+                Connection connection = jcbcStorageClientConnection.getConnection();
+                connection.rollback();
+                connection.setAutoCommit(autoCommit);
+            } catch (SQLException e) {
+                LOGGER.warn(e.getMessage(), e);
+            }
+        }
+    }
+
+    private void endBlock(boolean autoCommit) throws SQLException {
+        if (autoCommit) {
+            Connection connection = jcbcStorageClientConnection.getConnection();
+            connection.commit();
+            connection.setAutoCommit(autoCommit);
+        }
+    }
+
+    private boolean startBlock() throws SQLException {
+        Connection connection = jcbcStorageClientConnection.getConnection();
+        boolean autoCommit = connection.getAutoCommit();
+        connection.setAutoCommit(false);
+        return autoCommit;
+      }
 
     private boolean shouldIndex(String keySpace, String columnFamily, String k) {
         if ( AUTO_INDEX_COLUMNS.contains(columnFamily+":"+k)) {
@@ -554,7 +581,9 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         PreparedStatement deleteStringRow = null;
         PreparedStatement deleteBlockRow = null;
         String rid = rowHash(keySpace, columnFamily, key);
+        boolean autoCommit = false;
         try {
+            autoCommit = startBlock();
             deleteStringRow = getStatement(keySpace, columnFamily, SQL_DELETE_STRING_ROW, rid, null);
             inc("deleteStringRow");
             deleteStringRow.clearWarnings();
@@ -568,8 +597,9 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             deleteBlockRow.clearParameters();
             deleteBlockRow.setString(1, rid);
             deleteBlockRow.executeUpdate();
-
+            endBlock(autoCommit);
         } catch (SQLException e) {
+            abandonBlock(autoCommit);
             LOGGER.warn("Failed to perform delete operation on {}:{}:{} ", new Object[] { keySpace,
                     columnFamily, key }, e);
             throw new StorageClientException(e.getMessage(), e);

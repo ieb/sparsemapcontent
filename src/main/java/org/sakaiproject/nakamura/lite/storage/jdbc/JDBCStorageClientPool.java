@@ -326,6 +326,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
             } else {
                 connection = DriverManager.getConnection(url, username, password);
             }
+            connection.setAutoCommit(true); // KERN-1691
             connectionManager.set(connection);
         }
         return connection;
