@@ -45,7 +45,7 @@ CREATE TABLE  `cn_css` (
 DROP TABLE IF EXISTS `ac_css`;
 
 CREATE TABLE  `ac_css` (
-  `id` int(11) NOT NULL auto_increment,
+  `id` varchar(32) NOT NULL,
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
