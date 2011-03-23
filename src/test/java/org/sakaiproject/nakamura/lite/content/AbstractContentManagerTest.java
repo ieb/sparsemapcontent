@@ -463,4 +463,52 @@ public abstract class AbstractContentManagerTest {
 
     }
 
+  @Test
+  public void testMoveWithChildren() throws StorageClientException, AccessDeniedException {
+    AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+    User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+    AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+        currentUser, configuration, null, new LoggingStorageListener());
+
+    ContentManagerImpl contentManager = new ContentManagerImpl(client,
+        accessControlManager, configuration, null, new LoggingStorageListener());
+    contentManager.update(new Content("/", ImmutableMap.of("prop1", (Object) "value1")));
+    contentManager.update(new Content("/movewc", ImmutableMap.of("prop1",
+        (Object) "value2")));
+    contentManager.update(new Content("/test", ImmutableMap
+        .of("prop1", (Object) "value3")));
+    contentManager.update(new Content("/test/ing", ImmutableMap.of("prop1",
+        (Object) "value4")));
+    contentManager.moveWithChildren("/test", "/movewc/test");
+
+    Content content = contentManager.get("/");
+    Assert.assertEquals("/", content.getPath());
+    Map<String, Object> p = content.getProperties();
+    LOGGER.info("Properties is {}", p);
+    Assert.assertEquals("value1", (String) p.get("prop1"));
+    Iterator<Content> children = content.listChildren().iterator();
+    Assert.assertTrue(children.hasNext());
+    Content child = children.next();
+    Assert.assertFalse(children.hasNext());
+    Assert.assertEquals("/movewc", child.getPath());
+    p = child.getProperties();
+    Assert.assertEquals("value2", (String) p.get("prop1"));
+    children = child.listChildren().iterator();
+    Assert.assertTrue(children.hasNext());
+    child = children.next();
+    Assert.assertFalse(children.hasNext());
+    Assert.assertEquals("/movewc/test", child.getPath());
+    p = child.getProperties();
+    Assert.assertEquals("value3", (String) p.get("prop1"));
+    children = child.listChildren().iterator();
+    Assert.assertTrue(children.hasNext());
+    child = children.next();
+    Assert.assertFalse(children.hasNext());
+    Assert.assertEquals("/movewc/test/ing", child.getPath());
+    p = child.getProperties();
+    Assert.assertEquals("value4", (String) p.get("prop1"));
+
+  }
+
 }
