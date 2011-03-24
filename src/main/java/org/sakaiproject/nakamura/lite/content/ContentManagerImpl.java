@@ -775,4 +775,9 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
     };
     }
 
+    public boolean hasBody(String path, String streamId) throws StorageClientException, AccessDeniedException {
+        Content content = get(path);
+        return client.hasBody(content.getProperties(), streamId);
+    }
+
 }

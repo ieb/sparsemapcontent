@@ -259,4 +259,8 @@ public class CassandraClient extends Client implements StorageClient {
             String columnFamily, String key) throws StorageClientException {
         throw new UnsupportedOperationException();
     }
+
+    public boolean hasBody(Map<String, Object> content, String streamId) {
+        return contentHelper.hasBody(content, streamId);
+    }
 }

@@ -36,4 +36,6 @@ public interface BlockContentHelper {
     InputStream readBody(String keySpace, String contentColumnFamily, String contentBlockId,
             String streamId, int nBlocks) throws StorageClientException, AccessDeniedException;
 
+    boolean hasBody(Map<String, Object> content, String streamId);
+
 }

@@ -318,4 +318,13 @@ public interface ContentManager {
      */
     Iterator<Content> listChildren(String path) throws StorageClientException;
 
+    /**
+     * @param path the path of the content node
+     * @param streamId the stream id, null for the default stream
+     * @return true if the stream id is present.
+     * @throws AccessDeniedException
+     * @throws StorageClientException
+     */
+    boolean hasBody(String path, String streamId) throws StorageClientException, AccessDeniedException;
+
 }
