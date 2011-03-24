@@ -101,7 +101,7 @@ public class InternalContent {
     /**
      * Total length of the content body (content row)
      */
-    public static final String LENGTH_FIELD = "length";
+    public static final String LENGTH_FIELD = Repository.SYSTEM_PROP_PREFIX + "length";
     /**
      * The number of block sets in a body (content row)
      */
