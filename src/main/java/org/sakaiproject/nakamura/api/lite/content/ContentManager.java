@@ -333,32 +333,4 @@ public interface ContentManager {
      */
     Iterator<Content> listChildren(String path) throws StorageClientException;
 
-  /**
-   * Supplemental object for tracking transactions where sub-nodes are included
-   * 
-   * @param from
-   *          - Original path of object
-   * @param to
-   *          - Final path of object (can be null if transaction is delete)
-   * @return
-   * @throws StorageClientException
-   */
-  public class ActionRecord {
-    private String from;
-    private String to;
-
-    public ActionRecord(String newFrom, String newTo) {
-      from = newFrom;
-      to = newTo;
-    }
-
-    public String getFrom() {
-      return from;
-    }
-
-    public String getTo() {
-      return to;
-    }
-  }
-
 }

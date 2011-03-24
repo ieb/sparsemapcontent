@@ -58,6 +58,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessControlManager;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
+import org.sakaiproject.nakamura.api.lite.content.ActionRecord;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
@@ -541,7 +542,6 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
     List<ActionRecord> record = new ArrayList();
 
     move(from, to);
-
 
     PreemptiveIterator<String> iter = (PreemptiveIterator<String>) listChildPaths(from);
     while (iter.hasNext()) {
