@@ -127,4 +127,7 @@ public class BlockSetContentHelper implements BlockContentHelper {
                 nBlocks);
     }
 
+    public boolean hasBody(Map<String, Object> content, String streamId) {
+        return content.containsKey(StorageClientUtils.getAltField(Content.BLOCKID_FIELD, streamId));
+    }
 }

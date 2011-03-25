@@ -197,6 +197,10 @@ public class MemoryStorageClient implements StorageClient {
         return contentHelper.readBody(keySpace, contentColumnFamily, contentBlockId, streamId, nBlocks);
     }
 
+    public boolean hasBody(Map<String, Object> content, String streamId) {
+        return contentHelper.hasBody(content, streamId);
+    }
+
     private int toInt(Object object) {
         if ( object instanceof Integer) {
             return ((Integer) object).intValue();

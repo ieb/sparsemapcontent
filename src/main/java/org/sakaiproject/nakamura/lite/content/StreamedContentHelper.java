@@ -32,4 +32,7 @@ public interface StreamedContentHelper {
     InputStream readBody(String keySpace, String columnFamily, String contentBlockId,
             String streamId, Map<String, Object> content) throws IOException;
 
+    boolean hasStream(Map<String, Object> content, String streamId);
+
+
 }

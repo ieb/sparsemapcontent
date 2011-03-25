@@ -51,4 +51,6 @@ public interface StorageClient {
     DisposableIterator<Map<String, Object>> listChildren(String keySpace, String columnFamily,
             String key) throws StorageClientException;
 
+    boolean hasBody( Map<String, Object> content, String streamId);
+
 }

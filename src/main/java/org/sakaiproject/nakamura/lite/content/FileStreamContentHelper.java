@@ -99,4 +99,11 @@ public class FileStreamContentHelper implements StreamedContentHelper {
         }
     }
 
+    public boolean hasStream(Map<String, Object> content, String streamId ) {
+        String path = (String) content.get(StorageClientUtils.getAltField(STORE_LOCATION_FIELD, streamId));
+        File file = new File(fileStore + "/" + path);
+        return file.exists();
+    }
+
+
 }

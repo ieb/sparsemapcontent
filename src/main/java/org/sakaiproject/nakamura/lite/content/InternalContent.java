@@ -87,11 +87,11 @@ public class InternalContent {
     /**
      * Set to "Y" if the content item is read only. (content row)
      */
-    public static final String READONLY_FIELD = "readOnly";
+    public static final String READONLY_FIELD =  Repository.SYSTEM_PROP_PREFIX + "readOnly";
     /**
      * set to "Y" if deleted. (content row)
      */
-    public static final String DELETED_FIELD = "deleted";
+    public static final String DELETED_FIELD =  Repository.SYSTEM_PROP_PREFIX + "deleted";
 
     /**
      * The block size in bytes in each block in a block set, if body store uses
@@ -101,7 +101,7 @@ public class InternalContent {
     /**
      * Total length of the content body (content row)
      */
-    public static final String LENGTH_FIELD = "length";
+    public static final String LENGTH_FIELD = Repository.SYSTEM_PROP_PREFIX + "length";
     /**
      * The number of block sets in a body (content row)
      */
@@ -135,22 +135,22 @@ public class InternalContent {
     /**
      * The time the item was created. (content row)
      */
-    public static final String CREATED_FIELD = "created";
+    public static final String CREATED_FIELD =  Repository.SYSTEM_PROP_PREFIX + "created";
 
     /**
      * The user that created the item. (content row)
      */
-    public static final String CREATED_BY_FIELD = "createdBy";
+    public static final String CREATED_BY_FIELD =  Repository.SYSTEM_PROP_PREFIX + "createdBy";
 
     /**
      * The time the item was last modified. (content row)
      */
-    public static final String LASTMODIFIED_FIELD = "lastModified";
+    public static final String LASTMODIFIED_FIELD =  Repository.SYSTEM_PROP_PREFIX + "lastModified";
 
     /**
      * The user that lastModified the item. (content row)
      */
-    public static final String LASTMODIFIED_BY_FIELD = "lastModifiedBy";
+    public static final String LASTMODIFIED_BY_FIELD =  Repository.SYSTEM_PROP_PREFIX + "lastModifiedBy";
 
     /**
      * The path the content object was copied from if it was copied
@@ -170,12 +170,12 @@ public class InternalContent {
     /**
      * Mime type
      */
-    public static final String MIMETYPE_FIELD = "mimeType";
+    public static final String MIMETYPE_FIELD =  Repository.SYSTEM_PROP_PREFIX + "mimeType";
 
     /**
      * Charset encoding if char based.
      */
-    public static final String ENCODING_FIELD = "encoding";
+    public static final String ENCODING_FIELD =  Repository.SYSTEM_PROP_PREFIX + "encoding";
     
     /**
      * 

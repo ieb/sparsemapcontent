@@ -839,6 +839,10 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         return in;
     }
 
+    public boolean hasBody(Map<String, Object> content, String streamId) {
+        return streamedContentHelper.hasStream(content, streamId);
+    }
+
     protected Connection getConnection() throws StorageClientException, SQLException {
         checkClosed();
         return jcbcStorageClientConnection.getConnection();
@@ -907,6 +911,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                   if (v instanceof Map) {
                     // start the OR grouping
                     where.append(" (");
+                    @SuppressWarnings("unchecked")
                     Set<Entry<String, Object>> subterms = ((Map<String, Object>) v).entrySet();
                     for(Iterator<Entry<String, Object>> subtermsIter = subterms.iterator(); subtermsIter.hasNext();) {
                       Entry<String, Object> subterm = subtermsIter.next();
@@ -1166,5 +1171,4 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             }
         }
     }
-
 }
