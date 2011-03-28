@@ -58,6 +58,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessControlManager;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
+import org.sakaiproject.nakamura.api.lite.content.ActionRecord;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
@@ -68,6 +69,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -533,6 +535,27 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         eventListener.onUpdate(Security.ZONE_CONTENT, to, accessControlManager.getCurrentUserId(), true, "op:move");        
 
     }
+
+  public List<ActionRecord> moveWithChildren(String from, String to)
+      throws AccessDeniedException,
+      StorageClientException {
+    List<ActionRecord> record = new ArrayList();
+
+    move(from, to);
+
+    PreemptiveIterator<String> iter = (PreemptiveIterator<String>) listChildPaths(from);
+    while (iter.hasNext()) {
+      String childPath = iter.next();
+
+      // Since this is a direct child of the previous from, only the last token needs to
+      // be appended to "to"
+      record.addAll(moveWithChildren(childPath,
+          to.concat(childPath.substring(childPath.lastIndexOf("/")))));
+    }
+
+    record.add(new ActionRecord(from, to));
+    return record;
+  }
 
     // TODO: Unit test
     public void link(String from, String to) throws AccessDeniedException, StorageClientException {

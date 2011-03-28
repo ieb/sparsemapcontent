@@ -232,20 +232,35 @@ public interface ContentManager {
      */
     void move(String from, String to) throws AccessDeniedException, StorageClientException;
 
-    /**
-     * Create a Link. Links place a pointer to real content located at the to
-     * path, in the from path. Modifications to the underlying content are
-     * reflected in both locations. Permissions are controlled by the location
-     * and not the underlying content.
-     * 
-     * @param from
-     *            the source of the link (the soft part), must not exist.
-     * @param to
-     *            the destination, must exist
-     * @throws AccessDeniedException
-     *             if the user cant read the to and write the from
-     * @throws StorageClientException
-     */
+  /**
+   * Move a content item, and all child items, from to. Acts recursively.
+   * 
+   * @param from
+   *          the source, must exist
+   * @param to
+   *          the destination must not exist.
+   * @return a List of the moves performed (from and to paths). Listed bottom-up,
+   *         path-wise.
+   * @throws StorageClientException
+   * @throws AccessDeniedException
+   */
+  List<ActionRecord> moveWithChildren(String from, String to)
+      throws AccessDeniedException,
+      StorageClientException;
+
+  /**
+   * Create a Link. Links place a pointer to real content located at the to path, in the
+   * from path. Modifications to the underlying content are reflected in both locations.
+   * Permissions are controlled by the location and not the underlying content.
+   * 
+   * @param from
+   *          the source of the link (the soft part), must not exist.
+   * @param to
+   *          the destination, must exist
+   * @throws AccessDeniedException
+   *           if the user cant read the to and write the from
+   * @throws StorageClientException
+   */
     void link(String from, String to) throws AccessDeniedException, StorageClientException;
 
     /**
