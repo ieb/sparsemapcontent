@@ -279,10 +279,10 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                         } else {
                             Object[] valueMembers = (o instanceof Object[]) ? (Object[]) o : new Object[] { o };
                             for (Object ov : valueMembers) {
-                                String valueMember = ov.toString();
+                                String valueMember = String.valueOf(ov);
                                 PreparedStatement updateStringColumn = getStatement(keySpace,
                                     columnFamily, SQL_UPDATE_STRING_COLUMN, rid, statementCache);
-                                updateStringColumn.setString(1, (String) valueMember);
+                                updateStringColumn.setString(1, valueMember);
                                 updateStringColumn.setString(2, rid);
                                 updateStringColumn.setString(3, k);
                                 updateStringColumn.addBatch();
