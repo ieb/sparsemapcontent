@@ -29,6 +29,7 @@ import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorResolver;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
@@ -36,6 +37,7 @@ import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.LoggingStorageListener;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
+import org.sakaiproject.nakamura.lite.accesscontrol.PrincipalValidatorResolverImpl;
 import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
@@ -56,6 +58,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
     private ConfigurationImpl configuration;
     private StorageClientPool clientPool;
     private Map<String, CacheHolder> sharedCache = new ConcurrentLRUMap<String, CacheHolder>(1000);
+    private PrincipalValidatorResolver principalValidatorResolver = new PrincipalValidatorResolverImpl();
 
     @Before
     public void before() throws StorageClientException, AccessDeniedException, ClientPoolException,
@@ -67,6 +70,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
         properties.put("keyspace", "n");
         properties.put("acl-column-family", "ac");
         properties.put("authorizable-column-family", "au");
+        properties.put("shared-acl-secret", "shared secret key");
         configuration.activate(properties);
         AuthorizableActivator authorizableActivator = new AuthorizableActivator(client,
                 configuration);
@@ -89,7 +93,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
         Assert.assertNotNull(currentUser);
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener());
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
 
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
                 client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
@@ -124,7 +128,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener());
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
 
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
                 client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
@@ -158,7 +162,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener());
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
 
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
                 client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
@@ -192,7 +196,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener());
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
 
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
                 client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
@@ -217,7 +221,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
         Assert.assertFalse(user.isAdmin());
 
         AccessControlManagerImpl userAccessControlManagerImpl = new AccessControlManagerImpl(
-                client, user, configuration, sharedCache,  new LoggingStorageListener());
+                client, user, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
         AuthorizableManagerImpl userAuthorizableManager = new AuthorizableManagerImpl(user, client,
                 configuration, userAccessControlManagerImpl, sharedCache,  new LoggingStorageListener());
 
@@ -247,7 +251,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener());
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
 
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
                 client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
@@ -338,7 +342,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
             User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
             AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
-                    client, currentUser, configuration, sharedCache,  new LoggingStorageListener());
+                    client, currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
 
             AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
                     client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
@@ -409,7 +413,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener());
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
 
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
                 client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());

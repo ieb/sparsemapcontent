@@ -136,4 +136,17 @@ public interface AccessControlManager {
     String[] findPrincipals(String objectType, String objectPath, int permission, boolean granted) throws StorageClientException;
 
 
+    /**
+     * Bind a ProxyPrincipalResolver to the Access Manager request.
+     * @param proxyPrincipalResolver the principal resolver to use with this acl request.
+     */
+    void setRequestPrincipalResolver(PrincipalTokenResolver proxyPrincipalResolver);
+
+
+    /**
+     * Unbind a ProxyPrincipalReolver from the Access Manager.
+     */
+    void clearRequestPrincipalResolver();
+
+
 }

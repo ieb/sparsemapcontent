@@ -29,6 +29,7 @@ import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StoreListener;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorResolver;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
@@ -49,6 +50,9 @@ public class RepositoryImpl implements Repository {
     
     @Reference 
     protected StoreListener storeListener;
+
+    @Reference
+    protected PrincipalValidatorResolver principalValidatorResolver;
 
 
     public RepositoryImpl() {
@@ -103,7 +107,7 @@ public class RepositoryImpl implements Repository {
             if (currentUser == null) {
                 throw new StorageClientException("User " + username + " cant login with password");
             }
-            return new SessionImpl(this, currentUser, client, configuration, clientPool.getStorageCacheManager(), storeListener);
+            return new SessionImpl(this, currentUser, client, configuration, clientPool.getStorageCacheManager(), storeListener, principalValidatorResolver);
         } catch (ClientPoolException e) {
             clientPool.getClient();
             throw e;
@@ -130,7 +134,7 @@ public class RepositoryImpl implements Repository {
                 throw new StorageClientException("User " + username
                         + " does not exist, cant login administratively as this user");
             }
-            return new SessionImpl(this, currentUser, client, configuration,  clientPool.getStorageCacheManager(), storeListener);
+            return new SessionImpl(this, currentUser, client, configuration,  clientPool.getStorageCacheManager(), storeListener, principalValidatorResolver);
         } catch (ClientPoolException e) {
             clientPool.getClient();
             throw e;
