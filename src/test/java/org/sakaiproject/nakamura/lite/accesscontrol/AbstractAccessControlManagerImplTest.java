@@ -32,6 +32,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AclModification;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permission;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorResolver;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
@@ -55,6 +56,7 @@ public abstract class AbstractAccessControlManagerImplTest {
     private StorageClient client;
     private ConfigurationImpl configuration;
     private StorageClientPool clientPool;
+    private PrincipalValidatorResolver principalValidatorResolver = new PrincipalValidatorResolverImpl();
 
     @Before
     public void before() throws StorageClientException, AccessDeniedException, ClientPoolException,
@@ -66,6 +68,7 @@ public abstract class AbstractAccessControlManagerImplTest {
         properties.put("keyspace", "n");
         properties.put("acl-column-family", "ac");
         properties.put("authorizable-column-family", "au");
+        properties.put("shared-acl-secret", "shared secret key");
         configuration.activate(properties);
         AuthorizableActivator authorizableActivator = new AuthorizableActivator(client,
                 configuration);
@@ -89,7 +92,7 @@ public abstract class AbstractAccessControlManagerImplTest {
         String u3 = "user3-"+System.currentTimeMillis();
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, null, new LoggingStorageListener());
+                currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver);
         AclModification user1 = new AclModification(u1, Permissions.CAN_ANYTHING.combine(
                 Permissions.CAN_ANYTHING_ACL).getPermission(), AclModification.Operation.OP_REPLACE);
         AclModification user2 = new AclModification(u2, Permissions.CAN_READ
@@ -127,7 +130,7 @@ public abstract class AbstractAccessControlManagerImplTest {
       String basepath = "testpath"+System.currentTimeMillis();
 
       AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-              currentUser, configuration, null,  new LoggingStorageListener());
+              currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
       AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser, client,
           configuration, accessControlManagerImpl, null,  new LoggingStorageListener());
       authorizableManager.createUser(u3, "User 3", "test",
@@ -163,7 +166,7 @@ public abstract class AbstractAccessControlManagerImplTest {
         String basepath = "testpath"+System.currentTimeMillis();
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, null,  new LoggingStorageListener());
+                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
         AclModification user1CanAnything = new AclModification(AclModification.grantKey(u1),
                 Permissions.CAN_ANYTHING.combine(Permissions.CAN_ANYTHING_ACL).getPermission(),
                 AclModification.Operation.OP_REPLACE);
@@ -319,7 +322,7 @@ public abstract class AbstractAccessControlManagerImplTest {
 
     private void checkPermissions(User u, String[] testPath, Object[][] expectedPermissions,
             String[][] readers, String[][] deniedReaders) throws StorageClientException {
-        AccessControlManagerImpl acmU = new AccessControlManagerImpl(client, u, configuration, null,  new LoggingStorageListener());
+        AccessControlManagerImpl acmU = new AccessControlManagerImpl(client, u, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
 
         for (int i = 0; i < testPath.length; i++) {
             Permission[] p = acmU.getPermissions(Security.ZONE_CONTENT, testPath[i]);

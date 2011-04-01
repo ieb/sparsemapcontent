@@ -20,6 +20,7 @@ package org.sakaiproject.nakamura.lite.accesscontrol;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.Configuration;
@@ -31,22 +32,30 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AclModification;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permission;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorResolver;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalTokenResolver;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
+import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.lite.CachingManager;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AccessControlManagerImpl extends CachingManager implements AccessControlManager {
 
+    private static final String DYNAMIC_PRINCIPAL_STEM = "_pp_";
     private static final Logger LOGGER = LoggerFactory.getLogger(AccessControlManagerImpl.class);
     private User user;
     private String keySpace;
@@ -54,15 +63,24 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
     private Map<String, int[]> cache = new ConcurrentHashMap<String, int[]>();
     private boolean closed;
     private StoreListener storeListener;
+    private ThreadLocal<PrincipalTokenResolver> requestPrincipalTokenResolver = new ThreadLocal<PrincipalTokenResolver>();
+    private PrincipalTokenValidator principalTokenValidator;
 
     public AccessControlManagerImpl(StorageClient client, User currentUser, Configuration config,
-            Map<String, CacheHolder> sharedCache, StoreListener storeListener) {
+            Map<String, CacheHolder> sharedCache, StoreListener storeListener, PrincipalValidatorResolver principalValidatorResolver) throws StorageClientException {
         super(client, sharedCache);
         this.user = currentUser;
         this.aclColumnFamily = config.getAclColumnFamily();
         this.keySpace = config.getKeySpace();
         closed = false;
         this.storeListener = storeListener;
+        try {
+            principalTokenValidator = new PrincipalTokenValidator(config.getSharedAclSecret(), principalValidatorResolver);
+        } catch (NoSuchAlgorithmException e) {
+            throw new StorageClientException(e.getMessage(),e);
+        } catch (UnsupportedEncodingException e) {
+            throw new StorageClientException(e.getMessage(),e);
+        }
     }
 
     public Map<String, Object> getAcl(String objectType, String objectPath)
@@ -152,6 +170,13 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         return objectType + "/" + objectPath;
     }
 
+    public void setRequestPrincipalResolver(PrincipalTokenResolver proxyPrincipalResolver ) {
+        requestPrincipalTokenResolver.set(proxyPrincipalResolver);
+    }
+    public void clearRequestPrincipalResolver() {
+        requestPrincipalTokenResolver.set(null);
+    }
+
     private int[] compilePermission(Authorizable authorizable, String objectType,
             String objectPath, int recursion) throws StorageClientException {
         String key = getAclKey(objectType, objectPath);
@@ -202,6 +227,36 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
                 grants = grants | tg;
                 denies = denies | td;
 
+            }
+            /*
+             * Deal with any proxy principals
+             */
+            PrincipalTokenResolver principalTokenResolver = requestPrincipalTokenResolver.get();
+            if (requestPrincipalTokenResolver != null) {
+                Set<String> inspected = Sets.newHashSet();
+                if ( principalTokenResolver != null ) {
+                    for (Entry<String, Object> ace : acl.entrySet()) {
+                        String k = ace.getKey();
+                        if (k.startsWith(DYNAMIC_PRINCIPAL_STEM)) {
+                            String proxyPrincipal = AclModification.getPrincipal(k).substring(DYNAMIC_PRINCIPAL_STEM.length());
+                            if ( inspected.contains(proxyPrincipal)) {
+                                inspected.add(proxyPrincipal);
+                                Content[] proxyPrincipalTokens = principalTokenResolver.getToken(proxyPrincipal);
+                                for ( Content proxyPrincipalToken : proxyPrincipalTokens ) {
+                                    if ( principalTokenValidator.validatePrincipal(proxyPrincipalToken)) {
+                                        int tg = toInt(acl.get(proxyPrincipal
+                                                + AclModification.GRANTED_MARKER));
+                                        int td = toInt(acl
+                                                .get(proxyPrincipal + AclModification.DENIED_MARKER));
+                                        grants = grants | tg;
+                                        denies = denies | td;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
             /*
              * grants contains the granted permissions in a bitmap denies

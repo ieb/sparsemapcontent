@@ -24,11 +24,13 @@ import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorResolver;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.LoggingStorageListener;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
+import org.sakaiproject.nakamura.lite.accesscontrol.PrincipalValidatorResolverImpl;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.soak.AbstractScalingClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
@@ -42,6 +44,7 @@ public class CreateUsersAndGroupsWithMembersClient extends AbstractScalingClient
     private int nusers;
     private int ngroups;
     private Map<String, CacheHolder> sharedCache = new ConcurrentHashMap<String, CacheHolder>(1000);
+    private PrincipalValidatorResolver principalValidatorResolver = new PrincipalValidatorResolverImpl();
 
     public CreateUsersAndGroupsWithMembersClient(int totalUsers, int totalGroups,
             StorageClientPool connectionPool) throws ClientPoolException, StorageClientException,
@@ -60,7 +63,7 @@ public class CreateUsersAndGroupsWithMembersClient extends AbstractScalingClient
             User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
             AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
-                    client, currentUser, configuration, sharedCache,  new LoggingStorageListener());
+                    client, currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
 
             AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
                     client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());

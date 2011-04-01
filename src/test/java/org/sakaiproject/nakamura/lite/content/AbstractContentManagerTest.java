@@ -29,12 +29,14 @@ import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorResolver;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.LoggingStorageListener;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
+import org.sakaiproject.nakamura.lite.accesscontrol.PrincipalValidatorResolverImpl;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
 import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
@@ -58,6 +60,7 @@ public abstract class AbstractContentManagerTest {
     private ConfigurationImpl configuration;
     private StorageClientPool clientPool;
     private Map<String, CacheHolder> sharedCache = new ConcurrentLRUMap<String, CacheHolder>(1000);
+    private PrincipalValidatorResolver principalValidatorResolver = new PrincipalValidatorResolverImpl();
 
     @Before
     public void before() throws StorageClientException, AccessDeniedException, ClientPoolException,
@@ -70,6 +73,7 @@ public abstract class AbstractContentManagerTest {
         properties.put("acl-column-family", "ac");
         properties.put("authorizable-column-family", "au");
         properties.put("content-column-family", "cn");
+        properties.put("shared-acl-secret", "shared secret key");
         configuration.activate(properties);
         AuthorizableActivator authorizableActivator = new AuthorizableActivator(client,
                 configuration);
@@ -90,7 +94,7 @@ public abstract class AbstractContentManagerTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, null,  new LoggingStorageListener());
+                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
                 configuration, null,  new LoggingStorageListener());
@@ -127,7 +131,7 @@ public abstract class AbstractContentManagerTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener());
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
                 configuration,  sharedCache, new LoggingStorageListener());
@@ -155,7 +159,7 @@ public abstract class AbstractContentManagerTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener());
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
                 configuration,  sharedCache, new LoggingStorageListener());
@@ -183,7 +187,7 @@ public abstract class AbstractContentManagerTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener());
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
                 configuration,  sharedCache, new LoggingStorageListener());
@@ -238,7 +242,7 @@ public abstract class AbstractContentManagerTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener());
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
                 configuration,  sharedCache, new LoggingStorageListener());
@@ -285,7 +289,7 @@ public abstract class AbstractContentManagerTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener());
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
                 configuration,  sharedCache, new LoggingStorageListener());
@@ -356,7 +360,7 @@ public abstract class AbstractContentManagerTest {
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener());
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
                 configuration,  sharedCache, new LoggingStorageListener());
@@ -469,7 +473,7 @@ public abstract class AbstractContentManagerTest {
     User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
     AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-        currentUser, configuration, null, new LoggingStorageListener());
+        currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver);
 
     ContentManagerImpl contentManager = new ContentManagerImpl(client,
         accessControlManager, configuration, null, new LoggingStorageListener());

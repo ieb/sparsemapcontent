@@ -26,6 +26,7 @@ import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StoreListener;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Authenticator;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorResolver;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
@@ -46,13 +47,13 @@ public class SessionImpl implements Session {
     private StoreListener storeListener;
 
     public SessionImpl(Repository repository, User currentUser, StorageClient client,
-            Configuration configuration, StorageCacheManager storageCacheManager, StoreListener storeListener)
+            Configuration configuration, StorageCacheManager storageCacheManager, StoreListener storeListener, PrincipalValidatorResolver principalValidatorResolver)
             throws ClientPoolException, StorageClientException, AccessDeniedException {
         this.currentUser = currentUser;
         this.repository = repository;
         this.client = client;
         accessControlManager = new AccessControlManagerImpl(client, currentUser, configuration,
-                storageCacheManager.getAccessControlCache(), storeListener);
+                storageCacheManager.getAccessControlCache(), storeListener, principalValidatorResolver);
         authorizableManager = new AuthorizableManagerImpl(currentUser, client, configuration,
                 accessControlManager, storageCacheManager.getAuthorizableCache(), storeListener);
 
