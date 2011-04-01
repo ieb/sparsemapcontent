@@ -20,27 +20,36 @@ public class PrincipalTokenValidator {
 
     private static final String HMAC_SHA512 = "HmacSHA512";
     private static final Logger LOGGER = LoggerFactory.getLogger(PrincipalTokenValidator.class);
-    private SecretKeySpec key;
     private PrincipalValidatorPlugin defaultPrincipalValidator = new DefaultPrincipalValidator();
     private PrincipalValidatorResolver principalValidatorResolver;
 
-    public PrincipalTokenValidator(String sharedKey, PrincipalValidatorResolver principalValidatorResolver) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-        MessageDigest md = MessageDigest.getInstance("SHA-512");
-        byte[] input = sharedKey.getBytes("UTF-8");
-        byte[] data = md.digest(input);
-        key = new SecretKeySpec(data, HMAC_SHA512);
+    public PrincipalTokenValidator(PrincipalValidatorResolver principalValidatorResolver) {
+        this.principalValidatorResolver = principalValidatorResolver;
     }
 
-    public boolean validatePrincipal(Content proxyPrincipalToken)  {
+    public boolean validatePrincipal(Content proxyPrincipalToken, String sharedKey)  {
         if ( proxyPrincipalToken == null) {
             return false;
         }
         if ( !proxyPrincipalToken.hasProperty("_acltoken")) {
             return false;
         }
+        PrincipalValidatorPlugin plugin = null;
+        if ( proxyPrincipalToken.hasProperty("validatorplugin") ) {
+            plugin = principalValidatorResolver.getPluginByName((String) proxyPrincipalToken.getProperty("validatorplugin"));
+        } else {
+            plugin =  defaultPrincipalValidator;
+        }
+        if ( plugin == null ) {
+            return false;
+        }
         String hmac = null;
         try {
-            hmac = getHmac(proxyPrincipalToken);
+            MessageDigest md = MessageDigest.getInstance("SHA-512");
+            byte[] input = sharedKey.getBytes("UTF-8");
+            byte[] data = md.digest(input);
+            SecretKeySpec key = new SecretKeySpec(data, HMAC_SHA512);
+            hmac = getHmac(proxyPrincipalToken, plugin.getProtectedFields(), key);
         } catch (InvalidKeyException e) {
             LOGGER.warn(e.getMessage());
             LOGGER.debug(e.getMessage(),e);
@@ -61,23 +70,21 @@ public class PrincipalTokenValidator {
         if ( !hmac.equals(proxyPrincipalToken.getProperty("_acltoken")) ) {
             return false;
         }
-        if ( proxyPrincipalToken.hasProperty("validatorplugin") ) {
-            PrincipalValidatorPlugin plugin = principalValidatorResolver.getPluginByName((String) proxyPrincipalToken.getProperty("validatorplugin"));
-            if ( plugin == null ) {
-                return false;
-            } else {
-                return plugin.validate(proxyPrincipalToken);
-            }
-        } else {
-            return defaultPrincipalValidator.validate(proxyPrincipalToken);
-        }
+        return plugin.validate(proxyPrincipalToken);
     }
 
-    private String getHmac(Content proxyPrincipalToken) throws NoSuchAlgorithmException, InvalidKeyException, IllegalStateException, UnsupportedEncodingException {
+    private String getHmac(Content proxyPrincipalToken, String[] extraFields, SecretKeySpec key) throws NoSuchAlgorithmException, InvalidKeyException, IllegalStateException, UnsupportedEncodingException {
         StringBuilder sb = new StringBuilder();
         sb.append(proxyPrincipalToken.getPath()).append("@");
         if ( proxyPrincipalToken.hasProperty("validatorplugin")) {
             sb.append(proxyPrincipalToken.getPath()).append("@");
+        }
+        for (String f : extraFields) {
+            if ( proxyPrincipalToken.hasProperty("validatorplugin")) {
+                sb.append(proxyPrincipalToken.getProperty(f)).append("@");
+            } else {
+                sb.append("null").append("@");
+            }
         }
 
         Mac m = Mac.getInstance(HMAC_SHA512);

@@ -37,14 +37,11 @@ public class ConfigurationImpl implements Configuration {
     private static final String AUTHORIZABLE_COLUMN_FAMILY = "authorizable-column-family";
     @Property(value = "cn")
     private static final String CONTENT_COLUMN_FAMILY = "content-column-family";
-    @Property(value = "default acl secret, please change for production")
-    private static final String SHARED_ACL_SECRET = "shared-acl-secret";
 
     private String aclColumnFamily;
     private String keySpace;
     private String authorizableColumnFamily;
     private String contentColumnFamily;
-    private String aclTokenKey;
 
     @Activate
     public void activate(Map<String, Object> properties) {
@@ -52,7 +49,6 @@ public class ConfigurationImpl implements Configuration {
         keySpace = (String) properties.get(KEYSPACE);
         authorizableColumnFamily = (String) properties.get(AUTHORIZABLE_COLUMN_FAMILY);
         contentColumnFamily = (String) properties.get(CONTENT_COLUMN_FAMILY);
-        aclTokenKey = (String) properties.get(SHARED_ACL_SECRET);
     }
 
     public String getAclColumnFamily() {
@@ -70,10 +66,4 @@ public class ConfigurationImpl implements Configuration {
     public String getContentColumnFamily() {
         return contentColumnFamily;
     }
-
-    public String getSharedAclSecret() {
-        return aclTokenKey;
-    }
-
-
 }

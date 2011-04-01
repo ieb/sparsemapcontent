@@ -17,7 +17,7 @@
  */
 package org.sakaiproject.nakamura.lite.accesscontrol;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -32,8 +32,8 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AclModification;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permission;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
-import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorResolver;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalTokenResolver;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorResolver;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
@@ -44,19 +44,18 @@ import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AccessControlManagerImpl extends CachingManager implements AccessControlManager {
 
-    private static final String DYNAMIC_PRINCIPAL_STEM = "_pp_";
+    private static final String _SECRET_KEY = "_secretKey";
+    private static final String DYNAMIC_PRINCIPAL_STEM = "_tp_";
     private static final Logger LOGGER = LoggerFactory.getLogger(AccessControlManagerImpl.class);
+    private static final Set<String> PROTECTED_PROPERTIES = ImmutableSet.of(_SECRET_KEY);
     private User user;
     private String keySpace;
     private String aclColumnFamily;
@@ -74,13 +73,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         this.keySpace = config.getKeySpace();
         closed = false;
         this.storeListener = storeListener;
-        try {
-            principalTokenValidator = new PrincipalTokenValidator(config.getSharedAclSecret(), principalValidatorResolver);
-        } catch (NoSuchAlgorithmException e) {
-            throw new StorageClientException(e.getMessage(),e);
-        } catch (UnsupportedEncodingException e) {
-            throw new StorageClientException(e.getMessage(),e);
-        }
+        principalTokenValidator = new PrincipalTokenValidator(principalValidatorResolver);
     }
 
     public Map<String, Object> getAcl(String objectType, String objectPath)
@@ -89,7 +82,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         check(objectType, objectPath, Permissions.CAN_READ_ACL);
 
         String key = this.getAclKey(objectType, objectPath);
-        return ImmutableMap.copyOf(getCached(keySpace, aclColumnFamily, key));
+        return StorageClientUtils.getFilterMap(getCached(keySpace, aclColumnFamily, key), null, null, PROTECTED_PROPERTIES);
     }
     
     public Map<String, Object> getEffectiveAcl(String objectType, String objectPath)
@@ -234,23 +227,26 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
             PrincipalTokenResolver principalTokenResolver = requestPrincipalTokenResolver.get();
             if (requestPrincipalTokenResolver != null) {
                 Set<String> inspected = Sets.newHashSet();
-                if ( principalTokenResolver != null ) {
-                    for (Entry<String, Object> ace : acl.entrySet()) {
-                        String k = ace.getKey();
-                        if (k.startsWith(DYNAMIC_PRINCIPAL_STEM)) {
-                            String proxyPrincipal = AclModification.getPrincipal(k).substring(DYNAMIC_PRINCIPAL_STEM.length());
-                            if ( inspected.contains(proxyPrincipal)) {
-                                inspected.add(proxyPrincipal);
-                                Content[] proxyPrincipalTokens = principalTokenResolver.getToken(proxyPrincipal);
-                                for ( Content proxyPrincipalToken : proxyPrincipalTokens ) {
-                                    if ( principalTokenValidator.validatePrincipal(proxyPrincipalToken)) {
-                                        int tg = toInt(acl.get(proxyPrincipal
-                                                + AclModification.GRANTED_MARKER));
-                                        int td = toInt(acl
-                                                .get(proxyPrincipal + AclModification.DENIED_MARKER));
-                                        grants = grants | tg;
-                                        denies = denies | td;
-                                        break;
+                if ( acl.containsKey(_SECRET_KEY)) {
+                    String secretKey = (String) acl.get(_SECRET_KEY);
+                    if ( principalTokenResolver != null ) {
+                        for (Entry<String, Object> ace : acl.entrySet()) {
+                            String k = ace.getKey();
+                            if (k.startsWith(DYNAMIC_PRINCIPAL_STEM)) {
+                                String proxyPrincipal = AclModification.getPrincipal(k).substring(DYNAMIC_PRINCIPAL_STEM.length());
+                                if ( inspected.contains(proxyPrincipal)) {
+                                    inspected.add(proxyPrincipal);
+                                    Content[] proxyPrincipalTokens = principalTokenResolver.getToken(proxyPrincipal);
+                                    for ( Content proxyPrincipalToken : proxyPrincipalTokens ) {
+                                        if ( principalTokenValidator.validatePrincipal(proxyPrincipalToken, secretKey)) {
+                                            int tg = toInt(acl.get(proxyPrincipal
+                                                    + AclModification.GRANTED_MARKER));
+                                            int td = toInt(acl
+                                                    .get(proxyPrincipal + AclModification.DENIED_MARKER));
+                                            grants = grants | tg;
+                                            denies = denies | td;
+                                            break;
+                                        }
                                     }
                                 }
                             }

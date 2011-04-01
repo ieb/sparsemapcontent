@@ -73,7 +73,6 @@ public abstract class AbstractContentManagerTest {
         properties.put("acl-column-family", "ac");
         properties.put("authorizable-column-family", "au");
         properties.put("content-column-family", "cn");
-        properties.put("shared-acl-secret", "shared secret key");
         configuration.activate(properties);
         AuthorizableActivator authorizableActivator = new AuthorizableActivator(client,
                 configuration);

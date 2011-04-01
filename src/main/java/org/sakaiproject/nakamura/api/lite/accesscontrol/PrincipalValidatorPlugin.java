@@ -18,4 +18,10 @@ public interface PrincipalValidatorPlugin {
      */
     boolean validate(Content proxyPrincipalToken);
 
+    /**
+     * @return a list of fields that must be protected, these are incorporated
+     * into the hmac to ensure no tampering.
+     */
+    String[] getProtectedFields();
+
 }
