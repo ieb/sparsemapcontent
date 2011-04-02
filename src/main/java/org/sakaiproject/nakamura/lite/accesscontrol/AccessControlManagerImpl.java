@@ -57,7 +57,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AccessControlManagerImpl extends CachingManager implements AccessControlManager {
 
     private static final String _SECRET_KEY = "_secretKey";
-    private static final String DYNAMIC_PRINCIPAL_STEM = "_tp_";
     private static final Logger LOGGER = LoggerFactory.getLogger(AccessControlManagerImpl.class);
     private static final Set<String> PROTECTED_PROPERTIES = ImmutableSet.of(_SECRET_KEY);
     private User user;

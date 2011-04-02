@@ -28,6 +28,8 @@ import java.util.Map;
  */
 public interface AccessControlManager {
 
+    public static final String DYNAMIC_PRINCIPAL_STEM = "_tp_";
+
     /**
      * Get an ACL at an object of a defined type. Do not look at parent objects
      * 
