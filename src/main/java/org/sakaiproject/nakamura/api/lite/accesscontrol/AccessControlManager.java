@@ -19,6 +19,7 @@ package org.sakaiproject.nakamura.api.lite.accesscontrol;
 
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
+import org.sakaiproject.nakamura.api.lite.content.Content;
 
 import java.util.Map;
 
@@ -137,16 +138,33 @@ public interface AccessControlManager {
 
 
     /**
-     * Bind a ProxyPrincipalResolver to the Access Manager request.
-     * @param proxyPrincipalResolver the principal resolver to use with this acl request.
+     * Bind a PrincipalTokenResolver to the Access Manager request.
+     * @param principalTokenResolver the principal resolver to use with this acl request.
      */
-    void setRequestPrincipalResolver(PrincipalTokenResolver proxyPrincipalResolver);
+    void setRequestPrincipalResolver(PrincipalTokenResolver principalTokenResolver);
 
 
     /**
-     * Unbind a ProxyPrincipalReolver from the Access Manager.
+     * Unbind a PrincipalTokenResolver from the Access Manager.
      */
     void clearRequestPrincipalResolver();
+
+
+    /**
+     * This methods signs a token with the shared Key of the objectPath Content
+     * ACL and modifies the token properties with the signature. (using a HMAC
+     * based signature). It is the responsibility of the calling code to save
+     * the modified token.
+     *
+     * @param token
+     *            the token to be signed
+     * @param contentPath
+     *            the ACL path to use for signing
+     * @throws StorageClientException
+     * @throws AccessDeniedException
+     */
+    void signContentToken(Content token, String objectPath) throws StorageClientException,
+            AccessDeniedException;
 
 
 }

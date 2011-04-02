@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import org.apache.commons.codec.binary.Base64;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -44,6 +45,9 @@ import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -62,8 +66,9 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
     private Map<String, int[]> cache = new ConcurrentHashMap<String, int[]>();
     private boolean closed;
     private StoreListener storeListener;
-    private ThreadLocal<PrincipalTokenResolver> requestPrincipalTokenResolver = new ThreadLocal<PrincipalTokenResolver>();
     private PrincipalTokenValidator principalTokenValidator;
+    private PrincipalTokenResolver principalTokenResolver;
+    private SecureRandom secureRandom;
 
     public AccessControlManagerImpl(StorageClient client, User currentUser, Configuration config,
             Map<String, CacheHolder> sharedCache, StoreListener storeListener, PrincipalValidatorResolver principalValidatorResolver) throws StorageClientException {
@@ -74,6 +79,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         closed = false;
         this.storeListener = storeListener;
         principalTokenValidator = new PrincipalTokenValidator(principalValidatorResolver);
+        secureRandom = new SecureRandom();
     }
 
     public Map<String, Object> getAcl(String objectType, String objectPath)
@@ -90,12 +96,37 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         throw new UnsupportedOperationException("Nag someone to implement this");
     }
 
+    // to sign a token we need setAcl permissions on the delegate path
+    public void signContentToken(Content token, String objectPath) throws StorageClientException, AccessDeniedException {
+        checkOpen();
+        check(Security.ZONE_CONTENT, objectPath, Permissions.CAN_WRITE_ACL);
+        check(Security.ZONE_CONTENT, objectPath, Permissions.CAN_READ_ACL);
+        String key = this.getAclKey(Security.ZONE_CONTENT, objectPath);
+        Map<String, Object> currentAcl = getCached(keySpace, aclColumnFamily, key);
+        String secretKey = (String) currentAcl.get(_SECRET_KEY);
+        principalTokenValidator.signToken(token, secretKey);
+        // the caller must save the target.
+    }
+
     public void setAcl(String objectType, String objectPath, AclModification[] aclModifications)
             throws StorageClientException, AccessDeniedException {
         checkOpen();
         check(objectType, objectPath, Permissions.CAN_WRITE_ACL);
+        check(objectType, objectPath, Permissions.CAN_READ_ACL);
         String key = this.getAclKey(objectType, objectPath);
-        Map<String, Object> currentAcl = getAcl(objectType, objectPath);
+        Map<String, Object> currentAcl = getCached(keySpace, aclColumnFamily, key);
+        // every ACL gets a secret key, which avoids doing it later with a special call
+        if ( !currentAcl.containsKey(_SECRET_KEY)) {
+            byte[] secretKeySeed = new byte[20];
+            secureRandom.nextBytes(secretKeySeed);
+            MessageDigest md;
+            try {
+                md = MessageDigest.getInstance("SHA1");
+                currentAcl.put(_SECRET_KEY, Base64.encodeBase64URLSafeString(md.digest(secretKeySeed)));
+            } catch (NoSuchAlgorithmException e) {
+                LOGGER.error(e.getMessage(),e);
+            }
+        }
         Map<String, Object> modifications = Maps.newLinkedHashMap();
         for (AclModification m : aclModifications) {
             String name = m.getAceKey();
@@ -163,11 +194,11 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         return objectType + "/" + objectPath;
     }
 
-    public void setRequestPrincipalResolver(PrincipalTokenResolver proxyPrincipalResolver ) {
-        requestPrincipalTokenResolver.set(proxyPrincipalResolver);
+    public void setRequestPrincipalResolver(PrincipalTokenResolver principalTokenResolver ) {
+        this.principalTokenResolver = principalTokenResolver;
     }
     public void clearRequestPrincipalResolver() {
-        requestPrincipalTokenResolver.set(null);
+        principalTokenResolver = null;
     }
 
     private int[] compilePermission(Authorizable authorizable, String objectType,
@@ -224,19 +255,19 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
             /*
              * Deal with any proxy principals
              */
-            PrincipalTokenResolver principalTokenResolver = requestPrincipalTokenResolver.get();
-            if (requestPrincipalTokenResolver != null) {
+            if (principalTokenResolver != null) {
                 Set<String> inspected = Sets.newHashSet();
                 if ( acl.containsKey(_SECRET_KEY)) {
                     String secretKey = (String) acl.get(_SECRET_KEY);
-                    if ( principalTokenResolver != null ) {
+                    if ( secretKey != null ) {
                         for (Entry<String, Object> ace : acl.entrySet()) {
                             String k = ace.getKey();
                             if (k.startsWith(DYNAMIC_PRINCIPAL_STEM)) {
                                 String proxyPrincipal = AclModification.getPrincipal(k).substring(DYNAMIC_PRINCIPAL_STEM.length());
                                 if ( inspected.contains(proxyPrincipal)) {
                                     inspected.add(proxyPrincipal);
-                                    Content[] proxyPrincipalTokens = principalTokenResolver.getToken(proxyPrincipal);
+                                    List<Content> proxyPrincipalTokens = Lists.newArrayList();
+                                    principalTokenResolver.resolveTokens(proxyPrincipal, proxyPrincipalTokens);
                                     for ( Content proxyPrincipalToken : proxyPrincipalTokens ) {
                                         if ( principalTokenValidator.validatePrincipal(proxyPrincipalToken, secretKey)) {
                                             int tg = toInt(acl.get(proxyPrincipal

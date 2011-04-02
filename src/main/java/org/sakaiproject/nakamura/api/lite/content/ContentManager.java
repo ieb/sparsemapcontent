@@ -19,6 +19,7 @@ package org.sakaiproject.nakamura.api.lite.content;
 
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalTokenResolver;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -341,5 +342,20 @@ public interface ContentManager {
      * @throws StorageClientException
      */
     boolean hasBody(String path, String streamId) throws StorageClientException, AccessDeniedException;
+
+    /**
+     * Sets the principal Token Resolver for all subsequent requests using this
+     * session. When the ContentManager is invoked it will consult the supplied
+     * principal Token Resolver to locate any extra tokens that have been
+     * granted.
+     *
+     * @param principalTokenResolver
+     */
+    void setPrincipalTokenResolver(PrincipalTokenResolver principalTokenResolver);
+
+    /**
+     * Clear the principal Token Resolver
+     */
+    void cleanPrincipalTokenResolver();
 
 }

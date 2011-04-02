@@ -57,6 +57,7 @@ import org.sakaiproject.nakamura.api.lite.StoreListener;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessControlManager;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalTokenResolver;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.content.ActionRecord;
 import org.sakaiproject.nakamura.api.lite.content.Content;
@@ -168,16 +169,23 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
 
     private StoreListener eventListener;
 
+
+    private PathPrincipalTokenResolver pathPrincipalResolver;
+
     public ContentManagerImpl(StorageClient client, AccessControlManager accessControlManager,
             Configuration config,  Map<String, CacheHolder> sharedCache, StoreListener eventListener) {
         super(client, sharedCache);
         this.client = client;
-        this.accessControlManager = accessControlManager;
         keySpace = config.getKeySpace();
         contentColumnFamily = config.getContentColumnFamily();
         closed = false;
         this.eventListener = eventListener;
+        String userId = accessControlManager.getCurrentUserId();
+        String usersTokenPath = StorageClientUtils.newPath(userId, "private/tokens");
+        this.pathPrincipalResolver = new PathPrincipalTokenResolver(usersTokenPath, this);
+        this.accessControlManager = new AccessControlManagerTokenWrapper(accessControlManager, pathPrincipalResolver);
     }
+
 
     // TODO: Unit test
     public boolean exists(String path) {
@@ -801,6 +809,14 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
     public boolean hasBody(String path, String streamId) throws StorageClientException, AccessDeniedException {
         Content content = get(path);
         return client.hasBody(content.getProperties(), streamId);
+    }
+
+    public void setPrincipalTokenResolver(PrincipalTokenResolver principalTokenResolver) {
+        accessControlManager.setRequestPrincipalResolver(principalTokenResolver);
+    }
+
+    public void cleanPrincipalTokenResolver() {
+        accessControlManager.clearRequestPrincipalResolver();
     }
 
 }
