@@ -27,6 +27,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.api.lite.util.Type1UUID;
+import org.sakaiproject.nakamura.lite.types.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,6 +85,8 @@ public class StorageClientUtils {
      * @param object
      *            the storage object
      * @return a string representation of the storage object.
+     * @deprecated the application code should convert to a string if necessary,
+     *             this is not required for storage any more.
      */
     @Deprecated
     public static String toString(Object object) {
@@ -126,6 +129,10 @@ public class StorageClientUtils {
      * @param object
      *            the object to place in store.
      * @return the Store representation of the object.
+     * @deprecated Objects do not need to be converted when placing in the
+     *             store, provided they are one of the ones listed in
+     *             {@link Types.ALLTYPES}. If they are not your code should
+     *             convert to one or more of those types.
      */
     @Deprecated
     public static Object toStore(Object object) {
@@ -138,6 +145,9 @@ public class StorageClientUtils {
      * @param value
      *            the store object
      * @return a byte[] of the store object.
+     * @deprecated if its a byte[] just use it as a byte[] otherwise convert to
+     *             a byte[] before storing. eg
+     *             String.valueOf(value).getBytes("UTF-8")
      */
     @Deprecated
     public static byte[] toBytes(Object value) {
@@ -427,6 +437,7 @@ public class StorageClientUtils {
      * @param object
      * @return the store object as a {@link Calendar}
      * @throws ParseException
+     * @deprecated no need to convert, just get the calendar object directly out of the store.
      */
     @Deprecated
     public static Calendar toCalendar(Object object) throws ParseException {
@@ -519,8 +530,8 @@ public class StorageClientUtils {
     /**
      * @param object
      * @return null or the store object converted to a string[]
+     * @deprecated no need to convert, just get the String[] object directly out of the store.
      */
-    // TODO: Unit test
     @Deprecated
     public static String[] toStringArray(Object object) {
         if ( object instanceof String[] ) {
@@ -538,10 +549,10 @@ public class StorageClientUtils {
 
     /**
      * @param object
-     * @return null or the store object converted to a string[]
+     * @return null or the store object converted to a Calendar[]
      * @throws ParseException
+     * @deprecated no need to convert, just get the Calendar[] object directly out of the store.
      */
-    // TODO: Unit test
     @Deprecated
     public static Calendar[] toCalendarArray(Object object) throws ParseException {
         if ( object instanceof Calendar[] ) {
@@ -611,6 +622,11 @@ public class StorageClientUtils {
         return null;
     }
 
+    /**
+     * @param property
+     * @return
+     * @deprecated no need to convert, just get the Boolean object directly out of the store.
+     */
     @Deprecated
     public static boolean toBoolean(Object property) {
         return "true".equals(StorageClientUtils.toString(property));
