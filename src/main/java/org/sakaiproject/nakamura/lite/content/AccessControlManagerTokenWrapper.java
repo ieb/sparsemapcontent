@@ -1,6 +1,5 @@
 package org.sakaiproject.nakamura.lite.content;
 
-import com.sun.xml.internal.ws.server.UnsupportedMediaException;
 
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessControlManager;
@@ -70,7 +69,7 @@ public class AccessControlManagerTokenWrapper implements AccessControlManager {
 
     public boolean can(Authorizable authorizable, String objectType, String objectPath,
             Permission permission) {
-        throw new UnsupportedMediaException();
+        throw new UnsupportedOperationException();
     }
 
     public Permission[] getPermissions(String objectType, String objectPath)
