@@ -50,10 +50,4 @@ public interface Configuration {
      */
     String getContentColumnFamily();
 
-    /**
-     * @return the shared secret used for hamc acl keys.
-     */
-    String getSharedAclSecret();
-
-
 }

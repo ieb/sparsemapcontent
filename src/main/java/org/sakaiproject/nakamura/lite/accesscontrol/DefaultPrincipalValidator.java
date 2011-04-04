@@ -10,4 +10,8 @@ public class DefaultPrincipalValidator implements PrincipalValidatorPlugin {
         return true;
     }
 
+    public String[] getProtectedFields() {
+        return new String[0];
+    }
+
 }

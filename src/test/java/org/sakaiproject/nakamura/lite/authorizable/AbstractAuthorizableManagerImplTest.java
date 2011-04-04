@@ -70,7 +70,6 @@ public abstract class AbstractAuthorizableManagerImplTest {
         properties.put("keyspace", "n");
         properties.put("acl-column-family", "ac");
         properties.put("authorizable-column-family", "au");
-        properties.put("shared-acl-secret", "shared secret key");
         configuration.activate(properties);
         AuthorizableActivator authorizableActivator = new AuthorizableActivator(client,
                 configuration);

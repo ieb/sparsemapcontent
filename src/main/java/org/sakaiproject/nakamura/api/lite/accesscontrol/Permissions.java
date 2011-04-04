@@ -68,12 +68,14 @@ public class Permissions {
         b.put("write", Permissions.CAN_WRITE);
         b.put("delete", Permissions.CAN_DELETE);
         b.put("view", Permissions.CAN_READ);
-        b.put("manage", Permissions.CAN_MANAGE);
-        b.put("all", Permissions.ALL);
+        b.put("anything", Permissions.CAN_ANYTHING);
         b.put("read-acl", Permissions.CAN_READ_ACL);
         b.put("write-acl", Permissions.CAN_WRITE_ACL);
         b.put("delete-acl", Permissions.CAN_DELETE_ACL);
         b.put("manage-acl", Permissions.CAN_ANYTHING_ACL);
+        b.put("anything-acl", Permissions.CAN_ANYTHING_ACL);
+        b.put("manage", Permissions.CAN_MANAGE);
+        b.put("all", Permissions.ALL);
         return b.build();
     }
 

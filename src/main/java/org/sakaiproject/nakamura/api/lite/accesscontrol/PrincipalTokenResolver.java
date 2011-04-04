@@ -2,6 +2,8 @@ package org.sakaiproject.nakamura.api.lite.accesscontrol;
 
 import org.sakaiproject.nakamura.api.lite.content.Content;
 
+import java.util.List;
+
 /**
  * Resolves proxyPrincipals to tokens. An implementation of this will be
  * provided by the caller if principal tokens are to be resolved. This
@@ -16,6 +18,6 @@ public interface PrincipalTokenResolver {
      * @return the tokens associated with the proxyPrincipal, could be more than
      *         one.
      */
-    Content[] getToken(String principal);
+    void resolveTokens(String principal, List<Content> tokens);
 
 }
