@@ -20,14 +20,10 @@ remove-string-column.n.ac = delete from ac_css where rid = ? and cid = ?
 remove-string-column.n.cn = delete from cn_css where rid = ? and cid = ?
 check-schema = select count(*) from css
 
-# 0: select
-# 1: table join
-# 2: where clause
-# 3: where clause for sort field (if needed)
-# 4: order by clause
-find.n.au = select a.rid, a.cid, a.v from au_css a {0} where {1} 1 = 1 ;, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
-find.n.ac = select a.rid, a.cid, a.v from ac_css a {0} where {1} 1 = 1 ;, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
-find.n.cn = select a.rid, a.cid, a.v from cn_css a {0} where {1} 1 = 1 ;, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+# base statement with paging ; table join ; where clause ; where clause for sort field (if needed) ; order by clause
+find.n.au = select TR.rid, TR.cid, TR.v from (select a.rid, a.cid, a.v, ROW_NUMBER() OVER () AS R from au_css a {0} where {1} 1 = 1 {2}) as TR where TR.R > {4} and TR.R <= {3}+{4};, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+find.n.ac = select TR.rid, TR.cid, TR.v from (select a.rid, a.cid, a.v, ROW_NUMBER() OVER () AS R from ac_css a {0} where {1} 1 = 1 {2}) as TR where TR.R > {4} and TR.R <= {3}+{4};, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+find.n.cn = select TR.rid, TR.cid, TR.v from (select a.rid, a.cid, a.v, ROW_NUMBER() OVER () AS R from cn_css a {0} where {1} 1 = 1 {2}) as TR where TR.R > {4} and TR.R <= {3}+{4};, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
 validate = values(1)
 rowid-hash = SHA1
 
@@ -55,14 +51,11 @@ block-delete-row.n.cn = delete from cn_css_b where rid = ?
 block-insert-row.n.cn = insert into cn_css_b (rid,b) values (?, ?)
 block-update-row.n.cn = update cn_css_b set b = ? where rid = ?
 
-# 0: base statement
-# 1: table join
-# 2: where clause
-# 3: where clause for sort field (if needed)
-# 4: order by clause
-block-find = select a.rid, a.b from css_b a {0} where {1} 1 = 1;, css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
-block-find.n.au = select a.rid, a.b from au_css_b a {0} where {1} 1 = 1;, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
-block-find.n.ac = select a.rid, a.b from ac_css_b a {0} where {1} 1 = 1;, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
-block-find.n.cn = select a.rid, a.b from cn_css_b a {0} where {1} 1 = 1;, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+# base statement with paging ; table join ; where clause ; where clause for sort field (if needed) ; order by clause
+## the subselect in the paging statement is required by Derby to do paging. http://db.apache.org/derby/docs/10.6/ref/rreffuncrownumber.html
+block-find = select TR.rid, TR.b from (select a.rid, a.b, ROW_NUMBER() OVER () AS R from css_b a {0} where {1} 1 = 1 {2}) as TR where TR.R > {4} and TR.R <= {3}+{4};, css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+block-find.n.au = select TR.rid, TR.b from (select a.rid, a.b, ROW_NUMBER() OVER () AS R from au_css_b a {0} where {1} 1 = 1 {2}) as TR where TR.R > {4} and TR.R <= {3}+{4};, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+block-find.n.ac = select TR.rid, TR.b from (select a.rid, a.b, ROW_NUMBER() OVER () AS R from ac_css_b a {0} where {1} 1 = 1 {2}) as TR where TR.R > {4} and TR.R <= {3}+{4};, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+block-find.n.cn = select TR.rid, TR.b from (select a.rid, a.b, ROW_NUMBER() OVER () AS R from cn_css_b a {0} where {1} 1 = 1 {2}) as TR where TR.R > {4} and TR.R <= {3}+{4};, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
 
 use-batch-inserts = 0

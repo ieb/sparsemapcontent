@@ -87,6 +87,11 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             "cn:_:parenthash",
             "au:_:parenthash",
             "ac:_:parenthash");
+    private static final int STMT_BASE = 0;
+    private static final int STMT_TABLE_JOIN = 1;
+    private static final int STMT_WHERE = 2;
+    private static final int STMT_WHERE_SORT = 3;
+    private static final int STMT_ORDER = 4;
 
     private JDBCStorageClientPool jcbcStorageClientConnection;
     private Map<String, Object> sqlConfig;
@@ -865,16 +870,24 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     + Arrays.toString(keys));
         }
 
-        // 0: select
-        // 1: table join
-        // 2: where clause
-        // 3: where clause for sort field (if needed)
-        // 4: order by clause
         String[] statementParts = StringUtils.split(sql, ';');
 
         StringBuilder tables = new StringBuilder();
         StringBuilder where = new StringBuilder();
         StringBuilder order = new StringBuilder();
+
+        // collect information on paging
+        long page = 0;
+        long items = 25;
+        if (properties != null) {
+          if (properties.containsKey("page")) {
+            page = Long.valueOf(String.valueOf(properties.get("page")));
+          }
+          if (properties.containsKey("items")) {
+            items = Long.valueOf(String.valueOf(properties.get("items")));
+          }
+        }
+        long offset = page * items;
 
         // collect information on sorting
         String[] sorts = new String[] { null, "asc" };
@@ -910,35 +923,10 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                       Object subv = subterm.getValue();
                       // check that each subterm should be indexed
                       if (shouldIndex(keySpace, columnFamily, subk)) {
-                        String t = "a" + set;
-                        tables.append(MessageFormat.format(statementParts[1], t));
-
-                        if (subv instanceof Iterable<?>) {
-                          for (Iterator<?> subvi = ((Iterable<?>) subv).iterator(); subvi.hasNext();) {
-                            Object subvObj = subvi.next();
-                            parameters.add(subk);
-                            where.append(" (").append(MessageFormat.format(statementParts[2], t)).append(")");
-                            parameters.add(subvObj);
-
-                            // as long as there are more add OR
-                            if (subvi.hasNext()) {
-                              where.append(" OR");
-                            }
-                          }
-                        } else {
-                          parameters.add(subk);
-                          where.append(" (").append(MessageFormat.format(statementParts[2], t)).append(")");
-                          parameters.add(subv);
-                        }
+                        set = processEntry(statementParts, tables, where, order, parameters, subk, subv, sorts, set, true);
                         // as long as there are more add OR
                         if (subtermsIter.hasNext()) {
                           where.append(" OR");
-                        }
-                        set++;
-
-                        // add in sorting based on the table ref and value
-                        if (k.equals(sorts[0])) {
-                          order.append(MessageFormat.format(statementParts[4], t, sorts[1]));
                         }
                       }
                     }
@@ -946,28 +934,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     where.append(") AND");
                   } else {
                     // process a first level non-map value as an AND term
-                    String t = "a" + set;
-                    tables.append(MessageFormat.format(statementParts[1], t));
-
-                    if (v instanceof Iterable<?>) {
-                      for (Iterator<?> vi = ((Iterable<?>) v).iterator(); vi.hasNext();) {
-                        Object viObj = vi.next();
-                        parameters.add(k);
-                        where.append(MessageFormat.format(statementParts[2], t)).append(" AND");
-                        parameters.add(viObj);
-                      }
-                    } else {
-                      // concat terms together at this level with AND
-                      parameters.add(k);
-                      where.append(MessageFormat.format(statementParts[2], t)).append(" AND");
-                      parameters.add(v);
-                    }
-                    set++;
-
-                    // add in sorting based on the table ref and value
-                    if (k.equals(sorts[0])) {
-                      order.append(MessageFormat.format(statementParts[4], t, sorts[1]));
-                    }
+                    set = processEntry(statementParts, tables, where, order, parameters, k, v, sorts, set, false);
                   }
                 } else if (!k.startsWith("_")) {
                   LOGGER.debug("Search on {}:{} filter dropped due to null value.", columnFamily, k);
@@ -980,18 +947,18 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         if (sorts[0] != null && order.length() == 0) {
           if (shouldIndex(keySpace, columnFamily, sorts[0])) {
             String t = "a" + set;
-            tables.append(MessageFormat.format(statementParts[1], t));
+            tables.append(MessageFormat.format(statementParts[STMT_TABLE_JOIN], t));
             parameters.add(sorts[0]);
-            where.append(MessageFormat.format(statementParts[3], t)).append(" AND");
-            order.append(MessageFormat.format(statementParts[4], t, sorts[1]));
+            where.append(MessageFormat.format(statementParts[STMT_WHERE_SORT], t)).append(" AND");
+            order.append(MessageFormat.format(statementParts[STMT_ORDER], t, sorts[1]));
           } else {
             LOGGER.warn("Sort on {}:{} is not supported, sort dropped", columnFamily,
                 sorts[0]);
           }
         }
 
-        final String sqlStatement = MessageFormat.format(statementParts[0], tables.toString(),
-                where.toString()) + order.toString();
+        final String sqlStatement = MessageFormat.format(statementParts[STMT_BASE],
+            tables.toString(), where.toString(), order.toString(), items, offset);
 
         PreparedStatement tpst = null;
         ResultSet trs = null;
@@ -1103,6 +1070,56 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             }
         }
 
+    }
+
+    /**
+     * @param statementParts
+     * @param where
+     * @param params
+     * @param k
+     * @param v
+     * @param t
+     * @param conjunctionOr
+     */
+    private int processEntry(String[] statementParts, StringBuilder tables,
+        StringBuilder where, StringBuilder order, List<Object> params, String k, Object v,
+        String[] sorts, int set, boolean conjunctionOr) {
+      String t = "a" + set;
+      tables.append(MessageFormat.format(statementParts[STMT_TABLE_JOIN], t));
+
+      if (v instanceof Iterable<?>) {
+        for (Iterator<?> vi = ((Iterable<?>) v).iterator(); vi.hasNext();) {
+          Object viObj = vi.next();
+          
+          params.add(k);
+          params.add(viObj);
+          if (conjunctionOr) {
+            where.append(" (").append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(")");
+
+            // as long as there are more add OR
+            if (vi.hasNext()) {
+              where.append(" OR");
+            }
+          } else {
+            where.append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(" AND");
+          }
+        }
+      } else {
+        params.add(k);
+        params.add(v);
+        if (conjunctionOr) {
+          where.append(" (").append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(")");
+        } else {
+          // concat terms together at this level with AND
+          where.append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(" AND");
+        }
+      }
+
+      // add in sorting based on the table ref and value
+      if (k.equals(sorts[0])) {
+        order.append(MessageFormat.format(statementParts[STMT_ORDER], t, sorts[1]));
+      }
+      return ++set;
     }
 
     private void dec(String key) {
