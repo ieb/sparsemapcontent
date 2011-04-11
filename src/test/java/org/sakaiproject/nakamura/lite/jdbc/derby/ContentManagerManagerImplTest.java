@@ -17,7 +17,16 @@
  */
 package org.sakaiproject.nakamura.lite.jdbc.derby;
 
+import com.google.common.collect.ImmutableMap;
+import org.junit.Assert;
+import org.junit.Test;
+import org.sakaiproject.nakamura.api.lite.authorizable.User;
+import org.sakaiproject.nakamura.api.lite.content.Content;
+import org.sakaiproject.nakamura.lite.LoggingStorageListener;
+import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
+import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.content.AbstractContentManagerTest;
+import org.sakaiproject.nakamura.lite.content.ContentManagerImpl;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
 public class ContentManagerManagerImplTest extends AbstractContentManagerTest {
@@ -27,4 +36,35 @@ public class ContentManagerManagerImplTest extends AbstractContentManagerTest {
         return DerbySetup.getClientPool();
     }
 
+    @Test
+    public void findVsGet() throws Exception {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+        AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+                currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver);
+
+        ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
+                configuration, null, new LoggingStorageListener());
+        contentManager.update(new Content("/test", ImmutableMap.of("prop1", (Object) "val1")));
+
+        Content viaGet = contentManager.get("/test");
+        Assert.assertEquals("/test", viaGet.getPath());
+
+        Iterable<Content> results = contentManager.find(ImmutableMap.of("prop1", (Object) "val1"));
+        Content viaFind = results.iterator().next();
+        Assert.assertEquals("/test", viaFind.getPath());
+        Assert.assertEquals("val1", viaFind.getProperty("prop1"));
+
+        viaFind.setProperty("prop1", "newval");
+        contentManager.update(viaFind);
+
+        Content viaGetAfterUpdate = contentManager.get("/test");
+        Assert.assertEquals("newval", viaGetAfterUpdate.getProperty("prop1"));
+
+        Iterable<Content> resultsAfterUpdate = contentManager.find(ImmutableMap.of("prop1", (Object) "newval"));
+        Content viaFindAfterUpdate = resultsAfterUpdate.iterator().next();
+        Assert.assertEquals("newval", viaFindAfterUpdate.getProperty("prop1"));
+
+    }
 }

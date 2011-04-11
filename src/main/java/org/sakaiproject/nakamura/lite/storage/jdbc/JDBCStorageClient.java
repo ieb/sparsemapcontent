@@ -86,7 +86,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     private static final Set<String> AUTO_INDEX_COLUMNS = ImmutableSet.of(
             "cn:_:parenthash",
             "au:_:parenthash",
-            "ac:_:parenthash");
+            "ac:_:parenthash",
+            "cn:prop1");
     private static final int STMT_BASE = 0;
     private static final int STMT_TABLE_JOIN = 1;
     private static final int STMT_WHERE = 2;
