@@ -18,6 +18,7 @@
 package org.sakaiproject.nakamura.lite.content;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 
 import org.junit.After;
@@ -52,6 +53,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 public abstract class AbstractContentManagerTest {
 
@@ -513,5 +515,75 @@ public abstract class AbstractContentManagerTest {
     Assert.assertEquals("value4", (String) p.get("prop1"));
 
   }
+
+    @Test
+    public void testSimpleFind() throws StorageClientException, AccessDeniedException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+        AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+                currentUser, configuration, null, new LoggingStorageListener(),
+                principalValidatorResolver);
+
+        ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
+                configuration, null, new LoggingStorageListener());
+        contentManager.update(new Content("/simpleFind", ImmutableMap.of("sakai:marker",
+                (Object) "value1")));
+        contentManager.update(new Content("/simpleFind/item2", ImmutableMap.of("sakai:marker",
+                (Object) "value1")));
+        contentManager.update(new Content("/simpleFind/test", ImmutableMap.of("sakai:marker",
+                (Object) "value3")));
+        contentManager.update(new Content("/simpleFind/test/ing", ImmutableMap.of("sakai:marker",
+                (Object) "value4")));
+
+        verifyResults(contentManager.find(ImmutableMap.of("sakai:marker", (Object) "value4")),
+                ImmutableSet.of("/simpleFind/test/ing"));
+        verifyResults(contentManager.find(ImmutableMap.of("sakai:marker", (Object) "value1")),
+                ImmutableSet.of("/simpleFind", "/simpleFind/item2"));
+
+    }
+
+    @Test
+    public void testSimpleArrayFind() throws StorageClientException, AccessDeniedException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+        AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+                currentUser, configuration, null, new LoggingStorageListener(),
+                principalValidatorResolver);
+
+        ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
+                configuration, null, new LoggingStorageListener());
+        contentManager.update(new Content("/simpleArrayFind", ImmutableMap.of("sakai:marker",
+                (Object) new String[] { "value88", "value1" })));
+        contentManager.update(new Content("/simpleArrayFind/item2", ImmutableMap.of("sakai:marker",
+                (Object) new String[] { "value88", "value1" })));
+        contentManager.update(new Content("/simpleArrayFind/test", ImmutableMap.of("sakai:marker",
+                (Object) new String[] { "value44", "value3" })));
+        contentManager.update(new Content("/simpleArrayFind/test/ing", ImmutableMap.of(
+                "sakai:marker", (Object) new String[] { "value88", "value4" })));
+
+        verifyResults(contentManager.find(ImmutableMap.of("sakai:marker", (Object) "value4")),
+                ImmutableSet.of("/simpleArrayFind/test/ing"));
+        verifyResults(contentManager.find(ImmutableMap.of("sakai:marker", (Object) "value1")),
+                ImmutableSet.of("/simpleArrayFind", "/simpleArrayFind/item2"));
+        verifyResults(contentManager.find(ImmutableMap.of("sakai:marker", (Object) "value88")),
+                ImmutableSet.of("/simpleArrayFind/test/ing", "/simpleArrayFind",
+                        "/simpleArrayFind/item2"));
+
+    }
+
+    protected void verifyResults(Iterable<Content> ic, Set<String> shouldFind) {
+        int i = 0;
+        for (Content c : ic) {
+            String path = c.getPath();
+            if (shouldFind.contains(c.getPath())) {
+                i++;
+            } else {
+                LOGGER.info("Found wrong content {}", path);
+            }
+        }
+        Assert.assertEquals(shouldFind.size(), i);
+    }
 
 }

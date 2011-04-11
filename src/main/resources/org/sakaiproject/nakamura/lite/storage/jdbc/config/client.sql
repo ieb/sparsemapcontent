@@ -6,10 +6,10 @@ select-string-row = select cid, v from css where rid = ?
 select-string-row.n.au = select cid, v from au_css where rid = ?
 select-string-row.n.ac = select cid, v from ac_css where rid = ?
 select-string-row.n.cn = select cid, v from cn_css where rid = ?
-insert-string-column = insert into css ( v, rid, cid, id) values ( ?, ?, ? )
-insert-string-column.n.au = insert into au_css ( v, rid, cid, id) values ( ?, ?, ?, ? )
-insert-string-column.n.ac = insert into ac_css ( v, rid, cid, id) values ( ?, ?, ?, ? )
-insert-string-column.n.cn = insert into cn_css ( v, rid, cid, id) values ( ?, ?, ?, ? )
+insert-string-column = insert into css ( v, rid, cid) values ( ?, ?, ? )
+insert-string-column.n.au = insert into au_css ( v, rid, cid) values ( ?, ?, ? )
+insert-string-column.n.ac = insert into ac_css ( v, rid, cid) values ( ?, ?, ? )
+insert-string-column.n.cn = insert into cn_css ( v, rid, cid) values ( ?, ?, ? )
 update-string-column = update css set v = ?  where rid = ? and cid = ?
 update-string-column.n.au = update au_css set v = ?  where rid = ? and cid = ?
 update-string-column.n.ac = update ac_css set v = ?  where rid = ? and cid = ?
