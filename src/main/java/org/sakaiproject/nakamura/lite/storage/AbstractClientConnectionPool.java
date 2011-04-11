@@ -53,7 +53,7 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
     private static final String MIN_EVICTABLE_IDLE_TIME_MILLIS = "min-evictable-idle-time-millis";
     @Property(boolValue = false)
     private static final String TEST_WHILE_IDLE = "test-while-idle";
-    @Property(value = "block | fail | grow ")
+    @Property(value = "grow")
     private static final String WHEN_EHAUSTED = "when-exhausted-action";
 
     private GenericObjectPool pool;
@@ -120,7 +120,9 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
      */
     public StorageClient getClient() throws ClientPoolException {
         try {
-            return (StorageClient) pool.borrowObject();
+            StorageClient client = (StorageClient) pool.borrowObject();
+            LOGGER.debug("Borrowed storage client pool client:" + client);
+            return client;
         } catch (Exception e) {
             LOGGER.warn(e.getMessage(),e);
             throw new ClientPoolException("Failed To Borrow connection from pool ", e);
@@ -137,6 +139,7 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
         try {
             if (client != null) {
                 pool.returnObject(client);
+                LOGGER.debug("Released storage client pool client:" + client);
             }
         } catch (Exception e) {
             LOGGER.warn("Failed to close connection " + e.getMessage(), e);
