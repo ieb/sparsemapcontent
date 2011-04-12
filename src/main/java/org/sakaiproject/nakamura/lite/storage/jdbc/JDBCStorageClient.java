@@ -412,14 +412,15 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                             removeStringColumn.clearParameters();
                             removeStringColumn.setString(1, rid);
                             removeStringColumn.setString(2, k);
-                            if (removeStringColumn.executeUpdate() == 0) {
+                            int nrows = removeStringColumn.executeUpdate();
+                            if (nrows == 0) {
                                 m = get(keySpace, columnFamily, key);
                                 LOGGER.debug(
                                         "Column Not present did not remove {} {} Current Column:{} ",
                                         new Object[] { getRowId(keySpace, columnFamily, key), k, m });
                             } else {
-                                LOGGER.debug("Removed Index {} {} ",
-                                        getRowId(keySpace, columnFamily, key), k);
+                                LOGGER.debug("Removed Index {} {} {} ",
+                                        new Object[]{getRowId(keySpace, columnFamily, key), k, nrows});
                             }
                         } else {
                             PreparedStatement removeStringColumn = getStatement(keySpace,
@@ -428,6 +429,16 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                             removeStringColumn.clearParameters();
                             removeStringColumn.setString(1, rid);
                             removeStringColumn.setString(2, k);
+                            int nrows = removeStringColumn.executeUpdate();
+                            if (nrows == 0) {
+                                m = get(keySpace, columnFamily, key);
+                                LOGGER.debug(
+                                        "Column Not present did not remove {} {} Current Column:{} ",
+                                        new Object[] { getRowId(keySpace, columnFamily, key), k, m });
+                            } else {
+                                LOGGER.debug("Removed Index {} {} {} ",
+                                        new Object[]{getRowId(keySpace, columnFamily, key), k, nrows});
+                            }
                             Object[] os = (o instanceof Object[]) ? (Object[]) o : new Object[] { o };
                             for (Object ov : os) {
                                 String v = ov.toString();
