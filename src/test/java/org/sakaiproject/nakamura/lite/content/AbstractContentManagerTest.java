@@ -253,6 +253,7 @@ public abstract class AbstractContentManagerTest {
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
                 configuration,  sharedCache, new LoggingStorageListener());
+        StorageClientUtils.deleteTree(contentManager, "/testUpdateContent");
         contentManager.update(new Content("/testUpdateContent", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/testUpdateContent/test", ImmutableMap.of("prop1", (Object) "value2")));
         contentManager
@@ -300,6 +301,7 @@ public abstract class AbstractContentManagerTest {
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
                 configuration,  sharedCache, new LoggingStorageListener());
+        StorageClientUtils.deleteTree(contentManager, "/testVersionContent");
         contentManager.update(new Content("/testVersionContent", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/testVersionContent/test", ImmutableMap.of("prop1", (Object) "value2")));
         contentManager
@@ -371,6 +373,7 @@ public abstract class AbstractContentManagerTest {
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
                 configuration,  sharedCache, new LoggingStorageListener());
+        StorageClientUtils.deleteTree(contentManager, "/testUploadContent");
         contentManager.update(new Content("/testUploadContent", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/testUploadContent/test", ImmutableMap.of("prop1", (Object) "value2")));
         contentManager
