@@ -101,6 +101,33 @@ public abstract class AbstractContentManagerFinderTest {
     }
 
     @Test
+    public void testSimpleFindWithSort() throws StorageClientException, AccessDeniedException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+        AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+                currentUser, configuration, null, new LoggingStorageListener(),
+                principalValidatorResolver);
+
+        ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
+                configuration, null, new LoggingStorageListener());
+        contentManager.update(new Content("/simpleFind", ImmutableMap.of("sakai:marker",
+                (Object) "testSimpleFindvalue1")));
+        contentManager.update(new Content("/simpleFind/item2", ImmutableMap.of("sakai:marker",
+                (Object) "testSimpleFindvalue1")));
+        contentManager.update(new Content("/simpleFind/test", ImmutableMap.of("sakai:marker",
+                (Object) "testSimpleFindvalue3")));
+        contentManager.update(new Content("/simpleFind/test/ing", ImmutableMap.of("sakai:marker",
+                (Object) "testSimpleFindvalue4")));
+
+        verifyResults(contentManager.find(ImmutableMap.of("sakai:marker", (Object) "testSimpleFindvalue4", "_sort", "sakai:marker")),
+                ImmutableSet.of("/simpleFind/test/ing"));
+        verifyResults(contentManager.find(ImmutableMap.of("sakai:marker", (Object) "testSimpleFindvalue1", "_sort", "sakai:marker")),
+                ImmutableSet.of("/simpleFind", "/simpleFind/item2"));
+
+    }
+
+    @Test
     public void testSimpleArrayFind() throws StorageClientException, AccessDeniedException {
         AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");

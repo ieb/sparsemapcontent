@@ -91,6 +91,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     private static final int STMT_WHERE = 2;
     private static final int STMT_WHERE_SORT = 3;
     private static final int STMT_ORDER = 4;
+    private static final int STMT_EXTRA_COLUMNS = 5;
 
     private JDBCStorageClientPool jcbcStorageClientConnection;
     private Map<String, Object> sqlConfig;
@@ -895,6 +896,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         StringBuilder tables = new StringBuilder();
         StringBuilder where = new StringBuilder();
         StringBuilder order = new StringBuilder();
+        StringBuilder extraColumns = new StringBuilder();
 
         // collect information on paging
         long page = 0;
@@ -943,7 +945,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                       Object subv = subterm.getValue();
                       // check that each subterm should be indexed
                       if (shouldIndex(keySpace, columnFamily, subk)) {
-                        set = processEntry(statementParts, tables, where, order, parameters, subk, subv, sorts, set);
+                        set = processEntry(statementParts, tables, where, order, extraColumns, parameters, subk, subv, sorts, set);
                         // as long as there are more add OR
                         if (subtermsIter.hasNext()) {
                           where.append(" OR");
@@ -957,11 +959,11 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
 
                       if (v instanceof Iterable<?>) {
                           for (Object vo : (Iterable<?>)v) {
-                              set = processEntry(statementParts, tables, where, order, parameters, k, vo, sorts, set);
+                              set = processEntry(statementParts, tables, where, order, extraColumns, parameters, k, vo, sorts, set);
                               where.append(" AND");
                           }
                       } else {
-                          set = processEntry(statementParts, tables, where, order, parameters, k, v, sorts, set);
+                          set = processEntry(statementParts, tables, where, order, extraColumns, parameters, k, v, sorts, set);
                           where.append(" AND");
                       }
                   }
@@ -975,7 +977,10 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
 
         if (sorts[0] != null && order.length() == 0) {
           if (shouldIndex(keySpace, columnFamily, sorts[0])) {
-            String t = "a" + set;
+            String t = "a"+set;
+            if ( statementParts.length > STMT_EXTRA_COLUMNS ) {
+                extraColumns.append(MessageFormat.format(statementParts[STMT_EXTRA_COLUMNS], t));
+            }
             tables.append(MessageFormat.format(statementParts[STMT_TABLE_JOIN], t));
             parameters.add(sorts[0]);
             where.append(MessageFormat.format(statementParts[STMT_WHERE_SORT], t)).append(" AND");
@@ -988,12 +993,12 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
 
 
         final String sqlStatement = MessageFormat.format(statementParts[STMT_BASE],
-            tables.toString(), where.toString(), order.toString(), items, offset);
+            tables.toString(), where.toString(), order.toString(), items, offset, extraColumns.toString());
 
         PreparedStatement tpst = null;
         ResultSet trs = null;
         try {
-            LOGGER.debug("Preparing {} ", sqlStatement);
+            LOGGER.info("Preparing {} ", sqlStatement);
             tpst = jcbcStorageClientConnection.getConnection().prepareStatement(sqlStatement);
             inc("iterator");
             tpst.clearParameters();
@@ -1111,7 +1116,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
      * @param conjunctionOr
      */
     private int processEntry(String[] statementParts, StringBuilder tables,
-        StringBuilder where, StringBuilder order, List<Object> params, String k, Object v,
+        StringBuilder where, StringBuilder order, StringBuilder extraColumns, List<Object> params, String k, Object v,
         String[] sorts, int set) {
       String t = "a" + set;
       tables.append(MessageFormat.format(statementParts[STMT_TABLE_JOIN], t));
@@ -1138,6 +1143,9 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
       // add in sorting based on the table ref and value
       if (k.equals(sorts[0])) {
         order.append(MessageFormat.format(statementParts[STMT_ORDER], t, sorts[1]));
+        if ( statementParts.length > STMT_EXTRA_COLUMNS ) {
+            extraColumns.append(MessageFormat.format(statementParts[STMT_EXTRA_COLUMNS], t));
+        }
       }
       return set+1;
     }
