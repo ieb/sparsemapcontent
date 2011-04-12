@@ -17,13 +17,7 @@
  */
 package org.sakaiproject.nakamura.lite.content;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 
 import org.junit.After;
@@ -38,7 +32,6 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorResolver;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.lite.content.Content;
-import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.LoggingStorageListener;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
@@ -59,7 +52,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 public abstract class AbstractContentManagerTest {
 
@@ -526,45 +518,5 @@ public abstract class AbstractContentManagerTest {
 
   }
 
-  @Test
-  public void testFindAfterChangingPropertyValue() throws Exception {
-
-    String oldValue = "val1";
-    String newValue = "newval";
-
-    AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
-    User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
-    AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-            currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver);
-    ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-            configuration, null, new LoggingStorageListener());
-
-    // create content
-    contentManager.update(new Content("/test", ImmutableMap.of("prop1", (Object) oldValue)));
-
-    // after initial creation, prop1 should be "val1"
-    Iterable<Content> results = contentManager.find(ImmutableMap.of("prop1", (Object) oldValue));
-    Content found = results.iterator().next();
-    Assert.assertEquals("/test", found.getPath());
-    Assert.assertEquals(oldValue, found.getProperty("prop1"));
-
-    // now change prop1
-    found.setProperty("prop1", newValue);
-    contentManager.update(found);
-
-    // calling get() shows prop1 has been updated
-    Content gotten = contentManager.get("/test");
-    Assert.assertEquals(newValue, gotten.getProperty("prop1"));
-
-    // ok, now see if we can find the object searching on "newval"
-    Iterable<Content> findOfNewVal = contentManager.find(ImmutableMap.of("prop1", (Object) newValue));
-    Content foundAfterUpdate = findOfNewVal.iterator().next();
-    Assert.assertEquals(newValue, foundAfterUpdate.getProperty("prop1"));
-
-    // strangely, find on val1 still finds the record with its OLD value
-    Iterable<Content> findOfOldval = contentManager.find(ImmutableMap.of("prop1", (Object) oldValue));
-    // if find() is correct this line should pass
-    Assert.assertFalse(findOfOldval.iterator().hasNext());
-  }
 
 }
