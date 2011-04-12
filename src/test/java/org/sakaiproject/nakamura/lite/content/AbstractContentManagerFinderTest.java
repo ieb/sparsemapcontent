@@ -299,7 +299,7 @@ public abstract class AbstractContentManagerFinderTest {
    * @throws StorageClientException
    * @throws AccessDeniedException
    */
-  //@Test
+  @Test
   public void testMultiValuedIndexSearchFindAorB() throws StorageClientException,
       AccessDeniedException {
     final ContentManager contentManager = setupMultiValuedIndexSearch();
@@ -330,7 +330,7 @@ public abstract class AbstractContentManagerFinderTest {
    * @throws StorageClientException
    * @throws AccessDeniedException
    */
-  //@Test
+  @Test
   public void testMultiValuedIndexSearchFindBorA() throws StorageClientException,
       AccessDeniedException {
     final ContentManager contentManager = setupMultiValuedIndexSearch();
@@ -361,7 +361,7 @@ public abstract class AbstractContentManagerFinderTest {
    * @throws StorageClientException
    * @throws AccessDeniedException
    */
-  //@Test
+  @Test
   public void testMultiValuedIndexSearchFindXorY() throws StorageClientException,
       AccessDeniedException {
     final ContentManager contentManager = setupMultiValuedIndexSearch();
@@ -392,7 +392,7 @@ public abstract class AbstractContentManagerFinderTest {
    * @throws StorageClientException
    * @throws AccessDeniedException
    */
-  //@Test
+  @Test
   public void testMultiValuedIndexSearchFindXorZ() throws StorageClientException,
       AccessDeniedException {
     final ContentManager contentManager = setupMultiValuedIndexSearch();
@@ -423,7 +423,7 @@ public abstract class AbstractContentManagerFinderTest {
    * @throws StorageClientException
    * @throws AccessDeniedException
    */
-  //@Test
+  @Test
   public void testMultiValuedIndexSearchFindAandB() throws StorageClientException,
       AccessDeniedException {
     final ContentManager contentManager = setupMultiValuedIndexSearch();
@@ -714,7 +714,7 @@ public abstract class AbstractContentManagerFinderTest {
    * @throws StorageClientException
    * @throws AccessDeniedException
    */
-  //@Test
+  @Test
   public void testMultiValuedIndexSearchFindAltAorB() throws StorageClientException,
       AccessDeniedException {
     final ContentManager contentManager = setupAlternateMultiValuedProperties();
@@ -746,7 +746,7 @@ public abstract class AbstractContentManagerFinderTest {
    * @throws StorageClientException
    * @throws AccessDeniedException
    */
-  //@Test
+  @Test
   public void testMultiValuedIndexSearchFindAltAorB2() throws StorageClientException,
       AccessDeniedException {
     final ContentManager contentManager = setupAlternateMultiValuedProperties();
@@ -778,7 +778,7 @@ public abstract class AbstractContentManagerFinderTest {
    * @throws StorageClientException
    * @throws AccessDeniedException
    */
-  //@Test
+  @Test
   public void testMultiValuedIndexSearchFindAltAandB() throws StorageClientException,
       AccessDeniedException {
     final ContentManager contentManager = setupAlternateMultiValuedProperties();
@@ -942,7 +942,7 @@ public abstract class AbstractContentManagerFinderTest {
    * @throws StorageClientException
    * @throws AccessDeniedException
    */
-  //@Test
+  @Test
   public void testMultiValuedIndexSearchFindAltXorY() throws StorageClientException,
       AccessDeniedException {
     final ContentManager contentManager = setupAlternateMultiValuedProperties();
@@ -974,7 +974,7 @@ public abstract class AbstractContentManagerFinderTest {
    * @throws StorageClientException
    * @throws AccessDeniedException
    */
-  //@Test
+  @Test
   public void testMultiValuedIndexSearchFindAltXorZ() throws StorageClientException,
       AccessDeniedException {
     final ContentManager contentManager = setupAlternateMultiValuedProperties();
