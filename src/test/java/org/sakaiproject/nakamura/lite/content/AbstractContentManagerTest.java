@@ -55,12 +55,12 @@ import java.util.Random;
 
 public abstract class AbstractContentManagerTest {
 
-    protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractContentManagerTest.class);
-    protected StorageClient client;
-    protected ConfigurationImpl configuration;
-    protected StorageClientPool clientPool;
-    protected Map<String, CacheHolder> sharedCache = new ConcurrentLRUMap<String, CacheHolder>(1000);
-    protected PrincipalValidatorResolver principalValidatorResolver = new PrincipalValidatorResolverImpl();
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractContentManagerTest.class);
+    private StorageClient client;
+    private ConfigurationImpl configuration;
+    private StorageClientPool clientPool;
+    private Map<String, CacheHolder> sharedCache = new ConcurrentLRUMap<String, CacheHolder>(1000);
+    private PrincipalValidatorResolver principalValidatorResolver = new PrincipalValidatorResolverImpl();
 
     @Before
     public void before() throws StorageClientException, AccessDeniedException, ClientPoolException,
@@ -512,6 +512,47 @@ public abstract class AbstractContentManagerTest {
     p = child.getProperties();
     Assert.assertEquals("value4", (String) p.get("prop1"));
 
+  }
+
+  @Test
+  public void testFindAfterChangingPropertyValue() throws Exception {
+
+    String oldValue = "val1";
+    String newValue = "newval";
+
+    AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+    User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+    AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+            currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver);
+    ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
+            configuration, null, new LoggingStorageListener());
+
+    // create content
+    contentManager.update(new Content("/test", ImmutableMap.of("prop1", (Object) oldValue)));
+
+    // after initial creation, prop1 should be "val1"
+    Iterable<Content> results = contentManager.find(ImmutableMap.of("prop1", (Object) oldValue));
+    Content found = results.iterator().next();
+    Assert.assertEquals("/test", found.getPath());
+    Assert.assertEquals(oldValue, found.getProperty("prop1"));
+
+    // now change prop1
+    found.setProperty("prop1", newValue);
+    contentManager.update(found);
+
+    // calling get() shows prop1 has been updated
+    Content gotten = contentManager.get("/test");
+    Assert.assertEquals(newValue, gotten.getProperty("prop1"));
+
+    // ok, now see if we can find the object searching on "newval"
+    Iterable<Content> findOfNewVal = contentManager.find(ImmutableMap.of("prop1", (Object) newValue));
+    Content foundAfterUpdate = findOfNewVal.iterator().next();
+    Assert.assertEquals(newValue, foundAfterUpdate.getProperty("prop1"));
+
+    // strangely, find on val1 still finds the record with its OLD value
+    Iterable<Content> findOfOldval = contentManager.find(ImmutableMap.of("prop1", (Object) oldValue));
+    // if find() is correct this line should pass
+    Assert.assertFalse(findOfOldval.iterator().hasNext());
   }
 
 }
