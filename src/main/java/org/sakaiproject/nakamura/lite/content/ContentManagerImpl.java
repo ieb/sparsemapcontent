@@ -303,6 +303,17 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_WRITE);
         String id = null;
         Map<String, Object> toSave = null;
+        // deal with content that already exists.
+        if (content.isNew()) {
+            Content existingContent = get(path);
+            if ( existingContent != null ) {
+                Map<String, Object> properties = content.getProperties();
+                for ( Entry<String, Object> e : properties.entrySet()) {
+                   existingContent.setProperty(e.getKey(), e.getValue());
+                }
+                content = existingContent;
+            }
+        }
         if (content.isNew()) {
             // create the parents if necessary
             if (!StorageClientUtils.isRoot(path)) {
