@@ -117,9 +117,9 @@ public class JDBCStorageClientTest {
     StringBuilder tables = new StringBuilder().append(
         MessageFormat.format(statementParts[1], "a0")).append(
         MessageFormat.format(statementParts[1], "a1"));
-    StringBuilder where = new StringBuilder()
-        .append(MessageFormat.format(statementParts[2], "a0")).append(" AND")
-        .append(MessageFormat.format(statementParts[2], "a1")).append(" AND");
+    StringBuilder where = new StringBuilder().append(" (")
+        .append(MessageFormat.format(statementParts[2], "a0")).append(") AND (")
+        .append(MessageFormat.format(statementParts[2], "a1")).append(") AND");
 
     String expectedSql = MessageFormat.format(statementParts[0], tables.toString(),
         where.toString());
@@ -206,12 +206,12 @@ public class JDBCStorageClientTest {
         .append(MessageFormat.format(statementParts[1], "a1"))
         .append(MessageFormat.format(statementParts[1], "a2"))
         .append(MessageFormat.format(statementParts[1], "a3"));
-    StringBuilder where = new StringBuilder()
-        .append(MessageFormat.format(statementParts[2], "a0")).append(" AND")
-        .append(" ( (").append(MessageFormat.format(statementParts[2], "a1"))
+    StringBuilder where = new StringBuilder().append(" (")
+        .append(MessageFormat.format(statementParts[2], "a0")).append(") AND (")
+        .append(" (").append(MessageFormat.format(statementParts[2], "a1"))
         .append(") OR (").append(MessageFormat.format(statementParts[2], "a2"))
-        .append(")) AND").append(MessageFormat.format(statementParts[2], "a3"))
-        .append(" AND");
+        .append(")) AND (").append(MessageFormat.format(statementParts[2], "a3"))
+        .append(") AND");
 
     String expectedSql = MessageFormat.format(statementParts[0], tables.toString(),
         where.toString());
@@ -270,9 +270,9 @@ public class JDBCStorageClientTest {
         .append(MessageFormat.format(statementParts[1], "a3"))
         .append(MessageFormat.format(statementParts[1], "a4"))
         .append(MessageFormat.format(statementParts[1], "a5"));
-    StringBuilder where = new StringBuilder()
-        .append(MessageFormat.format(statementParts[2], "a0")).append(" AND")
-        .append(MessageFormat.format(statementParts[2], "a1")).append(" AND")
+    StringBuilder where = new StringBuilder().append(" (")
+        .append(MessageFormat.format(statementParts[2], "a0")).append(") AND (")
+        .append(MessageFormat.format(statementParts[2], "a1")).append(") AND")
         .append(" ( (").append(MessageFormat.format(statementParts[2], "a2"))
         .append(") OR (").append(MessageFormat.format(statementParts[2], "a3"))
         .append(")) AND").append(" ( (")
@@ -308,8 +308,8 @@ public class JDBCStorageClientTest {
 
     StringBuilder tables = new StringBuilder().append(MessageFormat.format(
         statementParts[1], "a0"));
-    StringBuilder where = new StringBuilder().append(
-        MessageFormat.format(statementParts[2], "a0")).append(" AND");
+    StringBuilder where = new StringBuilder().append(" (").append(
+        MessageFormat.format(statementParts[2], "a0")).append(") AND");
 
     String expectedSql = MessageFormat.format(statementParts[0], tables.toString(),
         where.toString());
@@ -345,11 +345,12 @@ public class JDBCStorageClientTest {
 
     StringBuilder tables = new StringBuilder().append(
         MessageFormat.format(statementParts[1], "a0")).append(
-        MessageFormat.format(statementParts[1], "a1"));
-    StringBuilder where = new StringBuilder()
-        .append(MessageFormat.format(statementParts[2], "a0")).append(" AND")
-        .append(MessageFormat.format(statementParts[2], "a0")).append(" AND")
-        .append(MessageFormat.format(statementParts[2], "a1")).append(" AND");
+        MessageFormat.format(statementParts[1], "a1")).append(
+        MessageFormat.format(statementParts[1], "a2"));
+    StringBuilder where = new StringBuilder().append(" (")
+        .append(MessageFormat.format(statementParts[2], "a0")).append(") AND (")
+        .append(MessageFormat.format(statementParts[2], "a1")).append(") AND (")
+        .append(MessageFormat.format(statementParts[2], "a2")).append(") AND");
 
     String expectedSql = MessageFormat.format(statementParts[0], tables.toString(),
         where.toString());

@@ -943,7 +943,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                       Object subv = subterm.getValue();
                       // check that each subterm should be indexed
                       if (shouldIndex(keySpace, columnFamily, subk)) {
-                        set = processEntry(statementParts, tables, where, order, parameters, subk, subv, sorts, set, true);
+                        set = processEntry(statementParts, tables, where, order, parameters, subk, subv, sorts, set);
                         // as long as there are more add OR
                         if (subtermsIter.hasNext()) {
                           where.append(" OR");
@@ -954,7 +954,16 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     where.append(") AND");
                   } else {
                     // process a first level non-map value as an AND term
-                    set = processEntry(statementParts, tables, where, order, parameters, k, v, sorts, set, false);
+
+                      if (v instanceof Iterable<?>) {
+                          for (Object vo : (Iterable<?>)v) {
+                              set = processEntry(statementParts, tables, where, order, parameters, k, vo, sorts, set);
+                              where.append(" AND");
+                          }
+                      } else {
+                          set = processEntry(statementParts, tables, where, order, parameters, k, v, sorts, set);
+                          where.append(" AND");
+                      }
                   }
                 } else if (!k.startsWith("_")) {
                   LOGGER.debug("Search on {}:{} filter dropped due to null value.", columnFamily, k);
@@ -976,6 +985,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 sorts[0]);
           }
         }
+
 
         final String sqlStatement = MessageFormat.format(statementParts[STMT_BASE],
             tables.toString(), where.toString(), order.toString(), items, offset);
@@ -1102,7 +1112,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
      */
     private int processEntry(String[] statementParts, StringBuilder tables,
         StringBuilder where, StringBuilder order, List<Object> params, String k, Object v,
-        String[] sorts, int set, boolean conjunctionOr) {
+        String[] sorts, int set) {
       String t = "a" + set;
       tables.append(MessageFormat.format(statementParts[STMT_TABLE_JOIN], t));
 
@@ -1112,33 +1122,24 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
           
           params.add(k);
           params.add(viObj);
-          if (conjunctionOr) {
-            where.append(" (").append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(")");
+          where.append(" (").append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(")");
 
-            // as long as there are more add OR
-            if (vi.hasNext()) {
-              where.append(" OR");
-            }
-          } else {
-            where.append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(" AND");
+          // as long as there are more add OR
+          if (vi.hasNext()) {
+            where.append(" OR");
           }
         }
       } else {
         params.add(k);
         params.add(v);
-        if (conjunctionOr) {
-          where.append(" (").append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(")");
-        } else {
-          // concat terms together at this level with AND
-          where.append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(" AND");
-        }
+        where.append(" (").append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(")");
       }
 
       // add in sorting based on the table ref and value
       if (k.equals(sorts[0])) {
         order.append(MessageFormat.format(statementParts[STMT_ORDER], t, sorts[1]));
       }
-      return ++set;
+      return set+1;
     }
 
     private void dec(String key) {
