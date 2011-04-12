@@ -121,9 +121,12 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     public Map<String, Object> get(String keySpace, String columnFamily, String key)
             throws StorageClientException {
         checkClosed();
+        String rid = rowHash(keySpace, columnFamily, key);
+        return internalGet(keySpace, columnFamily, rid);
+    }
+    private Map<String, Object> internalGet(String keySpace, String columnFamily, String rid) throws StorageClientException {
         ResultSet body = null;
         Map<String, Object> result = Maps.newHashMap();
-        String rid = rowHash(keySpace, columnFamily, key);
         PreparedStatement selectStringRow = null;
         try {
             selectStringRow = getStatement(keySpace, columnFamily, SQL_BLOCK_SELECT_ROW, rid, null);
@@ -138,7 +141,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             }
         } catch (SQLException e) {
             LOGGER.warn("Failed to perform get operation on  " + keySpace + ":" + columnFamily
-                    + ":" + key, e);
+                    + ":" + rid, e);
             if (passivate != null) {
                 LOGGER.warn("Was Pasivated ", passivate);
             }
@@ -148,7 +151,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             throw new StorageClientException(e.getMessage(), e);
         } catch (IOException e) {
             LOGGER.warn("Failed to perform get operation on  " + keySpace + ":" + columnFamily
-                    + ":" + key, e);
+                    + ":" + rid, e);
             if (passivate != null) {
                 LOGGER.warn("Was Pasivated ", passivate);
             }
@@ -868,7 +871,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         return find(keySpace, columnFamily, ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash));
     }
 
-    public DisposableIterator<Map<String, Object>> find(String keySpace, final String columnFamily,
+    public DisposableIterator<Map<String,Object>> find(final String keySpace, final String columnFamily,
             Map<String, Object> properties) throws StorageClientException {
         checkClosed();
 
@@ -1003,37 +1006,36 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             trs = null;
             return registerDisposable(new PreemptiveIterator<Map<String, Object>>() {
 
-                private Map<String, Object> map = Maps.newHashMap();
+                private Map<String, Object> nextValue = Maps.newHashMap();
                 private boolean open = true;
 
                 @Override
                 protected Map<String, Object> internalNext() {
-                    return map;
+                    return nextValue;
                 }
 
                 @Override
                 protected boolean internalHasNext() {
                     try {
                         if (open && rs.next()) {
-                            map.clear();
-                            Types.loadFromStream(rs.getString(1), map,
-                                    rs.getBinaryStream(2), columnFamily);
-                            LOGGER.debug("Loaded {} ",map);
+                            String id = rs.getString(1);
+                             nextValue = internalGet(keySpace, columnFamily, id);
+                             LOGGER.debug("Got Row ID {} {} ", id, nextValue);
                             return true;
                         }
-                        LOGGER.debug("No More Records ");
                         close();
-                        map = null;
+                        nextValue = null;
+                        LOGGER.debug("End of Set ");
                         return false;
                     } catch (SQLException e) {
                         LOGGER.error(e.getMessage(), e);
                         close();
-                        map = null;
+                        nextValue = null;
                         return false;
-                    } catch (IOException e) {
+                    } catch (StorageClientException e) {
                         LOGGER.error(e.getMessage(), e);
                         close();
-                        map = null;
+                        nextValue = null;
                         return false;
                     }
                 }

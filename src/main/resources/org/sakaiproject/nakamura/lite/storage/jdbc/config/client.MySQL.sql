@@ -54,10 +54,10 @@ block-update-row.n.au = update au_css_b set b = ? where rid = ?
 #
 # These are finder statements
 # base statement with paging ; table join ; where clause ; where clause for sort field (if needed) ; order by clause
-block-find = select a.rid, a.b from css_b a {0} where {1} 1 = 1 {2} limit {3} offset {4};, css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
-block-find.n.au = select a.rid, a.b from au_css_b a {0} where {1} 1 = 1 {2} limit {3} offset {4};, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
-block-find.n.cn = select a.rid, a.b from cn_css_b a {0} where {1} 1 = 1 {2} limit {3} offset {4};, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
-block-find.n.ac = select a.rid, a.b from ac_css_b a {0} where {1} 1 = 1 {2} limit {3} offset {4};, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+block-find = select distinct a.rid from css_b a {0} where {1} 1 = 1 {2} limit {3} offset {4};, css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+block-find.n.au = select distinct a.rid from au_css_b a {0} where {1} 1 = 1 {2} limit {3} offset {4};, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+block-find.n.cn = select distinct a.rid from cn_css_b a {0} where {1} 1 = 1 {2} limit {3} offset {4};, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+block-find.n.ac = select distinct a.rid from ac_css_b a {0} where {1} 1 = 1 {2} limit {3} offset {4};, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
 
 
 # statement to validate the connection
