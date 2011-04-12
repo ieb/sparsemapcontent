@@ -15,22 +15,23 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.sakaiproject.nakamura.lite.memory;
+package org.sakaiproject.nakamura.lite.cassandra;
 
 import com.google.common.collect.ImmutableMap;
 
-import org.sakaiproject.nakamura.lite.content.AbstractContentManagerTest;
+import org.sakaiproject.nakamura.lite.content.AbstractContentManagerFinderTest;
 import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
-import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.cassandra.CassandraClientPool;
 
-public class ContentManagerImplTest extends AbstractContentManagerTest {
+public class ContentManagerFinderImplMan extends AbstractContentManagerFinderTest {
 
     @Override
     protected StorageClientPool getClientPool() throws ClassNotFoundException {
-        MemoryStorageClientPool cp = new MemoryStorageClientPool();
+        CassandraClientPool cp = new CassandraClientPool();
         cp.activate(ImmutableMap.of("test", (Object) "test",
                 BlockContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK, 9));
         return cp;
     }
+
 }
