@@ -16,6 +16,7 @@ import org.junit.Test;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorResolver;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
@@ -96,6 +97,33 @@ public abstract class AbstractContentManagerFinderTest {
         verifyResults(contentManager.find(ImmutableMap.of("sakai:marker", (Object) "testSimpleFindvalue4")),
                 ImmutableSet.of("/simpleFind/test/ing"));
         verifyResults(contentManager.find(ImmutableMap.of("sakai:marker", (Object) "testSimpleFindvalue1")),
+                ImmutableSet.of("/simpleFind", "/simpleFind/item2"));
+
+    }
+
+    @Test
+    public void testSimpleFindWithSort() throws StorageClientException, AccessDeniedException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+        AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+                currentUser, configuration, null, new LoggingStorageListener(),
+                principalValidatorResolver);
+
+        ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
+                configuration, null, new LoggingStorageListener());
+        contentManager.update(new Content("/simpleFind", ImmutableMap.of("sakai:marker",
+                (Object) "testSimpleFindvalue1")));
+        contentManager.update(new Content("/simpleFind/item2", ImmutableMap.of("sakai:marker",
+                (Object) "testSimpleFindvalue1")));
+        contentManager.update(new Content("/simpleFind/test", ImmutableMap.of("sakai:marker",
+                (Object) "testSimpleFindvalue3")));
+        contentManager.update(new Content("/simpleFind/test/ing", ImmutableMap.of("sakai:marker",
+                (Object) "testSimpleFindvalue4")));
+
+        verifyResults(contentManager.find(ImmutableMap.of("sakai:marker", (Object) "testSimpleFindvalue4", "_sort", "sakai:marker")),
+                ImmutableSet.of("/simpleFind/test/ing"));
+        verifyResults(contentManager.find(ImmutableMap.of("sakai:marker", (Object) "testSimpleFindvalue1", "_sort", "sakai:marker")),
                 ImmutableSet.of("/simpleFind", "/simpleFind/item2"));
 
     }
@@ -1106,4 +1134,50 @@ public abstract class AbstractContentManagerFinderTest {
     private static final String[] altMultiValueA = multiValueB;
     private static final String[] altMultiValueB = multiValueA;
   }
+
+  @Test
+  public void testFindAfterChangingPropertyValue() throws Exception {
+
+    String oldValue = "testFindAfterChangingPropertyValue-val1";
+    String newValue = "testFindAfterChangingPropertyValue-newval";
+
+    AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+    User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+    AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+            currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver);
+    ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
+            configuration, null, new LoggingStorageListener());
+
+    StorageClientUtils.deleteTree(contentManager, "/testFindAfterChangingPropertyValue");
+
+    // create content
+    contentManager.update(new Content("/testFindAfterChangingPropertyValue", ImmutableMap.of("sakai:marker", (Object) oldValue)));
+
+    // after initial creation, prop1 should be "val1"
+    Iterable<Content> results = contentManager.find(ImmutableMap.of("sakai:marker", (Object) oldValue));
+    Iterator<Content> resultsIterator = results.iterator();
+    Assert.assertTrue(resultsIterator.hasNext());
+    Content found = resultsIterator.next();
+    Assert.assertEquals("/testFindAfterChangingPropertyValue", found.getPath());
+    Assert.assertEquals(oldValue, found.getProperty("sakai:marker"));
+
+    // now change prop1
+    found.setProperty("sakai:marker", newValue);
+    contentManager.update(found);
+
+    // calling get() shows prop1 has been updated
+    Content gotten = contentManager.get("/testFindAfterChangingPropertyValue");
+    Assert.assertEquals(newValue, gotten.getProperty("sakai:marker"));
+
+    // ok, now see if we can find the object searching on "newval"
+    Iterable<Content> findOfNewVal = contentManager.find(ImmutableMap.of("sakai:marker", (Object) newValue));
+    Content foundAfterUpdate = findOfNewVal.iterator().next();
+    Assert.assertEquals(newValue, foundAfterUpdate.getProperty("sakai:marker"));
+
+    // strangely, find on val1 still finds the record with its OLD value
+    Iterable<Content> findOfOldval = contentManager.find(ImmutableMap.of("sakai:marker", (Object) oldValue));
+    // if find() is correct this line should pass
+    Assert.assertFalse(findOfOldval.iterator().hasNext());
+  }
+
 }
