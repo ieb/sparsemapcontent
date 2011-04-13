@@ -238,7 +238,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 insertBlockRow.clearWarnings();
                 insertBlockRow.clearParameters();
                 insertBlockRow.setString(1, rid);
-                insertBlockRow.setBinaryStream(2, Types.storeMapToStream(rid, m, columnFamily));
+                InputStream insertStream = Types.storeMapToStream(rid, m, columnFamily);
+                insertBlockRow.setBinaryStream(2, insertStream, insertStream.available());
                 int rowsInserted = 0;
                 try {
                     rowsInserted = insertBlockRow.executeUpdate();
@@ -251,7 +252,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     updateBlockRow.clearWarnings();
                     updateBlockRow.clearParameters();
                     updateBlockRow.setString(2, rid);
-                    updateBlockRow.setBinaryStream(1, Types.storeMapToStream(rid, m, columnFamily));
+                    insertStream = Types.storeMapToStream(rid, m, columnFamily);
+                    updateBlockRow.setBinaryStream(1, insertStream, insertStream.available());
                     if( updateBlockRow.executeUpdate() == 0) {
                         throw new StorageClientException("Failed to save " + rid);
                     } else {
@@ -266,14 +268,16 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 updateBlockRow.clearWarnings();
                 updateBlockRow.clearParameters();
                 updateBlockRow.setString(2, rid);
-                updateBlockRow.setBinaryStream(1, Types.storeMapToStream(rid, m, columnFamily));
+                InputStream updateStream = Types.storeMapToStream(rid, m, columnFamily);
+                updateBlockRow.setBinaryStream(1, updateStream, updateStream.available());
                 if (updateBlockRow.executeUpdate() == 0) {
                     PreparedStatement insertBlockRow = getStatement(keySpace, columnFamily,
                             SQL_BLOCK_INSERT_ROW, rid, statementCache);
                     insertBlockRow.clearWarnings();
                     insertBlockRow.clearParameters();
                     insertBlockRow.setString(1, rid);
-                    insertBlockRow.setBinaryStream(2, Types.storeMapToStream(rid, m, columnFamily));
+                    updateStream = Types.storeMapToStream(rid, m, columnFamily);
+                    insertBlockRow.setBinaryStream(2, updateStream, updateStream.available());
                     if (insertBlockRow.executeUpdate() == 0) {
                         throw new StorageClientException("Failed to save " + rid);
                     } else {
