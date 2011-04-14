@@ -73,3 +73,7 @@ check-schema = select count(*) from css
 # Use batch Inserts means that update operations will be performed as batches rather than single SQL statements. This only really effects the update of
 # Index tables and not the content store but it will reduce the number of SQL operations where more than one field is indexed per content item.
 use-batch-inserts = 1
+
+# this property indicates which version of the JRE your JDBC driver targets
+# e.g. the driver for Oracle 10g does not support JDBC methods introduced in JRE 1.6
+jdbc-support-level = 1.5

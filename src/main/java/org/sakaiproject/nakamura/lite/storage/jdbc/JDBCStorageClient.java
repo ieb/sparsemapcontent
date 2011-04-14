@@ -87,6 +87,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     private static final String SELECT_INDEX_COLUMNS = "select-index-columns";
     private static final String PROP_HASH_ALG = "rowid-hash";
     private static final String USE_BATCH_INSERTS = "use-batch-inserts";
+    private static final String JDBC_SUPPORT_LEVEL = "jdbc-support-level";
     private static final Set<String> AUTO_INDEX_COLUMNS = ImmutableSet.of(
             "cn:_:parenthash",
             "au:_:parenthash",
@@ -239,7 +240,11 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 insertBlockRow.clearParameters();
                 insertBlockRow.setString(1, rid);
                 InputStream insertStream = Types.storeMapToStream(rid, m, columnFamily);
-                insertBlockRow.setBinaryStream(2, insertStream, insertStream.available());
+                if ("1.5".equals(getSql(JDBC_SUPPORT_LEVEL))) {
+                  insertBlockRow.setBinaryStream(2, insertStream, insertStream.available());
+                } else {
+                  insertBlockRow.setBinaryStream(2, insertStream);
+                }
                 int rowsInserted = 0;
                 try {
                     rowsInserted = insertBlockRow.executeUpdate();
@@ -253,7 +258,11 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     updateBlockRow.clearParameters();
                     updateBlockRow.setString(2, rid);
                     insertStream = Types.storeMapToStream(rid, m, columnFamily);
-                    updateBlockRow.setBinaryStream(1, insertStream, insertStream.available());
+                    if ("1.5".equals(getSql(JDBC_SUPPORT_LEVEL))) {
+                      updateBlockRow.setBinaryStream(1, insertStream, insertStream.available());
+                    } else {
+                      updateBlockRow.setBinaryStream(1, insertStream);
+                    }
                     if( updateBlockRow.executeUpdate() == 0) {
                         throw new StorageClientException("Failed to save " + rid);
                     } else {
@@ -269,7 +278,11 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 updateBlockRow.clearParameters();
                 updateBlockRow.setString(2, rid);
                 InputStream updateStream = Types.storeMapToStream(rid, m, columnFamily);
-                updateBlockRow.setBinaryStream(1, updateStream, updateStream.available());
+                if ("1.5".equals(getSql(JDBC_SUPPORT_LEVEL))) {
+                  updateBlockRow.setBinaryStream(1, updateStream, updateStream.available());
+                } else {
+                  updateBlockRow.setBinaryStream(1, updateStream);
+                }
                 if (updateBlockRow.executeUpdate() == 0) {
                     PreparedStatement insertBlockRow = getStatement(keySpace, columnFamily,
                             SQL_BLOCK_INSERT_ROW, rid, statementCache);
@@ -277,7 +290,11 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     insertBlockRow.clearParameters();
                     insertBlockRow.setString(1, rid);
                     updateStream = Types.storeMapToStream(rid, m, columnFamily);
-                    insertBlockRow.setBinaryStream(2, updateStream, updateStream.available());
+                    if ("1.5".equals(getSql(JDBC_SUPPORT_LEVEL))) {
+                      insertBlockRow.setBinaryStream(2, updateStream, updateStream.available());
+                    } else {
+                      insertBlockRow.setBinaryStream(2, updateStream);
+                    }
                     if (insertBlockRow.executeUpdate() == 0) {
                         throw new StorageClientException("Failed to save " + rid);
                     } else {
