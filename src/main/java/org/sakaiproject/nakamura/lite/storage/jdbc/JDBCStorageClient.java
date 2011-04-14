@@ -55,6 +55,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.MessageFormat;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -988,6 +989,24 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             } else {
               LOGGER.warn("Search on {}:{} is not supported, filter dropped ",columnFamily,k);
             }
+        }
+        if (where.length() == 0) {
+            return new DisposableIterator<Map<String,Object>>() {
+
+                public boolean hasNext() {
+                    return false;
+                }
+
+                public Map<String, Object> next() {
+                    return null;
+                }
+
+                public void remove() {
+                }
+
+                public void close() {
+                }
+            };
         }
 
         if (sorts[0] != null && order.length() == 0) {

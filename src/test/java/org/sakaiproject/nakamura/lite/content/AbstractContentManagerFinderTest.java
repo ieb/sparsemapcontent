@@ -158,6 +158,31 @@ public abstract class AbstractContentManagerFinderTest {
 
     }
 
+    @Test
+    public void testFindNoFilter() throws StorageClientException, AccessDeniedException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+        AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+                currentUser, configuration, null, new LoggingStorageListener(),
+                principalValidatorResolver);
+
+        ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
+                configuration, null, new LoggingStorageListener());
+        contentManager.update(new Content("/testFindNoFilter", ImmutableMap.of("sakai:marker",
+                (Object) new String[] { "testFindNoFiltervalue88", "testFindNoFiltervalue1" })));
+        contentManager.update(new Content("/testFindNoFilter/item2", ImmutableMap.of("sakai:marker",
+                (Object) new String[] { "testFindNoFiltervalue88", "testFindNoFiltervalue1" })));
+        contentManager.update(new Content("/testFindNoFilter/test", ImmutableMap.of("sakai:marker",
+                (Object) new String[] { "testFindNoFiltervalue44", "testFindNoFiltervalue3" })));
+        contentManager.update(new Content("/testFindNoFilter/test/ing", ImmutableMap.of(
+                "sakai:marker", (Object) new String[] { "testFindNoFiltervalue88", "testSimpleArrayFindvalue4" })));
+
+        Iterable<Content> found = contentManager.find(ImmutableMap.of("non-indexed-property", (Object) "testFindNoFiltervalue4"));
+        Iterator<Content> foundIterator = found.iterator();
+        Assert.assertFalse(foundIterator.hasNext());
+    }
+
     protected void verifyResults(Iterable<Content> ic, Set<String> shouldFind) {
         int i = 0;
         for (Content c : ic) {
