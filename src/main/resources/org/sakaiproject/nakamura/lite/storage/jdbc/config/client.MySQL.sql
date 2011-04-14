@@ -73,3 +73,9 @@ check-schema = select count(*) from css
 # Use batch Inserts means that update operations will be performed as batches rather than single SQL statements. This only really effects the update of 
 # Index tables and not the content store but it will reduce the number of SQL operations where more than one field is indexed per content item.
 use-batch-inserts = 1
+
+# Queries that take longer than these times to execute will be logged with warn and error respectively.
+# Logging is performed against org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClient.SlowQueryLogger
+slow-query-time = 10
+very-slow-query-time = 100
+

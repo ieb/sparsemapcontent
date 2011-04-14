@@ -59,3 +59,8 @@ block-find.n.ac = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R fr
 block-find.n.cn = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R from (select distinct a.rid  {5} from cn_css a {0} where {1} 1 = 1 {2}) as s) as TR where TR.R > {4} and TR.R <= {3}+{4};, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1};, {0}.v
 
 use-batch-inserts = 0
+
+# Queries that take longer than these times to execute will be logged with warn and error respectively.
+# Logging is performed against org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClient.SlowQueryLogger
+slow-query-time = 10
+very-slow-query-time = 100

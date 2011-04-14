@@ -1,3 +1,9 @@
+#
+# This SQL file is here for reference, and will only be used if a specific file for the DB type is not available.
+# The finder SQL in this file is unlikely to function correctly for the database in question as paging is non standard
+# for SQL. 
+#
+
 delete-string-row = delete from css where rid = ?
 delete-string-row.n.au = delete from au_css where rid = ?
 delete-string-row.n.ac = delete from ac_css where rid = ?
@@ -66,3 +72,9 @@ block-find.n.ac = select distinct a.rid from ac_css a {0} where {1} 1 = 1;, ac_c
 block-find.n.cn = select distinct a.rid from cn_css a {0} where {1} 1 = 1;, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
 
 use-batch-inserts = 0
+
+# Queries that take longer than these times to execute will be logged with warn and error respectively.
+# Logging is performed against org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClient.SlowQueryLogger
+slow-query-time = 10
+very-slow-query-time = 100
+

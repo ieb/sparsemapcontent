@@ -64,7 +64,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class JDBCStorageClient implements StorageClient, RowHasher {
 
+    public class SlowQueryLogger {
+        // only used to define the logger.
+    }
     private static final Logger LOGGER = LoggerFactory.getLogger(JDBCStorageClient.class);
+    private static final Logger SQL_LOGGER = LoggerFactory.getLogger(SlowQueryLogger.class);
     private static final String SQL_VALIDATE = "validate";
     private static final String SQL_CHECKSCHEMA = "check-schema";
     private static final String SQL_COMMENT = "#";
@@ -92,6 +96,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     private static final int STMT_WHERE_SORT = 3;
     private static final int STMT_ORDER = 4;
     private static final int STMT_EXTRA_COLUMNS = 5;
+    private static final Object SLOW_QUERY_THRESHOLD = "slow-query-time";
+    private static final Object VERY_SLOW_QUERY_THRESHOLD = "very-slow-query-time";
 
     private JDBCStorageClientPool jcbcStorageClientConnection;
     private Map<String, Object> sqlConfig;
@@ -103,6 +109,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     private String rowidHash;
     private Map<String, AtomicInteger> counters = Maps.newConcurrentHashMap();
     private Set<String> indexColumns;
+    private long slowQueryThreshold;
+    private long verySlowQueryThreshold;
 
     public JDBCStorageClient(JDBCStorageClientPool jdbcStorageClientConnectionPool,
             Map<String, Object> properties, Map<String, Object> sqlConfig) throws SQLException,
@@ -116,7 +124,14 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             rowidHash = "MD5";
         }
         active = true;
-
+        slowQueryThreshold = 10L;
+        verySlowQueryThreshold = 100L;
+        if (sqlConfig.containsKey(SLOW_QUERY_THRESHOLD)) {
+            slowQueryThreshold = Long.parseLong((String)sqlConfig.get(SLOW_QUERY_THRESHOLD));
+        }
+        if (sqlConfig.containsKey(VERY_SLOW_QUERY_THRESHOLD)) {
+            verySlowQueryThreshold = Long.parseLong((String)sqlConfig.get(VERY_SLOW_QUERY_THRESHOLD));
+        }
     }
 
     public Map<String, Object> get(String keySpace, String columnFamily, String key)
@@ -998,7 +1013,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         PreparedStatement tpst = null;
         ResultSet trs = null;
         try {
-            LOGGER.info("Preparing {} ", sqlStatement);
+            LOGGER.debug("Preparing {} ", sqlStatement);
             tpst = jcbcStorageClientConnection.getConnection().prepareStatement(sqlStatement);
             inc("iterator");
             tpst.clearParameters();
@@ -1010,7 +1025,14 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 i++;
             }
 
+            long qtime = System.currentTimeMillis();
             trs = tpst.executeQuery();
+            qtime = System.currentTimeMillis() - qtime;
+            if ( qtime > slowQueryThreshold && qtime < verySlowQueryThreshold) {
+                SQL_LOGGER.warn("Slow Query {}ms {} params:[{}]",new Object[]{qtime,sqlStatement,Arrays.toString(parameters.toArray(new String[parameters.size()]))});
+            } else if ( qtime > verySlowQueryThreshold ) {
+                SQL_LOGGER.error("Very Slow Query {}ms {} params:[{}]",new Object[]{qtime,sqlStatement,Arrays.toString(parameters.toArray(new String[parameters.size()]))});
+            }
             inc("iterator r");
             LOGGER.debug("Executed ");
 
