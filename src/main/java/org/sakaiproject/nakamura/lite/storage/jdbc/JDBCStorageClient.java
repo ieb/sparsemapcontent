@@ -126,7 +126,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             rowidHash = "MD5";
         }
         active = true;
-        slowQueryThreshold = 10L;
+        slowQueryThreshold = 50L;
         verySlowQueryThreshold = 100L;
         if (sqlConfig.containsKey(SLOW_QUERY_THRESHOLD)) {
             slowQueryThreshold = Long.parseLong((String)sqlConfig.get(SLOW_QUERY_THRESHOLD));
