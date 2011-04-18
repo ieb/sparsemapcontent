@@ -1,3 +1,9 @@
+#
+# This SQL file is here for reference, and will only be used if a specific file for the DB type is not available.
+# The finder SQL in this file is unlikely to function correctly for the database in question as paging is non standard
+# for SQL. 
+#
+
 delete-string-row = delete from css where rid = ?
 delete-string-row.n.au = delete from au_css where rid = ?
 delete-string-row.n.ac = delete from ac_css where rid = ?
@@ -6,10 +12,10 @@ select-string-row = select cid, v from css where rid = ?
 select-string-row.n.au = select cid, v from au_css where rid = ?
 select-string-row.n.ac = select cid, v from ac_css where rid = ?
 select-string-row.n.cn = select cid, v from cn_css where rid = ?
-insert-string-column = insert into css ( v, rid, cid, id) values ( ?, ?, ? )
-insert-string-column.n.au = insert into au_css ( v, rid, cid, id) values ( ?, ?, ?, ? )
-insert-string-column.n.ac = insert into ac_css ( v, rid, cid, id) values ( ?, ?, ?, ? )
-insert-string-column.n.cn = insert into cn_css ( v, rid, cid, id) values ( ?, ?, ?, ? )
+insert-string-column = insert into css ( v, rid, cid) values ( ?, ?, ? )
+insert-string-column.n.au = insert into au_css ( v, rid, cid) values ( ?, ?, ? )
+insert-string-column.n.ac = insert into ac_css ( v, rid, cid) values ( ?, ?, ? )
+insert-string-column.n.cn = insert into cn_css ( v, rid, cid) values ( ?, ?, ? )
 update-string-column = update css set v = ?  where rid = ? and cid = ?
 update-string-column.n.au = update au_css set v = ?  where rid = ? and cid = ?
 update-string-column.n.ac = update ac_css set v = ?  where rid = ? and cid = ?
@@ -55,14 +61,20 @@ block-delete-row.n.cn = delete from cn_css_b where rid = ?
 block-insert-row.n.cn = insert into cn_css_b (rid,b) values (?, ?)
 block-update-row.n.cn = update cn_css_b set b = ? where rid = ?
 
-# 0: select
+# 0: base statement
 # 1: table join
 # 2: where clause
 # 3: where clause for sort field (if needed)
 # 4: order by clause
-block-find = select a.rid, a.b from css_b a {0} where {1} 1 = 1;, css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
-block-find.n.au = select a.rid, a.b from au_css_b a {0} where {1} 1 = 1;, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
-block-find.n.ac = select a.rid, a.b from ac_css_b a {0} where {1} 1 = 1;, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
-block-find.n.cn = select a.rid, a.b from cn_css_b a {0} where {1} 1 = 1;, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+block-find = select distinct a.rid from css a {0} where {1} 1 = 1;, css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+block-find.n.au = select distinct a.rid from au_css a {0} where {1} 1 = 1;, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+block-find.n.ac = select distinct a.rid from ac_css a {0} where {1} 1 = 1;, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+block-find.n.cn = select distinct a.rid from cn_css a {0} where {1} 1 = 1;, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
 
 use-batch-inserts = 0
+
+# Queries that take longer than these times to execute will be logged with warn and error respectively.
+# Logging is performed against org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClient.SlowQueryLogger
+slow-query-time = 50
+very-slow-query-time = 100
+

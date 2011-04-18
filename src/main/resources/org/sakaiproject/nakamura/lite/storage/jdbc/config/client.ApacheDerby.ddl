@@ -1,6 +1,6 @@
 
 CREATE TABLE css (
-  id varchar(32) NOT NULL,
+  id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1),
   rid varchar(32) NOT NULL,
   cid varchar(64) NOT NULL,
   v varchar(780) NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE css (
 CREATE INDEX css_i ON css (rid, cid);
 
 CREATE TABLE au_css (
-  id varchar(32) NOT NULL,
+  id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1),
   rid varchar(32) NOT NULL,
   cid varchar(64) NOT NULL,
   v varchar(780) NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE au_css (
 CREATE INDEX au_css_i ON au_css (rid, cid);
 
 CREATE TABLE ac_css (
-  id varchar(32) NOT NULL,
+  id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1),
   rid varchar(32) NOT NULL,
   cid varchar(64) NOT NULL,
   v varchar(780) NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE ac_css (
 CREATE INDEX ac_css_i ON ac_css (rid, cid);
 
 CREATE TABLE cn_css (
-  id varchar(32) NOT NULL,
+  id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1),
   rid varchar(32) NOT NULL,
   cid varchar(64) NOT NULL,
   v varchar(780) NOT NULL,
@@ -86,7 +86,7 @@ CREATE TABLE  cn_css_b (
 
   
 # Columns that need to be indexed
-CREATE TABLE  index_cols (cid varchar(64) NOT NULL);
+CREATE TABLE  index_cols (cid varchar(64) NOT NULL, primary key(cid));
 
 insert into index_cols (cid) values ('au:rep:principalName');
 insert into index_cols (cid) values ('au:type');

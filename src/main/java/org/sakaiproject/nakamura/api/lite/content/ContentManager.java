@@ -56,6 +56,7 @@ public interface ContentManager {
      * @throws StorageClientException
      * @throws AccessDeniedException
      */
+    // TODO needs better documentation - not clear how to OR or AND
     Iterable<Content> find(Map<String, Object> searchProperties) throws StorageClientException, AccessDeniedException;
 
     /**

@@ -9,7 +9,7 @@ DROP TABLE IF EXISTS `css`;
 # Central store
 
 CREATE TABLE  `css` (
-  `id` varchar(32) NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
@@ -23,7 +23,7 @@ DROP TABLE IF EXISTS `au_css`;
 
 # Store just for Authorizables
 CREATE TABLE  `au_css` (
-  `id` varchar(32) NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
@@ -36,7 +36,7 @@ DROP TABLE IF EXISTS `cn_css`;
 
 # Store just for Content
 CREATE TABLE  `cn_css` (
-  `id` varchar(32) NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
@@ -50,7 +50,7 @@ DROP TABLE IF EXISTS `ac_css`;
 
 # Store just for Access Control
 CREATE TABLE  `ac_css` (
-  `id` varchar(32) NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
   `rid` varchar(32) NOT NULL,
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,

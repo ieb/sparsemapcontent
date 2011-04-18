@@ -70,7 +70,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -228,24 +227,22 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
 
             @Override
             protected boolean internalHasNext() {
-                while(childContent.hasNext()) {
-                    Map<String, Object> structureMap = childContent.next();
-                    LOGGER.debug("Loaded Next as {} ", structureMap);
-                    if ( structureMap != null && structureMap.size() > 0 ) {
-                        String path = (String) structureMap.get(PATH_FIELD);
-                        try {
+                content = null;
+                while(content == null && childContent.hasNext()) {
+                    try {
+                        Map<String, Object> structureMap = childContent.next();
+                        LOGGER.debug("Loaded Next as {} ", structureMap);
+                        if ( structureMap != null && structureMap.size() > 0 ) {
+                            String path = (String) structureMap.get(PATH_FIELD);
                             content = get(path);
-                            return true;
-                        } catch (AccessDeniedException e) {
-                            LOGGER.debug(e.getMessage(),e);
-                        } catch (StorageClientException e) {
-                            LOGGER.debug(e.getMessage(),e);
                         }
+                    } catch (AccessDeniedException e) {
+                        LOGGER.debug(e.getMessage(),e);
+                    } catch (StorageClientException e) {
+                        LOGGER.debug(e.getMessage(),e);
                     }
                 }
-                LOGGER.debug("No more");
-                content = null;
-                return false;
+                return (content != null);
             }
 
             @Override
@@ -265,23 +262,23 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
             @Override
             protected boolean internalHasNext() {
                 while(childContent.hasNext()) {
-                    Map<String, Object> structureMap = childContent.next();
-                    LOGGER.debug("Loaded Next as {} ", structureMap);
-                    if ( structureMap != null && structureMap.size() > 0 ) {
-                        String testChildPath = (String) structureMap.get(PATH_FIELD);
-                        try {
-                            accessControlManager.check(Security.ZONE_CONTENT, testChildPath, Permissions.CAN_READ);
-                            childPath = testChildPath;
-                            // this is not that efficient since it requires the map is
-                            // loaded, at the moment I dont have a way round this with the
-                            // underlying index strucutre.
-                            LOGGER.debug("Got Next Child as {} ", childPath);
-                            return true;
-                        } catch (AccessDeniedException e) {
-                            LOGGER.debug(e.getMessage(),e);
-                        } catch (StorageClientException e) {
-                            LOGGER.debug(e.getMessage(),e);
+                    try {
+                        Map<String, Object> structureMap = childContent.next();
+                        LOGGER.debug("Loaded Next as {} ", structureMap);
+                        if ( structureMap != null && structureMap.size() > 0 ) {
+                            String testChildPath = (String) structureMap.get(PATH_FIELD);
+                                accessControlManager.check(Security.ZONE_CONTENT, testChildPath, Permissions.CAN_READ);
+                                childPath = testChildPath;
+                                // this is not that efficient since it requires the map is
+                                // loaded, at the moment I dont have a way round this with the
+                                // underlying index strucutre.
+                                LOGGER.debug("Got Next Child as {} ", childPath);
+                                return true;
                         }
+                    } catch (AccessDeniedException e) {
+                        LOGGER.debug(e.getMessage(),e);
+                    } catch (StorageClientException e) {
+                        LOGGER.debug(e.getMessage(),e);
                     }
                 }
                 LOGGER.debug("No more");
@@ -303,6 +300,17 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_WRITE);
         String id = null;
         Map<String, Object> toSave = null;
+        // deal with content that already exists.
+        if (content.isNew()) {
+            Content existingContent = get(path);
+            if ( existingContent != null ) {
+                Map<String, Object> properties = content.getProperties();
+                for ( Entry<String, Object> e : properties.entrySet()) {
+                   existingContent.setProperty(e.getKey(), e.getValue());
+                }
+                content = existingContent;
+            }
+        }
         if (content.isNew()) {
             // create the parents if necessary
             if (!StorageClientUtils.isRoot(path)) {
@@ -547,7 +555,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
   public List<ActionRecord> moveWithChildren(String from, String to)
       throws AccessDeniedException,
       StorageClientException {
-    List<ActionRecord> record = new ArrayList();
+    List<ActionRecord> record = Lists.newArrayList();
 
     move(from, to);
 
@@ -781,16 +789,26 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         public Iterator<Content> iterator() {
             Iterator<Content> contentResultsIterator = null;
             try {
-              final Iterator<Map<String, Object>> clientSearchIterator = client.find(keySpace, contentColumnFamily, finalSearchProperties);
+              final Iterator<Map<String,Object>> clientSearchKeysIterator = client.find(keySpace, contentColumnFamily, finalSearchProperties);
               contentResultsIterator = new PreemptiveIterator<Content>() {
                   Content contentResult;
 
                   protected boolean internalHasNext() {
                       contentResult = null;
-                          while (contentResult == null && clientSearchIterator.hasNext()) {
-                              Map<String, Object> child = clientSearchIterator.next();
-                              contentResult = new Content((String)child.get(InternalContent.PATH_FIELD), child);
+                      while (contentResult == null && clientSearchKeysIterator.hasNext()) {
+                          try {
+                              Map<String, Object> structureMap = clientSearchKeysIterator.next();
+                              LOGGER.info("Loaded Next as {} ", structureMap);
+                              if ( structureMap != null && structureMap.size() > 0 ) {
+                                  String path = (String) structureMap.get(PATH_FIELD);
+                                  contentResult = get(path);
+                              }
+                          } catch (AccessDeniedException e) {
+                              LOGGER.debug(e.getMessage(),e);
+                          } catch (StorageClientException e) {
+                              LOGGER.debug(e.getMessage(),e);
                           }
+                      }
                       return (contentResult != null);
                   }
 
