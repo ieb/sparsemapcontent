@@ -287,9 +287,6 @@ public class Authorizable {
     }
 
     /**
-     * It is expected that toString will return the user ID when generating lists of
-     * authorizables, so be careful changing this.
-     *
      * {@inheritDoc}
      *
      * @see java.lang.Object#toString()
