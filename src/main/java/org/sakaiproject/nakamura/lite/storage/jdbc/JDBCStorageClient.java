@@ -938,11 +938,11 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         long page = 0;
         long items = 25;
         if (properties != null) {
-          if (properties.containsKey("page")) {
-            page = Long.valueOf(String.valueOf(properties.get("page")));
+          if (properties.containsKey("_page")) {
+            page = Long.valueOf(String.valueOf(properties.get("_page")));
           }
-          if (properties.containsKey("items")) {
-            items = Long.valueOf(String.valueOf(properties.get("items")));
+          if (properties.containsKey("_items")) {
+            items = Long.valueOf(String.valueOf(properties.get("_items")));
           }
         }
         long offset = page * items;

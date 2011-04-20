@@ -160,7 +160,7 @@
     repository and then uncomment the dependency below.
 
     mvn install:install-file -Dfile=path-to-your-ojdbc14-jar \
-                             -DgroupId=oracle \
+                             -DgroupId=com.oracle \
                              -DartifactId=ojdbc \
                              -Dversion=1.4 \
                              -Dpackaging=jar
