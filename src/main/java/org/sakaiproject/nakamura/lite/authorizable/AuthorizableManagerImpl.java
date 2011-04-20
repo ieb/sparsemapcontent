@@ -20,8 +20,10 @@ package org.sakaiproject.nakamura.lite.authorizable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -43,8 +45,8 @@ import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -138,6 +140,8 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
          * permission at some point in the future.
          */
         String type = "type:user";
+        List<String> attributes = Lists.newArrayList();
+
         if (authorizable instanceof Group) {
             type = "type:group";
             Group group = (Group) authorizable;
@@ -181,7 +185,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
 
             }
 
-            LOGGER.debug("Membership Change added [{}] removed [{}] ", Arrays.toString(newMembers), Arrays.toString(retiredMembers));
+            String membersAddedCsv = StringUtils.join(membersAdded, ',');
+            String membersRemovedCsv = StringUtils.join(membersRemoved, ',');
+            LOGGER.debug("Membership Change added [{}] removed [{}] ", membersAddedCsv, membersRemovedCsv);
             int changes = 0;
             // there is now a sparse list of authorizables, that need changing
             for (Authorizable newMember : newMembers) {
@@ -220,8 +226,15 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 }
             }
             LOGGER.debug(" Finished Updating other principals, made {} changes, Saving Changes to {} ", changes, id);
-        }
 
+            if (membersAdded.length > 0) {
+              attributes.add("added:" +  membersAddedCsv);
+            }
+            if (membersRemoved.length > 0) {
+              attributes.add("removed:" +  membersRemovedCsv);
+            }
+        }
+        attributes.add(type);
 
         Map<String, Object> encodedProperties = StorageClientUtils.getFilteredAndEcodedMap(
                 authorizable.getPropertiesForUpdate(), FILTER_ON_UPDATE);
@@ -231,7 +244,8 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
 
         authorizable.reset(getCached(keySpace, authorizableColumnFamily, id));
 
-        storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, accessControlManager.getCurrentUserId(), true, type);
+        String[] attrs = attributes.toArray(new String[attributes.size()]);
+        storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, accessControlManager.getCurrentUserId(), true, attrs);
 
     }
 
@@ -373,6 +387,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
 
             private Authorizable authorizable;
 
+            @Override
             protected boolean internalHasNext() {
                 while (authMaps.hasNext()) {
                     Map<String, Object> authMap = authMaps.next();
@@ -406,6 +421,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 return false;
             }
 
+            @Override
             protected Authorizable internalNext() {
                 return authorizable;
             }
