@@ -223,6 +223,7 @@ public class Authorizable {
             private int p;
             private Group group;
 
+            @Override
             protected boolean internalHasNext() {
                 while (p < memberIds.size()) {
                     String id = memberIds.get(p);
@@ -247,6 +248,7 @@ public class Authorizable {
                 return false;
             }
 
+            @Override
             protected Group internalNext() {
                 return group;
             }
@@ -284,4 +286,13 @@ public class Authorizable {
         return super.equals(obj);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+      return id;
+    }
 }
