@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -44,7 +45,6 @@ import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -185,9 +185,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
 
             }
 
-            String newMembersCsv = Arrays.toString(newMembers);
-            String retiredMembersCsv = Arrays.toString(retiredMembers);
-            LOGGER.debug("Membership Change added [{}] removed [{}] ", newMembersCsv, retiredMembersCsv);
+            String membersAddedCsv = StringUtils.join(membersAdded, ',');
+            String membersRemovedCsv = StringUtils.join(membersRemoved, ',');
+            LOGGER.debug("Membership Change added [{}] removed [{}] ", membersAddedCsv, membersRemovedCsv);
             int changes = 0;
             // there is now a sparse list of authorizables, that need changing
             for (Authorizable newMember : newMembers) {
@@ -227,8 +227,12 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             }
             LOGGER.debug(" Finished Updating other principals, made {} changes, Saving Changes to {} ", changes, id);
 
-            attributes.add("added:" +  newMembersCsv);
-            attributes.add("removed:" + retiredMembersCsv);
+            if (membersAdded.length > 0) {
+              attributes.add("added:" +  membersAddedCsv);
+            }
+            if (membersRemoved.length > 0) {
+              attributes.add("removed:" +  membersRemovedCsv);
+            }
         }
         attributes.add(type);
 
