@@ -45,11 +45,29 @@
 			   !org.cliffc.high_scale_lib.*,
 			   !com.sun.jna.*,
 			   !org.junit.*,
+			   <!-- Uncomment for Oracle -->
+			   <!--
+                oracle.i18n.text;resolution:=optional,
+                oracle.i18n.text.converter;resolution:=optional,
+                oracle.ons;resolution:=optional,
+                oracle.security.pki;resolution:=optional,
+                -->
                *
 			</Import-Package>
             <Private-Package>org.sakaiproject.nakamura.lite.*</Private-Package>
+            <!-- For Oracle, include ojdbc in your Embed-Dependency element -->
+            <!-- <Embed-Dependency>libthrift,apache-cassandra,mysql-connector-java,derby,ojdbc</Embed-Dependency> -->
             <Embed-Dependency>libthrift,apache-cassandra,mysql-connector-java,derby</Embed-Dependency>
           </instructions>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/oracle/*</exclude>
+          </excludes>
         </configuration>
       </plugin>
     </plugins>
@@ -146,6 +164,24 @@
       <artifactId>mysql-connector-java</artifactId>
       <version>5.1.13</version>
     </dependency>
+<!--
+    To use Oracle, install ojdbc14.jar to your local mvn
+    repository and then uncomment the dependency below.
+
+    mvn install:install-file -Dfile=path-to-your-ojdbc14-jar \
+                             -DgroupId=com.oracle \
+                             -DartifactId=ojdbc \
+                             -Dversion=1.4 \
+                             -Dpackaging=jar
+-->
+<!--
+    <dependency>
+      <groupId>com.oracle</groupId>
+      <artifactId>ojdbc</artifactId>
+      <version>1.4</version>
+    </dependency>
+-->
+
   </dependencies>
   <reporting>
     <plugins>
