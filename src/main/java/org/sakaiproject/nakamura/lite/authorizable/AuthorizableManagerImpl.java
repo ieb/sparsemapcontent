@@ -141,11 +141,13 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
          */
         String type = "type:user";
         List<String> attributes = Lists.newArrayList();
+        String[] membersAdded = null;
+        String[] membersRemoved = null;
 
         if (authorizable instanceof Group) {
             type = "type:group";
             Group group = (Group) authorizable;
-            String[] membersAdded = group.getMembersAdded();
+            membersAdded = group.getMembersAdded();
             Authorizable[] newMembers = new Authorizable[membersAdded.length];
             int i = 0;
             for (String newMember : membersAdded) {
@@ -170,7 +172,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 i++;
             }
             i = 0;
-            String[] membersRemoved = group.getMembersRemoved();
+            membersRemoved = group.getMembersRemoved();
             Authorizable[] retiredMembers = new Authorizable[membersRemoved.length];
             for (String retiredMember : membersRemoved) {
                 try {
@@ -227,6 +229,8 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             }
             LOGGER.debug(" Finished Updating other principals, made {} changes, Saving Changes to {} ", changes, id);
 
+            // if there were added or removed members, send them out as event properties for
+            // external integration
             if (membersAdded.length > 0) {
               attributes.add("added:" +  membersAddedCsv);
             }
@@ -247,6 +251,18 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         String[] attrs = attributes.toArray(new String[attributes.size()]);
         storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, accessControlManager.getCurrentUserId(), true, attrs);
 
+        // for each added or removed member, send an UPDATE event so indexing can properly
+        // record the groups each member is a member of.
+        if (membersAdded != null) {
+            for (String added : membersAdded) {
+                storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, added, accessControlManager.getCurrentUserId(), false);
+            }
+        }
+        if (membersRemoved != null) {
+            for (String removed : membersRemoved) {
+                storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, removed, accessControlManager.getCurrentUserId(), false);
+            }
+        }
     }
 
     public boolean createAuthorizable(String authorizableId, String authorizableName,
