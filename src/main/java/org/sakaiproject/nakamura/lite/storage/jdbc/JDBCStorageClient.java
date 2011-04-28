@@ -198,8 +198,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         } catch (UnsupportedEncodingException e) {
             ridkey = keystring.getBytes();
         }
-        return StorageClientUtils.encode(hasher.digest(ridkey),
-                StorageClientUtils.URL_SAFE_ENCODING);
+        return StorageClientUtils.encode(hasher.digest(ridkey));
     }
 
     public void insert(String keySpace, String columnFamily, String key, Map<String, Object> values, boolean probablyNew)

@@ -26,7 +26,9 @@ import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 
 import java.io.UnsupportedEncodingException;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class StorageClientUtilsTest {
 
@@ -147,6 +149,37 @@ public class StorageClientUtilsTest {
         m = (Map<String, Object>) m2.get("e");
         Assert.assertEquals(1, m.size());
         Assert.assertEquals("b", m.get("a"));
+    }
+    
+    
+    @Test
+    public void testEncode() {
+        Set<String> check = new HashSet<String>();
+        byte[] b = new byte[1];
+        for ( int i = 0; i < 100000; i++ ) {
+            b = incByteArray(b,0);
+            String id = StorageClientUtils.encode(b);
+            if ( check.contains(id) ) {
+                Assert.fail(id);
+            }
+            check.add(id);
+        }
+    }
+    
+
+    private byte[] incByteArray(byte[] b, int i) {
+        if ( i == b.length) {
+            byte[] bn = new byte[b.length+1];
+            System.arraycopy(b, 0, bn, 0, b.length);
+            bn[i] = 0x01;
+            b = bn;
+        } else {
+            b[i]++;
+            if (b[i] == 0) {
+                b = incByteArray(b, i + 1);
+            }
+        }
+        return b;
     }
 
 }

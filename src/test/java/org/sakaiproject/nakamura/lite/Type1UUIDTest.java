@@ -10,10 +10,10 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Type1UUIDSoak {
+public class Type1UUIDTest {
 
     
-    protected static final Logger LOGGER = LoggerFactory.getLogger(Type1UUIDSoak.class);
+    protected static final Logger LOGGER = LoggerFactory.getLogger(Type1UUIDTest.class);
     protected static final int TEST_SIZE = 100000;
     private static final int N_THREADS = 4;
     protected Map<String,Long> check = new ConcurrentHashMap<String, Long>(TEST_SIZE*N_THREADS);
@@ -28,16 +28,16 @@ public class Type1UUIDSoak {
                 
 
                 public void run() {
+                    String id = null;
                     for ( int i = 0; i < TEST_SIZE; i++ ) {
-                        String id = StorageClientUtils.getUuid();
+                        id = StorageClientUtils.getUuid();
                         if ( check.containsKey(id)) {
                             LOGGER.error("Collision {} ago {} ",id, System.currentTimeMillis()-check.get(id));
                             errors++;
-                            //treturn;
                         }
                         check.put(id,System.currentTimeMillis());
                     }
-                    LOGGER.info("Completed {} ",TEST_SIZE);
+                    LOGGER.info("Completed {} last ID is {} ",TEST_SIZE, id);
                 };
             });
             t[i].start();
@@ -49,7 +49,7 @@ public class Type1UUIDSoak {
                 LOGGER.error(e.getMessage(),e);
             }
         }
-        Assert.assertEquals("Collided "+errors+" times out of "+(TEST_SIZE*N_THREADS)+"  ie about "+((100*errors)/(TEST_SIZE*N_THREADS))+"%",0, errors);
+        Assert.assertEquals("Collided "+errors+" times out of "+(TEST_SIZE*N_THREADS)+"  ie about "+((100*errors)/(TEST_SIZE*N_THREADS))+"%, ",0, errors);
         
     }
 }
