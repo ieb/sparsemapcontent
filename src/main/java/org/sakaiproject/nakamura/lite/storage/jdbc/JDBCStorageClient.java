@@ -951,12 +951,11 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         String _sortProp = (String) properties.get("_sort");
         if (_sortProp != null) {
           String[] _sorts = StringUtils.split(_sortProp);
-          switch (_sorts.length) {
-          case 2:
-            sorts[1] = _sorts[1];
-          case 1:
+          if (_sorts.length == 1) {
             sorts[0] = _sorts[0];
-            break;
+          } else if (_sorts.length == 2) {
+            sorts[0] = _sorts[0];
+            sorts[1] = _sorts[1];
           }
         }
 
