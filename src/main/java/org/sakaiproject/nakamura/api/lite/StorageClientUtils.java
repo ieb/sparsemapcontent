@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Maps;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -62,6 +63,7 @@ public class StorageClientUtils {
     public final static String SECURE_HASH_DIGEST = "SHA-512";
     /**
      * Charset for encoding byte data as char
+     * @deprecated not of any use for encoding, use encode(byte[])
      */
     public static final char[] URL_SAFE_ENCODING = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
             .toCharArray();
@@ -232,12 +234,11 @@ public class StorageClientUtils {
                 } catch (NoSuchAlgorithmException e2) {
                     LOGGER.error("You have no Message Digest Algorightms intalled in this JVM, secure Hashes are not availalbe, encoding bytes :"
                             + e2.getMessage());
-                    return encode(StringUtils.leftPad(naked, 10, '_').getBytes(UTF8),
-                            URL_SAFE_ENCODING);
+                    return encode(StringUtils.leftPad(naked, 10, '_').getBytes(UTF8));
                 }
             }
             byte[] bytes = md.digest(naked.getBytes(UTF8));
-            return encode(bytes, URL_SAFE_ENCODING);
+            return encode(bytes);
         } catch (UnsupportedEncodingException e3) {
             LOGGER.error("no UTF-8 Envoding, get a real JVM, nothing will work here. NPE to come");
             return null;
@@ -263,13 +264,12 @@ public class StorageClientUtils {
                     } catch (NoSuchAlgorithmException e2) {
                         LOGGER.error("You have no Message Digest Algorightms intalled in this JVM, secure Hashes are not availalbe, encoding bytes :"
                                 + e2.getMessage());
-                        return encode(StringUtils.leftPad(password, 10, '_').getBytes(UTF8),
-                                URL_SAFE_ENCODING);
+                        return encode(StringUtils.leftPad(password, 10, '_').getBytes(UTF8));
                     }
                 }
             }
             byte[] bytes = md.digest(password.getBytes(UTF8));
-            return encode(bytes, URL_SAFE_ENCODING);
+            return encode(bytes);
         } catch (UnsupportedEncodingException e3) {
             LOGGER.error("no UTF-8 Envoding, get a real JVM, nothing will work here. NPE to come");
             return null;
@@ -286,32 +286,15 @@ public class StorageClientUtils {
      *            the shorter it is the longer the result. Dont be dumb and use
      *            an encoding size of < 2.
      * @return
+     * @deprecated use encode(byte[])
      */
+    @Deprecated
     public static String encode(byte[] hash, char[] encode) {
-        StringBuilder sb = new StringBuilder((hash.length * 15) / 10);
-        int x = (int) (hash[0] + 128);
-        int xt = 0;
-        int i = 0;
-        while (i < hash.length) {
-            if (x < encode.length) {
-                i++;
-                if (i < hash.length) {
-                    if (x == 0) {
-                        x = (int) (hash[i] + 128);
-                    } else {
-                        x = (x + 1) * (int) (hash[i] + 128);
-                    }
-                } else {
-                    sb.append(encode[x]);
-                    break;
-                }
-            }
-            xt = x % encode.length;
-            x = x / encode.length;
-            sb.append(encode[xt]);
-        }
-
-        return sb.toString();
+        return encode(hash);
+    }
+    
+    public static String encode(byte[] hash) {
+        return Base64.encodeBase64URLSafeString(hash);
     }
 
     /**
@@ -404,7 +387,7 @@ public class StorageClientUtils {
      * @return a UUID, compact encoded, suitable for use in URLs
      */
     public static String getUuid() {
-        return StorageClientUtils.encode(Type1UUID.next(), StorageClientUtils.URL_SAFE_ENCODING);
+        return StorageClientUtils.encode(Type1UUID.next());
     }
 
     /**
