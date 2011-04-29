@@ -30,9 +30,11 @@ public class PrincipalTokenValidator {
 
     public boolean validatePrincipal(Content proxyPrincipalToken, String sharedKey)  {
         if ( proxyPrincipalToken == null) {
+            LOGGER.debug("Failed to Validate Token at no content item ");
             return false;
         }
         if ( !proxyPrincipalToken.hasProperty("_acltoken")) {
+            LOGGER.debug("Failed to Validate Token at {} no ACL Token ", proxyPrincipalToken.getPath());
             return false;
         }
         PrincipalValidatorPlugin plugin = null;
@@ -42,13 +44,21 @@ public class PrincipalTokenValidator {
             plugin =  defaultPrincipalValidator;
         }
         if ( plugin == null ) {
+            LOGGER.debug("Failed to Validate Token at {} no plugin ");
             return false;
         }
         String hmac = signToken(proxyPrincipalToken, sharedKey, plugin);
         if ( hmac == null || !hmac.equals(proxyPrincipalToken.getProperty("_acltoken")) ) {
+            LOGGER.debug("Failed to Validate Token at {} as {}, does not match ",proxyPrincipalToken.getPath(), hmac);
             return false;
         }
-        return plugin.validate(proxyPrincipalToken);
+        boolean validate = plugin.validate(proxyPrincipalToken);
+        if ( validate ) {
+            LOGGER.debug("Validated Token at {} as {}  using plugin {} ",new Object[] { proxyPrincipalToken.getPath(), hmac, plugin});
+        } else {
+            LOGGER.debug("Invalid Token at {} as {}  using plugin {} ",new Object[] { proxyPrincipalToken.getPath(), hmac, plugin});
+        }
+        return validate;
     }
 
     public void signToken(Content token, String sharedKey ) throws StorageClientException {
@@ -95,10 +105,10 @@ public class PrincipalTokenValidator {
         StringBuilder sb = new StringBuilder();
         sb.append(principalToken.getPath()).append("@");
         if ( principalToken.hasProperty("validatorplugin")) {
-            sb.append(principalToken.getPath()).append("@");
+            sb.append(principalToken.getProperty("validatorplugin")).append("@");
         }
         for (String f : extraFields) {
-            if ( principalToken.hasProperty("validatorplugin")) {
+            if ( principalToken.hasProperty(f)) {
                 sb.append(principalToken.getProperty(f)).append("@");
             } else {
                 sb.append("null").append("@");
@@ -107,6 +117,7 @@ public class PrincipalTokenValidator {
         Mac m = Mac.getInstance(HMAC_SHA512);
         m.init(key);
         String message = sb.toString();
+        LOGGER.debug("Signing {} ", message);
         m.update(message.getBytes("UTF-8"));
         return Base64.encodeBase64URLSafeString(m.doFinal());
     }
