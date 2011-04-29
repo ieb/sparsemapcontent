@@ -36,6 +36,7 @@ import java.util.Map;
 public class BlockSetContentHelper implements BlockContentHelper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BlockSetContentHelper.class);
+    public static final String CONTENT_BLOCK_ID = Repository.SYSTEM_PROP_PREFIX + "cblockId";
     /**
      * The length of this block
      */
@@ -97,7 +98,9 @@ public class BlockSetContentHelper implements BlockContentHelper {
             length = length + bufferLength;
             lastBlockWrite = i;
             client.insert(keySpace, contentColumnFamily, key, ImmutableMap.of(Content.UUID_FIELD,
-                    (Object)contentId, NUMBLOCKS_FIELD,
+                    (Object)contentId, 
+                    CONTENT_BLOCK_ID, key,
+                    NUMBLOCKS_FIELD,
                     bodyNum + 1, blockLengthKey,
                     bufferLength, bodyKey, saveBuffer), false);
             bodyNum++;

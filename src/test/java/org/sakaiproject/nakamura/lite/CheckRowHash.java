@@ -3,7 +3,6 @@ package org.sakaiproject.nakamura.lite;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 
-import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -59,7 +58,6 @@ public class CheckRowHash {
         } catch (UnsupportedEncodingException e) {
             ridkey = keystring.getBytes();
         }
-        return StorageClientUtils.encode(hasher.digest(ridkey),
-                StorageClientUtils.URL_SAFE_ENCODING);
+        return StorageClientUtils.encode(hasher.digest(ridkey));
     }
 }

@@ -57,8 +57,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AccessControlManagerImpl extends CachingManager implements AccessControlManager {
 
     private static final String _SECRET_KEY = "_secretKey";
+    private static final String _PATH = "_aclPath";
+    private static final String _OBJECT_TYPE = "_aclType";
+    private static final String _KEY = "_aclKey";
     private static final Logger LOGGER = LoggerFactory.getLogger(AccessControlManagerImpl.class);
     private static final Set<String> PROTECTED_PROPERTIES = ImmutableSet.of(_SECRET_KEY);
+    private static final Set<String> READ_ONLY_PROPERTIES = ImmutableSet.of(_SECRET_KEY, _PATH, _OBJECT_TYPE, _KEY);
     private User user;
     private String keySpace;
     private String aclColumnFamily;
@@ -115,20 +119,28 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         String key = this.getAclKey(objectType, objectPath);
         Map<String, Object> currentAcl = getCached(keySpace, aclColumnFamily, key);
         // every ACL gets a secret key, which avoids doing it later with a special call
+        Map<String, Object> modifications = Maps.newLinkedHashMap();
         if ( !currentAcl.containsKey(_SECRET_KEY)) {
             byte[] secretKeySeed = new byte[20];
             secureRandom.nextBytes(secretKeySeed);
             MessageDigest md;
             try {
                 md = MessageDigest.getInstance("SHA1");
-                currentAcl.put(_SECRET_KEY, Base64.encodeBase64URLSafeString(md.digest(secretKeySeed)));
+                modifications.put(_SECRET_KEY, Base64.encodeBase64URLSafeString(md.digest(secretKeySeed)));
             } catch (NoSuchAlgorithmException e) {
                 LOGGER.error(e.getMessage(),e);
             }
         }
-        Map<String, Object> modifications = Maps.newLinkedHashMap();
+        if ( !currentAcl.containsKey(_KEY)) {
+            modifications.put(_KEY, key);
+            modifications.put(_OBJECT_TYPE, objectType);
+            modifications.put(_OBJECT_TYPE, objectPath);
+        }
         for (AclModification m : aclModifications) {
             String name = m.getAceKey();
+            if ( READ_ONLY_PROPERTIES.contains(name)) {
+                continue;
+            }
             if (m.isRemove()) {
                 modifications.put(name, null);
             } else {
