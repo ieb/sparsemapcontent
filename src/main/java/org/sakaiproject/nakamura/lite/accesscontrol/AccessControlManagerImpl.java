@@ -236,35 +236,12 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
                         .get(principal + AclModification.DENIED_MARKER));
                 grants = grants | tg;
                 denies = denies | td;
-                // LOGGER.info("Added Permissions for {} {}   result {} {}",new
-                // Object[]{tg,td,grants,denies});
-
-            }
-            for (String principal : authorizable.getPrincipals()) {
-                int tg = toInt(acl.get(principal
-                        + AclModification.GRANTED_MARKER));
-                int td = toInt(acl
-                        .get(principal + AclModification.DENIED_MARKER));
-                grants = grants | tg;
-                denies = denies | td;
-                // LOGGER.info("Added Permissions for {} {}   result {} {}",new
-                // Object[]{tg,td,grants,denies});
-            }
-            if (!User.ANON_USER.equals(authorizable.getId())) {
-                // all users except anon are in the group everyone, by default
-                // but only if not already denied or granted by a more specific
-                // permission.
-                int tg = (toInt(acl.get(Group.EVERYONE
-                        + AclModification.GRANTED_MARKER)) & ~denies);
-                int td = (toInt(acl.get(Group.EVERYONE
-                        + AclModification.DENIED_MARKER)) & ~grants);
-                // LOGGER.info("Adding Permissions for Everyone {} {} ",tg,td);
-                grants = grants | tg;
-                denies = denies | td;
+                LOGGER.debug("Added Permissions for {} g{} d{} => g{} d{}",new
+                Object[]{principal,tg,td,grants,denies});
 
             }
             /*
-             * Deal with any proxy principals
+             * Deal with any proxy principals, these override groups 
              */
             if (principalTokenResolver != null) {
                 Set<String> inspected = Sets.newHashSet();
@@ -273,28 +250,67 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
                     if ( secretKey != null ) {
                         for (Entry<String, Object> ace : acl.entrySet()) {
                             String k = ace.getKey();
+                            LOGGER.debug("Checking {} ",k);
                             if (k.startsWith(DYNAMIC_PRINCIPAL_STEM)) {
                                 String proxyPrincipal = AclModification.getPrincipal(k).substring(DYNAMIC_PRINCIPAL_STEM.length());
-                                if ( inspected.contains(proxyPrincipal)) {
+                                if ( !inspected.contains(proxyPrincipal)) {
                                     inspected.add(proxyPrincipal);
+                                    LOGGER.debug("Is Dynamic {}, checking ",k);
                                     List<Content> proxyPrincipalTokens = Lists.newArrayList();
                                     principalTokenResolver.resolveTokens(proxyPrincipal, proxyPrincipalTokens);
                                     for ( Content proxyPrincipalToken : proxyPrincipalTokens ) {
                                         if ( principalTokenValidator.validatePrincipal(proxyPrincipalToken, secretKey)) {
-                                            int tg = toInt(acl.get(proxyPrincipal
+                                            String pname = DYNAMIC_PRINCIPAL_STEM+proxyPrincipal;
+                                            LOGGER.debug("Has this principal {} ", proxyPrincipal);
+                                            int tg = toInt(acl.get(pname
                                                     + AclModification.GRANTED_MARKER));
-                                            int td = toInt(acl
-                                                    .get(proxyPrincipal + AclModification.DENIED_MARKER));
+                                            int td = toInt(acl.get(pname
+                                                    + AclModification.DENIED_MARKER));
                                             grants = grants | tg;
                                             denies = denies | td;
+                                            LOGGER.debug("Added Permissions for {} g{} d{} => g{} d{}",new
+                                                    Object[]{pname, tg,td,grants,denies});
                                             break;
                                         }
                                     }
                                 }
                             }
                         }
+                    } else {
+                        LOGGER.debug("Secret Key is null");
                     }
+                } else {
+                    LOGGER.debug("No Secret Key Key ");
                 }
+            } else {
+                LOGGER.debug("No principalToken Resolver");
+            }
+            // then deal with static principals
+            for (String principal : authorizable.getPrincipals()) {
+                int tg = toInt(acl.get(principal
+                        + AclModification.GRANTED_MARKER));
+                int td = toInt(acl
+                        .get(principal + AclModification.DENIED_MARKER));
+                grants = grants | tg;
+                denies = denies | td;
+                LOGGER.debug("Added Permissions for {} g{} d{} => g{} d{}",new
+                  Object[]{principal,tg,td,grants,denies});
+            }
+
+            // Everyone must be the last principal to be applied
+            if (!User.ANON_USER.equals(authorizable.getId())) {
+                // all users except anon are in the group everyone, by default
+                // but only if not already denied or granted by a more specific
+                // permission.
+                int tg = (toInt(acl.get(Group.EVERYONE
+                        + AclModification.GRANTED_MARKER)) & ~denies);
+                int td = (toInt(acl.get(Group.EVERYONE
+                        + AclModification.DENIED_MARKER)) & ~grants);
+                grants = grants | tg;
+                denies = denies | td;
+                LOGGER.debug("Added Permissions for {} g{} d{} => g{} d{}",new
+                        Object[]{Group.EVERYONE,tg,td,grants,denies});
+
             }
             /*
              * grants contains the granted permissions in a bitmap denies
@@ -334,13 +350,13 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
                     && (Security.ZONE_AUTHORIZABLES.equals(objectType) || Security.ZONE_CONTENT
                             .equals(objectType))) {
                 granted = granted | Permissions.CAN_READ.getPermission();
-                // LOGGER.info("Default Read Permission set {} {} ",key,denied);
+                LOGGER.debug("Default Read Permission set {} {} ",key,denied);
             } else {
-                // LOGGER.info("Default Read has been denied {} {} ",key,
-                // denied);
+                LOGGER.debug("Default Read has been denied {} {} ",key,
+                 denied);
             }
-            // LOGGER.info("Permissions on {} for {} is {} {} ",new
-            // Object[]{key,user.getId(),granted,denied});
+            LOGGER.debug("Permissions on {} for {} is {} {} ",new
+               Object[]{key,user.getId(),granted,denied});
             /*
              * Keep a cached copy
              */
@@ -362,6 +378,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         if ( object instanceof Integer ) {
             return ((Integer) object).intValue();
         }
+        LOGGER.debug("Bitmap Not Present");
         return 0;
     }
 
