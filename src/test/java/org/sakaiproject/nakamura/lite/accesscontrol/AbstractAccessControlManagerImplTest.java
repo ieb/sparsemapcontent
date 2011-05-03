@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -35,6 +36,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AclModification;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permission;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalTokenResolver;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorPlugin;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorResolver;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AclModification.Operation;
@@ -401,6 +403,70 @@ public abstract class AbstractAccessControlManagerImplTest {
 
         accessControlManagerImpl.clearRequestPrincipalResolver();
         LOGGER.info("Done Checking token");
+    }
+
+    @Test
+    public void testTokenPermissionWithPlugin() throws StorageClientException, AccessDeniedException {
+        AuthenticatorImpl authenticator = new AuthenticatorImpl(client, configuration);
+        User currentUser = authenticator.authenticate("admin", "admin");
+        String u3 = "user3-"+System.currentTimeMillis();
+
+        AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
+                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
+        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser, client,
+            configuration, accessControlManagerImpl, null,  new LoggingStorageListener());
+        authorizableManager.createUser(u3, "User 3", "test",
+            ImmutableMap.of("test", (Object)"test"));
+        Authorizable user3Auth = authorizableManager.findAuthorizable(u3);
+        String targetContentPath = "targetContentPath"+System.currentTimeMillis();
+        int grantedBitmap = Permissions.CAN_WRITE.getPermission();
+        int deniedBitmap = Permissions.CAN_MANAGE.getPermission();
+        String aclID = Integer.toHexString(grantedBitmap)+"_"+Integer.toHexString(deniedBitmap);
+        String tokenPrincipal = AccessControlManager.DYNAMIC_PRINCIPAL_STEM + aclID;
+
+        // grant access to the token, but deny access to everyone else.
+        accessControlManagerImpl.setAcl(
+                Security.ZONE_CONTENT,
+                targetContentPath,
+                new AclModification[] {
+                    new AclModification(AclModification.grantKey(tokenPrincipal),
+                        grantedBitmap, Operation.OP_REPLACE),
+                    new AclModification(AclModification.denyKey(tokenPrincipal), deniedBitmap,
+                        Operation.OP_REPLACE),
+                      new AclModification(AclModification.denyKey(Group.EVERYONE), Permissions.CAN_READ.getPermission(),
+                                Operation.OP_REPLACE),
+                                new AclModification(AclModification.denyKey(User.ANON_USER), Permissions.CAN_READ.getPermission(),
+                                        Operation.OP_REPLACE)
+                            });
+        // the tokens should not be setup,
+        final Set<Content> checked = Sets.newHashSet();
+        principalValidatorResolver.registerPlugin("testvalidator", new PrincipalValidatorPlugin() {
+            public boolean validate(Content proxyPrincipalToken) {
+                checked.add(proxyPrincipalToken);
+                return proxyPrincipalToken.hasProperty("protectedfield");
+            }
+            public String[] getProtectedFields() {
+                return new String[]{"protectedfield", "nullprotectedfield"} ;
+            }
+        });
+        final Content tokentContent = new Content("testtokenwithPlugin/"+tokenPrincipal, ImmutableMap.of(PrincipalTokenValidator.VALIDATORPLUGIN, (Object)"testvalidator", "protectedfield", "protected"));
+        accessControlManagerImpl.signContentToken(tokentContent, targetContentPath);
+        LOGGER.info("Checking Token {} ", tokentContent);
+        accessControlManagerImpl.setRequestPrincipalResolver(new PrincipalTokenResolver() {
+            public void resolveTokens(String principal, List<Content> tokens) {
+                tokens.add(tokentContent);
+                LOGGER.info("Principal {} checked tokens {}", principal, tokens);
+            }
+        });
+        Assert.assertTrue(accessControlManagerImpl.can(user3Auth, Security.ZONE_CONTENT, targetContentPath, Permissions.CAN_WRITE));
+        Assert.assertFalse(accessControlManagerImpl.can(user3Auth, Security.ZONE_CONTENT, targetContentPath, Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(user3Auth, Security.ZONE_CONTENT, targetContentPath, Permissions.CAN_MANAGE));
+
+        Assert.assertEquals(1, checked.size());
+        accessControlManagerImpl.clearRequestPrincipalResolver();
+        LOGGER.info("Done Checking token");
+        principalValidatorResolver.unregisterPlugin("testvalidator");
+
     }
 
 }
