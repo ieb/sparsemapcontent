@@ -144,6 +144,9 @@ public class Authorizable {
         return false;
     }
 
+    public Map<String, Object> getOriginalProperties() {
+        return StorageClientUtils.getFilterMap(authorizableMap, null, null, FILTER_PROPERTIES);
+    }
 
     public void setProperty(String key, Object value) {
         if (!readOnly && !FILTER_PROPERTIES.contains(key)) {

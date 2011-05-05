@@ -1,5 +1,7 @@
 package org.sakaiproject.nakamura.api.lite;
 
+import java.util.Map;
+
 
 public interface StoreListener {
     public static final String TOPIC_BASE = "org/sakaiproject/nakamura/lite/";
@@ -31,10 +33,10 @@ public interface StoreListener {
             TOPIC_BASE + "content/"+UPDATED_TOPIC };
     public static final String USERID_PROPERTY = "userid";
     public static final String PATH_PROPERTY = "path";
+    public static final String BEFORE_EVENT_PROPERTY = "_beforeEvent";
+    void onDelete(String zone, String path, String user, Map<String, Object> beforeEvent, String... attributes);
 
-    void onDelete(String zone, String path, String user, String... attributes);
-
-    void onUpdate(String zone, String path, String user, boolean isNew, String... attributes);
+    void onUpdate(String zone, String path, String user, boolean isNew,  Map<String, Object> beforeEvent, String... attributes);
 
     void onLogin(String id, String string);
 

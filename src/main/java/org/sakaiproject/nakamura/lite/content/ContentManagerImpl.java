@@ -311,6 +311,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                 content = existingContent;
             }
         }
+        Map<String, Object> originalProperties = ImmutableMap.of();
         if (content.isNew()) {
             // create the parents if necessary
             if (!StorageClientUtils.isRoot(path)) {
@@ -332,6 +333,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                     accessControlManager.getCurrentUserId());
             LOGGER.debug("New Content with {} {} ", id, toSave);
         } else if (content.isUpdated()) {
+            originalProperties = content.getOriginalProperties();
             toSave =  Maps.newHashMap(content.getPropertiesForUpdate());
             id = (String)toSave.get(UUID_FIELD);
             toSave.put(LASTMODIFIED_FIELD, System.currentTimeMillis());
@@ -360,7 +362,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         LOGGER.debug("Saved {} at {} as {} ", new Object[] { path, id, toSave });
         // reset state to unmodified to take further modifications.
         content.reset(getCached(keySpace, contentColumnFamily, id));
-        eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), isnew, "op:update");        
+        eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), isnew, originalProperties, "op:update");
     }
 
     public void delete(String path) throws AccessDeniedException, StorageClientException {
@@ -376,9 +378,9 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
             putCached(keySpace, contentColumnFamily, uuid,
                     ImmutableMap.of(DELETED_FIELD, (Object) TRUE), false);
             if (resourceType != null) {
-              eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), "resourceType:" + resourceType);
+              eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), null, "resourceType:" + resourceType);
             } else {
-              eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId());
+              eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), null);
             }
         }
     }
@@ -416,7 +418,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         }
         putCached(keySpace, contentColumnFamily, contentId, metadata, isnew);
         long length = (Long) metadata.get(LENGTH_FIELD);
-        eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), false, "stream", streamId);        
+        eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), false, null, "stream", streamId);
         return length;
 
     }
@@ -498,7 +500,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
             writeBody(to, fromStream);
             fromStream.close();
         }
-        eventListener.onUpdate(Security.ZONE_CONTENT, to, accessControlManager.getCurrentUserId(), true, "op:copy");        
+        eventListener.onUpdate(Security.ZONE_CONTENT, to, accessControlManager.getCurrentUserId(), true, null, "op:copy");
 
     }
 
@@ -547,8 +549,8 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         // remove the old from.
         removeFromCache(keySpace, contentColumnFamily, from);
         client.remove(keySpace, contentColumnFamily, from);
-        eventListener.onDelete(Security.ZONE_CONTENT, from, accessControlManager.getCurrentUserId(), "op:move");        
-        eventListener.onUpdate(Security.ZONE_CONTENT, to, accessControlManager.getCurrentUserId(), true, "op:move");        
+        eventListener.onDelete(Security.ZONE_CONTENT, from, accessControlManager.getCurrentUserId(), null, "op:move");
+        eventListener.onUpdate(Security.ZONE_CONTENT, to, accessControlManager.getCurrentUserId(), true, null, "op:move");
 
     }
 

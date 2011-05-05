@@ -239,6 +239,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             }
         }
         attributes.add(type);
+        Map<String, Object> beforeUpdateProperties = authorizable.getOriginalProperties();
 
         Map<String, Object> encodedProperties = StorageClientUtils.getFilteredAndEcodedMap(
                 authorizable.getPropertiesForUpdate(), FILTER_ON_UPDATE);
@@ -249,18 +250,18 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         authorizable.reset(getCached(keySpace, authorizableColumnFamily, id));
 
         String[] attrs = attributes.toArray(new String[attributes.size()]);
-        storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, accessControlManager.getCurrentUserId(), true, attrs);
+        storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, accessControlManager.getCurrentUserId(), true, beforeUpdateProperties, attrs);
 
         // for each added or removed member, send an UPDATE event so indexing can properly
         // record the groups each member is a member of.
         if (membersAdded != null) {
             for (String added : membersAdded) {
-                storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, added, accessControlManager.getCurrentUserId(), false);
+                storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, added, accessControlManager.getCurrentUserId(), false, null);
             }
         }
         if (membersRemoved != null) {
             for (String removed : membersRemoved) {
-                storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, removed, accessControlManager.getCurrentUserId(), false);
+                storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, removed, accessControlManager.getCurrentUserId(), false, null);
             }
         }
     }
@@ -340,7 +341,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         accessControlManager.check(Security.ZONE_ADMIN, authorizableId, Permissions.CAN_DELETE);
         removeFromCache(keySpace, authorizableColumnFamily, authorizableId);
         client.remove(keySpace, authorizableColumnFamily, authorizableId);
-        storeListener.onDelete(Security.ZONE_AUTHORIZABLES, authorizableId, accessControlManager.getCurrentUserId());
+        storeListener.onDelete(Security.ZONE_AUTHORIZABLES, authorizableId, accessControlManager.getCurrentUserId(), null);
 
     }
 
@@ -375,7 +376,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                     Authorizable.PASSWORD_FIELD,
                     StorageClientUtils.secureHash(password)), false);
 
-            storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, currentUserId, false, "op:change-password");
+            storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, currentUserId, false, null, "op:change-password");
 
         } else {
             throw new AccessDeniedException(Security.ZONE_ADMIN, id,
