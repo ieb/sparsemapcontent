@@ -800,7 +800,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                       while (contentResult == null && clientSearchKeysIterator.hasNext()) {
                           try {
                               Map<String, Object> structureMap = clientSearchKeysIterator.next();
-                              LOGGER.info("Loaded Next as {} ", structureMap);
+                              LOGGER.debug("Loaded Next as {} ", structureMap);
                               if ( structureMap != null && structureMap.size() > 0 ) {
                                   String path = (String) structureMap.get(PATH_FIELD);
                                   contentResult = get(path);
