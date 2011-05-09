@@ -212,8 +212,12 @@ public class Authorizable {
     }
 
     public boolean hasProperty(String name) {
-        if ( modifiedMap.get(name) instanceof RemoveProperty ) {
+        Object modifiedValue = modifiedMap.get(name);
+        if (modifiedValue instanceof RemoveProperty) {
             return false;
+        }
+        if (modifiedValue != null) {
+            return true;
         }
         return authorizableMap.containsKey(name);
     }
