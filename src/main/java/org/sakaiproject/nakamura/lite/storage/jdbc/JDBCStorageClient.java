@@ -1005,7 +1005,9 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                   LOGGER.debug("Search on {}:{} filter dropped due to null value.", columnFamily, k);
                 }
             } else {
-              LOGGER.warn("Search on {}:{} is not supported, filter dropped ",columnFamily,k);
+              if (!k.startsWith("_")) {
+                  LOGGER.warn("Search on {}:{} is not supported, filter dropped ",columnFamily,k);
+              }
             }
         }
         if (where.length() == 0) {
