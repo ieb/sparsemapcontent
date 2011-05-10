@@ -59,6 +59,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalTokenResolver;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
+import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.lite.content.ActionRecord;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
@@ -322,14 +323,15 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                 }
             }
             toSave =  Maps.newHashMap(content.getPropertiesForUpdate());
+            boolean isAdmin = User.ADMIN_USER.equals(accessControlManager.getCurrentUserId());
             id = StorageClientUtils.getUuid();
-            toSave.put(UUID_FIELD, id);
+            // if the user is admin we allow overwriting of protected fields. This should allow content migration.
+            setField(isAdmin, toSave, UUID_FIELD, id);
             toSave.put(PATH_FIELD, path);
-            toSave.put(CREATED_FIELD, System.currentTimeMillis());
-            toSave.put(CREATED_BY_FIELD,
-                    accessControlManager.getCurrentUserId());
-            toSave.put(LASTMODIFIED_FIELD, System.currentTimeMillis());
-            toSave.put(LASTMODIFIED_BY_FIELD,
+            setField(isAdmin, toSave, CREATED_FIELD, System.currentTimeMillis());
+            setField(isAdmin, toSave, CREATED_BY_FIELD, accessControlManager.getCurrentUserId());
+            setField(isAdmin, toSave, LASTMODIFIED_FIELD, System.currentTimeMillis());
+            setField(isAdmin, toSave, LASTMODIFIED_BY_FIELD,
                     accessControlManager.getCurrentUserId());
             LOGGER.debug("New Content with {} {} ", id, toSave);
         } else if (content.isUpdated()) {
@@ -364,6 +366,14 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         content.reset(getCached(keySpace, contentColumnFamily, id));
         eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), isnew, originalProperties, "op:update");
     }
+
+    private void setField(boolean isAdmin, Map<String, Object> toSave, String field, Object value) {
+        if ( isAdmin && toSave.containsKey(field)) {
+            return;
+        }
+        toSave.put(field, value);
+    }
+
 
     public void delete(String path) throws AccessDeniedException, StorageClientException {
         checkOpen();
