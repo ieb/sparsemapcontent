@@ -272,9 +272,9 @@ public class Authorizable {
      * remove the property.
      * @param name 
      */
-    public void removeProperty(String name) {
-        if (!readOnly && authorizableMap.containsKey(name)) {
-            modifiedMap.put(name, new RemoveProperty());
+    public void removeProperty(String key) {
+        if (!readOnly && (authorizableMap.containsKey(key) || modifiedMap.containsKey(key))) {
+            modifiedMap.put(key, new RemoveProperty());
         }
     }
 
