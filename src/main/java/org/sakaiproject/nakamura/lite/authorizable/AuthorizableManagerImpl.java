@@ -339,10 +339,13 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
     public void delete(String authorizableId) throws AccessDeniedException, StorageClientException {
         checkOpen();
         accessControlManager.check(Security.ZONE_ADMIN, authorizableId, Permissions.CAN_DELETE);
-        removeFromCache(keySpace, authorizableColumnFamily, authorizableId);
-        client.remove(keySpace, authorizableColumnFamily, authorizableId);
-        storeListener.onDelete(Security.ZONE_AUTHORIZABLES, authorizableId, accessControlManager.getCurrentUserId(), null);
-
+        Authorizable authorizable = findAuthorizable(authorizableId);
+        if (authorizable != null){
+            Map<String, Object> beforeUpdateProperties = authorizable.getOriginalProperties();
+            removeFromCache(keySpace, authorizableColumnFamily, authorizableId);
+            client.remove(keySpace, authorizableColumnFamily, authorizableId);
+            storeListener.onDelete(Security.ZONE_AUTHORIZABLES, authorizableId, accessControlManager.getCurrentUserId(), beforeUpdateProperties);
+        }
     }
 
     public void close() {
