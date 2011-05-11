@@ -341,10 +341,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         accessControlManager.check(Security.ZONE_ADMIN, authorizableId, Permissions.CAN_DELETE);
         Authorizable authorizable = findAuthorizable(authorizableId);
         if (authorizable != null){
-            Map<String, Object> beforeUpdateProperties = authorizable.getOriginalProperties();
             removeFromCache(keySpace, authorizableColumnFamily, authorizableId);
             client.remove(keySpace, authorizableColumnFamily, authorizableId);
-            storeListener.onDelete(Security.ZONE_AUTHORIZABLES, authorizableId, accessControlManager.getCurrentUserId(), beforeUpdateProperties);
+            storeListener.onDelete(Security.ZONE_AUTHORIZABLES, authorizableId, accessControlManager.getCurrentUserId(), authorizable.getOriginalProperties());
         }
     }
 
