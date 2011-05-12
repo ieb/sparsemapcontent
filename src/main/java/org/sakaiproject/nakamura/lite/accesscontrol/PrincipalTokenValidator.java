@@ -19,6 +19,8 @@ import javax.crypto.spec.SecretKeySpec;
 public class PrincipalTokenValidator {
 
 
+    public static final String VALIDATORPLUGIN = "validatorplugin";
+    public static final String _ACLTOKEN = "_acltoken";
     private static final String HMAC_SHA512 = "HmacSHA512";
     private static final Logger LOGGER = LoggerFactory.getLogger(PrincipalTokenValidator.class);
     private PrincipalValidatorPlugin defaultPrincipalValidator = new DefaultPrincipalValidator();
@@ -33,13 +35,13 @@ public class PrincipalTokenValidator {
             LOGGER.debug("Failed to Validate Token at no content item ");
             return false;
         }
-        if ( !proxyPrincipalToken.hasProperty("_acltoken")) {
+        if ( !proxyPrincipalToken.hasProperty(_ACLTOKEN)) {
             LOGGER.debug("Failed to Validate Token at {} no ACL Token ", proxyPrincipalToken.getPath());
             return false;
         }
         PrincipalValidatorPlugin plugin = null;
-        if ( proxyPrincipalToken.hasProperty("validatorplugin") ) {
-            plugin = principalValidatorResolver.getPluginByName((String) proxyPrincipalToken.getProperty("validatorplugin"));
+        if ( proxyPrincipalToken.hasProperty(VALIDATORPLUGIN) ) {
+            plugin = principalValidatorResolver.getPluginByName((String) proxyPrincipalToken.getProperty(VALIDATORPLUGIN));
         } else {
             plugin =  defaultPrincipalValidator;
         }
@@ -48,7 +50,7 @@ public class PrincipalTokenValidator {
             return false;
         }
         String hmac = signToken(proxyPrincipalToken, sharedKey, plugin);
-        if ( hmac == null || !hmac.equals(proxyPrincipalToken.getProperty("_acltoken")) ) {
+        if ( hmac == null || !hmac.equals(proxyPrincipalToken.getProperty(_ACLTOKEN)) ) {
             LOGGER.debug("Failed to Validate Token at {} as {}, does not match ",proxyPrincipalToken.getPath(), hmac);
             return false;
         }
@@ -63,15 +65,15 @@ public class PrincipalTokenValidator {
 
     public void signToken(Content token, String sharedKey ) throws StorageClientException {
         PrincipalValidatorPlugin plugin = null;
-        if ( token.hasProperty("validatorplugin") ) {
-            plugin = principalValidatorResolver.getPluginByName((String) token.getProperty("validatorplugin"));
+        if ( token.hasProperty(VALIDATORPLUGIN) ) {
+            plugin = principalValidatorResolver.getPluginByName((String) token.getProperty(VALIDATORPLUGIN));
         } else {
             plugin = defaultPrincipalValidator;
         }
         if ( plugin == null ) {
             throw new StorageClientException("The property validatorplugin does not specify an active PricipalValidatorPlugin, cant sign");
         }
-        token.setProperty("_acltoken", signToken(token, sharedKey, plugin));
+        token.setProperty(_ACLTOKEN, signToken(token, sharedKey, plugin));
     }
 
     private String signToken(Content token, String sharedKey, PrincipalValidatorPlugin plugin) {
@@ -104,8 +106,8 @@ public class PrincipalTokenValidator {
     private String getHmac(Content principalToken, String[] extraFields, SecretKeySpec key) throws NoSuchAlgorithmException, InvalidKeyException, IllegalStateException, UnsupportedEncodingException {
         StringBuilder sb = new StringBuilder();
         sb.append(principalToken.getPath()).append("@");
-        if ( principalToken.hasProperty("validatorplugin")) {
-            sb.append(principalToken.getProperty("validatorplugin")).append("@");
+        if ( principalToken.hasProperty(VALIDATORPLUGIN)) {
+            sb.append(principalToken.getProperty(VALIDATORPLUGIN)).append("@");
         }
         for (String f : extraFields) {
             if ( principalToken.hasProperty(f)) {

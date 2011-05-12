@@ -305,6 +305,11 @@ public class InternalContent {
         return StorageClientUtils.getFilterMap(content, updatedContent, null,
                 null);
     }
+    public Map<String, Object> getOriginalProperties() {
+        return StorageClientUtils.getFilterMap(content, null, null,
+                null);
+    }
+
 
     /**
      * set a property, creating if it does not exist, overwriting if it does.
@@ -435,4 +440,5 @@ public class InternalContent {
     public String toString() {
         return "Path: " + getPath() + "; Properties: " + getProperties();
     }
+
 }
