@@ -120,6 +120,8 @@ public class Authorizable {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(Authorizable.class);
 
+    private static final Set<String> IMMUTABLE_AUTH_IDS = ImmutableSet.of(Group.EVERYONE);
+
     /**
      * A read only copy of the map, protected by an Immutable Wrapper
      */
@@ -152,6 +154,8 @@ public class Authorizable {
      * true if the object is read only.
      */
     protected boolean readOnly;
+
+    private boolean immutable;
 
     public Authorizable(Map<String, Object> autorizableMap) {
         principalsModified = false;
@@ -403,6 +407,9 @@ public class Authorizable {
             this.readOnly = readOnly;
         }
     }
+    public boolean isReadOnly() {
+        return readOnly;
+    }
 
     @Override
     public int hashCode() {
@@ -426,5 +433,9 @@ public class Authorizable {
     @Override
     public String toString() {
         return id;
+    }
+
+    public boolean isImmutable() {
+        return immutable || IMMUTABLE_AUTH_IDS.contains(id);
     }
 }
