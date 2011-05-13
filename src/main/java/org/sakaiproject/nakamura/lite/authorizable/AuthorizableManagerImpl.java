@@ -125,7 +125,18 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             StorageClientException {
         checkOpen();
         String id = authorizable.getId();
+        if ( authorizable.isImmutable() ) {
+            throw new StorageClientException("You cant update an immutable authorizable:"+id);
+        }
+        if ( authorizable.isReadOnly() ) {
+            return;
+        }
         accessControlManager.check(Security.ZONE_AUTHORIZABLES, id, Permissions.CAN_WRITE);
+        if ( !authorizable.isModified() ) {
+            return;
+            // only perform the update and send the event if we see the authorizable as modified. It will be modified ig group membership was changed.
+        }
+
         /*
          * Update the principal records for members. The list of members that
          * have been added and removed is converted into a list of Authorzables.
@@ -239,6 +250,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             }
         }
         attributes.add(type);
+        boolean wasNew = authorizable.isNew();
         Map<String, Object> beforeUpdateProperties = authorizable.getOriginalProperties();
 
         Map<String, Object> encodedProperties = StorageClientUtils.getFilteredAndEcodedMap(
@@ -250,7 +262,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         authorizable.reset(getCached(keySpace, authorizableColumnFamily, id));
 
         String[] attrs = attributes.toArray(new String[attributes.size()]);
-        storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, accessControlManager.getCurrentUserId(), true, beforeUpdateProperties, attrs);
+        storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, accessControlManager.getCurrentUserId(), wasNew, beforeUpdateProperties, attrs);
 
         // for each added or removed member, send an UPDATE event so indexing can properly
         // record the groups each member is a member of.
