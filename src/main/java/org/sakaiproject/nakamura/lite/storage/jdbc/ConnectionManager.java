@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ConnectionManager extends TimerTask {
 
     private Map<Thread, ConnectionHolder> threadMap = new ConcurrentHashMap<Thread, ConnectionHolder>();
+    private boolean closing = false;
 
     @Override
     public void run() {
@@ -32,6 +33,9 @@ public class ConnectionManager extends TimerTask {
     }
 
     public Connection get() {
+        if ( closing ) {
+            return null;
+        }
         Thread t = Thread.currentThread();
         ConnectionHolder ch = threadMap.get(t);
         if (ch != null && ch.get() != null) {
@@ -42,6 +46,9 @@ public class ConnectionManager extends TimerTask {
     }
 
     public void set(Connection connection) {
+        if ( closing ) {
+            throw new IllegalStateException("ConnectionManager is closing ");
+        }
         cleanThreadMap();
         Thread t = Thread.currentThread();
         ConnectionHolder c = threadMap.get(t);
@@ -54,6 +61,9 @@ public class ConnectionManager extends TimerTask {
     }
 
     private void cleanThreadMap() {
+        if ( closing ) {
+            return;
+        }
         Thread[] copy = threadMap.keySet().toArray(new Thread[threadMap.size()]);
         for (Thread t : copy) {
             if (!t.isAlive()) {
@@ -75,7 +85,9 @@ public class ConnectionManager extends TimerTask {
     }
 
     public void close() {
+        closing = true;
         while (threadMap.size() > 0) {
+            
             Thread[] copy = threadMap.keySet().toArray(new Thread[threadMap.size()]);
             for (Thread t : copy) {
                 ConnectionHolder ch = threadMap.remove(t);

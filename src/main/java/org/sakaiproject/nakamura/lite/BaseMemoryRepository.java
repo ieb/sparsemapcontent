@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 /**
- * Utiltiy class to create an entirely in memorty Sparse Repository, usefull for
+ * Utility class to create an entirely in memory Sparse Repository, useful for
  * testing or bulk internal modifications.
  */
 public class BaseMemoryRepository {
