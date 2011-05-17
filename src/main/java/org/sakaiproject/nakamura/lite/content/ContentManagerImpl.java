@@ -253,7 +253,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         };
     }
 
-    public Iterator<String> listChildPaths(String path) throws StorageClientException {
+    public Iterator<String> listChildPaths(final String path) throws StorageClientException {
         final Iterator<Map<String, Object>> childContent = client.listChildren(keySpace,
                 contentColumnFamily, path);
         return new PreemptiveIterator<String>() {
@@ -265,7 +265,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                 while(childContent.hasNext()) {
                     try {
                         Map<String, Object> structureMap = childContent.next();
-                        LOGGER.debug("Loaded Next as {} ", structureMap);
+                        LOGGER.debug("Loaded Next child of {} as {} ", path, structureMap);
                         if ( structureMap != null && structureMap.size() > 0 ) {
                             String testChildPath = (String) structureMap.get(PATH_FIELD);
                                 accessControlManager.check(Security.ZONE_CONTENT, testChildPath, Permissions.CAN_READ);
@@ -273,7 +273,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                                 // this is not that efficient since it requires the map is
                                 // loaded, at the moment I dont have a way round this with the
                                 // underlying index strucutre.
-                                LOGGER.debug("Got Next Child as {} ", childPath);
+                                LOGGER.debug("Got Next Child of {} as {} ", path, childPath);
                                 return true;
                         }
                     } catch (AccessDeniedException e) {
@@ -469,7 +469,11 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
     }
 
     // TODO: Unit test
-    public void copy(String from, String to, boolean deep) throws StorageClientException,
+    /**
+     * {@inheritDoc}
+     * @see org.sakaiproject.nakamura.api.lite.content.ContentManager#copy(java.lang.String, java.lang.String, boolean)
+     */
+    public void copy(String from, String to, boolean withStreams) throws StorageClientException,
             AccessDeniedException, IOException {
         checkOpen();
         // To Copy, get the to object out and copy everything over.
@@ -479,11 +483,12 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         }
         Content t = get(to);
         if (t != null) {
-            delete(to);
+           LOGGER.info("Deleting {} ",to);
+           delete(to);
         }
         Set<String> streams = Sets.newHashSet();
         Map<String, Object> copyProperties = Maps.newHashMap();
-        if (deep) {
+        if (withStreams) {
             for (Entry<String, Object> p : f.getProperties().entrySet()) {
                 if (!DEEP_COPY_FILTER.contains(p.getKey())) {
                     if (p.getKey().startsWith(BLOCKID_FIELD)) {
@@ -498,9 +503,10 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         }
         copyProperties.put(COPIED_FROM_PATH_FIELD, from);
         copyProperties.put(COPIED_FROM_ID_FIELD, f.getProperty(UUID_FIELD));
-        copyProperties.put(COPIED_DEEP_FIELD, deep);
+        copyProperties.put(COPIED_DEEP_FIELD, withStreams);
         t = new Content(to, copyProperties);
         update(t);
+        LOGGER.debug("Copy Updated {} {} ",to,t);
 
         for (String stream : streams) {
             String streamId = null;
