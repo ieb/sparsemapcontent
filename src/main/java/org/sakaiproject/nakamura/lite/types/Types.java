@@ -215,7 +215,7 @@ public class Types {
                 return (Type<?>) e.getValue();
             }
         }
-        LOGGER.warn("Unknown Type For Object {}, needs to be implemented ",object);
+        LOGGER.warn("Unknown Type For Object {}, needs to be implemented ",object.getClass());
         return (Type<?>) UNKNOWN_TYPE;
     }
 
