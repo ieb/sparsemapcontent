@@ -18,6 +18,7 @@
 package org.sakaiproject.nakamura.lite.content;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -267,7 +268,6 @@ public class InternalContent {
             this.content = ImmutableMap.copyOf(updatedMap);
             updatedContent.clear();
             updated = false;
-            newcontent = false;
             LOGGER.debug("Reset to {} ",updatedMap);
         }
     }
@@ -389,6 +389,9 @@ public class InternalContent {
      * @return an iterable for all children of this content item.
      */
     public Iterable<Content> listChildren() {
+        if ( newcontent ) {
+            return Iterables.emptyIterable();
+        }
         return new Iterable<Content>() {
 
             public Iterator<Content> iterator() {
@@ -406,7 +409,9 @@ public class InternalContent {
      * @return an iterable of all relative child paths of this object.
      */
     public Iterable<String> listChildPaths() {
-
+        if ( newcontent ) {
+            return Iterables.emptyIterable();
+        }
         return new Iterable<String>() {
 
             public Iterator<String> iterator() {
