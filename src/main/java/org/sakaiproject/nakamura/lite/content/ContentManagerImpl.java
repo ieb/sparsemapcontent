@@ -382,15 +382,16 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         if ( structure != null && structure.size() > 0 ) {
             String uuid = (String)structure.get(STRUCTURE_UUID_FIELD);
             Map<String, Object> content = getCached(keySpace, contentColumnFamily, uuid);
+            Map<String, Object> contentBeforeDelete = ImmutableMap.copyOf(content);
             String resourceType = (String) content.get("sling:resourceType");
             removeFromCache(keySpace, contentColumnFamily, path);
             client.remove(keySpace, contentColumnFamily, path);
             putCached(keySpace, contentColumnFamily, uuid,
                     ImmutableMap.of(DELETED_FIELD, (Object) TRUE), false);
             if (resourceType != null) {
-              eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), null, "resourceType:" + resourceType);
+              eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), contentBeforeDelete, "resourceType:" + resourceType);
             } else {
-              eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), null);
+              eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), contentBeforeDelete);
             }
         }
     }
