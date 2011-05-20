@@ -158,9 +158,21 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
                   // XOR gives us a mask of only the bits that changed
                   int difference = originalbitmap ^ modifiedbitmap;
                   int otherbitmap = toInt(currentAcl.get(inverseKeyOf(name)));
-                  // toggle the bits that have been modified
-                  int modifiedotherbitmap = otherbitmap ^ difference;
-                  modifications.put(inverseKeyOf(name), modifiedotherbitmap);
+
+                  // Zero out the bits that have been modified
+                  //
+                  // KERN-1887: This was originally toggling the modified bits
+                  // using: "otherbitmap ^ difference", but this would
+                  // incorrectly grant permissions in some cases (see JIRA
+                  // issue).  To avoid inconsistencies between grant and deny
+                  // lists, setting a bit in one list should unset the
+                  // corresponding bit in the other.
+                  int modifiedotherbitmap = otherbitmap & ~difference;
+
+                  if (otherbitmap != modifiedotherbitmap) {
+                      // We made a change.  Record our modification.
+                      modifications.put(inverseKeyOf(name), modifiedotherbitmap);
+                  }
                 }
             }
         }
