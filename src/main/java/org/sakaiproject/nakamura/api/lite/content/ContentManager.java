@@ -211,7 +211,7 @@ public interface ContentManager {
      *            the path to copy from, must exist
      * @param to
      *            the path to copy to, must not exist
-     * @param deep
+     * @param withStreams
      *            if true, a copy is made of all the streams, if false the
      *            streams are shared but copies are made of the properties.
      * @throws IOException
@@ -219,7 +219,7 @@ public interface ContentManager {
      *             if the user cant read the source or write the desination.
      * @throws IOException
      */
-    void copy(String from, String to, boolean deep) throws StorageClientException,
+    void copy(String from, String to, boolean withStreams) throws StorageClientException,
             AccessDeniedException, IOException;
 
     /**

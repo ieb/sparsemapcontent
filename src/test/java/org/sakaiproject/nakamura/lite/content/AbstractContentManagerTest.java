@@ -19,6 +19,7 @@ package org.sakaiproject.nakamura.lite.content;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -52,6 +53,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 public abstract class AbstractContentManagerTest {
 
@@ -123,7 +125,226 @@ public abstract class AbstractContentManagerTest {
         Assert.assertEquals("value3", (String)p.get("prop1"));
 
     }
+
+    @Test
+    public void testCreateContent2() throws StorageClientException, AccessDeniedException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+        AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
+
+        ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
+                configuration, null,  new LoggingStorageListener());
+        contentManager.update(new Content("newRootTestCreateContent", ImmutableMap.of("prop1", (Object) "value1")));
+        contentManager.update(new Content("newRootTestCreateContent/test", ImmutableMap.of("prop1", (Object) "value2")));
+        contentManager
+                .update(new Content("newRootTestCreateContent/test/ing", ImmutableMap.of("prop1", (Object) "value3")));
+
+        Content content = contentManager.get("newRootTestCreateContent");
+        Assert.assertEquals("newRootTestCreateContent", content.getPath());
+        Map<String, Object> p = content.getProperties();
+        LOGGER.info("Properties is {}",p);
+        Assert.assertEquals("value1", (String)p.get("prop1"));
+        Iterator<Content> children = content.listChildren().iterator();
+        Assert.assertTrue(children.hasNext());
+        Content child = children.next();
+        Assert.assertFalse(children.hasNext());
+        Assert.assertEquals("newRootTestCreateContent/test", child.getPath());
+        p = child.getProperties();
+        Assert.assertEquals("value2", (String)p.get("prop1"));
+        children = child.listChildren().iterator();
+        Assert.assertTrue(children.hasNext());
+        child = children.next();
+        Assert.assertFalse(children.hasNext());
+        Assert.assertEquals("newRootTestCreateContent/test/ing", child.getPath());
+        p = child.getProperties();
+        Assert.assertEquals("value3", (String)p.get("prop1"));
+
+    }
+
+    @Test
+    public void testConentTree() throws StorageClientException, AccessDeniedException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+        AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
+
+        ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
+                configuration, null, new LoggingStorageListener());
+        contentManager.update(new Content("testConentTree/1/11/111", ImmutableMap.of("prop111",
+                (Object) "value111")));
+        contentManager.update(new Content("testConentTree/1/11/333", ImmutableMap.of("prop333",
+                (Object) "value333")));
+        contentManager.update(new Content("testConentTree/1/11/222", ImmutableMap.of("prop222",
+                (Object) "value222")));
+
+        contentManager.update(new Content("testConentTree/1/22/444", ImmutableMap.of("prop444",
+                (Object) "value444")));
+        contentManager.update(new Content("testConentTree/1/22/555", ImmutableMap.of("prop555",
+                (Object) "value555")));
+        contentManager.update(new Content("testConentTree/1/22/666", ImmutableMap.of("prop666",
+                (Object) "value666")));
+        contentManager.update(new Content("testConentTree/1/22/777", ImmutableMap.of("prop777",
+                (Object) "value777")));
+        Content content11 = contentManager.get("testConentTree/1/11");
+        Set<String> childSet = Sets.newHashSet();
+        int i = 0;
+        for ( String c : content11.listChildPaths()){
+            i++;
+            childSet.add(c);
+        }
+        Assert.assertEquals(i,childSet.size());
+        Assert.assertEquals(i,3);
+        Assert.assertTrue(childSet.contains("testConentTree/1/11/111"));
+        Assert.assertTrue(childSet.contains("testConentTree/1/11/222"));
+        Assert.assertTrue(childSet.contains("testConentTree/1/11/333"));
+
+        content11 = contentManager.get("testConentTree/1/22");
+        childSet.clear();
+        i = 0;
+        for ( String c : content11.listChildPaths()){
+            i++;
+            childSet.add(c);
+        }
+        Assert.assertEquals(i,childSet.size());
+        Assert.assertEquals(i,4);
+        Assert.assertTrue(childSet.contains("testConentTree/1/22/444"));
+        Assert.assertTrue(childSet.contains("testConentTree/1/22/555"));
+        Assert.assertTrue(childSet.contains("testConentTree/1/22/666"));
+        Assert.assertTrue(childSet.contains("testConentTree/1/22/777"));
+
+        content11 = contentManager.get("testConentTree/1");
+        childSet.clear();
+        i = 0;
+        for ( String c : content11.listChildPaths()){
+            i++;
+            childSet.add(c);
+        }
+        Assert.assertEquals(i,childSet.size());
+        Assert.assertEquals(i,2);
+        Assert.assertTrue(childSet.contains("testConentTree/1/11"));
+        Assert.assertTrue(childSet.contains("testConentTree/1/22"));
+
+
+    }
     
+
+    @Test
+    public void testCopySimple() throws StorageClientException, AccessDeniedException, IOException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+        AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
+
+        ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
+                configuration, null, new LoggingStorageListener());
+        contentManager.update(new Content("testCopySimple/source/thefile", ImmutableMap.of("prop",
+                (Object) "source")));
+        contentManager.update(new Content("testCopySimple/destination", ImmutableMap.of("prop",
+                (Object) "dest")));
+
+        contentManager.copy("testCopySimple/source/thefile", "testCopySimple/destination/target", false);
+        Content check = contentManager.get("testCopySimple/source/thefile");
+        Assert.assertEquals("testCopySimple/source/thefile", check.getPath());
+        Assert.assertEquals("source", check.getProperty("prop"));
+        Set<String> checkChildren = Sets.newHashSet();
+        int countChildren = 0;
+        for ( String child : check.listChildPaths()) {
+            countChildren++;
+            checkChildren.add(child);
+        }
+        Assert.assertEquals(0, countChildren);
+        Assert.assertEquals(0, checkChildren.size());
+
+        check = contentManager.get("testCopySimple/destination");
+        Assert.assertEquals("testCopySimple/destination", check.getPath());
+        Assert.assertEquals("dest", check.getProperty("prop"));
+
+        checkChildren = Sets.newHashSet();
+        countChildren = 0;
+        for ( String child : check.listChildPaths()) {
+            countChildren++;
+            checkChildren.add(child);
+        }
+        Assert.assertEquals(1, countChildren);
+        Assert.assertEquals(1, checkChildren.size());
+        Assert.assertTrue(checkChildren.contains("testCopySimple/destination/target"));
+
+        check = contentManager.get("testCopySimple/destination/target");
+        Assert.assertEquals("testCopySimple/destination/target", check.getPath());
+        Assert.assertEquals("source", check.getProperty("prop"));
+
+        checkChildren = Sets.newHashSet();
+        countChildren = 0;
+        for ( String child : check.listChildPaths()) {
+            countChildren++;
+            checkChildren.add(child);
+        }
+        Assert.assertEquals(0, countChildren);
+        Assert.assertEquals(0, checkChildren.size());
+    }
+
+    @Test
+    public void testCopyOverwrite() throws StorageClientException, AccessDeniedException, IOException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+        AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
+
+        ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
+                configuration, null, new LoggingStorageListener());
+        contentManager.update(new Content("testCopyOverwrite/source/thefile", ImmutableMap.of("prop",
+                (Object) "source")));
+        contentManager.update(new Content("testCopyOverwrite/destination/target", ImmutableMap.of("prop",
+                (Object) "dest")));
+
+        contentManager.copy("testCopyOverwrite/source/thefile", "testCopyOverwrite/destination/target", false);
+        Content check = contentManager.get("testCopyOverwrite/source/thefile");
+        Assert.assertEquals("testCopyOverwrite/source/thefile", check.getPath());
+        Assert.assertEquals("source", check.getProperty("prop"));
+        Set<String> checkChildren = Sets.newHashSet();
+        int countChildren = 0;
+        for ( String child : check.listChildPaths()) {
+            countChildren++;
+            checkChildren.add(child);
+        }
+        Assert.assertEquals(0, countChildren);
+        Assert.assertEquals(0, checkChildren.size());
+
+        check = contentManager.get("testCopyOverwrite/destination");
+        Assert.assertEquals("testCopyOverwrite/destination", check.getPath());
+        Assert.assertNull(check.getProperty("prop"));
+
+        checkChildren = Sets.newHashSet();
+        countChildren = 0;
+        for ( String child : check.listChildPaths()) {
+            countChildren++;
+            checkChildren.add(child);
+        }
+        Assert.assertEquals(1, countChildren);
+        Assert.assertEquals(1, checkChildren.size());
+        Assert.assertTrue(checkChildren.contains("testCopyOverwrite/destination/target"));
+
+        check = contentManager.get("testCopyOverwrite/destination/target");
+        Assert.assertEquals("testCopyOverwrite/destination/target", check.getPath());
+        Assert.assertEquals("source", check.getProperty("prop"));
+
+        checkChildren = Sets.newHashSet();
+        countChildren = 0;
+        for ( String child : check.listChildPaths()) {
+            countChildren++;
+            checkChildren.add(child);
+        }
+        Assert.assertEquals(0, countChildren);
+        Assert.assertEquals(0, checkChildren.size());
+    }
+
+
+
     @Test
     public void testSimpleDelete() throws AccessDeniedException, StorageClientException {
         AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);

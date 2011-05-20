@@ -32,10 +32,16 @@ import org.sakaiproject.nakamura.lite.content.InternalContent;
  * already exist with a cotentManager.get(path), and if that responds with a
  * null object, then create a new Content object with new Content(path, map);
  * where path is the path of the content object and map is null or the initial
- * properties of the content object. At that poin the conten object is created
+ * properties of the content object. At that point the content object is created
  * but not saved. To save perform contentManager.udpate(contentObject) which
- * will create any itermediate path and save the content object. At that point
+ * will create any intermediate path and save the content object. At that point
  * it will be persisted in the content store and have structure objects.
+ * </p>
+ * <p>
+ * Please note, if you create a Content object using the public constructor,
+ * that object will have no children until it is saved and re-loaded by the
+ * ContentManager. Any attempt to list children of the newly created Content
+ * instance will result in an empty iterator.
  * </p>
  * <p>
  * If you need to make changes to a Content object, get it out of the store,
@@ -46,21 +52,26 @@ import org.sakaiproject.nakamura.lite.content.InternalContent;
  * operation will persist directly to the underlying store. Concurrent threads
  * in the same JVM may retrieve the same underlying data from the content store
  * but each cotnentManager will operate on its own set of contentObjects
- * isolated from other cotnentManagers until the update operation is completed.
+ * isolated from other contentManagers until the update operation is completed.
  * </p>
  */
 public class Content extends InternalContent {
 
     /**
      * Create a brand new content object not connected to the underlying store.
-     * To save use contentManager.update(contentObject);
+     * To save use contentManager.update(contentObject); Since the object is not
+     * connected to the underlying store, it not have any children. Only Content
+     * objects loaded from the underlying store with ContentManager.get(path)
+     * are connected to the underlying store and have children. This is the case
+     * even if the path of the Content instance created via the public
+     * constructor exists within the underlying content store.
      * 
      * @param path
      *            the path in the store that should not already exist. If it
      *            does exist, this new object will overwrite.
      * @param content
      *            a map of initial content metadata.
-     * @param  
+     * @param
      */
     public Content(String path, java.util.Map<String, Object> content) {
         super(path, content);
