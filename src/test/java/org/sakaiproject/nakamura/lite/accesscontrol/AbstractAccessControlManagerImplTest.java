@@ -208,17 +208,17 @@ public abstract class AbstractAccessControlManagerImplTest {
         Assert.assertArrayEquals(new String[] {}, acl.keySet().toArray());
 
         acl = accessControlManagerImpl.getAcl(Security.ZONE_CONTENT, basepath+"/a");
-        acl = StorageClientUtils.getFilterMap(acl, null,null,ImmutableSet.of("_aclKey","_aclPath","_aclType"));
+        acl = StorageClientUtils.getFilterMap(acl, null,null,ImmutableSet.of("_aclKey","_aclPath","_aclType"), false);
         Assert.assertArrayEquals(Arrays.toString(sortToArray(acl.keySet())),
                 new String[] { AclModification.grantKey(u1), AclModification.grantKey(u3) },
                 sortToArray(acl.keySet()));
         acl = accessControlManagerImpl.getAcl(Security.ZONE_CONTENT, basepath+"/a/b");
-        acl = StorageClientUtils.getFilterMap(acl, null,null,ImmutableSet.of("_aclKey","_aclPath","_aclType"));
+        acl = StorageClientUtils.getFilterMap(acl, null,null,ImmutableSet.of("_aclKey","_aclPath","_aclType"), false);
         Assert.assertArrayEquals(
                 new String[] { AclModification.grantKey(u1), AclModification.grantKey(u2) },
                 sortToArray(acl.keySet()));
         acl = accessControlManagerImpl.getAcl(Security.ZONE_CONTENT, basepath+"/a/b/c");
-        acl = StorageClientUtils.getFilterMap(acl, null,null,ImmutableSet.of("_aclKey","_aclPath","_aclType"));
+        acl = StorageClientUtils.getFilterMap(acl, null,null,ImmutableSet.of("_aclKey","_aclPath","_aclType"), false);
         Assert.assertArrayEquals(new String[] { AclModification.denyKey(User.ANON_USER),
                 AclModification.denyKey(Group.EVERYONE), AclModification.grantKey(u1),
                 AclModification.denyKey(u2), AclModification.denyKey(u3) },

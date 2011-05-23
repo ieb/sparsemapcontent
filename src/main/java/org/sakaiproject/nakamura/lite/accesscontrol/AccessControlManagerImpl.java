@@ -91,7 +91,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         check(objectType, objectPath, Permissions.CAN_READ_ACL);
 
         String key = this.getAclKey(objectType, objectPath);
-        return StorageClientUtils.getFilterMap(getCached(keySpace, aclColumnFamily, key), null, null, PROTECTED_PROPERTIES);
+        return StorageClientUtils.getFilterMap(getCached(keySpace, aclColumnFamily, key), null, null, PROTECTED_PROPERTIES, false);
     }
     
     public Map<String, Object> getEffectiveAcl(String objectType, String objectPath)
