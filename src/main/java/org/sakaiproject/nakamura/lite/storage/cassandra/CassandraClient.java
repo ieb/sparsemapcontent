@@ -19,6 +19,7 @@ package org.sakaiproject.nakamura.lite.storage.cassandra;
 
 import com.google.common.collect.Lists;
 
+import org.sakaiproject.nakamura.lite.types.Types;
 import org.apache.cassandra.thrift.Cassandra.Client;
 import org.apache.cassandra.thrift.Column;
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
@@ -33,6 +34,7 @@ import org.apache.cassandra.thrift.SliceRange;
 import org.apache.cassandra.thrift.SuperColumn;
 import org.apache.cassandra.thrift.TimedOutException;
 import org.apache.cassandra.thrift.UnavailableException;
+import org.apache.commons.lang.SerializationUtils;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
@@ -49,8 +51,12 @@ import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -65,6 +71,7 @@ public class CassandraClient extends Client implements StorageClient {
 
     private static final int DEFAULT_BLOCK_SIZE = 1024 * 1024;
     private static final int DEFAULT_MAX_CHUNKS_PER_BLOCK = 64;
+
 
     private TSocket tSocket;
     private BlockContentHelper contentHelper;
@@ -111,40 +118,44 @@ public class CassandraClient extends Client implements StorageClient {
     }
 
     public Map<String, Object> get(String keySpace, String columnFamily, String key)
-            throws StorageClientException {
-        try {
-            Map<String, Object> row = new HashMap<String, Object>();
+    throws StorageClientException {
+    Map<String, Object> row = new HashMap<String, Object>();
+    try {
+        SlicePredicate predicate = new SlicePredicate();
+        SliceRange sliceRange = new SliceRange();
+        sliceRange.setStart(new byte[0]);
+        sliceRange.setFinish(new byte[0]);
+        predicate.setSlice_range(sliceRange);
 
-            SlicePredicate predicate = new SlicePredicate();
-            SliceRange sliceRange = new SliceRange();
-            sliceRange.setStart(new byte[0]);
-            sliceRange.setFinish(new byte[0]);
-            predicate.setSlice_range(sliceRange);
-
-            ColumnParent parent = new ColumnParent(columnFamily);
-            List<ColumnOrSuperColumn> results = get_slice(keySpace, key, parent, predicate,
-                    ConsistencyLevel.ONE);
-            for (ColumnOrSuperColumn result : results) {
-                if (result.isSetSuper_column()) {
-                    Map<String, byte[]> sc = new HashMap<String, byte[]>();
-                    for (Column column : result.super_column.columns) {
-                        sc.put(StorageClientUtils.toString(column.name), column.value);
-                    }
-                    row.put(StorageClientUtils.toString(result.super_column.name), sc);
-                } else {
-                    row.put(StorageClientUtils.toString(result.column.name), result.column.value);
+        ColumnParent parent = new ColumnParent(columnFamily);
+        List<ColumnOrSuperColumn> results = get_slice(keySpace, key, parent, predicate,ConsistencyLevel.ONE);
+    	
+        for (ColumnOrSuperColumn result : results) {
+            if (result.isSetSuper_column()) {
+    		    Map<String, Object> sc = new HashMap<String, Object>();
+    			
+    		    for (Column column : result.super_column.columns) { 
+                    Object columnValue=Types.toObject(column.value);    				 
+                    sc.put(new String(column.name,"UTF-8"),columnValue);
                 }
-            }
-            return row;
-        } catch (InvalidRequestException e) {
-            throw new StorageClientException(e.getMessage(), e);
-        } catch (UnavailableException e) {
-            throw new StorageClientException(e.getMessage(), e);
-        } catch (TimedOutException e) {
-            throw new StorageClientException(e.getMessage(), e);
-        } catch (TException e) {
-            throw new StorageClientException(e.getMessage(), e);
+                row.put(new String(result.super_column.name,"UTF-8"), sc);
+                } else {
+                row.put(new String(result.column.name,"UTF-8"), Types.toObject(result.column.value));
+                }
         }
+    
+    } catch (InvalidRequestException e) {
+    throw new StorageClientException(e.getMessage(), e);
+    } catch (UnavailableException e) {
+    throw new StorageClientException(e.getMessage(), e);
+    } catch (TimedOutException e) {
+    throw new StorageClientException(e.getMessage(), e);
+    } catch (TException e) {
+    throw new StorageClientException(e.getMessage(), e);
+    } catch (IOException e) {
+    LOGGER.debug(e.getMessage());
+    } 
+    return row;
     }
 
     public void insert(String keySpace, String columnFamily, String key, Map<String, Object> values, boolean probablyNew)
@@ -157,9 +168,16 @@ public class CassandraClient extends Client implements StorageClient {
             List<Mutation> keyMutations = Lists.newArrayList();
             columnMutations.put(columnFamily, keyMutations);
             mutation.put(key, columnMutations);
+            
             for (Entry<String, Object> value : values.entrySet()) {
                 String name = value.getKey();
-                byte[] bname = StorageClientUtils.toBytes(name);
+                byte[] bname=null;
+                try {
+					bname = name.getBytes("UTF-8");
+				} catch (UnsupportedEncodingException e1) {
+                    LOGGER.debug(e1.getMessage());
+				}
+                
                 Object v = value.getValue();
                 if (v instanceof RemoveProperty) {
                     Deletion deletion = new Deletion();
@@ -169,40 +187,22 @@ public class CassandraClient extends Client implements StorageClient {
                     Mutation mu = new Mutation();
                     mu.setDeletion(deletion);
                     keyMutations.add(mu);
-                } else if (v instanceof byte[]) {
-                    byte[] bv = (byte[]) v;
-                    Column column = new Column(bname, bv, System.currentTimeMillis());
-                    ColumnOrSuperColumn csc = new ColumnOrSuperColumn();
-                    csc.setColumn(column);
-                    Mutation mu = new Mutation();
-                    mu.setColumn_or_supercolumn(csc);
-                    keyMutations.add(mu);
-                } else if (v instanceof Map) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, byte[]> sc = (Map<String, byte[]>) v;
-                    List<Column> columns = new ArrayList<Column>();
-                    for (Entry<String, byte[]> sce : sc.entrySet()) {
-                        String cname = sce.getKey();
-                        byte[] bcname = StorageClientUtils.toBytes(cname);
-                        Column column = new Column(bcname, StorageClientUtils.toBytes(sce
-                                .getValue()), System.currentTimeMillis());
-                        columns.add(column);
-                    }
+                }
+                else {
+                    try{
+                         byte b[]=Types.toByteArray(v);
+                         Column column = new Column(bname, b, System.currentTimeMillis());
+                         ColumnOrSuperColumn csc = new ColumnOrSuperColumn();
+                         csc.setColumn(column);
+                         Mutation mu = new Mutation();
+                         mu.setColumn_or_supercolumn(csc);
+                         keyMutations.add(mu);
 
-                    SuperColumn superColumn = new SuperColumn(bname, columns);
-                    ColumnOrSuperColumn csc = new ColumnOrSuperColumn();
-                    csc.setSuper_column(superColumn);
-                    Mutation mu = new Mutation();
-                    mu.setColumn_or_supercolumn(csc);
-                    keyMutations.add(mu);
-                } else {
-                    byte[] bv = StorageClientUtils.toBytes(v);
-                    Column column = new Column(bname, bv, System.currentTimeMillis());
-                    ColumnOrSuperColumn csc = new ColumnOrSuperColumn();
-                    csc.setColumn(column);
-                    Mutation mu = new Mutation();
-                    mu.setColumn_or_supercolumn(csc);
-                    keyMutations.add(mu);
+                    }
+                    catch(IOException e)
+                    {
+                         LOGGER.debug("IOException. Stack trace:"+e.getStackTrace());
+                    }  
                 }
             }
             LOGGER.debug("Mutation {} ", mutation);
@@ -263,4 +263,5 @@ public class CassandraClient extends Client implements StorageClient {
     public boolean hasBody(Map<String, Object> content, String streamId) {
         return contentHelper.hasBody(content, streamId);
     }
+    
 }

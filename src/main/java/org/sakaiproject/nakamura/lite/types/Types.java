@@ -218,6 +218,31 @@ public class Types {
         LOGGER.warn("Unknown Type For Object {}, needs to be implemented ",object.getClass());
         return (Type<?>) UNKNOWN_TYPE;
     }
+    
+    public static byte[] toByteArray(Object o)throws IOException{
+    	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(baos);
+                
+        if ( o != null && !(o instanceof RemoveProperty) ) {             
+                Type<?> t = getTypeOfObject(o);
+                dos.writeInt(t.getTypeId());
+                t.save(dos, o);
+            }
+        
+        dos.flush();
+        baos.flush();
+        byte[] b = baos.toByteArray();
+        baos.close();
+        dos.close();
+        
+        return b;
+    }
+    
+    public static Object toObject(byte[] columnValue)throws IOException{
+    	DataInputStream dis = new DataInputStream(new ByteArrayInputStream(columnValue));        
+    	return lookupTypeById(dis.readInt()).load(dis);
+    	
+    }
 
 
 
