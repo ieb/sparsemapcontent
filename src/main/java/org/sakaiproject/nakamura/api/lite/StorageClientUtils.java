@@ -308,7 +308,7 @@ public class StorageClientUtils {
      * @return
      */
     @SuppressWarnings("unchecked")
-    public static <K, V> Map<K, V> getFilterMap(Map<K, V> source, Map<K, V> modified, Set<K> include, Set<K> exclude) {
+    public static <K, V> Map<K, V> getFilterMap(Map<K, V> source, Map<K, V> modified, Set<K> include, Set<K> exclude, boolean includingRemoveProperties ) {
        if ((modified == null || modified.size() == 0) && (include == null) && ( exclude == null || exclude.size() == 0)) {
            if ( source instanceof ImmutableMap ) {
                return source;
@@ -325,7 +325,9 @@ public class StorageClientUtils {
                         V o = modified.get(k);
                         if (o instanceof Map) {
                             filteredMap.put(k,
-                                    (V) getFilterMap((Map<K, V>) o, null, null, exclude));
+                                    (V) getFilterMap((Map<K, V>) o, null, null, exclude, includingRemoveProperties));
+                        } else if ( includingRemoveProperties ) {
+                            filteredMap.put(k, o);
                         } else if ( !(o instanceof RemoveProperty) ) {
                             filteredMap.put(k, o);
                         }
@@ -333,7 +335,7 @@ public class StorageClientUtils {
                         Object o = e.getValue();
                         if (o instanceof Map) {
                             filteredMap.put(k,
-                                    (V) getFilterMap((Map<K, V>) e.getValue(), null, null, exclude));
+                                    (V) getFilterMap((Map<K, V>) e.getValue(), null, null, exclude, includingRemoveProperties));
                         } else {
                             filteredMap.put(k, e.getValue());
                         }

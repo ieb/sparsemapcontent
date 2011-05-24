@@ -298,16 +298,16 @@ public class InternalContent {
      */
     public Map<String, Object> getProperties() {
         LOGGER.debug("getting properties map {}", content);
-        return StorageClientUtils.getFilterMap(content, updatedContent, null, null);
+        return StorageClientUtils.getFilterMap(content, updatedContent, null, null, false);
     }
 
     public Map<String, Object> getPropertiesForUpdate() {
         return StorageClientUtils.getFilterMap(content, updatedContent, null,
-                null);
+                null, true);
     }
     public Map<String, Object> getOriginalProperties() {
         return StorageClientUtils.getFilterMap(content, null, null,
-                null);
+                null, false);
     }
 
 

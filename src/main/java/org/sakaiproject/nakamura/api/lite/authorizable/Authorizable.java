@@ -219,7 +219,7 @@ public class Authorizable {
             modifiedMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
         }
         return StorageClientUtils.getFilterMap(authorizableMap, modifiedMap, null,
-                FILTER_PROPERTIES);
+                FILTER_PROPERTIES, false);
     }
 
     /**
@@ -233,7 +233,7 @@ public class Authorizable {
      * @return get the orriginal properties of this authorizable ignoring any unsaved properties.
      */
     public Map<String, Object> getOriginalProperties() {
-        return StorageClientUtils.getFilterMap(authorizableMap, null, null, FILTER_PROPERTIES);
+        return StorageClientUtils.getFilterMap(authorizableMap, null, null, FILTER_PROPERTIES, false);
     }
 
     /**
@@ -314,7 +314,7 @@ public class Authorizable {
             principals.add(Group.EVERYONE);
         }
         return StorageClientUtils.getFilterMap(authorizableMap, modifiedMap, null,
-                FILTER_PROPERTIES);
+                FILTER_PROPERTIES, true);
     }
 
     /**
