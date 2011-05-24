@@ -71,7 +71,6 @@ public class CassandraClient extends Client implements StorageClient {
 
     private static final int DEFAULT_BLOCK_SIZE = 1024 * 1024;
     private static final int DEFAULT_MAX_CHUNKS_PER_BLOCK = 64;
-    private final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
 
     private TSocket tSocket;
@@ -137,11 +136,11 @@ public class CassandraClient extends Client implements StorageClient {
     			
     		    for (Column column : result.super_column.columns) { 
                     Object columnValue=Types.toObject(column.value);    				 
-                    sc.put(new String(column.name,UTF8_CHARSET),columnValue);
+                    sc.put(new String(column.name,"UTF-8"),columnValue);
                 }
-                row.put(new String(result.super_column.name,UTF8_CHARSET), sc);
+                row.put(new String(result.super_column.name,"UTF-8"), sc);
                 } else {
-                row.put(new String(result.column.name,UTF8_CHARSET), Types.toObject(result.column.value));
+                row.put(new String(result.column.name,"UTF-8"), Types.toObject(result.column.value));
                 }
         }
     
@@ -173,7 +172,11 @@ public class CassandraClient extends Client implements StorageClient {
             for (Entry<String, Object> value : values.entrySet()) {
                 String name = value.getKey();
                 byte[] bname=null;
-                bname = name.getBytes(UTF8_CHARSET);
+                try {
+					bname = name.getBytes("UTF-8");
+				} catch (UnsupportedEncodingException e1) {
+                    LOGGER.debug(e1.getMessage());
+				}
                 
                 Object v = value.getValue();
                 if (v instanceof RemoveProperty) {
