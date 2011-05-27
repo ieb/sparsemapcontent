@@ -4,7 +4,7 @@
 # The access mechanism must be update then insert to allow no PK and no Unique key.
 # Please read http://harrison-fisk.blogspot.com/2009/02/my-favorite-new-feature-of-mysql-51.html for info.
 
-DROP TABLE IF EXISTS `css`;
+#### DROP TABLE IF EXISTS `css`;
 
 CREATE TABLE  `css` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -17,7 +17,7 @@ CREATE TABLE  `css` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-DROP TABLE IF EXISTS `au_css`;
+##### DROP TABLE IF EXISTS `au_css`;
 
 CREATE TABLE  `au_css` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -29,7 +29,7 @@ CREATE TABLE  `au_css` (
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-DROP TABLE IF EXISTS `cn_css`;
+###### DROP TABLE IF EXISTS `cn_css`;
 
 CREATE TABLE  `cn_css` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -42,7 +42,7 @@ CREATE TABLE  `cn_css` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-DROP TABLE IF EXISTS `ac_css`;
+###### DROP TABLE IF EXISTS `ac_css`;
 
 CREATE TABLE  `ac_css` (
   `id` INT NOT NULL AUTO_INCREMENT,

@@ -1,4 +1,4 @@
-DROP TABLE css;
+########### DROP TABLE css;
 
 CREATE TABLE  css (
   id NUMBER NOT NULL,
@@ -16,7 +16,7 @@ CREATE INDEX css_rowkey ON css(rid,cid);
 # Something else may be intended with cid_locate_i by Ian. He can correct me.
 CREATE INDEX css_cid_locate_i ON css(v,cid);
 
-DROP TABLE au_css;
+############ DROP TABLE au_css;
 
 CREATE TABLE  au_css (
   id NUMBER NOT NULL,
@@ -31,7 +31,7 @@ CREATE SEQUENCE seq_au_css_id;
 CREATE INDEX au_css_rowkey ON au_css(rid,cid);
 CREATE INDEX au_css_cid_locate_i ON au_css(v,cid);
 
-DROP TABLE cn_css;
+######### DROP TABLE cn_css;
 
 CREATE TABLE  cn_css (
   id NUMBER NOT NULL,
@@ -46,7 +46,7 @@ CREATE SEQUENCE seq_cn_css_id;
 CREATE INDEX cn_css_rowkey ON cn_css(rid,cid);
 CREATE INDEX cn_css_cid_locate_i ON cn_css(v,cid);
 
-DROP TABLE ac_css;
+########### DROP TABLE ac_css;
 
 CREATE TABLE  ac_css (
   id NUMBER NOT NULL,
@@ -61,7 +61,7 @@ CREATE SEQUENCE seq_ac_css_id;
 CREATE INDEX ac_css_rowkey ON ac_css(rid,cid);
 CREATE INDEX ac_css_cid_locate_i ON ac_css(v,cid);
 
-DROP TABLE css_b;
+########### DROP TABLE css_b;
 
 CREATE TABLE  css_b (
   rid varchar2(32) NOT NULL,
@@ -69,7 +69,7 @@ CREATE TABLE  css_b (
   PRIMARY KEY (rid) )
 ;
 
-DROP TABLE cn_css_b;
+########## DROP TABLE cn_css_b;
 
 CREATE TABLE  cn_css_b (
   rid varchar2(32) NOT NULL,
@@ -77,7 +77,7 @@ CREATE TABLE  cn_css_b (
   PRIMARY KEY (rid) )
 ;
 
-DROP TABLE au_css_b;
+########### DROP TABLE au_css_b;
 
 CREATE TABLE  au_css_b (
   rid varchar2(32) NOT NULL,
@@ -85,7 +85,7 @@ CREATE TABLE  au_css_b (
   PRIMARY KEY (rid) )
 ;
 
-DROP TABLE ac_css_b;
+########### DROP TABLE ac_css_b;
 
 CREATE TABLE  ac_css_b (
   rid varchar2(32) NOT NULL,
@@ -93,7 +93,7 @@ CREATE TABLE  ac_css_b (
   PRIMARY KEY (rid) )
 ;
 
-DROP TABLE index_cols;
+########### DROP TABLE index_cols;
 
 CREATE TABLE  index_cols (
   cid varchar2(64) NOT NULL,

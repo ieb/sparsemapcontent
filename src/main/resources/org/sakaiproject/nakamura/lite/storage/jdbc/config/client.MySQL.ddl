@@ -4,7 +4,7 @@
 # The access mechanism must be update then insert to allow no PK and no Unique key.
 # Please read http://harrison-fisk.blogspot.com/2009/02/my-favorite-new-feature-of-mysql-51.html for info.
 
-DROP TABLE IF EXISTS `css`;
+######## DROP TABLE IF EXISTS `css`;
 
 # Central store
 
@@ -19,7 +19,7 @@ CREATE TABLE  `css` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 
-DROP TABLE IF EXISTS `au_css`;
+######## DROP TABLE IF EXISTS `au_css`;
 
 # Store just for Authorizables
 CREATE TABLE  `au_css` (
@@ -32,7 +32,7 @@ CREATE TABLE  `au_css` (
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-DROP TABLE IF EXISTS `cn_css`;
+####### DROP TABLE IF EXISTS `cn_css`;
 
 # Store just for Content
 CREATE TABLE  `cn_css` (
@@ -46,7 +46,7 @@ CREATE TABLE  `cn_css` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 
-DROP TABLE IF EXISTS `ac_css`;
+####### DROP TABLE IF EXISTS `ac_css`;
 
 # Store just for Access Control
 CREATE TABLE  `ac_css` (
