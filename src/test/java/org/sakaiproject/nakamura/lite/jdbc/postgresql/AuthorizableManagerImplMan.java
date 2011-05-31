@@ -17,10 +17,10 @@
  */
 package org.sakaiproject.nakamura.lite.jdbc.postgresql;
 
-import org.sakaiproject.nakamura.lite.accesscontrol.AbstractAccessControlManagerImplTest;
+import org.sakaiproject.nakamura.lite.authorizable.AbstractAuthorizableManagerImplTest;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
-public class AccessControlManagerImplTest extends AbstractAccessControlManagerImplTest {
+public class AuthorizableManagerImplMan extends AbstractAuthorizableManagerImplTest {
 
     @Override
     protected StorageClientPool getClientPool() throws ClassNotFoundException {
