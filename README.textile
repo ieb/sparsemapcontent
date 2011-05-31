@@ -16,21 +16,18 @@ abstract level, but is making a positive effort and selfish effort to only provi
   The Implementation works on manipulating sparse objects in the Map with operations like get, insert and delete, but 
 has no understanding of the underlying implementation of the storage mechanism. 
 
-  At the moment we have 2 storage mechanisms implemented, In Memory using a HashMap, and Cassandra. The approach should 
-work on any Column Store (Dynamo, BigTable, Riak, Voldomort, Hbase etc) and can also work on RDBMS's including sharded storage.
+  At the moment we have 3 storage mechanisms implemented, In Memory using a HashMap, Cassandra and JDBC capable of doing sharded storage, The approach should 
+work on any Column Store (Dynamo, BigTable, Riak, Voldomort, Hbase etc).
 
-  At the moment there is no query support, expecting all access to be via column IDs, and multiple views to be written to the 
-underlying store.
-
-  The intention is to provide write through caches based on EhCache or Infinispan.
+  Query support is provided by finder messages that use index table written on update.
+  
+  Caching support is via an interface allowing external providers. In Nakamura there is an EhCache implementation and it would be a relatively simple task to write an Infinispan version.
 
   Transactions are supported, if supported by the underlying implementation of the storage, otherwise all operations are BASIC, non Atomic and immediate in nature. 
-We will add search indexes at some point using Lucene, perhaps in the form of Zoie
 
+  Search is provided in the form of a companion project that uses SolrJ 4
 
-  At this stage its pre-alpha, untested for performance and scalability and incomplete.
-
-
+  The JDBC Driver has configuration files for Derby, MySQL, Oracle, PostgreSQL.
 
 h2. Backlog
 
