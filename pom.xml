@@ -112,11 +112,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.5</version>
-        <configuration>
-          <excludes>
-            <exclude>**/oracle/*</exclude>
-          </excludes>
-        </configuration>
       </plugin>
     </plugins>
   </build>
@@ -217,6 +212,11 @@
       <groupId>mysql</groupId>
       <artifactId>mysql-connector-java</artifactId>
       <version>5.1.13</version>
+    </dependency>
+    <dependency>
+	  <groupId>postgresql</groupId>
+	  <artifactId>postgresql</artifactId>
+	  <version>9.0-801.jdbc4</version>    
     </dependency>
 <!--
     To use Oracle, install ojdbc14.jar to your local mvn

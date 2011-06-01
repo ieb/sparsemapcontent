@@ -15,16 +15,16 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.sakaiproject.nakamura.lite.jdbc.oracle;
+package org.sakaiproject.nakamura.lite.jdbc.postgresql;
 
 import org.sakaiproject.nakamura.lite.accesscontrol.AbstractAccessControlManagerImplTest;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
-public class AccessControlManagerImplTest extends AbstractAccessControlManagerImplTest {
+public class AccessControlManagerImplMan extends AbstractAccessControlManagerImplTest {
 
     @Override
     protected StorageClientPool getClientPool() throws ClassNotFoundException {
-        return OracleSetup.getClientPool();
+        return PostgreSQLSetup.getClientPool();
     }
 
 }
