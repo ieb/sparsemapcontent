@@ -40,4 +40,8 @@ public class CalendarArrayType implements Type<Calendar[]> {
         return Calendar[].class;
     }
 
+    public boolean accepts(Object object) {
+        return (object instanceof Calendar[]);
+    }
+
 }

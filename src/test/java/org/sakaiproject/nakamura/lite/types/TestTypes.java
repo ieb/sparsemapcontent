@@ -16,6 +16,10 @@ import java.util.TimeZone;
 public class TestTypes {
     
     
+    private static final String SHORTSTRING = "AShortString";
+    private static final String LONGSTRING = "Longer than "+SHORTSTRING;
+
+
     @Test
     public void testTypes() {
         Map<Integer, Type<?>> typeById = Types.getTypeByIdMap();
@@ -212,6 +216,41 @@ public class TestTypes {
         
         
         
+    }
+    
+    
+    @Test
+    public void testStringToLongString() throws IOException {
+        Map<String, Object> map = Maps.newHashMap();
+        map.put("short", SHORTSTRING);
+        map.put("long", LONGSTRING);
+        map.put("shortarray", new String[]{ SHORTSTRING, SHORTSTRING, SHORTSTRING});
+        map.put("longarray", new String[]{ SHORTSTRING, SHORTSTRING, LONGSTRING, LONGSTRING});
+        
+        StringType.setLengthLimit(LONGSTRING.length() -1);
+        
+        InputStream in = Types.storeMapToStream("testkey", map,"testcf");
+        Map<String, Object> output = Maps.newHashMap();
+        Types.loadFromStream("testkey", output, in, "testcf");
+        
+        Assert.assertEquals(String.class, output.get("short").getClass());
+        Assert.assertEquals(LongString.class, output.get("long").getClass());
+        Assert.assertEquals(String[].class, output.get("shortarray").getClass());
+        Assert.assertEquals(LongString[].class, output.get("longarray").getClass());
+        
+        Assert.assertEquals(SHORTSTRING, output.get("short"));
+        Assert.assertEquals(LONGSTRING, ((LongString)output.get("long")).toString());
+        Assert.assertArrayEquals(new String[]{SHORTSTRING, SHORTSTRING, SHORTSTRING}, (String[])output.get("shortarray"));
+        LongString[] longStringArray = (LongString[]) output.get("longarray");
+        Assert.assertEquals(longStringArray.length, 4);
+        Assert.assertEquals(SHORTSTRING, longStringArray[0].toString());
+        Assert.assertEquals(SHORTSTRING, longStringArray[1].toString());
+        Assert.assertEquals(LONGSTRING, longStringArray[2].toString());
+        Assert.assertEquals(LONGSTRING, longStringArray[3].toString());
+        
+        
+        StringType.setLengthLimit(0);
+
     }
 
 }

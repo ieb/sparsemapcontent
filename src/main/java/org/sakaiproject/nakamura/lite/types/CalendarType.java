@@ -32,4 +32,8 @@ public class CalendarType implements Type<Calendar> {
         return Calendar.class;
     }
 
+    public boolean accepts(Object object) {
+        return (object instanceof Calendar);
+    }
+
 }

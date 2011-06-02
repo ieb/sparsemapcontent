@@ -23,4 +23,7 @@ public class RemovePropertyType implements Type<RemoveProperty> {
         return RemoveProperty.class;
     }
 
+    public boolean accepts(Object object) {
+        return (object instanceof RemoveProperty);
+    }
 }

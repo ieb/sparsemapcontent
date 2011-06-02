@@ -21,5 +21,10 @@ public class BooleanType implements Type<Boolean> {
     public Class<Boolean> getTypeClass() {
         return Boolean.class;
     }
+    
+    public boolean accepts(Object object) {
+        return (object instanceof Boolean);
+    }
+
 
 }

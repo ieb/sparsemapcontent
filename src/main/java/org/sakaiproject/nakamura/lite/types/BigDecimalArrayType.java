@@ -32,4 +32,8 @@ public class BigDecimalArrayType implements Type<BigDecimal[]> {
         return BigDecimal[].class;
     }
 
+    public boolean accepts(Object object) {
+        return (object instanceof BigDecimal[]);
+    }
+
 }

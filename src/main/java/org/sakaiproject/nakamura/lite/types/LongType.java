@@ -22,4 +22,7 @@ public class LongType implements Type<Long> {
         return Long.class;
     }
 
+    public boolean accepts(Object object) {
+        return (object instanceof Long);
+    }
 }

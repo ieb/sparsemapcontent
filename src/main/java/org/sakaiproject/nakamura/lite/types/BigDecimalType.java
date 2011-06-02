@@ -22,5 +22,10 @@ public class BigDecimalType implements Type<BigDecimal> {
     public Class<BigDecimal> getTypeClass() {
         return BigDecimal.class;
     }
+    
+    public boolean accepts(Object object) {
+        return (object instanceof BigDecimal);
+    }
+
 
 }
