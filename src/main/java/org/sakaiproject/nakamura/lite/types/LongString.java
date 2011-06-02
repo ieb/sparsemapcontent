@@ -74,7 +74,6 @@ public class LongString {
     
     @Override
     public String toString() {
-        String s = null;
         if ( value == null || value.get() == null || lastModifed < 0 ) {
             try {
                 File f = new File(base, location);
