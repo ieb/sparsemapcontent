@@ -163,7 +163,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
             }
         };
 
-        String jdbcDriver = (String) properties.get(JDBC_DRIVER);
+        String jdbcDriver = StorageClientUtils.getSetting(properties.get(JDBC_DRIVER),"");
         Class<?> clazz = Class.forName(jdbcDriver);
 
         connectionProperties = getConnectionProperties(properties);
@@ -196,8 +196,8 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
         timer.cancel();
         connectionManager.close();
 
-        String connectionUrl = (String) this.properties.get(CONNECTION_URL);
-        String jdbcDriver = (String) properties.get(JDBC_DRIVER);
+        String connectionUrl = StorageClientUtils.getSetting(this.properties.get(CONNECTION_URL),"");
+        String jdbcDriver = StorageClientUtils.getSetting(properties.get(JDBC_DRIVER),"");
         if ("org.apache.derby.jdbc.EmbeddedDriver".equals(jdbcDriver) && connectionUrl != null) {
             // need to shutdown this instance.
             String[] parts = StringUtils.split(connectionUrl, ';');
