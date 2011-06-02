@@ -31,4 +31,7 @@ public class IntegerArrayType implements Type<int[]> {
         return int[].class;
     }
 
+    public boolean accepts(Object object) {
+        return (object instanceof int[]);
+    }
 }

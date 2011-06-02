@@ -37,7 +37,9 @@ public class Types {
         new BigDecimalArrayType(),
         new DoubleArrayType(),
         new CalendarArrayType(),
-        new RemovePropertyType()
+        new RemovePropertyType(),
+        new LongStringArrayType(),
+        new LongStringType()
     };
     private static final Type<String> UNKNOWN_TYPE = new StringType();
     private static final Logger LOGGER = LoggerFactory.getLogger(Types.class);
@@ -207,12 +209,15 @@ public class Types {
         }
         Class<?> c = object.getClass();
         if ( typeMap.containsKey(c)) {
-            return (Type<?>) typeMap.get(c);
+            Type<?> t = typeMap.get(c);
+            if ( t.accepts(object) ) {
+                return (Type<?>) t;
+            }
         }
         for ( Entry<Class<?>,Type<?>> e : typeMap.entrySet()) {
-            Class<?> tc = e.getKey();
-            if ( tc.isAssignableFrom(c) ) {
-                return (Type<?>) e.getValue();
+            Type<?> t = e.getValue();
+            if ( t.accepts(object) ) {
+                return (Type<?>) t;
             }
         }
         LOGGER.warn("Unknown Type For Object {}, needs to be implemented ",object.getClass());
@@ -243,6 +248,7 @@ public class Types {
     	return lookupTypeById(dis.readInt()).load(dis);
     	
     }
+
 
 
 

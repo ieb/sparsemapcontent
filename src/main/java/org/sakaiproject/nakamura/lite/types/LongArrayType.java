@@ -31,4 +31,7 @@ public class LongArrayType implements Type<long[]> {
         return long[].class;
     }
 
+    public boolean accepts(Object object) {
+        return (object instanceof long[]);
+    }
 }

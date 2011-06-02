@@ -30,5 +30,10 @@ public class BooleanArrayType implements Type<boolean[]> {
     public Class<boolean[]> getTypeClass() {
         return boolean[].class;
     }
+    
+    public boolean accepts(Object object) {
+        return (object instanceof boolean[]);
+    }
+
 
 }

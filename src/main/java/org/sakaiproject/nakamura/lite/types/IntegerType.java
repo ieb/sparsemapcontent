@@ -21,5 +21,9 @@ public class IntegerType implements Type<Integer> {
     public Class<Integer> getTypeClass() {
         return Integer.class;
     }
+    
+    public boolean accepts(Object object) {
+        return (object instanceof Integer);
+    }
 
 }

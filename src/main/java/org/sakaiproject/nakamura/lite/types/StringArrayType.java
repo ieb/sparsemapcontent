@@ -6,6 +6,7 @@ import java.io.IOException;
 
 public class StringArrayType implements Type<String[]> {
 
+
     public int getTypeId() {
         return 1000;
     }
@@ -30,5 +31,20 @@ public class StringArrayType implements Type<String[]> {
     public Class<String[]> getTypeClass() {
         return String[].class;
     }
+    
+    public boolean accepts(Object object) {
+        if (object instanceof String[]) {
+            if (StringType.getLengthLimit() > 0) {
+                for ( String s : (String[])object) {
+                    if ( s.length() > StringType.getLengthLimit()) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        return false;
+    }
 
+    
 }

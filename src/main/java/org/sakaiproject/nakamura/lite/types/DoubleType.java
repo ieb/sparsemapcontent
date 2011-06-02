@@ -22,4 +22,7 @@ public class DoubleType implements Type<Double> {
         return Double.class;
     }
 
+    public boolean accepts(Object object) {
+        return (object instanceof Double);
+    }
 }

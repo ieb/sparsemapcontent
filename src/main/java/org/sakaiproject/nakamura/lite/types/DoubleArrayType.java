@@ -31,4 +31,7 @@ public class DoubleArrayType implements Type<double[]> {
         return double[].class;
     }
 
+    public boolean accepts(Object object) {
+        return (object instanceof double[]);
+    }
 }

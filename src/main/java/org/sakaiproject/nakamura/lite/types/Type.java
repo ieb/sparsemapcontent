@@ -12,10 +12,32 @@ public interface Type<T> {
      */
     int getTypeId();
 
+    /**
+     * Safe the type to a data output stream
+     * @param dos
+     * @param o
+     * @throws IOException
+     */
     void save(DataOutputStream dos, Object o) throws IOException;
 
+    /**
+     * Load the type from a data output stream
+     * @param in
+     * @return
+     * @throws IOException
+     */
     T load(DataInputStream in) throws IOException;
 
+    /**
+     * @return get the class of the type
+     */
     Class<T> getTypeClass();
+
+    /**
+     * return true if the Type can save the object.
+     * @param object
+     * @return
+     */
+    boolean accepts(Object object);
 
 }

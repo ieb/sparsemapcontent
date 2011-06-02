@@ -24,6 +24,7 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.lite.types.StringType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +56,8 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
     private static final String TEST_WHILE_IDLE = "test-while-idle";
     @Property(value = "grow")
     private static final String WHEN_EHAUSTED = "when-exhausted-action";
+    @Property(intValue = 0)
+    private static final String LONG_STRING_SIZE = "long-string-size";
 
     private GenericObjectPool pool;
 
@@ -88,6 +91,9 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
         pool = new GenericObjectPool(getConnectionPoolFactory(), maxActive, whenExhaustedAction,
                 maxWait, maxIdle, testOnBorrow, testOnReturn, timeBetweenEvictionRunsMillis,
                 numTestsPerEvictionRun, minEvictableIdleTimeMillis, testWhileIdle);
+        
+        // set the maximum size of a string, if this is not 0, strings over this size will become files.
+        StringType.setLengthLimit(getProperty(properties.get(LONG_STRING_SIZE),0));
 
     }
 
