@@ -6,8 +6,8 @@
   <artifactId>org.sakaiproject.nakamura.core</artifactId>
   <packaging>bundle</packaging>
   <version>1.0-SNAPSHOT</version>
-  <name>Sakai Nakamura :: Cassandra based server bundle.</name>
-  <description>Server that uses Cassandra.</description>
+  <name>Sakai Nakamura :: Sparse Map Content Storage bundle.</name>
+  <description>Server that uses a sparse map to represent content mapping closely to a colum database like Cassandra.</description>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
@@ -76,24 +76,19 @@
             <Export-Package>
               org.sakaiproject.nakamura.api.lite.*
 			</Export-Package>
+			<DynamicImport-Package>*</DynamicImport-Package>
 			<Import-Package>
-			   !org.jboss.resource.adapter.jdbc.*,
-			   !com.mchange.v2.c3p0.*,
 			   !org.apache.xpath.*,
 			   !org.apache.xalan.*,
 			   !org.apache.xml.utils.*,
 			   !org.apache.derby.impl.drda.*,
-			   !org.apache.commons.cli.*,
-			   !org.json.simple.*,
-			   !com.reardencommerce.*,
-			   !jline,
-			   !org.apache.hadoop.*,
-			   !org.antlr.runtime.*,
-			   !org.cliffc.high_scale_lib.*,
-			   !com.sun.jna.*,
-			   !org.junit.*,
+			   org.apache.cassandra.thrift;resolution:=optional,
+			   org.apache.thrift;resolution:=optional,
+			   org.apache.thrift.protocol;resolution:=optional,
+			   org.apache.thrift.transport;resolution:=optional,
 			   <!-- Uncomment for Oracle -->
 			   <!--
+			   Please verify that with Dynamic-Import this is not required. I think only packages that are explicity mentioned need this.
                 oracle.i18n.text;resolution:=optional,
                 oracle.i18n.text.converter;resolution:=optional,
                 oracle.ons;resolution:=optional,
@@ -104,7 +99,9 @@
             <Private-Package>org.sakaiproject.nakamura.lite.*</Private-Package>
             <!-- For Oracle, include ojdbc in your Embed-Dependency element -->
             <!-- <Embed-Dependency>libthrift,apache-cassandra,mysql-connector-java,derby,ojdbc</Embed-Dependency> -->
-            <Embed-Dependency>libthrift,apache-cassandra,mysql-connector-java,derby</Embed-Dependency>
+            <!--  <Embed-Dependency>libthrift,apache-cassandra,mysql-connector-java,derby</Embed-Dependency> -->
+            <!--  Only embed Derby, the other Jars must be provided as seperate bundles -->
+            <Embed-Dependency>derby</Embed-Dependency>
           </instructions>
         </configuration>
       </plugin>
@@ -115,6 +112,28 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>     
+   <profile>
+      <id>redeploy</id>
+      <build>
+       <plugins>
+         <plugin>
+          <groupId>org.apache.sling</groupId>
+          <artifactId>maven-sling-plugin</artifactId>
+          <version>2.0.5-SNAPSHOT</version>
+          <executions>
+            <execution>
+              <id>install-bundle</id>
+              <goals>
+                <goal>install</goal>
+              </goals>
+            </execution>
+          </executions>
+         </plugin>
+       </plugins>
+      </build>
+    </profile>
+  </profiles>
   <dependencies>
   
      

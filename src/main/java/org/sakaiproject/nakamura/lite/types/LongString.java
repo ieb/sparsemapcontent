@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -21,7 +22,10 @@ public class LongString {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(LongString.class);
     private String location;
+    private WeakReference<String> value;
+    private long lastModifed = -1;
     private static String base;
+    
 
     LongString(String location) {
         this.location = location;
@@ -50,6 +54,9 @@ public class LongString {
         FileWriter fw = new FileWriter(f);
         fw.write(content);
         fw.close();
+        // re-create the file to ensure the values are updated.
+        f = new File(base, location);
+        lastModifed  = f.lastModified();
     }
 
     @Override
@@ -67,15 +74,25 @@ public class LongString {
     
     @Override
     public String toString() {
-        try {
-        File f = new File(base, location);
-        FileReader fr = new FileReader(f);
-        String value = IOUtils.toString(fr);
-        fr.close();
-        return value;
-        } catch ( IOException e) {
-            LOGGER.error(e.getMessage(),e);
-            return "ERROR, unable to load LongString body, see error log on server for details at "+String.valueOf(new Date());
+        if ( value == null || value.get() == null || lastModifed < 0 ) {
+            try {
+                File f = new File(base, location);
+                if ( value == null || value.get() == null || lastModifed < f.lastModified() ) {
+                    FileReader fr = new FileReader(f);
+                    String v = IOUtils.toString(fr);
+                    fr.close();
+                    value = new WeakReference<String>(v);
+                    lastModifed = f.lastModified();
+                    return v;
+                } else {
+                    return value.get();
+                }
+            } catch ( IOException e) {
+                LOGGER.error(e.getMessage(),e);
+                return "ERROR, unable to load LongString body, see error log on server for details at "+String.valueOf(new Date());
+            }
+        } else {
+            return value.get();
         }
     }
 

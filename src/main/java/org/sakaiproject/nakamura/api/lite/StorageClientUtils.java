@@ -469,6 +469,21 @@ public class StorageClientUtils {
     @SuppressWarnings("unchecked")
     public static <T> T getSetting(Object setting, T defaultValue) {
         if (setting != null) {
+            if (defaultValue.getClass().isAssignableFrom(setting.getClass())) {
+                return (T) setting;
+            }
+            // handle conversions
+            if ( defaultValue instanceof Long ) {
+                return (T) new Long(String.valueOf(setting));
+            } else if ( defaultValue instanceof Integer ) {
+                return (T) new Integer(String.valueOf(setting));
+            } else if (defaultValue instanceof Boolean ) {
+                return (T) new Boolean(String.valueOf(setting));
+            } else if ( defaultValue instanceof Double ) {
+                return (T) new Double(String.valueOf(setting));
+            } else if ( defaultValue instanceof String[] ) {
+                return (T) StringUtils.split(String.valueOf(setting), ',');
+            }
             return (T) setting;
         }
         return defaultValue;

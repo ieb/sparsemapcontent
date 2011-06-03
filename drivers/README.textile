@@ -1,0 +1,16 @@
+h1. Map Content System Drivers.
+
+This subtree contains external drivers that may be needed to run other storage back ends. These drviers should be loaded seperately into the OSGi container, or used seperately in the JVM.
+
+Cassandra
+   Contains a combined Thrift + Cassandra Bundle
+
+Postgres
+  Contains a repackaged Postgres 9 driver
+
+
+MySQL
+  MySQL comes with the OSGi manifest already in the jar from the central maven repos
+
+Oracle
+  ?
