@@ -35,12 +35,16 @@ import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
 @Component(immediate = true, metatype = true)
 @Service(value = Repository.class)
 public class RepositoryImpl implements Repository {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RepositoryImpl.class);
 
     @Reference
     protected Configuration configuration;
@@ -68,8 +72,11 @@ public class RepositoryImpl implements Repository {
                     configuration);
             authorizableActivator.setup();
         } finally {
-            client.close();
-            clientPool.getClient();
+            if ( client != null ) {
+              client.close();
+            } else {
+                LOGGER.error("Failed to actvate repository, probably failed to create default users");
+            }
         }
     }
 
