@@ -45,12 +45,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Enumeration;
 import java.util.Properties;
 import java.util.Timer;
 
@@ -162,16 +165,44 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
                 return sharedCache;
             }
         };
+        if ( LOGGER.isDebugEnabled()) {
+            DriverManager.setLogWriter(new PrintWriter(System.err));
+        }
 
         String jdbcDriver = StorageClientUtils.getSetting(properties.get(JDBC_DRIVER),"");
-        Class<?> clazz = Class.forName(jdbcDriver);
-
+        Class<?> driverClass = this.getClass().getClassLoader().loadClass(jdbcDriver);
+        if ( driverClass != null  ) {
+            LOGGER.info("Loaded Driver Class {} with classloader {} ", driverClass, driverClass.getClassLoader());
+            try {
+                Driver d = (Driver) driverClass.newInstance();
+                if ( d == null ) {
+                    LOGGER.error("Error creating driver instance, got null from {} ",driverClass);
+                } else {
+                    LOGGER.info("Created Driver Instance as {} ", d);
+                }
+            } catch (InstantiationException e) {
+                LOGGER.info("Error Creating Driver {} ", driverClass, e);
+            } catch (IllegalAccessException e) {
+                LOGGER.info("Error Creating Driver {} ", driverClass, e);
+            }
+        } else {
+            LOGGER.error("Failed to Load the DB Driver {}, unless the driver is available in the core bundle, it probably wont be found.", jdbcDriver);
+        }
         connectionProperties = getConnectionProperties(properties);
         username = StorageClientUtils.getSetting(properties.get(USERNAME), "");
         password = StorageClientUtils.getSetting(properties.get(PASSWORD), "");
         url = StorageClientUtils.getSetting(properties.get(CONNECTION_URL), "");
 
-        LOGGER.info("Loaded Database Driver {} as {}  ", jdbcDriver, clazz);
+        LOGGER.info("Loaded Database Driver {} as {}  ", jdbcDriver, driverClass);
+        boolean registered = false;
+        for ( Enumeration<Driver> ed = DriverManager.getDrivers(); ed.hasMoreElements();) {
+            registered = true;
+            Driver d = ed.nextElement();
+            LOGGER.info("JDBC Driver Registration [{}] [{}] [{}] ", new Object[]{d, d.getClass(), d.getClass().getClassLoader()});
+        }
+        if ( !registered ) {
+            LOGGER.warn("The SQL Driver has no drivers registered, did you ensure that that your Driver started up before this bundle ?");
+        }
         JDBCStorageClient client = null;
         try {
             client = (JDBCStorageClient) getClient();
