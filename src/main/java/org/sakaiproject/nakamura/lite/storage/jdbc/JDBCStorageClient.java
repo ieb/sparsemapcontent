@@ -25,6 +25,7 @@ import com.google.common.collect.Sets;
 
 import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.DataFormatException;
 import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
@@ -45,6 +46,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UTFDataFormatException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -64,7 +66,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class JDBCStorageClient implements StorageClient, RowHasher {
 
-    public class SlowQueryLogger {
+  private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
+
+  public class SlowQueryLogger {
         // only used to define the logger.
     }
     private static final Logger LOGGER = LoggerFactory.getLogger(JDBCStorageClient.class);
@@ -237,8 +241,13 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 insertBlockRow.clearWarnings();
                 insertBlockRow.clearParameters();
                 insertBlockRow.setString(1, rid);
-                InputStream insertStream = Types.storeMapToStream(rid, m, columnFamily);
-                if ("1.5".equals(getSql(JDBC_SUPPORT_LEVEL))) {
+                InputStream insertStream = null;
+                try {
+                  insertStream = Types.storeMapToStream(rid, m, columnFamily);
+                } catch (UTFDataFormatException e) {
+                  throw new DataFormatException(INVALID_DATA_ERROR, e);
+                }
+              if ("1.5".equals(getSql(JDBC_SUPPORT_LEVEL))) {
                   insertBlockRow.setBinaryStream(2, insertStream, insertStream.available());
                 } else {
                   insertBlockRow.setBinaryStream(2, insertStream);
@@ -255,8 +264,12 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     updateBlockRow.clearWarnings();
                     updateBlockRow.clearParameters();
                     updateBlockRow.setString(2, rid);
+                  try {
                     insertStream = Types.storeMapToStream(rid, m, columnFamily);
-                    if ("1.5".equals(getSql(JDBC_SUPPORT_LEVEL))) {
+                  } catch (UTFDataFormatException e) {
+                    throw new DataFormatException(INVALID_DATA_ERROR, e);
+                  }
+                  if ("1.5".equals(getSql(JDBC_SUPPORT_LEVEL))) {
                       updateBlockRow.setBinaryStream(1, insertStream, insertStream.available());
                     } else {
                       updateBlockRow.setBinaryStream(1, insertStream);
@@ -275,8 +288,13 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 updateBlockRow.clearWarnings();
                 updateBlockRow.clearParameters();
                 updateBlockRow.setString(2, rid);
-                InputStream updateStream = Types.storeMapToStream(rid, m, columnFamily);
-                if ("1.5".equals(getSql(JDBC_SUPPORT_LEVEL))) {
+              InputStream updateStream = null;
+              try {
+                updateStream = Types.storeMapToStream(rid, m, columnFamily);
+              } catch (UTFDataFormatException e) {
+                  throw new DataFormatException(INVALID_DATA_ERROR, e);
+              }
+              if ("1.5".equals(getSql(JDBC_SUPPORT_LEVEL))) {
                   updateBlockRow.setBinaryStream(1, updateStream, updateStream.available());
                 } else {
                   updateBlockRow.setBinaryStream(1, updateStream);
@@ -287,8 +305,12 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     insertBlockRow.clearWarnings();
                     insertBlockRow.clearParameters();
                     insertBlockRow.setString(1, rid);
+                  try {
                     updateStream = Types.storeMapToStream(rid, m, columnFamily);
-                    if ("1.5".equals(getSql(JDBC_SUPPORT_LEVEL))) {
+                  } catch (UTFDataFormatException e) {
+                    throw new DataFormatException(INVALID_DATA_ERROR, e);
+                  }
+                  if ("1.5".equals(getSql(JDBC_SUPPORT_LEVEL))) {
                       insertBlockRow.setBinaryStream(2, updateStream, updateStream.available());
                     } else {
                       insertBlockRow.setBinaryStream(2, updateStream);

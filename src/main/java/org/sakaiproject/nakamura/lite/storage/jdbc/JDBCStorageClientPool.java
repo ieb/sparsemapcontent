@@ -164,7 +164,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
         };
 
         String jdbcDriver = StorageClientUtils.getSetting(properties.get(JDBC_DRIVER),"");
-        Class<?> clazz = Class.forName(jdbcDriver);
+        Class<?> clazz = this.getClass().getClassLoader().loadClass(jdbcDriver);
 
         connectionProperties = getConnectionProperties(properties);
         username = StorageClientUtils.getSetting(properties.get(USERNAME), "");
