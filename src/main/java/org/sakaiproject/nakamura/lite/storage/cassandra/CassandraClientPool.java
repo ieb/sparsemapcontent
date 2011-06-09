@@ -17,6 +17,8 @@
  */
 package org.sakaiproject.nakamura.lite.storage.cassandra;
 
+import com.google.common.collect.ImmutableMap;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.PoolableObjectFactory;
@@ -33,6 +35,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
@@ -42,7 +45,7 @@ import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
+import java.util.Map;;
 
 @Component(enabled = false, metatype = true, inherit = true)
 @Service(value = StorageClientPool.class)
@@ -54,7 +57,10 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
     
     @Reference(cardinality=ReferenceCardinality.OPTIONAL_UNARY, policy=ReferencePolicy.DYNAMIC)
     private StorageCacheManager storageManagerCache;
-
+    public static final String PROPERTIES_KEYSPACE="n";
+    public static final String INDEX_COLUMN_FAMILY="smcindex";
+    private static final String ROW_OF_PROPERTIES="default";
+    private static final String PROPERTIES_INDEX_COLUMN_NAME="validIndex";
 
     public static class ClientConnectionPoolFactory extends BasePoolableObjectFactory {
 
@@ -76,7 +82,8 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
                 hosts[i] = spec[0];
                 ports[i] = Integer.parseInt(spec[1]);
                 i++;
-            }
+            }   
+            
         }
 
         @Override
@@ -124,6 +131,7 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
                     tSocket.isOpen());
             CassandraClient clientConnection = new CassandraClient(pool, tProtocol, tSocket,
                     properties);
+            
             return clientConnection;
         }
 
@@ -176,6 +184,29 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
         this.properties = properties;
         super.activate(properties);
         // this should come from the memory service ultimately.
+        
+           CassandraClient client = null;
+           try {
+               client = (CassandraClient) getClient();
+               if (client == null) {
+                   LOGGER.warn("No connection");
+               }
+               else{       
+                   client.insert(PROPERTIES_KEYSPACE, INDEX_COLUMN_FAMILY, ROW_OF_PROPERTIES, ImmutableMap.of(PROPERTIES_INDEX_COLUMN_NAME,
+                   properties.get(PROPERTIES_INDEX_COLUMN_NAME)), true);            
+               } 
+           } catch (ClientPoolException e) {
+               LOGGER.error("Failed to check Schema", e);
+           } catch(StorageClientException e){
+               LOGGER.error("Storage client exception",e);
+             }
+             finally {
+                  if (client != null) {
+                     client.close();
+                  }
+               } 
+     
+       
         sharedCache = new ConcurrentLRUMap<String, CacheHolder>(10000);
         defaultStorageManagerCache = new StorageCacheManager() {
             
