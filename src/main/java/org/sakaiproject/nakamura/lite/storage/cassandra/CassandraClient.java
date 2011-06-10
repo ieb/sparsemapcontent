@@ -17,6 +17,7 @@
  */
 package org.sakaiproject.nakamura.lite.storage.cassandra;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
 import org.sakaiproject.nakamura.lite.types.Types;
@@ -31,10 +32,8 @@ import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.cassandra.thrift.Mutation;
 import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.thrift.SliceRange;
-import org.apache.cassandra.thrift.SuperColumn;
 import org.apache.cassandra.thrift.TimedOutException;
 import org.apache.cassandra.thrift.UnavailableException;
-import org.apache.commons.lang.SerializationUtils;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
@@ -51,13 +50,9 @@ import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +66,10 @@ public class CassandraClient extends Client implements StorageClient {
 
     private static final int DEFAULT_BLOCK_SIZE = 1024 * 1024;
     private static final int DEFAULT_MAX_CHUNKS_PER_BLOCK = 64;
+    private static final String INDEX_COLUMN_FAMILY = "smcindex";
+    private static final String PROPERTIES_INDEX_COLUMN_NAME = "validIndex";
+    private static ImmutableSet<String> indexColumns;
+    private static final String ROW_OF_PROPERTIES = "default";
 
 
     private TSocket tSocket;
@@ -89,7 +88,6 @@ public class CassandraClient extends Client implements StorageClient {
                 DEFAULT_BLOCK_SIZE);
         maxChunksPerBlockSet = StorageClientUtils.getSetting(
                 properties.get(CONFIG_MAX_CHUNKS_PER_BLOCK), DEFAULT_MAX_CHUNKS_PER_BLOCK);
-
     }
 
     public void close() {
@@ -129,13 +127,13 @@ public class CassandraClient extends Client implements StorageClient {
 
         ColumnParent parent = new ColumnParent(columnFamily);
         List<ColumnOrSuperColumn> results = get_slice(keySpace, key, parent, predicate,ConsistencyLevel.ONE);
-    	
+   
         for (ColumnOrSuperColumn result : results) {
             if (result.isSetSuper_column()) {
-    		    Map<String, Object> sc = new HashMap<String, Object>();
-    			
-    		    for (Column column : result.super_column.columns) { 
-                    Object columnValue=Types.toObject(column.value);    				 
+       Map<String, Object> sc = new HashMap<String, Object>();
+   
+       for (Column column : result.super_column.columns) { 
+                    Object columnValue=Types.toObject(column.value);      
                     sc.put(new String(column.name,"UTF-8"),columnValue);
                 }
                 row.put(new String(result.super_column.name,"UTF-8"), sc);
@@ -173,11 +171,10 @@ public class CassandraClient extends Client implements StorageClient {
                 String name = value.getKey();
                 byte[] bname=null;
                 try {
-					bname = name.getBytes("UTF-8");
-				} catch (UnsupportedEncodingException e1) {
+                    bname = name.getBytes("UTF-8");
+                    } catch (UnsupportedEncodingException e1) {
                     LOGGER.debug(e1.getMessage());
-				}
-                
+                    }                
                 Object v = value.getValue();
                 if (v instanceof RemoveProperty) {
                     Deletion deletion = new Deletion();
@@ -197,6 +194,10 @@ public class CassandraClient extends Client implements StorageClient {
                          Mutation mu = new Mutation();
                          mu.setColumn_or_supercolumn(csc);
                          keyMutations.add(mu);
+                         
+                         if((!columnFamily.equals(INDEX_COLUMN_FAMILY))&&shouldIndex(keySpace, columnFamily, name)) {
+                              addIndex(keySpace,columnFamily,key,bname,b);
+                         }
 
                     }
                     catch(IOException e)
@@ -220,6 +221,28 @@ public class CassandraClient extends Client implements StorageClient {
 
     public void remove(String keySpace, String columnFamily, String key)
             throws StorageClientException {
+      if(!columnFamily.equals(INDEX_COLUMN_FAMILY)){
+        Map<String, Object> row = new HashMap<String, Object>();
+        Map<String, Object> indexRow = new HashMap<String, Object>();
+        row=get(keySpace, columnFamily, key);
+        
+        for (Entry<String, Object> value : row.entrySet()) {
+          try {
+            String columnname = value.getKey();
+            String columnvalue = null;
+            columnvalue = new String(Types.toByteArray(value.getValue()));
+            columnvalue=StorageClientUtils.insecureHash(columnvalue);
+            String indexKey=columnname+":"+INDEX_COLUMN_FAMILY+":"+columnvalue;
+            indexRow=get(keySpace,INDEX_COLUMN_FAMILY,indexKey);         
+            indexRow.remove(key);
+            remove(keySpace,INDEX_COLUMN_FAMILY,indexKey);
+            insert(keySpace,INDEX_COLUMN_FAMILY,indexKey,indexRow,true);
+          }  catch (IOException e) {
+            LOGGER.debug("IOException. Stack trace:"+e.getStackTrace());
+          }
+        }
+      }
+
         ColumnPath cp = new ColumnPath(columnFamily);
         try {
             remove(keySpace, key, cp, System.currentTimeMillis(), ConsistencyLevel.ONE);
@@ -263,5 +286,30 @@ public class CassandraClient extends Client implements StorageClient {
     public boolean hasBody(Map<String, Object> content, String streamId) {
         return contentHelper.hasBody(content, streamId);
     }
+    private void addIndex(String keySpace,String columnFamily,String key,byte[] bname,byte[] b)throws StorageClientException {
+      String indexKey = new String(bname)+":"+columnFamily+":"+new String(b);
+      Map<String, Object> values = new HashMap<String, Object>();
+      values.put(key,(Object)(new String("Whatever value of index")));
+      insert(keySpace,INDEX_COLUMN_FAMILY,indexKey,values,true);
+    }
+    private boolean shouldIndex(String keySpace, String columnFamily, String columnName) throws StorageClientException {
+      if (indexColumns == null) {
+        Map<String,Object> loadProperties=get(keySpace,INDEX_COLUMN_FAMILY,ROW_OF_PROPERTIES);
+        
+        if(loadProperties == null)
+          return false;
+               
+        indexColumns = ImmutableSet.of(((String) loadProperties.get(PROPERTIES_INDEX_COLUMN_NAME)).split(","));         
+      }
+      
+      if (indexColumns.contains(columnFamily + ":" + columnName)) {
+        LOGGER.debug("Should Index {}:{}", columnFamily, columnName);
+        return true;
+    } else {
+        LOGGER.debug("Should Not Index {}:{}", columnFamily, columnName);
+        return false;
+    }
+  }
+    
     
 }

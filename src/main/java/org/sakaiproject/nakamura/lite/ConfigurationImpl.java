@@ -38,6 +38,24 @@ public class ConfigurationImpl implements Configuration {
     private static final String AUTHORIZABLE_COLUMN_FAMILY = "authorizable-column-family";
     @Property(value = "cn")
     private static final String CONTENT_COLUMN_FAMILY = "content-column-family";
+    
+    private static final String[] PROPERTIES_INDEX_COLUMN_NAME = {
+      "au:rep:principalName",
+      "au:type",
+      "cn:sling:resourceType",
+      "cn:sakai:pooled-content-manager",
+      "cn:sakai:messagestore",
+      "cn:sakai:type",
+      "cn:sakai:marker",
+      "cn:sakai:tag-uuid",
+      "cn:sakai:contactstorepath",
+      "cn:sakai:state",
+      "cn:_created",
+      "cn:sakai:category",
+      "cn:sakai:messagebox",
+      "cn:sakai:from",
+      "cn:sakai:subject"
+      };
 
     private String aclColumnFamily;
     private String keySpace;
@@ -66,5 +84,8 @@ public class ConfigurationImpl implements Configuration {
 
     public String getContentColumnFamily() {
         return contentColumnFamily;
+    }
+    public String[] getPropertiesIndexColumnName() {
+        return PROPERTIES_INDEX_COLUMN_NAME;
     }
 }
