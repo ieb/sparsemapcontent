@@ -101,6 +101,8 @@ insert into index_cols (cid) values ('cn:sakai:tag-uuid');
 # /var/contacts/findstate.json
 insert into index_cols (cid) values ('cn:sakai:contactstorepath');
 insert into index_cols (cid) values ('cn:sakai:state');
+insert into index_cols (cid) values ('cn:firstName');
+insert into index_cols (cid) values ('cn:lastName');
 # content sorting
 insert into index_cols (cid) values ('cn:_created');
 # /var/message/boxcategory.json
@@ -108,3 +110,4 @@ insert into index_cols (cid) values ('cn:sakai:category');
 insert into index_cols (cid) values ('cn:sakai:messagebox');
 insert into index_cols (cid) values ('cn:sakai:from');
 insert into index_cols (cid) values ('cn:sakai:subject');
+

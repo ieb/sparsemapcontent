@@ -166,6 +166,8 @@ insert into index_cols (cid) values ('cn:sakai:tag-uuid');
 # /var/contacts/findstate.json
 insert into index_cols (cid) values ('cn:sakai:contactstorepath');
 insert into index_cols (cid) values ('cn:sakai:state');
+insert into index_cols (cid) values ('cn:firstName');
+insert into index_cols (cid) values ('cn:lastName');
 # content sorting
 insert into index_cols (cid) values ('cn:_created');
 # /var/message/boxcategory.json
