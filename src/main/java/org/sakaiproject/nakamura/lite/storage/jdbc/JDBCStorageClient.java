@@ -415,7 +415,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     List<Entry<String, Object>> updateSeq = updateSequence.get(pst);
                     for (int i = 0; i < res.length; i++) {
                         Entry<String, Object> e = updateSeq.get(i);
-                        if (res[i] <= 0) {
+                        if (res[i] <= 0 && res[i] != -2 ) { // Oracle Drivers respond with -2 on success if the exact number updated is not known. http://download.oracle.com/javase/1.3/docs/guide/jdbc/spec2/jdbc2.1.frame6.html 
                             String k = e.getKey();
                             Object o = e.getValue();
                             Object[] valueMembers = (o instanceof Object[]) ? (Object[]) o : new Object[] { o };
@@ -449,7 +449,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     List<Entry<String, Object>> insertSeq = insertSequence.get(pst);
                     for (int i = 0; i < res.length; i++ ) {
                         Entry<String, Object> e = insertSeq.get(i);
-                        if ( res[i] <= 0 ) {
+                        if ( res[i] <= 0 && res[i] != -2 ) { // Oracle drivers respond with -2 on a successful insert when the number is not known http://download.oracle.com/javase/1.3/docs/guide/jdbc/spec2/jdbc2.1.frame6.html
                             LOGGER.warn("Index failed for {} {} ", new Object[] { rid, e.getKey(),
                                     e.getValue() });
                             
