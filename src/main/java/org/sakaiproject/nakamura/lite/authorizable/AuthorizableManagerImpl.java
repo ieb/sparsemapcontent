@@ -40,6 +40,7 @@ import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.sakaiproject.nakamura.lite.CachingManager;
+import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
@@ -75,7 +76,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
     private StoreListener storeListener;
 
     public AuthorizableManagerImpl(User currentUser, StorageClient client,
-            Configuration configuration, AccessControlManager accessControlManager,
+            Configuration configuration, AccessControlManagerImpl accessControlManager,
             Map<String, CacheHolder> sharedCache, StoreListener storeListener) throws StorageClientException,
             AccessDeniedException {
         super(client, sharedCache);
@@ -91,6 +92,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         this.authenticator = new AuthenticatorImpl(client, configuration);
         this.closed = false;
         this.storeListener = storeListener;
+        accessControlManager.setAuthorizableManager(this);
     }
 
     public User getUser() {
