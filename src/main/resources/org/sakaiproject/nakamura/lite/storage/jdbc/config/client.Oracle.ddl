@@ -121,3 +121,5 @@ insert into index_cols (cid) values ('cn:_created');
 # /var/message/boxcategory.json
 insert into index_cols (cid) values ('cn:sakai:category');
 insert into index_cols (cid) values ('cn:sakai:messagebox');
+insert into index_cols (cid) values ('cn:sakai:from');
+insert into index_cols (cid) values ('cn:sakai:subject');
