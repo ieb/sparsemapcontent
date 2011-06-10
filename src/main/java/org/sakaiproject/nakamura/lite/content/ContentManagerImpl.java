@@ -428,7 +428,12 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                     accessControlManager.getCurrentUserId());
         }
         putCached(keySpace, contentColumnFamily, contentId, metadata, isnew);
-        long length = (Long) metadata.get(LENGTH_FIELD);
+        long length = 0;
+        if (metadata.containsKey(LENGTH_FIELD)) {
+          length = (Long) metadata.get(LENGTH_FIELD);
+        } else if (metadata.containsKey(LENGTH_FIELD + "/" + streamId)) {
+          length = (Long) metadata.get(LENGTH_FIELD + "/" + streamId);
+        }
         eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), false, null, "stream", streamId);
         return length;
 
