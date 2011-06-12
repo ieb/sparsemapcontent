@@ -324,7 +324,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
             }
             toSave =  Maps.newHashMap(content.getPropertiesForUpdate());
             boolean isAdmin = User.ADMIN_USER.equals(accessControlManager.getCurrentUserId());
-            id = StorageClientUtils.getUuid();
+            id = StorageClientUtils.getInternalUuid();
             // if the user is admin we allow overwriting of protected fields. This should allow content migration.
             setField(isAdmin, toSave, UUID_FIELD, id);
             toSave.put(PATH_FIELD, path);
@@ -413,7 +413,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         if (content.containsKey(blockIdField)) {
             isnew = false;      
         }
-        String contentBlockId = StorageClientUtils.getUuid();
+        String contentBlockId = StorageClientUtils.getInternalUuid();
         
         Map<String, Object> metadata = client.streamBodyIn(keySpace, contentColumnFamily,
                 contentId, contentBlockId, streamId, content, in);
@@ -650,7 +650,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         String versionHistoryId = (String)saveVersion.get(VERSION_HISTORY_ID_FIELD);
 
         if (versionHistoryId == null) {
-            versionHistoryId = StorageClientUtils.getUuid();
+            versionHistoryId = StorageClientUtils.getInternalUuid();
             LOGGER.debug("Created new Version History UUID as {} for Object {} ",versionHistoryId, saveVersionId);
             saveVersion.put(VERSION_HISTORY_ID_FIELD, versionHistoryId);
         } else {
@@ -659,7 +659,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         }
 
         Map<String, Object> newVersion = Maps.newHashMap(saveVersion);
-        String newVersionId = StorageClientUtils.getUuid();
+        String newVersionId = StorageClientUtils.getInternalUuid();
 
 
         String saveBlockId = (String)saveVersion.get(BLOCKID_FIELD);

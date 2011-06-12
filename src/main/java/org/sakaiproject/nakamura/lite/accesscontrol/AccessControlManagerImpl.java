@@ -138,8 +138,8 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         }
         if ( !currentAcl.containsKey(_KEY)) {
             modifications.put(_KEY, key);
-            modifications.put(_OBJECT_TYPE, objectType);
-            modifications.put(_OBJECT_TYPE, objectPath);
+            modifications.put(_OBJECT_TYPE, objectType); // this is here to make data migration possible in the future 
+            modifications.put(_PATH, objectPath); // same
         }
         for (AclModification m : aclModifications) {
             String name = m.getAceKey();

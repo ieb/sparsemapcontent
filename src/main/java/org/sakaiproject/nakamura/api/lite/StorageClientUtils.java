@@ -653,4 +653,8 @@ public class StorageClientUtils {
         contentManager.delete(path);
     }
 
+    public static String getInternalUuid() {
+        return getUuid()+"+"; // URL safe base 64 does not use + chars
+    }
+
 }
