@@ -216,10 +216,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
     }
 
     private String getAclKey(String objectType, String objectPath) {
-        if (objectPath != null && objectPath.startsWith("/")) {
-            return objectType + objectPath;
-        }
-        return objectType + "/" + objectPath;
+        return objectType + ";" + objectPath;
     }
 
     public void setRequestPrincipalResolver(PrincipalTokenResolver principalTokenResolver ) {
