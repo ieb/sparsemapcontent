@@ -429,10 +429,9 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         }
         putCached(keySpace, contentColumnFamily, contentId, metadata, isnew);
         long length = 0;
-        if (metadata.containsKey(LENGTH_FIELD)) {
-          length = (Long) metadata.get(LENGTH_FIELD);
-        } else if (metadata.containsKey(LENGTH_FIELD + "/" + streamId)) {
-          length = (Long) metadata.get(LENGTH_FIELD + "/" + streamId);
+        String lengthFieldName = StorageClientUtils.getAltField(LENGTH_FIELD, streamId);
+        if (metadata.containsKey(lengthFieldName)) {
+          length = (Long) metadata.get(lengthFieldName);
         }
         eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), false, null, "stream", streamId);
         return length;
