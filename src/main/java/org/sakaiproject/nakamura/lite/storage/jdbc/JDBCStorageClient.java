@@ -325,7 +325,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 }
             }
             if ("1".equals(getSql(USE_BATCH_INSERTS))) {
-                Set<PreparedStatement> updateSet = Sets.newHashSet();
                 Map<PreparedStatement, List<Entry<String, Object>>> updateSequence = Maps
                         .newHashMap();
                 Set<PreparedStatement> removeSet = Sets.newHashSet();
@@ -384,21 +383,28 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     // create a holding map containing a rowhash of the parent and then process the entry to generate a update operation.
                     Map<String, Object> autoIndexMap = ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)rowHash(keySpace, columnFamily, StorageClientUtils.getParentObjectPath(key)));
                     for ( Entry<String, Object> e : autoIndexMap.entrySet()) {
-                        PreparedStatement updateStringColumn = getStatement(keySpace,
-                                columnFamily, SQL_UPDATE_STRING_COLUMN, rid, statementCache);
-                        updateStringColumn.setString(1, (String)e.getValue());
-                        updateStringColumn.setString(2, rid);
-                        updateStringColumn.setString(3, e.getKey());
-                        updateStringColumn.addBatch();
-                        LOGGER.debug("Update {} {}", e.getKey(), e.getValue());
-                        updateSet.add(updateStringColumn);
-                        List<Entry<String, Object>> updateSeq = updateSequence
-                                .get(updateStringColumn);
-                        if (updateSeq == null) {
-                            updateSeq = Lists.newArrayList();
-                            updateSequence.put(updateStringColumn, updateSeq);
+                        // remove all previous values
+                        PreparedStatement removeStringColumn = getStatement(keySpace,
+                                columnFamily, SQL_REMOVE_STRING_COLUMN, rid, statementCache);
+                        removeStringColumn.setString(1, rid);
+                        removeStringColumn.setString(2, e.getKey());
+                        removeStringColumn.addBatch();
+                        removeSet.add(removeStringColumn);
+                        PreparedStatement insertStringColumn = getStatement(keySpace,
+                                columnFamily, SQL_INSERT_STRING_COLUMN, rid, statementCache);
+                        insertStringColumn.setString(1, (String)e.getValue());
+                        insertStringColumn.setString(2, rid);
+                        insertStringColumn.setString(3, e.getKey());
+                        insertStringColumn.addBatch();
+                        LOGGER.debug("Insert {} {}", e.getKey(), e.getValue());
+                        insertSet.add(insertStringColumn);
+                        List<Entry<String, Object>> insertSeq = insertSequence
+                                .get(insertStringColumn);
+                        if (insertSeq == null) {
+                            insertSeq = Lists.newArrayList();
+                            insertSequence.put(insertStringColumn, insertSeq);
                         }
-                        updateSeq.add(e);
+                        insertSeq.add(e);
                     }
                 }
 
@@ -408,41 +414,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     pst.executeBatch();
                 }
 
-                LOGGER.debug("Update set {}", updateSet);
-
-                for (PreparedStatement pst : updateSet) {
-                    int[] res = pst.executeBatch();
-                    List<Entry<String, Object>> updateSeq = updateSequence.get(pst);
-                    for (int i = 0; i < res.length; i++) {
-                        Entry<String, Object> e = updateSeq.get(i);
-                        if (res[i] <= 0 && res[i] != -2 ) { // Oracle Drivers respond with -2 on success if the exact number updated is not known. http://download.oracle.com/javase/1.3/docs/guide/jdbc/spec2/jdbc2.1.frame6.html 
-                            String k = e.getKey();
-                            Object o = e.getValue();
-                            Object[] valueMembers = (o instanceof Object[]) ? (Object[]) o : new Object[] { o };
-                            for (Object ov : valueMembers) {
-                                String valueMember = ov.toString();
-                                PreparedStatement insertStringColumn = getStatement(keySpace,
-                                    columnFamily, SQL_INSERT_STRING_COLUMN, rid, statementCache);
-                                insertStringColumn.setString(1, valueMember);
-                                insertStringColumn.setString(2, rid);
-                                insertStringColumn.setString(3, k);
-                                insertStringColumn.addBatch();
-                                LOGGER.debug("Insert Index {} {}", k, valueMember);
-                                insertSet.add(insertStringColumn);
-                                List<Entry<String, Object>> insertSeq = insertSequence
-                                .get(insertStringColumn);
-                                if (insertSeq == null) {
-                                  insertSeq = Lists.newArrayList();
-                                  insertSequence.put(insertStringColumn, insertSeq);
-                                }
-                                insertSeq.add(e);
-                            }
-                        } else {
-                            LOGGER.debug("Index updated for {} {} ", new Object[] { rid, e.getKey(),
-                                    e.getValue() });
-                        }
-                    }
-                }
                 LOGGER.debug("Insert set {}", insertSet);
                 for (PreparedStatement pst : insertSet) {
                     int[] res = pst.executeBatch();
@@ -525,41 +496,49 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                     }
                 }
 
-                if ( !StorageClientUtils.isRoot(key)) {
-                   String parent = StorageClientUtils.getParentObjectPath(key);
-                   String hash =  rowHash(keySpace, columnFamily, parent);
-                   LOGGER.debug("Hash of {}:{}:{} is {} ",new Object[]{keySpace, columnFamily, parent, hash});
-                    Map<String, Object> autoIndexMap = ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash);
-                    for ( Entry<String, Object> e : autoIndexMap.entrySet()) {
-                        PreparedStatement updateStringColumn = getStatement(keySpace,
-                                columnFamily, SQL_UPDATE_STRING_COLUMN, rid, statementCache);
-                        updateStringColumn.clearWarnings();
-                        updateStringColumn.clearParameters();
-                        updateStringColumn.setString(1, (String) e.getValue());
-                        updateStringColumn.setString(2, rid);
-                        updateStringColumn.setString(3, e.getKey());
-
-                        if (updateStringColumn.executeUpdate() == 0) {
-                            PreparedStatement insertStringColumn = getStatement(keySpace,
-                                    columnFamily, SQL_INSERT_STRING_COLUMN, rid, statementCache);
-                            insertStringColumn.clearWarnings();
-                            insertStringColumn.clearParameters();
-                            insertStringColumn.setString(1, (String) e.getValue());
-                            insertStringColumn.setString(2, rid);
-                            insertStringColumn.setString(3, e.getKey());
-                            if (insertStringColumn.executeUpdate() == 0) {
-                                throw new StorageClientException("Failed to save "
-                                        + getRowId(keySpace, columnFamily, key) + "  column:["
-                                        + e.getKey() + "] ");
-                            } else {
-                                LOGGER.debug("Inserted Index {} {} [{}]",
-                                        new Object[] { getRowId(keySpace, columnFamily, key),
-                                                e.getKey(), e.getValue() });
-                            }
+                if (!StorageClientUtils.isRoot(key)) {
+                    String parent = StorageClientUtils.getParentObjectPath(key);
+                    String hash = rowHash(keySpace, columnFamily, parent);
+                    LOGGER.debug("Hash of {}:{}:{} is {} ", new Object[] { keySpace, columnFamily,
+                            parent, hash });
+                    Map<String, Object> autoIndexMap = ImmutableMap.of(
+                            InternalContent.PARENT_HASH_FIELD, (Object) hash);
+                    for (Entry<String, Object> e : autoIndexMap.entrySet()) {
+                        String k = e.getKey();
+                        Object v = e.getValue();
+                        PreparedStatement removeStringColumn = getStatement(keySpace, columnFamily,
+                                SQL_REMOVE_STRING_COLUMN, rid, statementCache);
+                        removeStringColumn.clearWarnings();
+                        removeStringColumn.clearParameters();
+                        removeStringColumn.setString(1, rid);
+                        removeStringColumn.setString(2, k);
+                        int nrows = removeStringColumn.executeUpdate();
+                        if (nrows == 0) {
+                            m = get(keySpace, columnFamily, key);
+                            LOGGER.debug(
+                                    "Column Not present did not remove {} {} Current Column:{} ",
+                                    new Object[] { getRowId(keySpace, columnFamily, key), k, m });
                         } else {
                             LOGGER.debug(
-                                    "Updated Index {} {} [{}]",
-                                    new Object[] { getRowId(keySpace, columnFamily, key), e.getKey(), e.getValue() });
+                                    "Removed Index {} {} {} ",
+                                    new Object[] { getRowId(keySpace, columnFamily, key), k, nrows });
+                        }
+
+                        PreparedStatement insertStringColumn = getStatement(keySpace, columnFamily,
+                                SQL_INSERT_STRING_COLUMN, rid, statementCache);
+                        insertStringColumn.clearWarnings();
+                        insertStringColumn.clearParameters();
+                        insertStringColumn.setString(1, v.toString());
+                        insertStringColumn.setString(2, rid);
+                        insertStringColumn.setString(3, k);
+                        LOGGER.debug("Non Batch Insert Index {} {}", k, v);
+                        if (insertStringColumn.executeUpdate() == 0) {
+                            throw new StorageClientException("Failed to save "
+                                    + getRowId(keySpace, columnFamily, key) + "  column:[" + k
+                                    + "] ");
+                        } else {
+                            LOGGER.debug("Inserted Index {} {} [{}]",
+                                    new Object[] { getRowId(keySpace, columnFamily, key), k, v });
                         }
                     }
                 }
