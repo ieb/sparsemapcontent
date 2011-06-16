@@ -100,4 +100,7 @@ public class LongString {
         return location;
     }
     
+    public static void setBase(String base) {
+        LongString.base = base;
+    }
 }

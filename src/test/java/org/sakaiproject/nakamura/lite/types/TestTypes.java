@@ -4,6 +4,7 @@ import com.google.common.collect.Maps;
 
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -19,6 +20,10 @@ public class TestTypes {
     private static final String SHORTSTRING = "AShortString";
     private static final String LONGSTRING = "Longer than "+SHORTSTRING;
 
+    @Before
+    public void before() {
+        LongString.setBase("target/longstringstore");
+    }
 
     @Test
     public void testTypes() {
