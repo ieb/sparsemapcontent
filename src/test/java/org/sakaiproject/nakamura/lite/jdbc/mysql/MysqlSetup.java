@@ -33,7 +33,7 @@ public class MysqlSetup {
                             .of(JDBCStorageClientPool.CONNECTION_URL,
                                     (Object) "jdbc:mysql://127.0.0.1:3306/sakai22?useUnicode=true&amp;characterEncoding=UTF-8",
                                     JDBCStorageClientPool.JDBC_DRIVER, "com.mysql.jdbc.Driver",
-                                    "username", "sakai22", "password", "sakai22"));
+                                    "username", "sakai22", "password", "sakai22","store-base-dir", "target/store"));
             return connectionPool;
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e.getMessage(), e);

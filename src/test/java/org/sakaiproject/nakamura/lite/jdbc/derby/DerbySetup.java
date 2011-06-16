@@ -30,7 +30,8 @@ public class DerbySetup {
             JDBCStorageClientPool connectionPool = new JDBCStorageClientPool();
             connectionPool.activate(ImmutableMap.of(JDBCStorageClientPool.CONNECTION_URL,
                     (Object) "jdbc:derby:memory:MyDB;create=true",
-                    JDBCStorageClientPool.JDBC_DRIVER, "org.apache.derby.jdbc.EmbeddedDriver"));
+                    JDBCStorageClientPool.JDBC_DRIVER, "org.apache.derby.jdbc.EmbeddedDriver",
+                    "store-base-dir", "target/store"));
             return connectionPool;
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e.getMessage(), e);

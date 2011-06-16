@@ -33,7 +33,7 @@ public class OracleSetup {
                             .of(JDBCStorageClientPool.CONNECTION_URL,
                                     (Object) "jdbc:oracle:thin:@127.0.0.1:1521:XE",
                                     JDBCStorageClientPool.JDBC_DRIVER, "oracle.jdbc.driver.OracleDriver",
-                                    "username", "sakai22", "password", "sakai22"));
+                                    "username", "sakai22", "password", "sakai22","store-base-dir", "target/store"));
             return connectionPool;
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e.getMessage(), e);

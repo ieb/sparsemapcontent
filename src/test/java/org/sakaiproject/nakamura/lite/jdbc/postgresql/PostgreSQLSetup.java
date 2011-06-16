@@ -33,7 +33,7 @@ public class PostgreSQLSetup {
                             .of(JDBCStorageClientPool.CONNECTION_URL,
                                     (Object) "jdbc:postgresql://localhost/nak",
                                     JDBCStorageClientPool.JDBC_DRIVER, "org.postgresql.Driver",
-                                    "username", "nakamura", "password", "nakamura"));
+                                    "username", "nakamura", "password", "nakamura","store-base-dir", "target/store"));
             return connectionPool;
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e.getMessage(), e);
