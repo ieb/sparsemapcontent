@@ -29,62 +29,52 @@ import java.util.Map;
 @Service(value = Configuration.class)
 public class ConfigurationImpl implements Configuration {
 
-    @Property(value = "ac")
-    private static final String ACL_COLUMN_FAMILY = "acl-column-family";
-    @Property(value = "n")
-    private static final String KEYSPACE = "keyspace";
-    @Property(value = "au")
-    private static final String AUTHORIZABLE_COLUMN_FAMILY = "authorizable-column-family";
-    @Property(value = "cn")
-    private static final String CONTENT_COLUMN_FAMILY = "content-column-family";
-    
-    private static final String[] PROPERTIES_INDEX_COLUMN_NAME = {
-      "au:rep:principalName",
-      "au:type",
-      "cn:sling:resourceType",
-      "cn:sakai:pooled-content-manager",
-      "cn:sakai:messagestore",
-      "cn:sakai:type",
-      "cn:sakai:marker",
-      "cn:sakai:tag-uuid",
-      "cn:sakai:contactstorepath",
-      "cn:sakai:state",
-      "cn:_created",
-      "cn:sakai:category",
-      "cn:sakai:messagebox",
-      "cn:sakai:from",
-      "cn:sakai:subject"
-      };
+  @Property(value = "ac")
+  private static final String ACL_COLUMN_FAMILY = "acl-column-family";
+  @Property(value = "n")
+  private static final String KEYSPACE = "keyspace";
+  @Property(value = "au")
+  private static final String AUTHORIZABLE_COLUMN_FAMILY = "authorizable-column-family";
+  @Property(value = "cn")
+  private static final String CONTENT_COLUMN_FAMILY = "content-column-family";
 
-    private String aclColumnFamily;
-    private String keySpace;
-    private String authorizableColumnFamily;
-    private String contentColumnFamily;
+  private static final String PROPERTIES_INDEX_COLUMN_NAME = "au:rep:principalName,"
+      + "au:type," + "cn:sling:resourceType," + "cn:sakai:pooled-content-manager,"
+      + "cn:sakai:messagestore," + "cn:sakai:type," + "cn:sakai:marker,"
+      + "cn:sakai:tag-uuid," + "cn:sakai:contactstorepath," + "cn:sakai:state,"
+      + "cn:_created," + "cn:sakai:category," + "cn:sakai:messagebox," + "cn:sakai:from,"
+      + "cn:sakai:subject";
 
-    @Activate
-    public void activate(Map<String, Object> properties) {
-        aclColumnFamily = (String) properties.get(ACL_COLUMN_FAMILY);
-        keySpace = (String) properties.get(KEYSPACE);
-        authorizableColumnFamily = (String) properties.get(AUTHORIZABLE_COLUMN_FAMILY);
-        contentColumnFamily = (String) properties.get(CONTENT_COLUMN_FAMILY);
-    }
+  private String aclColumnFamily;
+  private String keySpace;
+  private String authorizableColumnFamily;
+  private String contentColumnFamily;
 
-    public String getAclColumnFamily() {
-        return aclColumnFamily;
-    }
+  @Activate
+  public void activate(Map<String, Object> properties) {
+    aclColumnFamily = (String) properties.get(ACL_COLUMN_FAMILY);
+    keySpace = (String) properties.get(KEYSPACE);
+    authorizableColumnFamily = (String) properties.get(AUTHORIZABLE_COLUMN_FAMILY);
+    contentColumnFamily = (String) properties.get(CONTENT_COLUMN_FAMILY);
+  }
 
-    public String getKeySpace() {
-        return keySpace;
-    }
+  public String getAclColumnFamily() {
+    return aclColumnFamily;
+  }
 
-    public String getAuthorizableColumnFamily() {
-        return authorizableColumnFamily;
-    }
+  public String getKeySpace() {
+    return keySpace;
+  }
 
-    public String getContentColumnFamily() {
-        return contentColumnFamily;
-    }
-    public String[] getPropertiesIndexColumnName() {
-        return PROPERTIES_INDEX_COLUMN_NAME;
-    }
+  public String getAuthorizableColumnFamily() {
+    return authorizableColumnFamily;
+  }
+
+  public String getContentColumnFamily() {
+    return contentColumnFamily;
+  }
+
+  public String getPropertiesIndexColumnName() {
+    return PROPERTIES_INDEX_COLUMN_NAME;
+  }
 }
