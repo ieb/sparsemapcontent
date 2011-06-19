@@ -60,263 +60,256 @@ import java.util.Map.Entry;
 
 public class CassandraClient extends Client implements StorageClient {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(CassandraClient.class);
-  public static final String CONFIG_BLOCK_SIZE = "block-size";
-  public static final String CONFIG_MAX_CHUNKS_PER_BLOCK = "chunks-per-block";
+    private static final Logger LOGGER = LoggerFactory.getLogger(CassandraClient.class);
+    public static final String CONFIG_BLOCK_SIZE = "block-size";
+    public static final String CONFIG_MAX_CHUNKS_PER_BLOCK = "chunks-per-block";
 
-  private static final int DEFAULT_BLOCK_SIZE = 1024 * 1024;
-  private static final int DEFAULT_MAX_CHUNKS_PER_BLOCK = 64;
-  private static final String INDEX_COLUMN_FAMILY = "smcindex";
-  private static final String PROPERTIES_INDEX_COLUMN_NAME = "validIndex";
-  private static ImmutableSet<String> indexColumns;
-  private static final String ROW_OF_PROPERTIES = "default";
+    private static final int DEFAULT_BLOCK_SIZE = 1024 * 1024;
+    private static final int DEFAULT_MAX_CHUNKS_PER_BLOCK = 64;
+    private static final String INDEX_COLUMN_FAMILY = "smcindex";
+    private static final String PROPERTIES_INDEX_COLUMN_NAME = "validIndex";
+    private static ImmutableSet<String> indexColumns;
+    private static final String ROW_OF_PROPERTIES = "default";
 
-  private TSocket tSocket;
-  private BlockContentHelper contentHelper;
-  private int blockSize;
-  private int maxChunksPerBlockSet;
-  private CassandraClientPool pool;
 
-  public CassandraClient(CassandraClientPool pool, TProtocol tProtocol, TSocket tSocket,
-      Map<String, Object> properties) {
-    super(tProtocol);
-    this.tSocket = tSocket;
-    this.pool = pool;
-    contentHelper = new BlockSetContentHelper(this);
-    blockSize = StorageClientUtils.getSetting(properties.get(CONFIG_BLOCK_SIZE),
-        DEFAULT_BLOCK_SIZE);
-    maxChunksPerBlockSet = StorageClientUtils.getSetting(
-        properties.get(CONFIG_MAX_CHUNKS_PER_BLOCK), DEFAULT_MAX_CHUNKS_PER_BLOCK);
-  }
+    private TSocket tSocket;
+    private BlockContentHelper contentHelper;
+    private int blockSize;
+    private int maxChunksPerBlockSet;
+    private CassandraClientPool pool;
 
-  public void close() {
-    pool.releaseClient(this);
-  }
-
-  public void destroy() {
-    try {
-      if (tSocket.isOpen()) {
-        tSocket.flush();
-        tSocket.close();
-      }
-    } catch (TTransportException e) {
-      LOGGER.error("Failed to close the connection to the cassandra store.", e);
+    public CassandraClient(CassandraClientPool pool, TProtocol tProtocol, TSocket tSocket,
+            Map<String, Object> properties) {
+        super(tProtocol);
+        this.tSocket = tSocket;
+        this.pool = pool;
+        contentHelper = new BlockSetContentHelper(this);
+        blockSize = StorageClientUtils.getSetting(properties.get(CONFIG_BLOCK_SIZE),
+                DEFAULT_BLOCK_SIZE);
+        maxChunksPerBlockSet = StorageClientUtils.getSetting(
+                properties.get(CONFIG_MAX_CHUNKS_PER_BLOCK), DEFAULT_MAX_CHUNKS_PER_BLOCK);
     }
-  }
 
-  public void passivate() {
-  }
+    public void close() {
+        pool.releaseClient(this);
+    }
 
-  public void activate() {
-  }
+    public void destroy() {
+        try {
+            if (tSocket.isOpen()) {
+                tSocket.flush();
+                tSocket.close();
+            }
+        } catch (TTransportException e) {
+            LOGGER.error("Failed to close the connection to the cassandra store.", e);
+        }
+    }
 
-  public void validate() throws TException {
-    describe_version();
-  }
+    public void passivate() {
+    }
 
-  public Map<String, Object> get(String keySpace, String columnFamily, String key)
-      throws StorageClientException {
+    public void activate() {
+    }
+
+    public void validate() throws TException {
+        describe_version();
+    }
+
+    public Map<String, Object> get(String keySpace, String columnFamily, String key)
+    throws StorageClientException {
     Map<String, Object> row = new HashMap<String, Object>();
     try {
-      SlicePredicate predicate = new SlicePredicate();
-      SliceRange sliceRange = new SliceRange();
-      sliceRange.setStart(new byte[0]);
-      sliceRange.setFinish(new byte[0]);
-      predicate.setSlice_range(sliceRange);
+        SlicePredicate predicate = new SlicePredicate();
+        SliceRange sliceRange = new SliceRange();
+        sliceRange.setStart(new byte[0]);
+        sliceRange.setFinish(new byte[0]);
+        predicate.setSlice_range(sliceRange);
 
-      ColumnParent parent = new ColumnParent(columnFamily);
-      List<ColumnOrSuperColumn> results = get_slice(keySpace, key, parent, predicate,
-          ConsistencyLevel.ONE);
-
-      for (ColumnOrSuperColumn result : results) {
-        if (result.isSetSuper_column()) {
-          Map<String, Object> sc = new HashMap<String, Object>();
-
-          for (Column column : result.super_column.columns) {
-            Object columnValue = Types.toObject(column.value);
-            sc.put(new String(column.name, "UTF-8"), columnValue);
-          }
-          row.put(new String(result.super_column.name, "UTF-8"), sc);
-        } else {
-          row.put(new String(result.column.name, "UTF-8"),
-              Types.toObject(result.column.value));
+        ColumnParent parent = new ColumnParent(columnFamily);
+        List<ColumnOrSuperColumn> results = get_slice(keySpace, key, parent, predicate,ConsistencyLevel.ONE);
+   
+        for (ColumnOrSuperColumn result : results) {
+            if (result.isSetSuper_column()) {
+       Map<String, Object> sc = new HashMap<String, Object>();
+   
+       for (Column column : result.super_column.columns) { 
+                    Object columnValue=Types.toObject(column.value);      
+                    sc.put(new String(column.name,"UTF-8"),columnValue);
+                }
+                row.put(new String(result.super_column.name,"UTF-8"), sc);
+                } else {
+                row.put(new String(result.column.name,"UTF-8"), Types.toObject(result.column.value));
+                }
         }
-      }
-
+    
     } catch (InvalidRequestException e) {
-      throw new StorageClientException(e.getMessage(), e);
+    throw new StorageClientException(e.getMessage(), e);
     } catch (UnavailableException e) {
-      throw new StorageClientException(e.getMessage(), e);
+    throw new StorageClientException(e.getMessage(), e);
     } catch (TimedOutException e) {
-      throw new StorageClientException(e.getMessage(), e);
+    throw new StorageClientException(e.getMessage(), e);
     } catch (TException e) {
-      throw new StorageClientException(e.getMessage(), e);
+    throw new StorageClientException(e.getMessage(), e);
     } catch (IOException e) {
-      LOGGER.debug(e.getMessage());
-    }
+    LOGGER.debug(e.getMessage());
+    } 
     return row;
-  }
+    }
 
-  public void insert(String keySpace, String columnFamily, String key,
-      Map<String, Object> values, boolean probablyNew) throws StorageClientException {
-    try {
-      Map<String, Map<String, List<Mutation>>> mutation = new HashMap<String, Map<String, List<Mutation>>>();
-      Map<String, List<Mutation>> columnMutations = new HashMap<String, List<Mutation>>();
-      LOGGER.debug("Saving changes to {}:{}:{} ", new Object[] { keySpace, columnFamily,
-          key });
-      List<Mutation> keyMutations = Lists.newArrayList();
-      columnMutations.put(columnFamily, keyMutations);
-      mutation.put(key, columnMutations);
-
-      for (Entry<String, Object> value : values.entrySet()) {
-        String name = value.getKey();
-        byte[] bname = null;
+    public void insert(String keySpace, String columnFamily, String key, Map<String, Object> values, boolean probablyNew)
+            throws StorageClientException {
         try {
-          bname = name.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e1) {
-          LOGGER.debug(e1.getMessage());
-        }
-        Object v = value.getValue();
-        if (v instanceof RemoveProperty) {
-          Deletion deletion = new Deletion();
-          SlicePredicate deletionPredicate = new SlicePredicate();
-          deletionPredicate.addToColumn_names(bname);
-          deletion.setPredicate(deletionPredicate);
-          Mutation mu = new Mutation();
-          mu.setDeletion(deletion);
-          keyMutations.add(mu);
-        } else {
-          try {
-            byte b[] = Types.toByteArray(v);
-            Column column = new Column(bname, b, System.currentTimeMillis());
-            ColumnOrSuperColumn csc = new ColumnOrSuperColumn();
-            csc.setColumn(column);
-            Mutation mu = new Mutation();
-            mu.setColumn_or_supercolumn(csc);
-            keyMutations.add(mu);
+            Map<String, Map<String, List<Mutation>>> mutation = new HashMap<String, Map<String, List<Mutation>>>();
+            Map<String, List<Mutation>> columnMutations = new HashMap<String, List<Mutation>>();
+            LOGGER.debug("Saving changes to {}:{}:{} ",
+                    new Object[] { keySpace, columnFamily, key });
+            List<Mutation> keyMutations = Lists.newArrayList();
+            columnMutations.put(columnFamily, keyMutations);
+            mutation.put(key, columnMutations);
+            
+            for (Entry<String, Object> value : values.entrySet()) {
+                String name = value.getKey();
+                byte[] bname=null;
+                try {
+                    bname = name.getBytes("UTF-8");
+                    } catch (UnsupportedEncodingException e1) {
+                    LOGGER.debug(e1.getMessage());
+                    }                
+                Object v = value.getValue();
+                if (v instanceof RemoveProperty) {
+                    Deletion deletion = new Deletion();
+                    SlicePredicate deletionPredicate = new SlicePredicate();
+                    deletionPredicate.addToColumn_names(bname);
+                    deletion.setPredicate(deletionPredicate);
+                    Mutation mu = new Mutation();
+                    mu.setDeletion(deletion);
+                    keyMutations.add(mu);
+                }
+                else {
+                    try{
+                         byte b[]=Types.toByteArray(v);
+                         Column column = new Column(bname, b, System.currentTimeMillis());
+                         ColumnOrSuperColumn csc = new ColumnOrSuperColumn();
+                         csc.setColumn(column);
+                         Mutation mu = new Mutation();
+                         mu.setColumn_or_supercolumn(csc);
+                         keyMutations.add(mu);
+                         
+                         if((!columnFamily.equals(INDEX_COLUMN_FAMILY))&&shouldIndex(keySpace, columnFamily, name)) {
+                              addIndex(keySpace,columnFamily,key,bname,b);
+                         }
 
-            if ((!columnFamily.equals(INDEX_COLUMN_FAMILY))
-                && shouldIndex(keySpace, columnFamily, name)) {
-              addIndex(keySpace, columnFamily, key, bname, b);
+                    }
+                    catch(IOException e)
+                    {
+                         LOGGER.debug("IOException. Stack trace:"+e.getStackTrace());
+                    }  
+                }
             }
+            LOGGER.debug("Mutation {} ", mutation);
+            batch_mutate(keySpace, mutation, ConsistencyLevel.ONE);
+        } catch (InvalidRequestException e) {
+            throw new StorageClientException(e.getMessage(), e);
+        } catch (UnavailableException e) {
+            throw new StorageClientException(e.getMessage(), e);
+        } catch (TimedOutException e) {
+            throw new StorageClientException(e.getMessage(), e);
+        } catch (TException e) {
+            throw new StorageClientException(e.getMessage(), e);
+        }
+    }
 
-          } catch (IOException e) {
-            LOGGER.debug("IOException. Stack trace:" + e.getStackTrace());
+    public void remove(String keySpace, String columnFamily, String key)
+            throws StorageClientException {
+      if(!columnFamily.equals(INDEX_COLUMN_FAMILY)){
+        Map<String, Object> row = new HashMap<String, Object>();
+        Map<String, Object> indexRow = new HashMap<String, Object>();
+        row=get(keySpace, columnFamily, key);
+        
+        for (Entry<String, Object> value : row.entrySet()) {
+          try {
+            String columnname = value.getKey();
+            String columnvalue = null;
+            columnvalue = new String(Types.toByteArray(value.getValue()));
+            columnvalue=StorageClientUtils.insecureHash(columnvalue);
+            String indexKey=columnname+":"+INDEX_COLUMN_FAMILY+":"+columnvalue;
+            indexRow=get(keySpace,INDEX_COLUMN_FAMILY,indexKey);         
+            indexRow.remove(key);
+            remove(keySpace,INDEX_COLUMN_FAMILY,indexKey);
+            insert(keySpace,INDEX_COLUMN_FAMILY,indexKey,indexRow,true);
+          }  catch (IOException e) {
+            LOGGER.debug("IOException. Stack trace:"+e.getStackTrace());
           }
         }
       }
-      LOGGER.debug("Mutation {} ", mutation);
-      batch_mutate(keySpace, mutation, ConsistencyLevel.ONE);
-    } catch (InvalidRequestException e) {
-      throw new StorageClientException(e.getMessage(), e);
-    } catch (UnavailableException e) {
-      throw new StorageClientException(e.getMessage(), e);
-    } catch (TimedOutException e) {
-      throw new StorageClientException(e.getMessage(), e);
-    } catch (TException e) {
-      throw new StorageClientException(e.getMessage(), e);
-    }
-  }
 
-  public void remove(String keySpace, String columnFamily, String key)
-      throws StorageClientException {
-    if (!columnFamily.equals(INDEX_COLUMN_FAMILY)) {
-      Map<String, Object> row = new HashMap<String, Object>();
-      Map<String, Object> indexRow = new HashMap<String, Object>();
-      row = get(keySpace, columnFamily, key);
-
-      for (Entry<String, Object> value : row.entrySet()) {
+        ColumnPath cp = new ColumnPath(columnFamily);
         try {
-          String columnname = value.getKey();
-          String columnvalue = null;
-          columnvalue = new String(Types.toByteArray(value.getValue()));
-          columnvalue = StorageClientUtils.insecureHash(columnvalue);
-          String indexKey = columnname + ":" + INDEX_COLUMN_FAMILY + ":" + columnvalue;
-          indexRow = get(keySpace, INDEX_COLUMN_FAMILY, indexKey);
-          indexRow.remove(key);
-          remove(keySpace, INDEX_COLUMN_FAMILY, indexKey);
-          insert(keySpace, INDEX_COLUMN_FAMILY, indexKey, indexRow, true);
-        } catch (IOException e) {
-          LOGGER.debug("IOException. Stack trace:" + e.getStackTrace());
+            remove(keySpace, key, cp, System.currentTimeMillis(), ConsistencyLevel.ONE);
+        } catch (InvalidRequestException e) {
+            throw new StorageClientException(e.getMessage(), e);
+        } catch (UnavailableException e) {
+            throw new StorageClientException(e.getMessage(), e);
+        } catch (TimedOutException e) {
+            throw new StorageClientException(e.getMessage(), e);
+        } catch (TException e) {
+            throw new StorageClientException(e.getMessage(), e);
         }
+    }
+
+    public Map<String, Object> streamBodyIn(String keySpace, String contentColumnFamily,
+            String contentId, String contentBlockId, String streamId, Map<String, Object> content, InputStream in)
+            throws StorageClientException, AccessDeniedException, IOException {
+        return contentHelper.writeBody(keySpace, contentColumnFamily, contentId, contentBlockId, streamId,
+                blockSize, maxChunksPerBlockSet, in);
+    }
+
+    public InputStream streamBodyOut(String keySpace, String contentColumnFamily, String contentId,
+            String contentBlockId, String streamId, Map<String, Object> content) throws StorageClientException,
+            AccessDeniedException {
+
+        int nBlocks = StorageClientUtils.toInt(content.get(Content.NBLOCKS_FIELD));
+        return contentHelper.readBody(keySpace, contentColumnFamily, contentBlockId, streamId, nBlocks);
+    }
+
+    public DisposableIterator<Map<String, Object>> find(String keySpace,
+            String authorizableColumnFamily, Map<String, Object> properties) {
+        // TODO: Implement
+        throw new UnsupportedOperationException();
+    }
+
+    public DisposableIterator<Map<String, Object>> listChildren(String keySpace,
+            String columnFamily, String key) throws StorageClientException {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean hasBody(Map<String, Object> content, String streamId) {
+        return contentHelper.hasBody(content, streamId);
+    }
+    private void addIndex(String keySpace,String columnFamily,String key,byte[] bname,byte[] b)throws StorageClientException {
+      String indexKey = new String(bname)+":"+columnFamily+":"+new String(b);
+      Map<String, Object> values = new HashMap<String, Object>();
+      values.put(key,(Object)(new String("Whatever value of index")));
+      insert(keySpace,INDEX_COLUMN_FAMILY,indexKey,values,true);
+    }
+    private boolean shouldIndex(String keySpace, String columnFamily, String columnName) throws StorageClientException {
+      if (indexColumns == null) {
+        Map<String,Object> loadProperties=get(keySpace,INDEX_COLUMN_FAMILY,ROW_OF_PROPERTIES);
+        
+        if(loadProperties == null)
+          return false;
+               
+        indexColumns = ImmutableSet.of(((String) loadProperties.get(PROPERTIES_INDEX_COLUMN_NAME)).split(","));         
       }
-    }
-
-    ColumnPath cp = new ColumnPath(columnFamily);
-    try {
-      remove(keySpace, key, cp, System.currentTimeMillis(), ConsistencyLevel.ONE);
-    } catch (InvalidRequestException e) {
-      throw new StorageClientException(e.getMessage(), e);
-    } catch (UnavailableException e) {
-      throw new StorageClientException(e.getMessage(), e);
-    } catch (TimedOutException e) {
-      throw new StorageClientException(e.getMessage(), e);
-    } catch (TException e) {
-      throw new StorageClientException(e.getMessage(), e);
-    }
-  }
-
-  public Map<String, Object> streamBodyIn(String keySpace, String contentColumnFamily,
-      String contentId, String contentBlockId, String streamId,
-      Map<String, Object> content, InputStream in) throws StorageClientException,
-      AccessDeniedException, IOException {
-    return contentHelper.writeBody(keySpace, contentColumnFamily, contentId,
-        contentBlockId, streamId, blockSize, maxChunksPerBlockSet, in);
-  }
-
-  public InputStream streamBodyOut(String keySpace, String contentColumnFamily,
-      String contentId, String contentBlockId, String streamId,
-      Map<String, Object> content) throws StorageClientException, AccessDeniedException {
-
-    int nBlocks = StorageClientUtils.toInt(content.get(Content.NBLOCKS_FIELD));
-    return contentHelper.readBody(keySpace, contentColumnFamily, contentBlockId,
-        streamId, nBlocks);
-  }
-
-  public DisposableIterator<Map<String, Object>> find(String keySpace,
-      String authorizableColumnFamily, Map<String, Object> properties) {
-    // TODO: Implement
-    throw new UnsupportedOperationException();
-  }
-
-  public DisposableIterator<Map<String, Object>> listChildren(String keySpace,
-      String columnFamily, String key) throws StorageClientException {
-    throw new UnsupportedOperationException();
-  }
-
-  public boolean hasBody(Map<String, Object> content, String streamId) {
-    return contentHelper.hasBody(content, streamId);
-  }
-
-  private void addIndex(String keySpace, String columnFamily, String key, byte[] bname,
-      byte[] b) throws StorageClientException {
-    String indexKey = new String(bname) + ":" + columnFamily + ":"
-        + StorageClientUtils.insecureHash(new String(b));
-    Map<String, Object> values = new HashMap<String, Object>();
-    values.put(key, (Object) (new String("Value of index yet to be decided")));
-    insert(keySpace, INDEX_COLUMN_FAMILY, indexKey, values, true);
-  }
-
-  private boolean shouldIndex(String keySpace, String columnFamily, String columnName)
-      throws StorageClientException {
-    if (indexColumns == null) {
-      Map<String, Object> loadProperties = get(keySpace, INDEX_COLUMN_FAMILY,
-          ROW_OF_PROPERTIES);
-
-      if (loadProperties == null)
-        return false;
-
-      indexColumns = ImmutableSet.of(((String) loadProperties
-          .get(PROPERTIES_INDEX_COLUMN_NAME)).split(","));
-    }
-
-    if (indexColumns.contains(columnFamily + ":" + columnName)) {
-      LOGGER.debug("Should Index {}:{}", columnFamily, columnName);
-      return true;
+      
+      if (indexColumns.contains(columnFamily + ":" + columnName)) {
+        LOGGER.debug("Should Index {}:{}", columnFamily, columnName);
+        return true;
     } else {
-      LOGGER.debug("Should Not Index {}:{}", columnFamily, columnName);
-      return false;
+        LOGGER.debug("Should Not Index {}:{}", columnFamily, columnName);
+        return false;
     }
   }
-
+    
+    
 }
