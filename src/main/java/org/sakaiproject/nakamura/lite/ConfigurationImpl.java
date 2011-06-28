@@ -27,11 +27,14 @@ import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 
@@ -70,6 +73,7 @@ public class ConfigurationImpl implements Configuration {
     private static final String SHAREDCONFIGPATH = "org/sakaiproject/nakamura/lite/shared.properties";
 
     private static final String SHAREDCONFIGPROPERTY = "sparseconfig";
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationImpl.class);
 
 
     private String aclColumnFamily;
@@ -115,10 +119,16 @@ public class ConfigurationImpl implements Configuration {
         // if present in the shared properties, load the default from there.
         if ( sharedProperties.containsKey(INDEX_COLUMN_NAMES) ) {
             indexColumnNames = StringUtils.split(sharedProperties.get(INDEX_COLUMN_NAMES),',');
+            LOGGER.info("Index Column Names from shared properties is configured as {}", Arrays.toString(indexColumnNames));
+        } else {
+            LOGGER.warn("Using Default Index Columns from code base, not from shared properties, " +
+            		"OSGi Configuration may override this, if {} has been set in the " +
+            		"OSGi Configuration for this component ", INDEX_COLUMN_NAMES);
         }
 
         // apply any local OSGi customization
         indexColumnNames = StorageClientUtils.getSetting(properties.get(INDEX_COLUMN_NAMES), indexColumnNames);
+        LOGGER.info("Using Configuration for Index Column Names as              {}", Arrays.toString(indexColumnNames));
 
 
     }
