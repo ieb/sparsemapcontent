@@ -29,7 +29,7 @@ remove-string-column.n.cn = delete from cn_css where rid = ? and cid = ?
 
 # base statement with paging ; table join ; where clause ; where clause for sort field (if needed) ; order by clause
 find.n.au = select a.rid, a.cid, a.v from au_css a {0} where {1} 1 = 1 limit {2,number,#} offset {3,number,#};, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
-select-index-columns = select cid from index_cols
+
 
 block-select-row = select b from css_b where rid = ?
 block-delete-row = delete from css_b where rid = ?

@@ -18,26 +18,34 @@
 package org.sakaiproject.nakamura.lite.soak.memory;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
 import org.sakaiproject.nakamura.lite.soak.AbstractSoakController;
 import org.sakaiproject.nakamura.lite.soak.authorizable.CreateUsersAndGroupsWithMembersClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientPool;
 
+import java.io.IOException;
+import java.util.Map;
+
 public class CreateUsersAndGroupsWithMembersSoak extends AbstractSoakController {
 
     private int totalUsers;
     private StorageClientPool connectionPool;
     private int totalGroups;
+    private Configuration configuration;
 
     public CreateUsersAndGroupsWithMembersSoak(int totalUsers, int totalGroups,
-            StorageClientPool connectionPool) {
+            StorageClientPool connectionPool, Configuration configuration) {
         super(totalUsers + (totalGroups * 5));
+        this.configuration = configuration;
         this.connectionPool = connectionPool;
         this.totalUsers = totalUsers;
         this.totalGroups = totalGroups;
@@ -48,11 +56,11 @@ public class CreateUsersAndGroupsWithMembersSoak extends AbstractSoakController 
         int usersPerThread = totalUsers / nthreads;
         int groupsPerThread = totalGroups / nthreads;
         return new CreateUsersAndGroupsWithMembersClient(usersPerThread, groupsPerThread,
-                connectionPool);
+                connectionPool, configuration);
     }
 
     public static void main(String[] argv) throws ClientPoolException, StorageClientException,
-            AccessDeniedException, ClassNotFoundException {
+            AccessDeniedException, ClassNotFoundException, IOException {
 
         int totalUsers = 1000;
         int totalGroups = 100;
@@ -67,16 +75,24 @@ public class CreateUsersAndGroupsWithMembersSoak extends AbstractSoakController 
         if (argv.length > 2) {
             totalGroups = StorageClientUtils.getSetting(Integer.valueOf(argv[2]), totalUsers);
         }
+        ConfigurationImpl configuration = new ConfigurationImpl();
+        Map<String, Object> properties = Maps.newHashMap();
+        properties.put("keyspace", "n");
+        properties.put("acl-column-family", "ac");
+        properties.put("authorizable-column-family", "au");
+        properties.put("content-column-family", "cn");
+        configuration.activate(properties);
 
         CreateUsersAndGroupsWithMembersSoak createUsersAndGroupsSoak = new CreateUsersAndGroupsWithMembersSoak(
-                totalUsers, totalGroups, getConnectionPool());
+                totalUsers, totalGroups, getConnectionPool(configuration), configuration);
         createUsersAndGroupsSoak.launchSoak(nthreads);
     }
 
-    protected static StorageClientPool getConnectionPool() throws ClassNotFoundException {
+    protected static StorageClientPool getConnectionPool(Configuration configuration) throws ClassNotFoundException {
         MemoryStorageClientPool cp = new MemoryStorageClientPool();
         cp.activate(ImmutableMap.of("test", (Object) "test",
-                BlockContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK, 9));
+                BlockContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK, 9,
+                Configuration.class.getName(), configuration));
         return cp;
     }
 

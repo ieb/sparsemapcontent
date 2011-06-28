@@ -20,6 +20,7 @@ package org.sakaiproject.nakamura.lite.soak;
 import com.google.common.collect.Maps;
 
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.lite.ConfigurationImpl;
@@ -40,21 +41,16 @@ public abstract class AbstractScalingClient implements Runnable {
 
     protected StorageClientPool clientPool;
     protected StorageClient client;
-    protected ConfigurationImpl configuration;
+    protected Configuration configuration;
 
-    public AbstractScalingClient(StorageClientPool clientPool) throws ClientPoolException,
+    public AbstractScalingClient(StorageClientPool clientPool, Configuration configuration) throws ClientPoolException,
             StorageClientException, AccessDeniedException {
         this.clientPool = clientPool;
+        this.configuration = configuration;
     }
 
     public void setup() throws ClientPoolException, StorageClientException, AccessDeniedException {
         client = clientPool.getClient();
-        configuration = new ConfigurationImpl();
-        Map<String, Object> properties = Maps.newHashMap();
-        properties.put("keyspace", "n");
-        properties.put("acl-column-family", "ac");
-        properties.put("authorizable-column-family", "au");
-        configuration.activate(properties);
         AuthorizableActivator authorizableActivator = new AuthorizableActivator(client,
                 configuration);
         authorizableActivator.setup();

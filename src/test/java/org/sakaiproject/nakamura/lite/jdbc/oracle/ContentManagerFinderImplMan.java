@@ -17,14 +17,15 @@
  */
 package org.sakaiproject.nakamura.lite.jdbc.oracle;
 
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.lite.content.AbstractContentManagerFinderTest;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
 public class ContentManagerFinderImplMan extends AbstractContentManagerFinderTest {
 
     @Override
-    protected StorageClientPool getClientPool() throws ClassNotFoundException {
-        return OracleSetup.getClientPool();
+    protected StorageClientPool getClientPool(Configuration configuration) throws ClassNotFoundException {
+        return OracleSetup.getClientPool(configuration);
     }
 
 }

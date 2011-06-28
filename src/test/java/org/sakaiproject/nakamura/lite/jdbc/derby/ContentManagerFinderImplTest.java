@@ -17,14 +17,15 @@
  */
 package org.sakaiproject.nakamura.lite.jdbc.derby;
 
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.lite.content.AbstractContentManagerFinderTest;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
 public class ContentManagerFinderImplTest extends AbstractContentManagerFinderTest {
 
     @Override
-    protected StorageClientPool getClientPool() throws ClassNotFoundException {
-        return DerbySetup.getClientPool();
+    protected StorageClientPool getClientPool(Configuration configuration) throws ClassNotFoundException {
+        return DerbySetup.getClientPool(configuration);
     }
 
 }

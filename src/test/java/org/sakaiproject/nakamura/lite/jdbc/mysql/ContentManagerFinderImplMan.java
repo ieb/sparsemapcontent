@@ -17,14 +17,15 @@
  */
 package org.sakaiproject.nakamura.lite.jdbc.mysql;
 
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.lite.content.AbstractContentManagerFinderTest;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
 public class ContentManagerFinderImplMan extends AbstractContentManagerFinderTest {
 
     @Override
-    protected StorageClientPool getClientPool() throws ClassNotFoundException {
-        return MysqlSetup.getClientPool();
+    protected StorageClientPool getClientPool(Configuration configuration) throws ClassNotFoundException {
+        return MysqlSetup.getClientPool(configuration);
     }
 
 }

@@ -14,6 +14,7 @@ import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -29,7 +30,7 @@ public class BaseMemoryRepository {
     private RepositoryImpl repository;
 
     public BaseMemoryRepository() throws StorageClientException, AccessDeniedException,
-            ClientPoolException, ClassNotFoundException {
+            ClientPoolException, ClassNotFoundException, IOException {
         clientPool = getClientPool();
         client = clientPool.getClient();
         configuration = new ConfigurationImpl();

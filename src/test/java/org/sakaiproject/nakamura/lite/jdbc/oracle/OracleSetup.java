@@ -18,29 +18,37 @@
 package org.sakaiproject.nakamura.lite.jdbc.oracle;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClientPool;
 
 public class OracleSetup {
 
-    private static JDBCStorageClientPool clientPool = createClientPool();
+    private static JDBCStorageClientPool clientPool = null;
 
-    public synchronized static JDBCStorageClientPool createClientPool() {
+    public synchronized static JDBCStorageClientPool createClientPool(Configuration configuration) {
         try {
             JDBCStorageClientPool connectionPool = new JDBCStorageClientPool();
+            Builder<String, Object> b = ImmutableMap.builder();
+            b.put(JDBCStorageClientPool.CONNECTION_URL,"jdbc:oracle:thin:@127.0.0.1:1521:XE");
+            b.put(JDBCStorageClientPool.JDBC_DRIVER, "oracle.jdbc.driver.OracleDriver");
+            b.put("username", "sakai22");
+            b.put("password", "sakai22");
+            b.put("store-base-dir", "target/store");
+            b.put(Configuration.class.getName(), configuration);
             connectionPool
-                    .activate(ImmutableMap
-                            .of(JDBCStorageClientPool.CONNECTION_URL,
-                                    (Object) "jdbc:oracle:thin:@127.0.0.1:1521:XE",
-                                    JDBCStorageClientPool.JDBC_DRIVER, "oracle.jdbc.driver.OracleDriver",
-                                    "username", "sakai22", "password", "sakai22","store-base-dir", "target/store"));
+                    .activate(b.build());
             return connectionPool;
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
 
-    public static JDBCStorageClientPool getClientPool() {
+    public synchronized static JDBCStorageClientPool getClientPool(Configuration configuration) {
+        if ( clientPool == null) {
+            clientPool = createClientPool(configuration);
+        }
         return clientPool;
     }
 }

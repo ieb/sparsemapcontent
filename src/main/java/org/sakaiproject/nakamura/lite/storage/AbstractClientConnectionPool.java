@@ -17,19 +17,24 @@
  */
 package org.sakaiproject.nakamura.lite.storage;
 
+import com.google.common.collect.ImmutableSet;
+
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Reference;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.lite.types.StringType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Set;
 
 @Component(componentAbstract = true)
 public abstract class AbstractClientConnectionPool implements StorageClientPool {
@@ -60,6 +65,13 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
     @Property(intValue = 0)
     private static final String LONG_STRING_SIZE = "long-string-size";
 
+    @Reference
+    private Configuration configuration;
+
+    private Set<String> indexColums;
+
+
+
     private GenericObjectPool pool;
 
 
@@ -68,6 +80,11 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
 
     @Activate
     public void activate(Map<String, Object> properties) throws ClassNotFoundException {
+        // for testing purposes
+        if ( configuration == null ) {
+            configuration = (Configuration) properties.get(Configuration.class.getName());
+        }
+        indexColums = ImmutableSet.of(configuration.getIndexColumnNames());
         int maxActive = StorageClientUtils.getSetting(properties.get(MAX_ACTIVE), 200);
         byte whenExhaustedAction = GenericObjectPool.DEFAULT_WHEN_EXHAUSTED_ACTION;
         String whenExhausted = (String) properties.get(WHEN_EHAUSTED);
@@ -112,6 +129,10 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
         }
     }
 
+    public Set<String> getIndexColumns() {
+        return indexColums;
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -124,7 +145,7 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
             LOGGER.debug("Borrowed storage client pool client:" + client);
             return client;
         } catch (Exception e) {
-            LOGGER.warn(e.getMessage(),e);
+            LOGGER.warn("Failed To Borrow connection from pool {} ",e.getMessage());
             throw new ClientPoolException("Failed To Borrow connection from pool ", e);
         }
     }

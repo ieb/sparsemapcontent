@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -66,23 +67,24 @@ public abstract class AbstractContentManagerTest {
 
     @Before
     public void before() throws StorageClientException, AccessDeniedException, ClientPoolException,
-            ClassNotFoundException {
-        clientPool = getClientPool();
-        client = clientPool.getClient();
-        configuration = new ConfigurationImpl();
+            ClassNotFoundException, IOException {
+
         Map<String, Object> properties = Maps.newHashMap();
         properties.put("keyspace", "n");
         properties.put("acl-column-family", "ac");
         properties.put("authorizable-column-family", "au");
         properties.put("content-column-family", "cn");
+        configuration = new ConfigurationImpl();
         configuration.activate(properties);
+        clientPool = getClientPool(configuration);
+        client = clientPool.getClient();
         AuthorizableActivator authorizableActivator = new AuthorizableActivator(client,
                 configuration);
         authorizableActivator.setup();
         LOGGER.info("Setup Complete");
     }
 
-    protected abstract StorageClientPool getClientPool() throws ClassNotFoundException;
+    protected abstract StorageClientPool getClientPool(Configuration configuration) throws ClassNotFoundException;
 
     @After
     public void after() throws ClientPoolException {

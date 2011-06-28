@@ -85,29 +85,5 @@ CREATE TABLE  cn_css_b (
   primary key(rid));
 
   
-# Columns that need to be indexed
-CREATE TABLE  index_cols (cid varchar(64) NOT NULL, primary key(cid));
 
-insert into index_cols (cid) values ('au:rep:principalName');
-insert into index_cols (cid) values ('au:type');
-insert into index_cols (cid) values ('cn:sling:resourceType');
-insert into index_cols (cid) values ('cn:sakai:pooled-content-manager');
-# /var/search/comments/discussions/threaded.json
-insert into index_cols (cid) values ('cn:sakai:messagestore');
-insert into index_cols (cid) values ('cn:sakai:type');
-insert into index_cols (cid) values ('cn:sakai:marker');
-# *.tagged.json 
-insert into index_cols (cid) values ('cn:sakai:tag-uuid');
-# /var/contacts/findstate.json
-insert into index_cols (cid) values ('cn:sakai:contactstorepath');
-insert into index_cols (cid) values ('cn:sakai:state');
-insert into index_cols (cid) values ('cn:firstName');
-insert into index_cols (cid) values ('cn:lastName');
-# content sorting
-insert into index_cols (cid) values ('cn:_created');
-# /var/message/boxcategory.json
-insert into index_cols (cid) values ('cn:sakai:category');
-insert into index_cols (cid) values ('cn:sakai:messagebox');
-insert into index_cols (cid) values ('cn:sakai:from');
-insert into index_cols (cid) values ('cn:sakai:subject');
 

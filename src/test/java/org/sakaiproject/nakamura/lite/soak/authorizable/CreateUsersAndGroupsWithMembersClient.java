@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorResolver;
@@ -47,9 +48,9 @@ public class CreateUsersAndGroupsWithMembersClient extends AbstractScalingClient
     private PrincipalValidatorResolver principalValidatorResolver = new PrincipalValidatorResolverImpl();
 
     public CreateUsersAndGroupsWithMembersClient(int totalUsers, int totalGroups,
-            StorageClientPool connectionPool) throws ClientPoolException, StorageClientException,
+            StorageClientPool connectionPool, Configuration configuration) throws ClientPoolException, StorageClientException,
             AccessDeniedException {
-        super(connectionPool);
+        super(connectionPool, configuration);
         nusers = totalUsers;
         ngroups = totalGroups;
     }

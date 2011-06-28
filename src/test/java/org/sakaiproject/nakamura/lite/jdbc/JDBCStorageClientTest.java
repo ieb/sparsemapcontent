@@ -22,6 +22,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -57,14 +58,10 @@ public class JDBCStorageClientTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   Connection conn;
 
-  @Mock
-  PreparedStatement ps1;
 
   @Mock
   PreparedStatement ps2;
 
-  @Mock
-  ResultSet rs1;
 
   @Mock
   ResultSet rs2;
@@ -78,8 +75,7 @@ public class JDBCStorageClientTest {
     when(connPool.getConnection()).thenReturn(conn);
 
     // funnel in data when the indexed columns are looked up
-    when(conn.prepareStatement(anyString())).thenReturn(ps1).thenReturn(ps2);
-    when(ps1.executeQuery()).thenReturn(rs1);
+    when(conn.prepareStatement(anyString())).thenReturn(ps2);
     when(ps2.executeQuery()).thenReturn(rs2);
 
     // give back some bogus db vendor data
@@ -87,15 +83,15 @@ public class JDBCStorageClientTest {
     when(conn.getMetaData().getDatabaseMajorVersion()).thenReturn(1);
     when(conn.getMetaData().getDatabaseMinorVersion()).thenReturn(0);
 
+
     sqlConfig = new JDBCStorageClientPool().getSqlConfig(conn);
 
-    client = new JDBCStorageClient(connPool, properties, sqlConfig);
+    client = new JDBCStorageClient(connPool, properties, sqlConfig, ImmutableSet.of("conjunctions:key1","conjunctions:key2","conjunctions:key3","conjunctions:key4",
+             "conjunctions:testKey1","conjunctions:testKey2","conjunctions:testKey3","conjunctions:testKey4"));
   }
 
   @Test
   public void test2TermsAnd() throws Exception {
-    when(rs1.next()).thenReturn(true, true, false);
-    when(rs1.getString(1)).thenReturn("conjunctions:key1", "conjunctions:key2");
 
     String keySpace = "cn";
     String columnFamily = "conjunctions";
@@ -130,8 +126,6 @@ public class JDBCStorageClientTest {
 
   @Test
   public void test2TermsOr() throws Exception {
-    when(rs1.next()).thenReturn(true, true, false);
-    when(rs1.getString(1)).thenReturn("conjunctions:key1", "conjunctions:key2");
 
     String keySpace = "cn";
     String columnFamily = "conjunctions";
@@ -168,10 +162,6 @@ public class JDBCStorageClientTest {
 
   @Test
   public void test1TermAnd2TermsOr1TermAnd() throws Exception {
-    when(rs1.next()).thenReturn(true).thenReturn(true).thenReturn(true).thenReturn(true)
-        .thenReturn(false);
-    when(rs1.getString(1)).thenReturn("conjunctions:key1", "conjunctions:key2",
-        "conjunctions:testKey1").thenReturn("conjunctions:testKey2");
 
     String keySpace = "cn";
     String columnFamily = "conjunctions";
@@ -222,10 +212,6 @@ public class JDBCStorageClientTest {
 
   @Test
   public void test2TermsAnd2TermsOr2TermsOr() throws Exception {
-    when(rs1.next()).thenReturn(true, true, true, true, true, true, false);
-    when(rs1.getString(1)).thenReturn("conjunctions:testKey1", "conjunctions:testKey2",
-        "conjunctions:key1", "conjunctions:key2", "conjunctions:key3",
-        "conjunctions:key4");
 
     String keySpace = "cn";
     String columnFamily = "conjunctions";
@@ -288,14 +274,12 @@ public class JDBCStorageClientTest {
 
   @Test
   public void test2Terms1Indexed() throws Exception {
-    when(rs1.next()).thenReturn(true, false);
-    when(rs1.getString(1)).thenReturn("conjunctions:key1");
 
     String keySpace = "cn";
     String columnFamily = "conjunctions";
     Map<String, Object> props = Maps.newLinkedHashMap();
     props.put("key1", "val1");
-    props.put("key2", "val2");
+    props.put("key2not", "val2");
     client.find(keySpace, columnFamily, props);
 
     ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
@@ -320,8 +304,6 @@ public class JDBCStorageClientTest {
 
   @Test
   public void test2TermsMultivalueAnd() throws Exception {
-    when(rs1.next()).thenReturn(true, true, false);
-    when(rs1.getString(1)).thenReturn("conjunctions:key1", "conjunctions:key2");
 
     String keySpace = "cn";
     String columnFamily = "conjunctions";
@@ -361,8 +343,6 @@ public class JDBCStorageClientTest {
 
   @Test
   public void test2TermsMultivalueOr() throws Exception {
-    when(rs1.next()).thenReturn(true, true, false);
-    when(rs1.getString(1)).thenReturn("conjunctions:key1", "conjunctions:key2");
 
     String keySpace = "cn";
     String columnFamily = "conjunctions";

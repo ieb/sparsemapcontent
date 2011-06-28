@@ -87,10 +87,12 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     private static final String SQL_BLOCK_INSERT_ROW = "block-insert-row";
     private static final String SQL_BLOCK_UPDATE_ROW = "block-update-row";
 
-    private static final String SELECT_INDEX_COLUMNS = "select-index-columns";
     private static final String PROP_HASH_ALG = "rowid-hash";
     private static final String USE_BATCH_INSERTS = "use-batch-inserts";
     private static final String JDBC_SUPPORT_LEVEL = "jdbc-support-level";
+    /**
+     * A set of columns that are indexed to allow operations within the driver.
+     */
     private static final Set<String> AUTO_INDEX_COLUMNS = ImmutableSet.of(
             "cn:_:parenthash",
             "au:_:parenthash",
@@ -118,12 +120,25 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     private long verySlowQueryThreshold;
 
     public JDBCStorageClient(JDBCStorageClientPool jdbcStorageClientConnectionPool,
-            Map<String, Object> properties, Map<String, Object> sqlConfig) throws SQLException,
+            Map<String, Object> properties, Map<String, Object> sqlConfig, Set<String> indexColumns) throws SQLException,
             NoSuchAlgorithmException, StorageClientException {
+        if ( jdbcStorageClientConnectionPool == null ) {
+            throw new StorageClientException("Null Connection Pool, cant create Client");
+        }
+        if ( properties == null ) {
+            throw new StorageClientException("Null Connection Properties, cant create Client");
+        }
+        if ( sqlConfig == null ) {
+            throw new StorageClientException("Null SQL COnfiguration, cant create Client");
+        }
+        if ( indexColumns == null ) {
+            throw new StorageClientException("Null Index Colums, cant create Client");
+        }
         this.jcbcStorageClientConnection = jdbcStorageClientConnectionPool;
         streamedContentHelper = new FileStreamContentHelper(this, properties);
 
         this.sqlConfig = sqlConfig;
+        this.indexColumns = indexColumns;
         rowidHash = getSql(PROP_HASH_ALG);
         if (rowidHash == null) {
             rowidHash = "MD5";
@@ -325,8 +340,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 }
             }
             if ("1".equals(getSql(USE_BATCH_INSERTS))) {
-                Map<PreparedStatement, List<Entry<String, Object>>> updateSequence = Maps
-                        .newHashMap();
                 Set<PreparedStatement> removeSet = Sets.newHashSet();
                 // execute the updates and add the necessary inserts.
                 Map<PreparedStatement, List<Entry<String, Object>>> insertSequence = Maps
@@ -590,30 +603,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     private boolean shouldIndex(String keySpace, String columnFamily, String k) {
         if ( AUTO_INDEX_COLUMNS.contains(columnFamily+":"+k)) {
             return true;
-        }
-        if (indexColumns == null) {
-            PreparedStatement pst = null;
-            ResultSet rs = null;
-            try {
-                pst = getStatement(keySpace, columnFamily, SELECT_INDEX_COLUMNS, "default", null);
-                inc(SELECT_INDEX_COLUMNS);
-                pst.clearWarnings();
-                pst.clearParameters();
-                rs = pst.executeQuery();
-                inc("select-index-columns-rs");
-                Set<String> loadIndexColumns = Sets.newHashSet();
-                while (rs.next()) {
-                    loadIndexColumns.add(rs.getString(1));
-                }
-                indexColumns = loadIndexColumns;
-                LOGGER.debug("Indexing Colums is {} ", indexColumns);
-            } catch (SQLException e) {
-                LOGGER.warn(e.getMessage(), e);
-                return false;
-            } finally {
-                close(rs, "select-index-columns-rs");
-                close(pst, SELECT_INDEX_COLUMNS);
-            }
         }
         if (indexColumns.contains(columnFamily + ":" + k)) {
             LOGGER.debug("Will Index {}:{}", columnFamily, k);

@@ -21,10 +21,12 @@ import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 
+import java.io.IOException;
+
 public class SoakAll {
 
     public static void main(String[] argv) throws ClientPoolException, StorageClientException,
-            AccessDeniedException, ClassNotFoundException {
+            AccessDeniedException, ClassNotFoundException, IOException {
         CreateUsersAndGroupsSoak.main(argv);
         CreateUsersAndGroupsWithMembersSoak.main(argv);
     }

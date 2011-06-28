@@ -25,6 +25,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -38,6 +39,7 @@ import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Map;
 
 public class RepositoryImplTest {
@@ -49,9 +51,7 @@ public class RepositoryImplTest {
 
     @Before
     public void before() throws StorageClientException, AccessDeniedException, ClientPoolException,
-            ClassNotFoundException {
-        clientPool = getClientPool();
-        client = clientPool.getClient();
+            ClassNotFoundException, IOException {
         configuration = new ConfigurationImpl();
         Map<String, Object> properties = Maps.newHashMap();
         properties.put("keyspace", "n");
@@ -59,6 +59,8 @@ public class RepositoryImplTest {
         properties.put("authorizable-column-family", "au");
         properties.put("content-column-family", "cn");
         configuration.activate(properties);
+        clientPool = getClientPool(configuration);
+        client = clientPool.getClient();
         AuthorizableActivator authorizableActivator = new AuthorizableActivator(client,
                 configuration);
         authorizableActivator.setup();
@@ -104,10 +106,11 @@ public class RepositoryImplTest {
 
     }
 
-    protected StorageClientPool getClientPool() throws ClassNotFoundException {
+    protected StorageClientPool getClientPool(Configuration configuration) throws ClassNotFoundException {
         MemoryStorageClientPool cp = new MemoryStorageClientPool();
         cp.activate(ImmutableMap.of("test", (Object) "test",
-                BlockContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK, 9));
+                BlockContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK, 9,
+                Configuration.class.getName(), configuration));
         return cp;
     }
 

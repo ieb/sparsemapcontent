@@ -62,7 +62,7 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
     private static final String ROW_OF_PROPERTIES="default";
     private static final String PROPERTIES_INDEX_COLUMN_NAME="validIndex";
 
-    public static class ClientConnectionPoolFactory extends BasePoolableObjectFactory {
+    public class ClientConnectionPoolFactory extends BasePoolableObjectFactory {
 
         private String[] hosts;
         private int[] ports;
@@ -130,7 +130,7 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
             LOGGER.debug("Opened Connection {} isOpen {} Host {} Port {}", tSocket,
                     tSocket.isOpen());
             CassandraClient clientConnection = new CassandraClient(pool, tProtocol, tSocket,
-                    properties);
+                    properties, getIndexColumns());
             
             return clientConnection;
         }

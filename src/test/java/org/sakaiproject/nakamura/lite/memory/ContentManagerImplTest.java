@@ -19,6 +19,7 @@ package org.sakaiproject.nakamura.lite.memory;
 
 import com.google.common.collect.ImmutableMap;
 
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.lite.content.AbstractContentManagerTest;
 import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
@@ -27,10 +28,11 @@ import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientPool;
 public class ContentManagerImplTest extends AbstractContentManagerTest {
 
     @Override
-    protected StorageClientPool getClientPool() throws ClassNotFoundException {
+    protected StorageClientPool getClientPool(Configuration configuration) throws ClassNotFoundException {
         MemoryStorageClientPool cp = new MemoryStorageClientPool();
         cp.activate(ImmutableMap.of("test", (Object) "test",
-                BlockContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK, 9));
+                BlockContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK, 9,
+                Configuration.class.getName(), configuration));
         return cp;
     }
 }

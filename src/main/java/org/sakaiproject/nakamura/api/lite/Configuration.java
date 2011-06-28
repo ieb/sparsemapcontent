@@ -18,6 +18,8 @@
 
 package org.sakaiproject.nakamura.api.lite;
 
+import java.util.Map;
+
 /**
  * An Interface to define configuration for the sparse content store.
  */
@@ -49,5 +51,15 @@ public interface Configuration {
      *         storing Content objects.
      */
     String getContentColumnFamily();
+
+    /**
+     * @return the config, shared by all drivers.
+     */
+    Map<String, String> getSharedConfig();
+
+    /**
+     * @return an array of properties names that should be indexed.
+     */
+    String[] getIndexColumnNames();
 
 }

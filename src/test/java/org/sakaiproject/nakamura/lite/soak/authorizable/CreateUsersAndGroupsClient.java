@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorResolver;
@@ -43,9 +44,9 @@ public class CreateUsersAndGroupsClient extends AbstractScalingClient {
     private Map<String, CacheHolder> sharedCache = new ConcurrentLRUMap<String, CacheHolder>(1000);
     private PrincipalValidatorResolver principalValidatorResolver = new PrincipalValidatorResolverImpl();
 
-    public CreateUsersAndGroupsClient(int totalUsers, StorageClientPool clientPool)
+    public CreateUsersAndGroupsClient(int totalUsers, StorageClientPool clientPool, Configuration configuration)
             throws ClientPoolException, StorageClientException, AccessDeniedException {
-        super(clientPool);
+        super(clientPool, configuration);
         nusers = totalUsers;
     }
 

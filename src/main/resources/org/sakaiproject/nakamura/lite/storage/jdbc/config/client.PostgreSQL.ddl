@@ -145,33 +145,4 @@ GRANT ALL ON TABLE ac_css_b TO nakrole;
 
 CREATE INDEX ac_css_b_rowkey ON ac_css_b (rid);
 
-########### DROP TABLE index_cols;
 
-CREATE TABLE  index_cols (
-  cid character varying(64) NOT NULL,
-  CONSTRAINT index_cols_pk PRIMARY KEY (cid)
-)
-;
-
-insert into index_cols (cid) values ('au:rep:principalName');
-insert into index_cols (cid) values ('au:type');
-insert into index_cols (cid) values ('cn:sling:resourceType');
-insert into index_cols (cid) values ('cn:sakai:pooled-content-manager');
-# /var/search/comments/discussions/threaded.json
-insert into index_cols (cid) values ('cn:sakai:messagestore');
-insert into index_cols (cid) values ('cn:sakai:type');
-insert into index_cols (cid) values ('cn:sakai:marker');
-# *.tagged.json
-insert into index_cols (cid) values ('cn:sakai:tag-uuid');
-# /var/contacts/findstate.json
-insert into index_cols (cid) values ('cn:sakai:contactstorepath');
-insert into index_cols (cid) values ('cn:sakai:state');
-insert into index_cols (cid) values ('cn:firstName');
-insert into index_cols (cid) values ('cn:lastName');
-# content sorting
-insert into index_cols (cid) values ('cn:_created');
-# /var/message/boxcategory.json
-insert into index_cols (cid) values ('cn:sakai:category');
-insert into index_cols (cid) values ('cn:sakai:messagebox');
-insert into index_cols (cid) values ('cn:sakai:from');
-insert into index_cols (cid) values ('cn:sakai:subject');

@@ -34,6 +34,7 @@ import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.felix.scr.annotations.Service;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
@@ -278,10 +279,16 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
     }
 
     public Map<String, Object> getSqlConfig() {
+        return getSqlConfig(null);
+    }
+
+    public Map<String, Object> getSqlConfig(Connection connection) {
         synchronized (sqlConfigLock) {
             if (sqlConfig == null) {
                 try {
-                    Connection connection = getConnection();
+                    if ( connection == null ) {
+                        connection = getConnection();
+                    }
                     for (String clientSQLLocation : getClientConfigLocations(connection)) {
                         String clientConfig = clientSQLLocation + ".sql";
                         InputStream in = this.getClass().getClassLoader()
@@ -306,7 +313,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
                         }
                     }
                 } catch (SQLException e) {
-                    LOGGER.error("Failed to locate SQL configuration");
+                    LOGGER.error("Failed to locate SQL configuration ",e);
                 }
             }
         }
@@ -329,7 +336,10 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
     private Properties getConnectionProperties(Map<String, Object> config) {
         Properties connectionProperties = new Properties();
         for (Entry<String, Object> e : config.entrySet()) {
-            connectionProperties.put(e.getKey(), e.getValue());
+            // dont add the configuration object that might be in the properties while unit testing.
+            if ( !(e.getValue() instanceof Configuration) ) {
+                connectionProperties.put(e.getKey(), e.getValue());
+            }
         }
         return connectionProperties;
     }

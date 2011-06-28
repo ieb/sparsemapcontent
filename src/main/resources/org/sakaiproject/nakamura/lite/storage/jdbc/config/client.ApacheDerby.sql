@@ -28,8 +28,6 @@ validate = values(1)
 rowid-hash = SHA1
 
 
-select-index-columns = select cid from index_cols
-
 
 block-select-row = select b from css_b where rid = ?
 block-delete-row = delete from css_b where rid = ?

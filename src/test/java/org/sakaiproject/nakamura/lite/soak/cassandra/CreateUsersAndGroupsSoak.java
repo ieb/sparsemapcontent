@@ -18,34 +18,42 @@
 package org.sakaiproject.nakamura.lite.soak.cassandra;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.soak.AbstractSoakController;
 import org.sakaiproject.nakamura.lite.soak.authorizable.CreateUsersAndGroupsClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.cassandra.CassandraClientPool;
 
+import java.io.IOException;
+import java.util.Map;
+
 public class CreateUsersAndGroupsSoak extends AbstractSoakController {
     private int totalUsers;
     private StorageClientPool connectionPool;
+    private Configuration configuration;
 
-    public CreateUsersAndGroupsSoak(int totalUsers, StorageClientPool connectionPool) {
+    public CreateUsersAndGroupsSoak(int totalUsers, StorageClientPool connectionPool, Configuration configuration) {
         super(totalUsers);
         this.connectionPool = connectionPool;
+        this.configuration = configuration;
         this.totalUsers = totalUsers;
     }
 
     protected Runnable getRunnable(int nthreads) throws ClientPoolException,
             StorageClientException, AccessDeniedException {
         int usersPerThread = totalUsers / nthreads;
-        return new CreateUsersAndGroupsClient(usersPerThread, connectionPool);
+        return new CreateUsersAndGroupsClient(usersPerThread, connectionPool, configuration);
     }
 
     public static void main(String[] argv) throws ClientPoolException, StorageClientException,
-            AccessDeniedException, ClassNotFoundException {
+            AccessDeniedException, ClassNotFoundException, IOException {
 
         int totalUsers = 1000;
         int nthreads = 10;
@@ -56,15 +64,23 @@ public class CreateUsersAndGroupsSoak extends AbstractSoakController {
         if (argv.length > 1) {
             totalUsers = StorageClientUtils.getSetting(Integer.valueOf(argv[1]), totalUsers);
         }
+        ConfigurationImpl configuration = new ConfigurationImpl();
+        Map<String, Object> properties = Maps.newHashMap();
+        properties.put("keyspace", "n");
+        properties.put("acl-column-family", "ac");
+        properties.put("authorizable-column-family", "au");
+        properties.put("content-column-family", "cn");
+        configuration.activate(properties);
 
         CreateUsersAndGroupsSoak createUsersAndGroupsSoak = new CreateUsersAndGroupsSoak(
-                totalUsers, getConnectionPool());
+                totalUsers, getConnectionPool(configuration), configuration);
         createUsersAndGroupsSoak.launchSoak(nthreads);
     }
 
-    protected static StorageClientPool getConnectionPool() throws ClassNotFoundException {
+    protected static StorageClientPool getConnectionPool(Configuration configuration) throws ClassNotFoundException {
         CassandraClientPool cp = new CassandraClientPool();
-        cp.activate(ImmutableMap.of("test", (Object) "test"));
+        cp.activate(ImmutableMap.of("test", (Object) "test",
+                Configuration.class.getName(), configuration));
         return cp;
     }
 

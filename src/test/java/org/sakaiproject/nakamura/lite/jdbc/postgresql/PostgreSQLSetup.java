@@ -18,29 +18,38 @@
 package org.sakaiproject.nakamura.lite.jdbc.postgresql;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 
+import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClientPool;
 
 public class PostgreSQLSetup {
 
-    private static JDBCStorageClientPool clientPool = createClientPool();
+    private static JDBCStorageClientPool clientPool = null;
 
-    public synchronized static JDBCStorageClientPool createClientPool() {
+    public synchronized static JDBCStorageClientPool createClientPool(Configuration configuration) {
         try {
             JDBCStorageClientPool connectionPool = new JDBCStorageClientPool();
+            Builder<String, Object> b = ImmutableMap.builder();
+            b.put(JDBCStorageClientPool.CONNECTION_URL,"jdbc:postgresql://localhost/nak");
+            b.put(JDBCStorageClientPool.JDBC_DRIVER, "org.postgresql.Driver");
+            b.put("username", "nakamura");
+            b.put("password", "nakamura");
+            b.put("store-base-dir", "target/store");
+            b.put(Configuration.class.getName(), configuration);
             connectionPool
-                    .activate(ImmutableMap
-                            .of(JDBCStorageClientPool.CONNECTION_URL,
-                                    (Object) "jdbc:postgresql://localhost/nak",
-                                    JDBCStorageClientPool.JDBC_DRIVER, "org.postgresql.Driver",
-                                    "username", "nakamura", "password", "nakamura","store-base-dir", "target/store"));
+                    .activate(b.build());
             return connectionPool;
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
 
-    public static JDBCStorageClientPool getClientPool() {
+    public synchronized static JDBCStorageClientPool getClientPool(Configuration configuration) {
+        if ( clientPool == null) {
+            clientPool = createClientPool(configuration);
+        }
         return clientPool;
-    }
+    }   
+
 }
