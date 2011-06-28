@@ -26,7 +26,9 @@ package org.sakaiproject.nakamura.api.lite;
  */
 public class DataFormatException extends StorageClientException {
 
-  public DataFormatException(String message, Throwable t) {
+    private static final long serialVersionUID = 1464691562897983604L;
+
+    public DataFormatException(String message, Throwable t) {
         super(message, t);
     }
 
