@@ -97,7 +97,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
 
         public Object makeObject() throws Exception {
             return checkSchema(new JDBCStorageClient(JDBCStorageClientPool.this, properties,
-                    getSqlConfig(getConnection())));
+                    getSqlConfig(), getIndexColumns()));
         }
 
         public void passivateObject(Object obj) throws Exception {
@@ -277,11 +277,11 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
         return client;
     }
 
-    public Map<String, Object> getSqlConfig(Connection connection) {
+    public Map<String, Object> getSqlConfig() {
         synchronized (sqlConfigLock) {
             if (sqlConfig == null) {
                 try {
-
+                    Connection connection = getConnection();
                     for (String clientSQLLocation : getClientConfigLocations(connection)) {
                         String clientConfig = clientSQLLocation + ".sql";
                         InputStream in = this.getClass().getClassLoader()
