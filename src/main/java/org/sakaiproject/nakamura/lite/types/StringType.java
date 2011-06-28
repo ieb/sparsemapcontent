@@ -1,6 +1,5 @@
 package org.sakaiproject.nakamura.lite.types;
 
-import org.slf4j.LoggerFactory;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
