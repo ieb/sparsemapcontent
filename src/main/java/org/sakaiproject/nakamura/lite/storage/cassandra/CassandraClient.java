@@ -289,7 +289,7 @@ public class CassandraClient extends Client implements StorageClient {
     
     private void addIndex(String keySpace, String columnFamily, String key, byte[] bname, byte[] b)
             throws StorageClientException {
-        String indexKey = new String(bname) + ":" + columnFamily + ":" + new String(b);
+        String indexKey = new String(bname) + ":" + columnFamily + ":" + StorageClientUtils.insecureHash(b);
         Map<String, Object> values = new HashMap<String, Object>();
         values.put(key, (Object) (new String("Whatever value of index")));
         insert(keySpace, INDEX_COLUMN_FAMILY, indexKey, values, true);

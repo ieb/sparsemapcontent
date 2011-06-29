@@ -225,6 +225,15 @@ public class StorageClientUtils {
     // TODO: Unit test
     public static String insecureHash(String naked) {
         try {
+            return insecureHash(naked.getBytes(UTF8));
+        } catch (UnsupportedEncodingException e3) {
+            LOGGER.error("no UTF-8 Envoding, get a real JVM, nothing will work here. NPE to come");
+            return null;
+        }
+    }
+
+    public static String insecureHash(byte[] b) {
+        try {
             MessageDigest md;
             try {
                 md = MessageDigest.getInstance("SHA-1");
@@ -234,10 +243,10 @@ public class StorageClientUtils {
                 } catch (NoSuchAlgorithmException e2) {
                     LOGGER.error("You have no Message Digest Algorightms intalled in this JVM, secure Hashes are not availalbe, encoding bytes :"
                             + e2.getMessage());
-                    return encode(StringUtils.leftPad(naked, 10, '_').getBytes(UTF8));
+                    return encode(StringUtils.leftPad((new String(b,"UTF-8")), 10, '_').getBytes(UTF8));
                 }
             }
-            byte[] bytes = md.digest(naked.getBytes(UTF8));
+            byte[] bytes = md.digest(b);
             return encode(bytes);
         } catch (UnsupportedEncodingException e3) {
             LOGGER.error("no UTF-8 Envoding, get a real JVM, nothing will work here. NPE to come");
