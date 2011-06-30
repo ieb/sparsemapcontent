@@ -276,6 +276,7 @@ public abstract class AbstractContentManagerTest {
         Assert.assertTrue(checkChildren.contains("testCopySimple/destination/target"));
 
         check = contentManager.get("testCopySimple/destination/target");
+        Assert.assertNotNull(check);
         Assert.assertEquals("testCopySimple/destination/target", check.getPath());
         Assert.assertEquals("source", check.getProperty("prop"));
 
@@ -332,6 +333,7 @@ public abstract class AbstractContentManagerTest {
         Assert.assertTrue(checkChildren.contains("testCopyOverwrite/destination/target"));
 
         check = contentManager.get("testCopyOverwrite/destination/target");
+        Assert.assertNotNull(check);
         Assert.assertEquals("testCopyOverwrite/destination/target", check.getPath());
         Assert.assertEquals("source", check.getProperty("prop"));
 
