@@ -41,8 +41,8 @@ public interface StorageClient {
     /**
      * Insert or update a row in the store.
      * @param keySpace the keyspace to search
-	 * @param columnFamily the group of columns we're considering
-	 * @param key the key of the row
+     * @param columnFamily the group of columns we're considering
+     * @param key the key of the row
      * @param values the Map of column values to associate with this key
      * @param probablyNew whether or not the row is probably new
      * @throws StorageClientException
@@ -53,8 +53,8 @@ public interface StorageClient {
     /**
      * Remove a row in the store.
      * @param keySpace the keyspace to search
-	 * @param columnFamily the group of columns we're considering
-	 * @param key the key of the row
+     * @param columnFamily the group of columns we're considering
+     * @param key the key of the row
      * @throws StorageClientException
      */
     void remove(String keySpace, String columnFamily, String key) throws StorageClientException;
@@ -62,7 +62,7 @@ public interface StorageClient {
     /**
      * Get an {@link InputStream} to read a stream of content.
      * @param keySpace the keyspace to search
-	 * @param columnFamily the group of columns we're considering
+     * @param columnFamily the group of columns we're considering
      * @param contentId the id of the content item
      * @param contentBlockId the block offset
      * @param streamId the id of the correct stream for this piece of content
