@@ -305,7 +305,7 @@ public class Authorizable {
     }
 
     /**
-     * @return a Map or properties that should be saved to storage. This merges the orriginal properties and unsaved changed.
+     * @return a Map or properties that should be saved to storage. This merges the original properties and unsaved changed.
      */
     public Map<String, Object> getPropertiesForUpdate() {
         if (!readOnly && principalsModified) {

@@ -41,7 +41,7 @@ public class User extends Authorizable {
      */
     public static final String ANON_USER = "anonymous";
     /**
-     * The ID of teh system user.
+     * The ID of the system user.
      */
     public static final String SYSTEM_USER = "system";
     public static final String IMPERSONATORS_FIELD = "impersonators";
