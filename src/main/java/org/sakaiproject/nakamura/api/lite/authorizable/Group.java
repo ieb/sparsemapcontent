@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A group has a list of members that is maintaiend in the group. This is
+ * A group has a list of members that is maintained in the group. This is
  * reflected as principals in each member, managed by the AuthorizableManager,
  * only updated on save.
  * 
@@ -57,12 +57,17 @@ public class Group extends Authorizable {
     }
     
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isGroup() {
         return true;
     }
 
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Map<String, Object> getPropertiesForUpdate() {
         if ( !readOnly && membersModified ) {
@@ -71,7 +76,10 @@ public class Group extends Authorizable {
         Map<String, Object> propertiesForUpdate =  super.getPropertiesForUpdate();
         return propertiesForUpdate;
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     // TODO: Unit test
     public Map<String, Object> getSafeProperties() {
@@ -80,7 +88,10 @@ public class Group extends Authorizable {
         }
         return super.getSafeProperties();
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     // TODO: Unit test
     public boolean isModified() {

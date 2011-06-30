@@ -28,6 +28,9 @@ public interface StorageClientPool {
      */
     StorageClient getClient() throws ClientPoolException;
 
+    /**
+     * @return the object cache for this datastore.
+     */
     StorageCacheManager getStorageCacheManager();
 
 }

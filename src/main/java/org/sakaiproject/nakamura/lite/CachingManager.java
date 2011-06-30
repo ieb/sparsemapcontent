@@ -25,6 +25,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
+/**
+ * Extend this class to add caching to a Manager class.
+ */
 public abstract class CachingManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CachingManager.class);
@@ -34,11 +37,25 @@ public abstract class CachingManager {
     private int miss;
     private long calls;
 
+    /**
+     * Create a new {@link CachingManager}
+     * @param client a client to the underlying storage engine
+     * @param sharedCache the cache where the objects will be stored
+     */
     public CachingManager(StorageClient client, Map<String, CacheHolder> sharedCache) {
         this.client = client;
         this.sharedCache = sharedCache;
     }
 
+    /**
+     * Try to retrieve an object from the cache.
+     * Has the side-effect of loading an uncached object into cache the first time.
+     * @param keySpace the key space we're operating in.
+     * @param columnFamily the column family for the object
+     * @param key the object key
+     * @return the object or null if not cached and not found
+     * @throws StorageClientException
+     */
     protected Map<String, Object> getCached(String keySpace, String columnFamily, String key)
             throws StorageClientException {
         Map<String, Object> m = null;
@@ -72,10 +89,23 @@ public abstract class CachingManager {
 
     protected abstract Logger getLogger();
 
+    /**
+     * Combine the parameters into a key suitable for storage and lookup in the cache.
+     * @param keySpace
+     * @param columnFamily
+     * @param key
+     * @return the cache key
+     */
     private String getCacheKey(String keySpace, String columnFamily, String key) {
         return keySpace + ":" + columnFamily + ":" + key;
     }
 
+    /**
+     * Remove this object from the cache.
+     * @param keySpace
+     * @param columnFamily
+     * @param key
+     */
     protected void removeFromCache(String keySpace, String columnFamily, String key) {
         if (sharedCache != null) {
             sharedCache.remove(getCacheKey(keySpace, columnFamily, key));
@@ -83,6 +113,15 @@ public abstract class CachingManager {
     }
     
 
+    /**
+     * Put an object in the cache
+     * @param keySpace
+     * @param columnFamily
+     * @param key
+     * @param encodedProperties the object to be stored
+     * @param probablyNew whether or not this object is new.
+     * @throws StorageClientException
+     */
     protected void putCached(String keySpace, String columnFamily, String key,
             Map<String, Object> encodedProperties, boolean probablyNew)
             throws StorageClientException {

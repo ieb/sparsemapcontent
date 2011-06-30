@@ -21,6 +21,14 @@ import org.sakaiproject.nakamura.api.lite.StorageClientException;
 
 public interface RowHasher {
 
+	/**
+	 * Generate rowIds.
+	 * @param keySpace
+	 * @param columnFamily
+	 * @param key
+	 * @return an id for the row based on the parameters and a hashing/encoding strategy
+	 * @throws StorageClientException
+	 */
     String rowHash(String keySpace, String columnFamily, String key) throws StorageClientException;
 
 }

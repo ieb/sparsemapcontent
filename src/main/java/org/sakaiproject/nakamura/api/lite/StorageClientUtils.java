@@ -308,13 +308,15 @@ public class StorageClientUtils {
 
     /**
      * Converts to an Immutable map, with keys that are in the filter not
-     * transdered. Nested maps are also transfered.
+     * transfered. Nested maps are also transfered.
      * 
-     * @param <K>
-     * @param <V>
-     * @param source
-     * @param filter
-     * @return
+     * @param <K> the type of the key
+     * @param <V> the type of the value
+     * @param source a map of values to start with
+     * @param modified a map to oveeride values in source
+     * @param include if not null, only include these keys in the returned map
+     * @param exclude if not null, exclude these keys from the returned map
+     * @return a map with the modifications applied and filtered by the includes and excludes
      */
     @SuppressWarnings("unchecked")
     public static <K, V> Map<K, V> getFilterMap(Map<K, V> source, Map<K, V> modified, Set<K> include, Set<K> exclude, boolean includingRemoveProperties ) {
@@ -325,6 +327,7 @@ public class StorageClientUtils {
                return ImmutableMap.copyOf(source);
            }
         }
+
         Builder<K, V> filteredMap = new ImmutableMap.Builder<K, V>();
         for (Entry<K, V> e : source.entrySet()) {
             K k = e.getKey();
@@ -372,9 +375,9 @@ public class StorageClientUtils {
      * over depth of nesting. Keys in the filter set are not transfered
      * Resulting map is mutable.
      * 
-     * @param source
-     * @param filter
-     * @return
+     * @param source a map of values to modify
+     * @param filter a map of values to remove by key from source
+     * @return the map less any keys from filter
      */
     @SuppressWarnings("unchecked")
     public static Map<String, Object> getFilteredAndEcodedMap(Map<String, Object> source,
@@ -615,6 +618,14 @@ public class StorageClientUtils {
         }
     }
 
+    /**
+     * Make the method on the target object accessible and then invoke it.
+     * @param target the object with the method to invoke
+     * @param methodName the name of the method to invoke
+     * @param args the arguments to pass to the invoked method
+     * @param argsTypes the types of the arguments being passed to the method
+     * @return
+     */
     private static Object safeMethod(Object target, String methodName, Object[] args,
             @SuppressWarnings("rawtypes") Class[] argsTypes) {
         if (target != null) {
