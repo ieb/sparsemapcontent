@@ -78,3 +78,7 @@ use-batch-inserts = 1
 # e.g. the driver for Postgres 9 does not support JDBC methods introduced in JRE 1.6
 jdbc-support-level = 1.5
 
+#
+# PostgreSQL does not like to perform insert, fail, update operations. It wants update if missing insert.
+sql-statement-sequence = updateFirst
+

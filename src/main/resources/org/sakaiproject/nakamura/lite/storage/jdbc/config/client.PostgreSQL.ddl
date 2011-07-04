@@ -85,13 +85,12 @@ CREATE TABLE css_b
   id serial,
   rid character varying(32) NOT NULL,
   b bytea,
-  CONSTRAINT css_b_pk PRIMARY KEY (id)
+  CONSTRAINT css_b_pk PRIMARY KEY (id),
+  CONSTRAINT css_b_rid_uk UNIQUE (rid)
 );
 
 ALTER TABLE css_b OWNER TO nakamura;
 GRANT ALL ON TABLE css_b TO nakrole;
-
-CREATE INDEX css_b_rowkey ON css_b (rid);
 
 
 ########## DROP TABLE cn_css_b;
@@ -102,13 +101,13 @@ CREATE TABLE cn_css_b
   id serial,
   rid character varying(32) NOT NULL,
   b bytea,
-  CONSTRAINT cn_css_b_pk PRIMARY KEY (id)
+  CONSTRAINT cn_css_b_pk PRIMARY KEY (id),
+  CONSTRAINT cn_css_b_rid_uk UNIQUE (rid)
 );
 
 ALTER TABLE cn_css_b OWNER TO nakamura;
 GRANT ALL ON TABLE cn_css_b TO nakrole;
 
-CREATE INDEX cn_css_b_rowkey ON cn_css_b (rid);
 
 
 ########### DROP TABLE au_css_b;
@@ -119,13 +118,13 @@ CREATE TABLE au_css_b
   id serial,
   rid character varying(32) NOT NULL,
   b bytea,
-  CONSTRAINT au_css_b_pk PRIMARY KEY (id)
+  CONSTRAINT au_css_b_pk PRIMARY KEY (id),
+  CONSTRAINT au_css_b_rid_uk UNIQUE (rid)
 );
 
 ALTER TABLE au_css_b OWNER TO nakamura;
 GRANT ALL ON TABLE au_css_b TO nakrole;
 
-CREATE INDEX au_css_b_rowkey ON au_css_b (rid);
 
 
 
@@ -137,12 +136,12 @@ CREATE TABLE ac_css_b
   id serial,
   rid character varying(32) NOT NULL,
   b bytea,
-  CONSTRAINT ac_css_b_pk PRIMARY KEY (id)
+  CONSTRAINT ac_css_b_pk PRIMARY KEY (id),
+  CONSTRAINT ac_css_b_rid_uk UNIQUE (rid)
 );
 
 ALTER TABLE ac_css_b OWNER TO nakamura;
 GRANT ALL ON TABLE ac_css_b TO nakrole;
 
-CREATE INDEX ac_css_b_rowkey ON ac_css_b (rid);
 
 

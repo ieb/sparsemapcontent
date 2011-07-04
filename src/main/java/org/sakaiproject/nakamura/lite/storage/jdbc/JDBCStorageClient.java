@@ -90,6 +90,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
     private static final String PROP_HASH_ALG = "rowid-hash";
     private static final String USE_BATCH_INSERTS = "use-batch-inserts";
     private static final String JDBC_SUPPORT_LEVEL = "jdbc-support-level";
+    private static final String SQL_STATEMENT_SEQUENCE = "sql-statement-sequence";
+    private static final String UPDATE_FIRST_SEQUENCE = "updateFirst";
     /**
      * A set of columns that are indexed to allow operations within the driver.
      */
@@ -250,7 +252,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 }
             }
             LOGGER.debug("Saving {} {} {} ", new Object[]{key, rid, m});
-            if ( probablyNew ) {
+            if ( probablyNew && !UPDATE_FIRST_SEQUENCE.equals(getSql(SQL_STATEMENT_SEQUENCE))) {
                 PreparedStatement insertBlockRow = getStatement(keySpace, columnFamily,
                         SQL_BLOCK_INSERT_ROW, rid, statementCache);
                 insertBlockRow.clearWarnings();
