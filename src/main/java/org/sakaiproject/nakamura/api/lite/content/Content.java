@@ -48,10 +48,10 @@ import org.sakaiproject.nakamura.lite.content.InternalContent;
  * with contentManager.get(path); then change some properties before performing
  * a contentManager.update(contentObject); Transactions are managed by the
  * underlying store implementation and are not actively managed in the
- * cotnentManager. If your underlying store is not transactional, the update
+ * contentManager. If your underlying store is not transactional, the update
  * operation will persist directly to the underlying store. Concurrent threads
  * in the same JVM may retrieve the same underlying data from the content store
- * but each cotnentManager will operate on its own set of contentObjects
+ * but each contentManager will operate on its own set of contentObjects
  * isolated from other contentManagers until the update operation is completed.
  * </p>
  */

@@ -37,7 +37,7 @@ public interface Authenticator {
     User authenticate(String userid, String password);
 
     /**
-     * perform a system authentiation, trusting the userId.
+     * perform a system authentication, trusting the userId.
      * @param userid
      * @return the User object if the userID exists.
      */
