@@ -113,3 +113,17 @@ Throughput is users added per second.
 So far it looks like the code is concurrent, but MySQL is considerably slower than Cassandra or Memory. Below the Fighting for cores
 the box doesn't have enough CPUs to support the DB if present and the code.
 
+
+
+h1. Contributions, Patches, and License.
+
+The code in this code base is (c) Timefields Ltd and licensed to the Sakai Foundation under a Apache 2 Software License. Before making 
+a contribution by means of a patch or otherwise please ensure that you read and understand the terms under which a patch or contribution
+will be accepted, outlined in the NOTICES file. All patches and contributions are made under those terms with no exceptions.
+
+I am sorry if this sounds a bit legal, but I want to be able to always license this software to the Sakai Foundation under an Apache 2 license
+and so I have to insist that no contributions are made that would prevent that from happening. I cani't ask everyone who submits a patch to sign a 
+legal document, so this is the next best thing. If you have a problem with this approach, please email me and we can try and work it out.
+
+BTW, IANAL :)
+
