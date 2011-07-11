@@ -83,7 +83,9 @@ public abstract class AbstractAuthorizableManagerImplTest {
 
     @After
     public void after() throws ClientPoolException {
-        client.close();
+        if ( client != null ) {
+            client.close();
+        }
     }
 
     @Test
