@@ -50,7 +50,7 @@ public class InternalContent {
     /**
      * The ID of a content item
      */
-    public static final String UUID_FIELD = Repository.SYSTEM_PROP_PREFIX + "id";
+    public static final String UUID_FIELD = Repository.SYSTEM_PROP_PREFIX + "sparseId";
     /**
      * The path of the content item (used in structure row)
      */
