@@ -150,8 +150,9 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
                 modifications.put(name, null);
             } else {
 
-                int originalbitmap = toInt(currentAcl.get(name));
+                int originalbitmap = getBitMap(name, modifications, currentAcl);
                 int modifiedbitmap = m.modify(originalbitmap);
+                LOGGER.info("Adding Modification {} {} ",name, modifiedbitmap);
                 modifications.put(name, modifiedbitmap);
                 
                 // KERN-1515
@@ -159,10 +160,10 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
                 // reverse of the change we just made. Otherwise,
                 // you can end up with ACLs with contradictions, like:
                 // anonymous@g=1, anonymous@d=1
-                if (currentAcl.containsKey(inverseKeyOf(name))) {
+                if (containsKey(inverseKeyOf(name), modifications, currentAcl)) {
                   // XOR gives us a mask of only the bits that changed
                   int difference = originalbitmap ^ modifiedbitmap;
-                  int otherbitmap = toInt(currentAcl.get(inverseKeyOf(name)));
+                  int otherbitmap = toInt(getBitMap(inverseKeyOf(name), modifications, currentAcl));
 
                   // Zero out the bits that have been modified
                   //
@@ -186,6 +187,22 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         storeListener.onUpdate(objectType, objectPath,  getCurrentUserId(), false, null, "op:acl");
     }
     
+    private boolean containsKey(String name, Map<String, Object> map1,
+            Map<String, Object> map2) {
+        return map1.containsKey(name) || map2.containsKey(name);
+    }
+
+    private int getBitMap(String name, Map<String, Object> modifications,
+            Map<String, Object> currentAcl) {
+        int bm = 0;
+        if ( modifications.containsKey(name)) {
+            bm = toInt(modifications.get(name));
+        } else {
+            bm = toInt(currentAcl.get(name));
+        }
+        return bm;
+    }
+
     private String inverseKeyOf(String key) {
       if (key == null) {
         return null;
