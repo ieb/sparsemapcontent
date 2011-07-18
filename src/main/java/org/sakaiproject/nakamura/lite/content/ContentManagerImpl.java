@@ -497,7 +497,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         }
         Content t = get(to);
         if (t != null) {
-           LOGGER.info("Deleting {} ",to);
+           LOGGER.debug("Deleting {} ",to);
            delete(to);
         }
         Set<String> streams = Sets.newHashSet();

@@ -152,7 +152,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
 
                 int originalbitmap = getBitMap(name, modifications, currentAcl);
                 int modifiedbitmap = m.modify(originalbitmap);
-                LOGGER.info("Adding Modification {} {} ",name, modifiedbitmap);
+                LOGGER.debug("Adding Modification {} {} ",name, modifiedbitmap);
                 modifications.put(name, modifiedbitmap);
                 
                 // KERN-1515
