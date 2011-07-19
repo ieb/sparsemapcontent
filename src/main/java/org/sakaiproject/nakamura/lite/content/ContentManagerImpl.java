@@ -189,12 +189,18 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
     }
 
 
-    // TODO: Unit test
     public boolean exists(String path) {
         try {
+            checkOpen();
             accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
             Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
-            return (structure != null && structure.size() > 0);
+            if (structure != null && structure.size() > 0) {
+                String contentId = (String)structure.get(STRUCTURE_UUID_FIELD);
+                Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
+                if (content != null && content.size() > 0) {
+                    return true;
+                }
+            }
         } catch (AccessDeniedException e) {
             LOGGER.debug(e.getMessage(), e);
         } catch (StorageClientException e) {
