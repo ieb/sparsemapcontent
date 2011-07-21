@@ -422,6 +422,11 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_WRITE);
         Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
+        if ( structure == null ) {
+            Content content = new Content(path,null);
+            update(content);
+            structure = getCached(keySpace, contentColumnFamily, path);
+        }
         String contentId = (String)structure.get(STRUCTURE_UUID_FIELD);
         Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
         boolean isnew = true;
