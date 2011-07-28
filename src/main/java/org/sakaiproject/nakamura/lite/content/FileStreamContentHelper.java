@@ -24,6 +24,7 @@ import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.content.Content;
+import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.RowHasher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,16 +40,14 @@ import java.util.Map;
 
 public class FileStreamContentHelper implements StreamedContentHelper {
 
-    private static final String DEFAULT_FILE_STORE = "store";
-    private static final String CONFIG_STOREBASE = "store-base-dir";
     private static final Logger LOGGER = LoggerFactory.getLogger(FileStreamContentHelper.class);
     private static final String STORE_LOCATION_FIELD = Repository.SYSTEM_PROP_PREFIX + "bodyLocation";
     private String fileStore;
     private RowHasher rowHasher;
 
     public FileStreamContentHelper(RowHasher rowHasher, Map<String, Object> properties) {
-        fileStore = StorageClientUtils.getSetting(properties.get(CONFIG_STOREBASE),
-                DEFAULT_FILE_STORE);
+        fileStore = StorageClientUtils.getSetting(properties.get(AbstractClientConnectionPool.FS_STORE_BASE_DIR),
+                AbstractClientConnectionPool.DEFAULT_FILE_STORE);
         this.rowHasher = rowHasher;
     }
 

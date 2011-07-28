@@ -65,6 +65,10 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
     @Property(intValue = 0)
     private static final String LONG_STRING_SIZE = "long-string-size";
 
+    public  static final String DEFAULT_FILE_STORE = "store";
+    @Property(value = "store")
+    public static final String FS_STORE_BASE_DIR = "store-base-dir";
+
     @Reference
     private Configuration configuration;
 
