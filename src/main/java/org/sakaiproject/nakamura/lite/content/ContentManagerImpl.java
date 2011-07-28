@@ -170,6 +170,11 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
     private boolean closed;
 
     private StoreListener eventListener;
+ 
+    /**
+     * Fields are not protected when the content manager is in maintanence mode. Only an admin session can switch to maintanence mode.
+     */
+    private boolean maintanenceMode = false;
 
 
     private PathPrincipalTokenResolver pathPrincipalResolver;
@@ -186,6 +191,12 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         String usersTokenPath = StorageClientUtils.newPath(userId, "private/tokens");
         this.pathPrincipalResolver = new PathPrincipalTokenResolver(usersTokenPath, this);
         this.accessControlManager = new AccessControlManagerTokenWrapper(accessControlManager, pathPrincipalResolver);
+    }
+  
+    public void setMaintanenceMode(boolean maintanenceMode) {
+        if ( User.ADMIN_USER.equals(accessControlManager.getCurrentUserId()) ) {
+           this.maintanenceMode = maintanenceMode;
+        }
     }
 
 
@@ -322,7 +333,6 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         }
 
         Map<String, Object> originalProperties = ImmutableMap.of();
-        boolean isAdmin = User.ADMIN_USER.equals(accessControlManager.getCurrentUserId());
 
         if (content.isNew()) {
             // create the parents if necessary
@@ -336,12 +346,12 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
             toSave =  Maps.newHashMap(content.getPropertiesForUpdate());
             id = StorageClientUtils.getInternalUuid();
             // if the user is admin we allow overwriting of protected fields. This should allow content migration.
-            setField(isAdmin, toSave, UUID_FIELD, id);
+            setField(toSave, UUID_FIELD, id);
             toSave.put(PATH_FIELD, path);
-            setField(isAdmin, toSave, CREATED_FIELD, System.currentTimeMillis());
-            setField(isAdmin, toSave, CREATED_BY_FIELD, accessControlManager.getCurrentUserId());
-            setField(isAdmin, toSave, LASTMODIFIED_FIELD, System.currentTimeMillis());
-            setField(isAdmin, toSave, LASTMODIFIED_BY_FIELD,
+            setField(toSave, CREATED_FIELD, System.currentTimeMillis());
+            setField(toSave, CREATED_BY_FIELD, accessControlManager.getCurrentUserId());
+            setField(toSave, LASTMODIFIED_FIELD, System.currentTimeMillis());
+            setField(toSave, LASTMODIFIED_BY_FIELD,
                     accessControlManager.getCurrentUserId());
             LOGGER.debug("New Content with {} {} ", id, toSave);
         } else if (content.isUpdated()) {
@@ -350,7 +360,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
 
             for (String field : PROTECTED_FIELDS) {
                 LOGGER.debug ("Resetting value for {} to {}", field, originalProperties.get(field));
-                setField(isAdmin, toSave, field, originalProperties.get(field));
+                setField(toSave, field, originalProperties.get(field));
             }
 
             id = (String)toSave.get(UUID_FIELD);
@@ -382,9 +392,10 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         content.reset(getCached(keySpace, contentColumnFamily, id));
         eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), isnew, originalProperties, "op:update");
     }
+    
 
-    private void setField(boolean isAdmin, Map<String, Object> toSave, String field, Object value) {
-        if ( isAdmin && toSave.containsKey(field)) {
+    private void setField(Map<String, Object> toSave, String field, Object value) {
+        if ( maintanenceMode && toSave.containsKey(field)) {
             return;
         }
         toSave.put(field, value);
