@@ -12,8 +12,21 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
   </properties>
+  <scm>
+    <connection>scm:git:git://github.com/ieb/sparsemapcontent.git</connection>
+    <developerConnection>scm:git:git@github.com:ieb/sparsemapcontent.git</developerConnection>
+    <url>http://github.com/ieb/sparsemapcontent/</url>
+  </scm>
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+           <goals>deploy</goals>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
