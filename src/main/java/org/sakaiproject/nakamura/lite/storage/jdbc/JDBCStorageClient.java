@@ -17,31 +17,6 @@
  */
 package org.sakaiproject.nakamura.lite.storage.jdbc;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-
-import org.apache.commons.lang.StringUtils;
-import org.sakaiproject.nakamura.api.lite.ClientPoolException;
-import org.sakaiproject.nakamura.api.lite.DataFormatException;
-import org.sakaiproject.nakamura.api.lite.RemoveProperty;
-import org.sakaiproject.nakamura.api.lite.StorageClientException;
-import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
-import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
-import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
-import org.sakaiproject.nakamura.lite.content.FileStreamContentHelper;
-import org.sakaiproject.nakamura.lite.content.InternalContent;
-import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
-import org.sakaiproject.nakamura.lite.storage.Disposable;
-import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
-import org.sakaiproject.nakamura.lite.storage.RowHasher;
-import org.sakaiproject.nakamura.lite.storage.StorageClient;
-import org.sakaiproject.nakamura.lite.types.Types;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,6 +38,32 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.commons.lang.StringUtils;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.DataFormatException;
+import org.sakaiproject.nakamura.api.lite.RemoveProperty;
+import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
+import org.sakaiproject.nakamura.api.lite.StorageConstants;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
+import org.sakaiproject.nakamura.lite.content.FileStreamContentHelper;
+import org.sakaiproject.nakamura.lite.content.InternalContent;
+import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
+import org.sakaiproject.nakamura.lite.storage.Disposable;
+import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.RowHasher;
+import org.sakaiproject.nakamura.lite.storage.StorageClient;
+import org.sakaiproject.nakamura.lite.types.Types;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 public class JDBCStorageClient implements StorageClient, RowHasher {
 
@@ -602,15 +603,22 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         return autoCommit;
       }
 
-    private boolean shouldIndex(String keySpace, String columnFamily, String k) {
-        if ( AUTO_INDEX_COLUMNS.contains(columnFamily+":"+k)) {
+    private boolean shouldFind(String keySpace, String columnFamily, String k) {
+        String key = columnFamily+":"+k;
+        if ( AUTO_INDEX_COLUMNS.contains(key) || indexColumns.contains(key)) {
             return true;
+        } else {
+            LOGGER.debug("Ignoring Find operation on {}:{}", columnFamily, k);     
         }
-        if (indexColumns.contains(columnFamily + ":" + k)) {
+        return false;
+    }
+    private boolean shouldIndex(String keySpace, String columnFamily, String k) {
+        String key = columnFamily+":"+k;
+        if ( AUTO_INDEX_COLUMNS.contains(key) || indexColumns.contains(key)) {
             LOGGER.debug("Will Index {}:{}", columnFamily, k);
             return true;
         } else {
-            LOGGER.debug("Should Not Index {}:{}", columnFamily, k);
+            LOGGER.debug("Will Not Index {}:{}", columnFamily, k);
             return false;
         }
     }
@@ -896,15 +904,28 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         // this will load all child object directly.
         String hash = rowHash(keySpace, columnFamily, key);
         LOGGER.debug("Finding {}:{}:{} as {} ",new Object[]{keySpace,columnFamily, key, hash});
-        return find(keySpace, columnFamily, ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash));
+        return find(keySpace, columnFamily, ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash, StorageConstants.CUSTOM_STATEMENT_SET, "listchildren"));
     }
 
     public DisposableIterator<Map<String,Object>> find(final String keySpace, final String columnFamily,
             Map<String, Object> properties) throws StorageClientException {
         checkClosed();
-
-        String[] keys = new String[] { "block-find." + keySpace + "." + columnFamily,
-                "block-find." + columnFamily, "block-find" };
+        
+        String[] keys = null;
+        if ( properties != null  && properties.containsKey(StorageConstants.CUSTOM_STATEMENT_SET)) {
+            String customStatement = (String) properties.get(StorageConstants.CUSTOM_STATEMENT_SET);
+            keys = new String[] { 
+                    customStatement+ "." + keySpace + "." + columnFamily,
+                    customStatement +  "." + columnFamily, 
+                    customStatement, 
+                    "block-find." + keySpace + "." + columnFamily,
+                    "block-find." + columnFamily, 
+                    "block-find" 
+           };            
+        } else {
+            keys = new String[] { "block-find." + keySpace + "." + columnFamily,
+                    "block-find." + columnFamily, "block-find" };            
+        }
 
         String sql = null;
         for (String statementKey : keys) {
@@ -929,18 +950,18 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         long page = 0;
         long items = 25;
         if (properties != null) {
-          if (properties.containsKey("_page")) {
-            page = Long.valueOf(String.valueOf(properties.get("_page")));
+          if (properties.containsKey(StorageConstants.PAGE)) {
+            page = Long.valueOf(String.valueOf(properties.get(StorageConstants.PAGE)));
           }
-          if (properties.containsKey("_items")) {
-            items = Long.valueOf(String.valueOf(properties.get("_items")));
+          if (properties.containsKey(StorageConstants.ITEMS)) {
+            items = Long.valueOf(String.valueOf(properties.get(StorageConstants.ITEMS)));
           }
         }
         long offset = page * items;
 
         // collect information on sorting
         String[] sorts = new String[] { null, "asc" };
-        String _sortProp = (String) properties.get("_sort");
+        String _sortProp = (String) properties.get(StorageConstants.SORT);
         if (_sortProp != null) {
           String[] _sorts = StringUtils.split(_sortProp);
           if (_sorts.length == 1) {
@@ -956,7 +977,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         for (Entry<String, Object> e : properties.entrySet()) {
             Object v = e.getValue();
             String k = e.getKey();
-            if ( shouldIndex(keySpace, columnFamily, k) || (v instanceof Map)) {
+            if ( shouldFind(keySpace, columnFamily, k) || (v instanceof Map)) {
                 if (v != null) {
                   // check for a value map and treat sub terms as for OR terms.
                   // Only go 1 level deep; don't recurse. That's just silly.
@@ -970,7 +991,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                       String subk = subterm.getKey();
                       Object subv = subterm.getValue();
                       // check that each subterm should be indexed
-                      if (shouldIndex(keySpace, columnFamily, subk)) {
+                      if (shouldFind(keySpace, columnFamily, subk)) {
                         set = processEntry(statementParts, tables, where, order, extraColumns, parameters, subk, subv, sorts, set);
                         // as long as there are more add OR
                         if (subtermsIter.hasNext()) {
@@ -1022,7 +1043,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
         }
 
         if (sorts[0] != null && order.length() == 0) {
-          if (shouldIndex(keySpace, columnFamily, sorts[0])) {
+          if (shouldFind(keySpace, columnFamily, sorts[0])) {
             String t = "a"+set;
             if ( statementParts.length > STMT_EXTRA_COLUMNS ) {
                 extraColumns.append(MessageFormat.format(statementParts[STMT_EXTRA_COLUMNS], t));

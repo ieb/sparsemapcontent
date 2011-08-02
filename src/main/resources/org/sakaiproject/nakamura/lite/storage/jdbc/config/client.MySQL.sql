@@ -59,6 +59,11 @@ block-find.n.au = select distinct a.rid from au_css a {0} where {1} 1 = 1 {2} li
 block-find.n.cn = select distinct a.rid from cn_css a {0} where {1} 1 = 1 {2} limit {3,number,#} offset {4,number,#};, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
 block-find.n.ac = select distinct a.rid from ac_css a {0} where {1} 1 = 1 {2} limit {3,number,#} offset {4,number,#};, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
 
+listchildren = select distinct a.rid from css a {0} where {1} 1 = 1 {2} ;, css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+listchildren.n.au = select distinct a.rid from au_css a {0} where {1} 1 = 1 {2} ;, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+listchildren.n.cn = select distinct a.rid from cn_css a {0} where {1} 1 = 1 {2} ;, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+listchildren.n.ac = select distinct a.rid from ac_css a {0} where {1} 1 = 1 {2} ;, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+
 
 # statement to validate the connection
 validate = select 1

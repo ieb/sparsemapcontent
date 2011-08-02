@@ -56,6 +56,12 @@ block-find.n.au = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R fr
 block-find.n.ac = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R from (select distinct a.rid  {5} from ac_css a {0} where {1} 1 = 1 {2}) as s) as TR where TR.R > {4,number,#} and TR.R <= {3,number,#}+{4,number,#};, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1};, {0}.v
 block-find.n.cn = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R from (select distinct a.rid  {5} from cn_css a {0} where {1} 1 = 1 {2}) as s) as TR where TR.R > {4,number,#} and TR.R <= {3,number,#}+{4,number,#};, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1};, {0}.v
 
+# Optimized queries to find children
+listchildren = select distinct a.rid {5} from css a {0} where {1} 1 = 1 {2};, css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1} ;, {0}.v
+listchildren.n.au = select distinct a.rid  {5} from au_css a {0} where {1} 1 = 1 {2};, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1};, {0}.v
+listchildren.n.ac = select distinct a.rid  {5} from ac_css a {0} where {1} 1 = 1 {2};, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1};, {0}.v
+listchildren.n.cn = select distinct a.rid  {5} from cn_css a {0} where {1} 1 = 1 {2};, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1};, {0}.v
+
 use-batch-inserts = 0
 
 # Queries that take longer than these times to execute will be logged with warn and error respectively.
