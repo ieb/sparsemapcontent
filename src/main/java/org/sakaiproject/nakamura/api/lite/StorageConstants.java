@@ -4,7 +4,7 @@ public class StorageConstants {
 
     /**
      * Property used to select a set of query statements in the finder. These must exist in 
-     * the driver configuration and are intended to allow institutions to optilise certain 
+     * the driver configuration and are intended to allow institutions to optimize certain 
      * queries. If not present, a the default set will be used. 
      */
     public static final String CUSTOM_STATEMENT_SET = "_statementset";

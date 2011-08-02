@@ -71,7 +71,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
 
 private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
 
-  public class SlowQueryLogger {
+    public class SlowQueryLogger {
         // only used to define the logger.
     }
     private static final Logger LOGGER = LoggerFactory.getLogger(JDBCStorageClient.class);
@@ -82,7 +82,6 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
     private static final String SQL_EOL = ";";
     private static final String SQL_DELETE_STRING_ROW = "delete-string-row";
     private static final String SQL_INSERT_STRING_COLUMN = "insert-string-column";
-    private static final String SQL_UPDATE_STRING_COLUMN = "update-string-column";
     private static final String SQL_REMOVE_STRING_COLUMN = "remove-string-column";
 
     private static final String SQL_BLOCK_DELETE_ROW = "block-delete-row";
