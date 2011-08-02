@@ -27,6 +27,10 @@ public class StorageConstants {
      */
     public static final String SORT = "_sort";
 
+    /**
+     * If present Raw Results will be returned as string values for each record.
+     */
+    public static final String RAWRESULTS = "_rawresults";
 
 
 }

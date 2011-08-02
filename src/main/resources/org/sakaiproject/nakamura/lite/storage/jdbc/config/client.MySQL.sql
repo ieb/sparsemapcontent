@@ -64,6 +64,11 @@ listchildren.n.au = select distinct a.rid from au_css a {0} where {1} 1 = 1 {2} 
 listchildren.n.cn = select distinct a.rid from cn_css a {0} where {1} 1 = 1 {2} ;, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
 listchildren.n.ac = select distinct a.rid from ac_css a {0} where {1} 1 = 1 {2} ;, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
 
+# This custom finder statement outputs 1 row which is the count of number of rows.
+countestimate = select count(*) from (select distinct a.rid from css a {0} where {1} 1 = 1 {2}) as tocount ;, css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+countestimate.n.au = select count(*) from (select distinct a.rid from au_css a {0} where {1} 1 = 1 {2}) as tocount ;, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+countestimate.n.cn = select count(*) from (select distinct a.rid from cn_css a {0} where {1} 1 = 1 {2}) as tocount ;, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
+countestimate.n.ac = select count(*) from (select distinct a.rid from ac_css a {0} where {1} 1 = 1 {2}) as tocount ;, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1}
 
 # statement to validate the connection
 validate = select 1

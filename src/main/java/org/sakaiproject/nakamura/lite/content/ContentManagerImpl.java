@@ -43,6 +43,7 @@ import static org.sakaiproject.nakamura.lite.content.InternalContent.UUID_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.VERSION_HISTORY_ID_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.VERSION_NUMBER_FIELD;
 
+import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -53,6 +54,7 @@ import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
+import org.sakaiproject.nakamura.api.lite.StorageConstants;
 import org.sakaiproject.nakamura.api.lite.StoreListener;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessControlManager;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -884,6 +886,17 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         }
     };
     }
+    
+    public int count(Map<String, Object> countSearch) throws StorageClientException {
+        Builder<String, Object> b = ImmutableMap.builder();
+        b.putAll(countSearch);
+        b.put(StorageConstants.CUSTOM_STATEMENT_SET, "countestimate");
+        b.put(StorageConstants.RAWRESULTS, true);
+        Iterator<Map<String,Object>> counts = client.find(keySpace, contentColumnFamily, b.build());
+        Map<String, Object> count = counts.next();
+        return Integer.parseInt(String.valueOf(count.get("1")));
+    }
+
 
     public boolean hasBody(String path, String streamId) throws StorageClientException, AccessDeniedException {
         Content content = get(path);
@@ -897,5 +910,6 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
     public void cleanPrincipalTokenResolver() {
         accessControlManager.clearRequestPrincipalResolver();
     }
+
 
 }

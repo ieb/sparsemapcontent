@@ -28,6 +28,7 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.MessageFormat;
@@ -60,6 +61,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -67,7 +69,7 @@ import com.google.common.collect.Sets;
 
 public class JDBCStorageClient implements StorageClient, RowHasher {
 
-  private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
+private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
 
   public class SlowQueryLogger {
         // only used to define the logger.
@@ -926,6 +928,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             keys = new String[] { "block-find." + keySpace + "." + columnFamily,
                     "block-find." + columnFamily, "block-find" };            
         }
+        
+        final boolean rawResults = properties != null && properties.containsKey(StorageConstants.RAWRESULTS);
 
         String sql = null;
         for (String statementKey : keys) {
@@ -1091,6 +1095,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
             // pass control to the iterator.
             final PreparedStatement pst = tpst;
             final ResultSet rs = trs;
+            final ResultSetMetaData rsmd = rs.getMetaData();
             tpst = null;
             trs = null;
             return registerDisposable(new PreemptiveIterator<Map<String, Object>>() {
@@ -1107,9 +1112,17 @@ public class JDBCStorageClient implements StorageClient, RowHasher {
                 protected boolean internalHasNext() {
                     try {
                         if (open && rs.next()) {
-                            String id = rs.getString(1);
-                             nextValue = internalGet(keySpace, columnFamily, id);
-                             LOGGER.debug("Got Row ID {} {} ", id, nextValue);
+                            if ( rawResults ) {
+                                Builder<String, Object> b = ImmutableMap.builder();
+                                for  (int i = 1; i <= rsmd.getColumnCount(); i++ ) {
+                                    b.put(String.valueOf(i), rs.getObject(i));
+                                }
+                                nextValue = b.build();
+                            } else {
+                               String id = rs.getString(1);
+                               nextValue = internalGet(keySpace, columnFamily, id);
+                               LOGGER.debug("Got Row ID {} {} ", id, nextValue);
+                            }
                             return true;
                         }
                         close();

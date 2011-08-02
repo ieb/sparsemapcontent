@@ -21,6 +21,8 @@ import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalTokenResolver;
 
+import com.google.common.collect.ImmutableMap;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
@@ -58,6 +60,14 @@ public interface ContentManager {
      */
     // TODO needs better documentation - not clear how to OR or AND
     Iterable<Content> find(Map<String, Object> searchProperties) throws StorageClientException, AccessDeniedException;
+
+    /**
+     * Counts the maximum number of results a find operation could return, ignoring access control. This method may cause problems
+     * if used inappropriately on sets of results that are mostly not readable by the current user (eg how many documents are there with "ieb" and "your fired" in ?)
+     * @param searchProperties Map the same as the finder
+     * @return maximum number of results a find could return.
+     */
+    int count(Map<String, Object> countSearch) throws StorageClientException;
 
     /**
      * Save the current version of the content object including metadata and
@@ -367,6 +377,8 @@ public interface ContentManager {
      * the target ContentManagerImpl, before you enable maintanence mode. Failure to do so may destroy your content.
      */
     void setMaintanenceMode(boolean maintanenceMode);
+
+
 
 
 }

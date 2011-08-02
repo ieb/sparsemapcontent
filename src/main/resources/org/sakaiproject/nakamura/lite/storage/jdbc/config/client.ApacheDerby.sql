@@ -62,6 +62,12 @@ listchildren.n.au = select distinct a.rid  {5} from au_css a {0} where {1} 1 = 1
 listchildren.n.ac = select distinct a.rid  {5} from ac_css a {0} where {1} 1 = 1 {2};, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1};, {0}.v
 listchildren.n.cn = select distinct a.rid  {5} from cn_css a {0} where {1} 1 = 1 {2};, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1};, {0}.v
 
+# Optimized queries estimate the count of any query.
+countestimate = select count(*) from (select distinct a.rid {5} from css a {0} where {1} 1 = 1 {2}) as tocount;, css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1} ;, {0}.v
+countestimate.n.au = select count(*) from (select distinct a.rid  {5} from au_css a {0} where {1} 1 = 1 {2}) as tocount;, au_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1};, {0}.v
+countestimate.n.ac = select count(*) from (select distinct a.rid  {5} from ac_css a {0} where {1} 1 = 1 {2}) as tocount;, ac_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1};, {0}.v
+countestimate.n.cn = select count(*) from (select distinct a.rid  {5} from cn_css a {0} where {1} 1 = 1 {2}) as tocount;, cn_css {0} ; {0}.cid = ? and {0}.v = ? and {0}.rid = a.rid ; {0}.cid = ? and {0}.rid = a.rid ; order by {0}.v {1};, {0}.v
+
 use-batch-inserts = 0
 
 # Queries that take longer than these times to execute will be logged with warn and error respectively.
