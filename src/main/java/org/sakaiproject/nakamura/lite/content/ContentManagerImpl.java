@@ -517,6 +517,10 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         if (f == null) {
             throw new StorageClientException(" Source content " + from + " does not exist");
         }
+        if ( f.getProperty(UUID_FIELD) == null ) {
+            LOGGER.warn("Bad Content item with no ID cant be copied {} ",f);
+            throw new StorageClientException(" Source content " + from + "  Has no "+UUID_FIELD);      
+        }
         Content t = get(to);
         if (t != null) {
            LOGGER.debug("Deleting {} ",to);
