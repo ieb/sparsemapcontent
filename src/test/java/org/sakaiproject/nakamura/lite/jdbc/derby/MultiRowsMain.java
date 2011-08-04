@@ -11,19 +11,20 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 
-public class TestKeyValueRows {
+public class MultiRowsMain {
 
     
     private Connection connection;
     private String[] dictionary;
 
-    public TestKeyValueRows() {
+    public MultiRowsMain() {
     }
     
     public void deleteDb(String file) {
@@ -37,15 +38,18 @@ public class TestKeyValueRows {
     public void createTables(int columns) throws SQLException {
         Statement s = connection.createStatement();
         StringBuilder sql = new StringBuilder();
-        sql.append("CREATE TABLE cn_css_kv (");
+        sql.append("CREATE TABLE cn_css_index (");
         sql.append("id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1),");
         sql.append("rid varchar(32) NOT NULL,");
-        sql.append("cid varchar(64) NOT NULL,");
-        sql.append("v varchar(740),");
+        for ( int i = 0; i < columns; i++ ) {
+            sql.append("v").append(i).append(" varchar(780),");
+        }
         sql.append("primary key(id))");
         s.execute(sql.toString());
-        s.execute("CREATE UNIQUE INDEX cn_css_kv_rc ON cn_css_kv (rid,cid)");
-        s.execute("CREATE INDEX cn_css_kv_cv ON cn_css_kv (cid,v)");
+        s.execute("CREATE UNIQUE INDEX cn_css_index_i ON cn_css_index (rid)");
+        for ( int i = 0; i < columns; i++) {
+            s.execute("CREATE INDEX cn_css_index_v"+i+" ON cn_css_index (v"+i+")");
+        }
         s.close();
     }
     
@@ -61,25 +65,34 @@ public class TestKeyValueRows {
     
     public void loadTable(int columns, int records) throws SQLException, UnsupportedEncodingException, NoSuchAlgorithmException {
         StringBuilder sb = new StringBuilder();
-        sb.append("insert into cn_css_kv (rid, cid, v) values ( ?, ?, ?)");
+        sb.append("insert into cn_css_index (rid");
+        for ( int i = 0; i < columns; i++ ) {
+            sb.append(",v").append(i);
+        }
+        sb.append(") values ( ?");
+        for ( int i = 0; i < columns; i++ ) {
+            sb.append(",?");
+        }
+        sb.append(")");
         PreparedStatement p = connection.prepareStatement(sb.toString());
         MessageDigest sha1 = MessageDigest.getInstance("SHA1");
         SecureRandom sr = new SecureRandom();
         long cs = System.currentTimeMillis();
-        ResultSet rs = connection.createStatement().executeQuery("select count(*) from cn_css_kv");
+        ResultSet rs = connection.createStatement().executeQuery("select count(*) from cn_css_index");
         rs.next();
         int nrows = rs.getInt(1);
         for ( int i = 0+nrows; i < records+nrows; i++) {
             String rid = Base64.encodeBase64URLSafeString(sha1.digest(String.valueOf("TEST"+i).getBytes("UTF-8")));
-            for ( int j = 0; j < columns; j++) {
+            p.clearParameters();
+            p.setString(1, rid);
+            for ( int j = 2; j <= columns+1; j++) {
                 if ( sr.nextBoolean() ) {
-                    p.clearParameters();
-                    p.setString(1, rid);
-                    p.setString(2, "v"+j);
-                    p.setString(3,  dictionary[sr.nextInt(dictionary.length)]);
-                    p.execute();
+                    p.setString(j,  dictionary[sr.nextInt(dictionary.length)]);
+                } else {
+                    p.setNull(j, Types.VARCHAR);
                 }
             }
+            p.execute();
             
             if ( i%100 == 0) {
                 long ct = System.currentTimeMillis();
@@ -96,6 +109,7 @@ public class TestKeyValueRows {
 
     public void testSelect(int ncols, int sorts, int columns, long timeToLive) throws SQLException {
         StringBuilder sb = new StringBuilder();
+        sb.append("select rid from cn_css_index where ");
         SecureRandom sr = new SecureRandom();
         Set<Integer> used = new LinkedHashSet<Integer>();
         while(used.size() < ncols ) {
@@ -105,32 +119,11 @@ public class TestKeyValueRows {
             }
         }
         Integer[] cnums = used.toArray(new Integer[ncols]);
-        sb.append("select distinct a.rid  ");
-        if ( sorts > 0 ) {
-            for ( int i = 0; i < sorts; i++ ) {
-                sb.append(", s").append(i).append(".v ");
-            }
+        for ( int i = 0; i < ncols-1; i++ ) {
+            
+            sb.append("v").append(cnums[i]).append(" = ? AND ");
         }
-        sb.append(" from cn_css_kv a ");
-        for ( int i = 0; i < ncols; i++ ) {
-            sb.append(" , cn_css_kv a").append(i);
-        }
-        if ( sorts > 0 ) {
-            for ( int i = 0; i < sorts; i++ ) {
-                sb.append(" , cn_css_kv s").append(i);
-            }
-        }
-        sb.append(" where  ");
-        for ( int i = 0; i < ncols; i++ ) {
-            sb.append(" a").append(i).append(".cid = ? AND a").append(i).append(".v = ? AND a").append(i).append(".rid = a.rid AND ");
-        }
-        if ( sorts > 0 ) {
-            for ( int i = 0; i < sorts; i++ ) {
-                sb.append("s").append(i).append(".cid = ? AND a.rid = s").append(i).append(".rid AND ");
-            }      
-        }
-        sb.append(" 1 = 1 ");
-        Integer[] snums = null;
+        sb.append("v").append(cnums[ncols-1]).append(" = ? ");
         if ( sorts > 0 ) {
             sb.append(" order by ");
             used.clear();
@@ -140,11 +133,11 @@ public class TestKeyValueRows {
                     used.add(c);
                 }
             }
-            snums = used.toArray(new Integer[ncols]);
+            cnums = used.toArray(new Integer[ncols]);
             for ( int i = 0; i < sorts-1; i++ ) {
-                sb.append("s").append(i).append(".v ,");
+                sb.append("v").append(cnums[i]).append(",");
             }
-            sb.append("s").append(sorts-1).append(".v ");
+            sb.append("v").append(cnums[sorts-1]);
         }
         System.err.println(sb.toString());
         PreparedStatement p = connection.prepareStatement(sb.toString());
@@ -154,14 +147,8 @@ public class TestKeyValueRows {
         int arows = 0;
         while(System.currentTimeMillis() < endTestTime) {
             p.clearParameters();
-            for ( int i = 0; i < ncols; i++ ) {
-                p.setString(i*2+1, "v"+cnums[i]);
-                p.setString(i*2+2, dictionary[sr.nextInt(dictionary.length)]);
-            }
-            if ( sorts > 0 ) {
-                for ( int i = 0; i < sorts; i++ ) {
-                    p.setString(i+1+ncols*2, "s"+snums[i]);
-                }
+            for ( int i = 1; i <= ncols; i++ ) {
+                p.setString(i, dictionary[sr.nextInt(dictionary.length)]);
             }
             ResultSet rs = p.executeQuery();
             int rows = 0;
@@ -180,16 +167,15 @@ public class TestKeyValueRows {
     }
     
     public static void main(String[] argv) throws SQLException, NoSuchAlgorithmException, UnsupportedEncodingException {
-        TestKeyValueRows tmr = new TestKeyValueRows();
-        String db = "target/testkv";
-        tmr.deleteDb(db);
-        boolean exists = new File(db).exists();
+        MultiRowsMain tmr = new MultiRowsMain();
+        String db = "target/testwide";
+        boolean exists = new File("target/testwide").exists();
         tmr.open(db);
         if ( ! exists ) {
             tmr.createTables(30);
         }
         tmr.populateDictionary(1000);
-        tmr.loadTable(30, 10000);
+        tmr.loadTable(30, 200000);
         tmr.testSelect(1, 0, 30, 5000);
         tmr.testSelect(2, 0, 30, 5000);
         tmr.testSelect(3, 0, 30, 5000);
