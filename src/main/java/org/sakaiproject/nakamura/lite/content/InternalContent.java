@@ -29,6 +29,7 @@ import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.content.Content;
+import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,13 +45,14 @@ import java.util.Set;
 public class InternalContent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Content.class);
-    
-    
-    public static final String INTERNAL_FIELD_PREFIX = Repository.SYSTEM_PROP_PREFIX+":";
+
+    public static final String INTERNAL_FIELD_PREFIX = Repository.SYSTEM_PROP_PREFIX + ":";
     /**
      * The ID of a content item
      */
-    public static final String UUID_FIELD = Repository.SYSTEM_PROP_PREFIX + "sparseId";
+    private static String UUID_FIELD = ConfigurationImpl.DEFAULT_UUID_FIELD;
+
+    private static boolean idFieldIsSet = false;
     /**
      * The path of the content item (used in structure row)
      */
@@ -65,7 +67,8 @@ public class InternalContent {
      */
     public static final String STRUCTURE_UUID_FIELD = INTERNAL_FIELD_PREFIX + "cid";
     /**
-     * Where a structure object is a link, this field contains the location of the target of the link
+     * Where a structure object is a link, this field contains the location of
+     * the target of the link
      */
     public static final String LINKED_PATH_FIELD = INTERNAL_FIELD_PREFIX + "link";
     /**
@@ -76,11 +79,13 @@ public class InternalContent {
     /**
      * ID of the previous version (content row)
      */
-    public static final String PREVIOUS_VERSION_UUID_FIELD = Repository.SYSTEM_PROP_PREFIX + "previousVersion";
+    public static final String PREVIOUS_VERSION_UUID_FIELD = Repository.SYSTEM_PROP_PREFIX
+            + "previousVersion";
     /**
      * Previous Block ID. (content row)
      */
-    public static final String PREVIOUS_BLOCKID_FIELD = Repository.SYSTEM_PROP_PREFIX + "previousBlockId";
+    public static final String PREVIOUS_BLOCKID_FIELD = Repository.SYSTEM_PROP_PREFIX
+            + "previousBlockId";
     /**
      * The ID of the next version (content row)
      */
@@ -88,11 +93,11 @@ public class InternalContent {
     /**
      * Set to "Y" if the content item is read only. (content row)
      */
-    public static final String READONLY_FIELD =  Repository.SYSTEM_PROP_PREFIX + "readOnly";
+    public static final String READONLY_FIELD = Repository.SYSTEM_PROP_PREFIX + "readOnly";
     /**
      * set to "Y" if deleted. (content row)
      */
-    public static final String DELETED_FIELD =  Repository.SYSTEM_PROP_PREFIX + "deleted";
+    public static final String DELETED_FIELD = Repository.SYSTEM_PROP_PREFIX + "deleted";
 
     /**
      * The block size in bytes in each block in a block set, if body store uses
@@ -116,12 +121,14 @@ public class InternalContent {
      * The date (stored as GMT epoch long) the body was last modified. (content
      * row)
      */
-    public static final String BODY_LAST_MODIFIED_FIELD = Repository.SYSTEM_PROP_PREFIX + "bodyLastModified";
+    public static final String BODY_LAST_MODIFIED_FIELD = Repository.SYSTEM_PROP_PREFIX
+            + "bodyLastModified";
 
     /**
      * The user ID that last modified the body. (content row)
      */
-    public static final String BODY_LAST_MODIFIED_BY_FIELD = Repository.SYSTEM_PROP_PREFIX + "bodyLastModifiedBy";
+    public static final String BODY_LAST_MODIFIED_BY_FIELD = Repository.SYSTEM_PROP_PREFIX
+            + "bodyLastModifiedBy";
 
     /**
      * The date the body was created (GMT epoch long) (content row)
@@ -131,37 +138,41 @@ public class InternalContent {
     /**
      * The user that created the body. (content row)
      */
-    public static final String BODY_CREATED_BY_FIELD = Repository.SYSTEM_PROP_PREFIX + "bodyCreatedBy";
+    public static final String BODY_CREATED_BY_FIELD = Repository.SYSTEM_PROP_PREFIX
+            + "bodyCreatedBy";
 
     /**
      * The time the item was created. (content row)
      */
-    public static final String CREATED_FIELD =  Repository.SYSTEM_PROP_PREFIX + "created";
+    public static final String CREATED_FIELD = Repository.SYSTEM_PROP_PREFIX + "created";
 
     /**
      * The user that created the item. (content row)
      */
-    public static final String CREATED_BY_FIELD =  Repository.SYSTEM_PROP_PREFIX + "createdBy";
+    public static final String CREATED_BY_FIELD = Repository.SYSTEM_PROP_PREFIX + "createdBy";
 
     /**
      * The time the item was last modified. (content row)
      */
-    public static final String LASTMODIFIED_FIELD =  Repository.SYSTEM_PROP_PREFIX + "lastModified";
+    public static final String LASTMODIFIED_FIELD = Repository.SYSTEM_PROP_PREFIX + "lastModified";
 
     /**
      * The user that lastModified the item. (content row)
      */
-    public static final String LASTMODIFIED_BY_FIELD =  Repository.SYSTEM_PROP_PREFIX + "lastModifiedBy";
+    public static final String LASTMODIFIED_BY_FIELD = Repository.SYSTEM_PROP_PREFIX
+            + "lastModifiedBy";
 
     /**
      * The path the content object was copied from if it was copied
      */
-    public static final String COPIED_FROM_PATH_FIELD = Repository.SYSTEM_PROP_PREFIX + "copiedFrom";
+    public static final String COPIED_FROM_PATH_FIELD = Repository.SYSTEM_PROP_PREFIX
+            + "copiedFrom";
 
     /**
      * The ID the content object was copied from.
      */
-    public static final String COPIED_FROM_ID_FIELD = Repository.SYSTEM_PROP_PREFIX + "copiedFromId";
+    public static final String COPIED_FROM_ID_FIELD = Repository.SYSTEM_PROP_PREFIX
+            + "copiedFromId";
 
     /**
      * If the copy was deep, then true
@@ -171,30 +182,30 @@ public class InternalContent {
     /**
      * Mime type
      */
-    public static final String MIMETYPE_FIELD =  Repository.SYSTEM_PROP_PREFIX + "mimeType";
+    public static final String MIMETYPE_FIELD = Repository.SYSTEM_PROP_PREFIX + "mimeType";
 
     /**
      * Charset encoding if char based.
      */
-    public static final String ENCODING_FIELD =  Repository.SYSTEM_PROP_PREFIX + "encoding";
-    
-    /**
-     * 
-     */
-    public static final String VERSION_HISTORY_ID_FIELD = Repository.SYSTEM_PROP_PREFIX + "versionHistoryId";
+    public static final String ENCODING_FIELD = Repository.SYSTEM_PROP_PREFIX + "encoding";
 
     /**
      * 
      */
-    public static final String VERSION_NUMBER_FIELD = Repository.SYSTEM_PROP_PREFIX + "versionNumber";
-    
+    public static final String VERSION_HISTORY_ID_FIELD = Repository.SYSTEM_PROP_PREFIX
+            + "versionHistoryId";
+
+    /**
+     * 
+     */
+    public static final String VERSION_NUMBER_FIELD = Repository.SYSTEM_PROP_PREFIX
+            + "versionNumber";
+
     /**
      * The who this version was saved by
      */
-    public static final String VERSION_SAVEDBY_FIELD = Repository.SYSTEM_PROP_PREFIX + "versionSavedBy";
-
-
-
+    public static final String VERSION_SAVEDBY_FIELD = Repository.SYSTEM_PROP_PREFIX
+            + "versionSavedBy";
 
     /**
      * Map of the content object itself.
@@ -222,7 +233,6 @@ public class InternalContent {
      */
     private boolean newcontent;
     private boolean readOnly;
-
 
     /**
      * Create a new Content Object that has not been persisted
@@ -259,16 +269,15 @@ public class InternalContent {
         this.readOnly = readOnly;
     }
 
-
     /**
      * Reset the object back to its last saved state.
      */
     public void reset(Map<String, Object> updatedMap) {
-        if ( !readOnly ) {
+        if (!readOnly) {
             this.content = ImmutableMap.copyOf(updatedMap);
             updatedContent.clear();
             updated = false;
-            LOGGER.debug("Reset to {} ",updatedMap);
+            LOGGER.debug("Reset to {} ", updatedMap);
         }
     }
 
@@ -285,7 +294,7 @@ public class InternalContent {
      *         retrieved.
      */
     public boolean isUpdated() {
-        if ( readOnly ) {
+        if (readOnly) {
             return false;
         }
         return updated;
@@ -302,14 +311,12 @@ public class InternalContent {
     }
 
     public Map<String, Object> getPropertiesForUpdate() {
-        return StorageClientUtils.getFilterMap(content, updatedContent, null,
-                null, true);
-    }
-    public Map<String, Object> getOriginalProperties() {
-        return StorageClientUtils.getFilterMap(content, null, null,
-                null, false);
+        return StorageClientUtils.getFilterMap(content, updatedContent, null, null, true);
     }
 
+    public Map<String, Object> getOriginalProperties() {
+        return StorageClientUtils.getFilterMap(content, null, null, null, false);
+    }
 
     /**
      * set a property, creating if it does not exist, overwriting if it does.
@@ -321,30 +328,29 @@ public class InternalContent {
      *            StorageContentUtils.toStore(). Must not be null.
      */
     public void setProperty(String key, Object value) {
-        if ( readOnly) {
+        if (readOnly) {
             return;
         }
         if (value == null) {
             throw new IllegalArgumentException("value must not be null");
         }
         Object o = content.get(key);
-        if (!value.equals(o) ) {
+        if (!value.equals(o)) {
             updatedContent.put(key, value);
             updated = true;
-        } else if ( updatedContent.containsKey(key) && !value.equals(updatedContent.get(key)) ) {
+        } else if (updatedContent.containsKey(key) && !value.equals(updatedContent.get(key))) {
             updatedContent.put(key, value);
-            updated = true;            
+            updated = true;
         }
 
     }
-    
+
     public void removeProperty(String name) {
-        if ( readOnly) {
+        if (readOnly) {
             return;
         }
         setProperty(name, new RemoveProperty());
     }
-
 
     /**
      * @param key
@@ -356,15 +362,15 @@ public class InternalContent {
      */
     // TODO: Unit test
     public Object getProperty(String key) {
-        if ( updatedContent.containsKey(key)) {
+        if (updatedContent.containsKey(key)) {
             Object o = updatedContent.get(key);
-            if ( o instanceof RemoveProperty ) {
+            if (o instanceof RemoveProperty) {
                 return null;
             }
             return o;
         }
-        Object o =  content.get(key);
-        if ( o instanceof RemoveProperty ) {
+        Object o = content.get(key);
+        if (o instanceof RemoveProperty) {
             return null;
         }
         return o;
@@ -375,8 +381,8 @@ public class InternalContent {
      * @return true if the property exists.
      */
     public boolean hasProperty(String key) {
-        if ( updatedContent.containsKey(key)) {
-            return !( updatedContent.get(key) instanceof RemoveProperty);
+        if (updatedContent.containsKey(key)) {
+            return !(updatedContent.get(key) instanceof RemoveProperty);
         }
         return content.containsKey(key) && !(content.get(key) instanceof RemoveProperty);
     }
@@ -392,7 +398,7 @@ public class InternalContent {
      * @return an iterable for all children of this content item.
      */
     public Iterable<Content> listChildren() {
-        if ( newcontent ) {
+        if (newcontent) {
             return Iterables.emptyIterable();
         }
         return new Iterable<Content>() {
@@ -401,7 +407,7 @@ public class InternalContent {
                 try {
                     return contentManager.listChildren(path);
                 } catch (StorageClientException e) {
-                    LOGGER.error(e.getMessage(),e);
+                    LOGGER.error(e.getMessage(), e);
                 }
                 return Iterators.emptyIterator();
             }
@@ -412,7 +418,7 @@ public class InternalContent {
      * @return an iterable of all relative child paths of this object.
      */
     public Iterable<String> listChildPaths() {
-        if ( newcontent ) {
+        if (newcontent) {
             return Iterables.emptyIterable();
         }
         return new Iterable<String>() {
@@ -421,7 +427,7 @@ public class InternalContent {
                 try {
                     return contentManager.listChildPaths(path);
                 } catch (StorageClientException e) {
-                    LOGGER.error(e.getMessage(),e);
+                    LOGGER.error(e.getMessage(), e);
                 }
                 return Iterators.emptyIterator();
             }
@@ -430,10 +436,10 @@ public class InternalContent {
 
     public Iterable<String> listStreams() {
         final Set<String> streams = Sets.newHashSet();
-        for ( Entry<String, Object> e : content.entrySet()) {
+        for (Entry<String, Object> e : content.entrySet()) {
             String k = e.getKey();
-            String[] streamIds = StringUtils.split(k,"/", 2);
-            if ( streamIds.length == 2) {
+            String[] streamIds = StringUtils.split(k, "/", 2);
+            if (streamIds.length == 2) {
                 streams.add(streamIds[1]);
             }
         }
@@ -447,6 +453,36 @@ public class InternalContent {
     @Override
     public String toString() {
         return "Path: " + getPath() + "; Properties: " + getProperties();
+    }
+
+    /**
+     * @deprecated This method sets the ID field for the whole system. Do not
+     *             use. Its been provided to make it possible to configure the
+     *             ID field name used by Sparse to allow Berkley to continue
+     *             running without migration. DO NOT USE, IT WILL HAVE NO EFFECT.
+     * @param idFieldName
+     */
+    public static void setUuidField(String idFieldName) {
+        if ( !idFieldIsSet  ) {
+            idFieldIsSet = true;
+            LOGGER.warn("ID Field is being set to {}, this can only be done once per JVM start ",idFieldName);
+            UUID_FIELD = idFieldName;
+        } else {
+            LOGGER.warn("ID Field has already been set to {} and cannot be reset. ",idFieldName);
+        }
+    }
+
+    /**
+     * @deprecated this is a transitional measure that will be removed once
+     *             Berkley have migrated. It allows them (and anyone else with
+     *             content containing _sparseId) in their data to configure
+     *             their system to use that field name. Eventually this method
+     *             will be replaced throughout the code base with a static
+     *             final.
+     * @return
+     */
+    public static String getUuidFeld() {
+        return UUID_FIELD;
     }
 
 }

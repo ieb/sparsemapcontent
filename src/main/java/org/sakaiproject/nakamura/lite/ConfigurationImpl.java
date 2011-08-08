@@ -26,7 +26,9 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.sakaiproject.nakamura.api.lite.Configuration;
+import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
+import org.sakaiproject.nakamura.lite.content.InternalContent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,6 +76,12 @@ public class ConfigurationImpl implements Configuration {
 
     private static final String SHAREDCONFIGPROPERTY = "sparseconfig";
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationImpl.class);
+    public static final String DEFAULT_UUID_FIELD = Repository.SYSTEM_PROP_PREFIX+ "id";
+    /**
+     * 
+     */
+    @Property
+    private static final String UUID_FIELD_NAME = "uuid-field-name";
 
 
     private String aclColumnFamily;
@@ -129,6 +137,9 @@ public class ConfigurationImpl implements Configuration {
         // apply any local OSGi customization
         indexColumnNames = StorageClientUtils.getSetting(properties.get(INDEX_COLUMN_NAMES), indexColumnNames);
         LOGGER.info("Using Configuration for Index Column Names as              {}", Arrays.toString(indexColumnNames));
+        
+        InternalContent.setUuidField(StorageClientUtils.getSetting(properties.get(UUID_FIELD_NAME), DEFAULT_UUID_FIELD ));
+        
 
 
     }
