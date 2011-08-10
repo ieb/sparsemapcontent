@@ -52,7 +52,7 @@ public class InternalContent {
      */
     private static String UUID_FIELD = ConfigurationImpl.DEFAULT_UUID_FIELD;
 
-    private static boolean idFieldIsSet = false;
+    static boolean idFieldIsSet = false;
     /**
      * The path of the content item (used in structure row)
      */
@@ -481,7 +481,7 @@ public class InternalContent {
      *             final.
      * @return
      */
-    public static String getUuidFeld() {
+    public static String getUuidField() {
         return UUID_FIELD;
     }
 

@@ -97,7 +97,7 @@ public class BlockSetContentHelper implements BlockContentHelper {
             int bufferLength = saveBuffer.length;
             length = length + bufferLength;
             lastBlockWrite = i;
-            client.insert(keySpace, contentColumnFamily, key, ImmutableMap.of(Content.getUuidFeld(),
+            client.insert(keySpace, contentColumnFamily, key, ImmutableMap.of(Content.getUuidField(),
                     (Object)contentId, 
                     CONTENT_BLOCK_ID, key,
                     NUMBLOCKS_FIELD,

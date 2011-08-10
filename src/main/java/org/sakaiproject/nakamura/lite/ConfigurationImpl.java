@@ -53,7 +53,7 @@ public class ConfigurationImpl implements Configuration {
     @Property(value = "cn")
     private static final String CONTENT_COLUMN_FAMILY = "content-column-family";
     
-    private static final String[] DEFAULT_INDEX_COLUMN_NAMES = new String[]{"au:rep:principalName",
+    protected static final String[] DEFAULT_INDEX_COLUMN_NAMES = new String[]{"au:rep:principalName",
         "au:type",
         "cn:sling:resourceType",
         "cn:sakai:pooled-content-manager",
@@ -70,18 +70,18 @@ public class ConfigurationImpl implements Configuration {
         "cn:sakai:subject"};
 
     @Property
-    private static final String INDEX_COLUMN_NAMES = "index-column-names";
+    protected static final String INDEX_COLUMN_NAMES = "index-column-names";
 
     private static final String SHAREDCONFIGPATH = "org/sakaiproject/nakamura/lite/shared.properties";
 
-    private static final String SHAREDCONFIGPROPERTY = "sparseconfig";
+    protected static final String SHAREDCONFIGPROPERTY = "sparseconfig";
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationImpl.class);
     public static final String DEFAULT_UUID_FIELD = Repository.SYSTEM_PROP_PREFIX+ "id";
     /**
      * 
      */
     @Property
-    private static final String UUID_FIELD_NAME = "uuid-field-name";
+    protected static final String UUID_FIELD_NAME = "uuid-field-name";
 
 
     private String aclColumnFamily;
@@ -118,6 +118,8 @@ public class ConfigurationImpl implements Configuration {
                 p.load(fr);
                 fr.close();
                 sharedProperties.putAll(Maps.fromProperties(p));
+            } else {
+                LOGGER.warn("Unable to read shared config file {} specified by the system property {} ",f.getAbsolutePath(), SHAREDCONFIGPROPERTY);
             }
         }
 
@@ -133,12 +135,19 @@ public class ConfigurationImpl implements Configuration {
             		"OSGi Configuration may override this, if {} has been set in the " +
             		"OSGi Configuration for this component ", INDEX_COLUMN_NAMES);
         }
+        
+        
 
         // apply any local OSGi customization
         indexColumnNames = StorageClientUtils.getSetting(properties.get(INDEX_COLUMN_NAMES), indexColumnNames);
         LOGGER.info("Using Configuration for Index Column Names as              {}", Arrays.toString(indexColumnNames));
         
-        InternalContent.setUuidField(StorageClientUtils.getSetting(properties.get(UUID_FIELD_NAME), DEFAULT_UUID_FIELD ));
+        String uuidFieldName = DEFAULT_UUID_FIELD;
+        if ( sharedProperties.containsKey(UUID_FIELD_NAME) ) {
+            uuidFieldName = sharedProperties.get(UUID_FIELD_NAME);
+            LOGGER.info("UUID Field Name from shared properties is configured as {}", uuidFieldName);
+        }
+        InternalContent.setUuidField(StorageClientUtils.getSetting(properties.get(UUID_FIELD_NAME), uuidFieldName ));
         
 
 
