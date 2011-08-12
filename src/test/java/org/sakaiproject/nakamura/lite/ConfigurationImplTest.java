@@ -7,7 +7,6 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 import org.sakaiproject.nakamura.api.lite.content.Content;
-import org.sakaiproject.nakamura.lite.content.InternalContent;
 import org.sakaiproject.nakamura.lite.content.InternalContentAccess;
 
 import com.google.common.collect.ImmutableMap;

@@ -1,6 +1,7 @@
 package org.sakaiproject.nakamura.api.lite.util;
 
 import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.Disposer;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -15,6 +16,7 @@ public abstract class PreemptiveIterator<T> implements Iterator<T>, DisposableIt
     private static final int TRUE = 1;
     private static final int FALSE = -1;
     private int lastCheck = UNDETERMINED;
+    private Disposer disposer;
 
     protected abstract boolean internalHasNext();
 
@@ -48,6 +50,13 @@ public abstract class PreemptiveIterator<T> implements Iterator<T>, DisposableIt
     }
     
     public void close() {
+        if ( disposer != null ) {
+            disposer.unregisterDisposable(this);
+        }
+    }
+    
+    public void setDisposer(Disposer disposer) {
+        this.disposer = disposer;
     }
 
 }

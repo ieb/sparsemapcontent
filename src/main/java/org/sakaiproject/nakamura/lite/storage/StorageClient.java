@@ -17,13 +17,12 @@
  */
 package org.sakaiproject.nakamura.lite.storage;
 
-import org.sakaiproject.nakamura.api.lite.StorageClientException;
-import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
-
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Iterator;
 import java.util.Map;
+
+import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 
 public interface StorageClient {
 
@@ -102,7 +101,7 @@ public interface StorageClient {
      * @return an iterator of results
      * @throws StorageClientException
      */
-    Iterator<Map<String, Object>> find(String keySpace, String authorizableColumnFamily,
+    DisposableIterator<Map<String, Object>> find(String keySpace, String authorizableColumnFamily,
             Map<String, Object> properties) throws StorageClientException;
 
     /**

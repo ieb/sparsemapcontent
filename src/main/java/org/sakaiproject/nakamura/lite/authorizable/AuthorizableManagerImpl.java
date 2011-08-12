@@ -17,11 +17,9 @@
  */
 package org.sakaiproject.nakamura.lite.authorizable;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
@@ -42,14 +40,16 @@ import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.sakaiproject.nakamura.lite.CachingManager;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
+import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 /**
  * An Authourizable Manager bound to a user, on creation the user ID specified
@@ -402,7 +402,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
 
     }
 
-    public Iterator<Authorizable> findAuthorizable(String propertyName, String value,
+    public DisposableIterator<Authorizable> findAuthorizable(String propertyName, String value,
             Class<? extends Authorizable> authorizableType) throws StorageClientException {
         Builder<String, Object> builder = ImmutableMap.builder();
         if (value != null) {
@@ -413,7 +413,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         } else if (authorizableType.equals(Group.class)) {
             builder.put(Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.GROUP_VALUE);
         }
-        final Iterator<Map<String, Object>> authMaps = client.find(keySpace,
+        final DisposableIterator<Map<String, Object>> authMaps = client.find(keySpace,
                 authorizableColumnFamily, builder.build());
 
         return new PreemptiveIterator<Authorizable>() {
@@ -444,6 +444,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                             LOGGER.debug("Search result filtered ", e.getMessage());
                         } catch (StorageClientException e) {
                             LOGGER.error("Failed to check ACLs ", e.getMessage());
+                            close();
                             return false;
                         }
 
@@ -451,6 +452,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 }
 
                 authorizable = null;
+                close();
                 return false;
             }
 
@@ -458,7 +460,11 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             protected Authorizable internalNext() {
                 return authorizable;
             }
-
+            @Override
+            public void close() {
+                authMaps.close();
+                super.close();
+            }
 
         };
     }

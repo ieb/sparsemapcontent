@@ -66,6 +66,7 @@ import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.sakaiproject.nakamura.lite.CachingManager;
+import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -240,7 +241,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
 
 
     public Iterator<Content> listChildren(String path) throws StorageClientException {
-        final Iterator<Map<String, Object>> childContent = client.listChildren(keySpace,
+        final DisposableIterator<Map<String, Object>> childContent = client.listChildren(keySpace,
                 contentColumnFamily, path);
         return new PreemptiveIterator<Content>() {
 
@@ -263,7 +264,13 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                         LOGGER.debug(e.getMessage(),e);
                     }
                 }
-                return (content != null);
+                if  (content == null) {
+                    // this is over the top as a disposable iterator should close auto
+                    childContent.close();
+                    close();
+                    return false;
+                }
+                return true;
             }
 
             @Override
@@ -304,6 +311,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                 }
                 LOGGER.debug("No more");
                 childPath = null;
+                close();
                 return false;
             }
 
@@ -851,7 +859,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         public Iterator<Content> iterator() {
             Iterator<Content> contentResultsIterator = null;
             try {
-              final Iterator<Map<String,Object>> clientSearchKeysIterator = client.find(keySpace, contentColumnFamily, finalSearchProperties);
+              final DisposableIterator<Map<String,Object>> clientSearchKeysIterator = client.find(keySpace, contentColumnFamily, finalSearchProperties);
               contentResultsIterator = new PreemptiveIterator<Content>() {
                   Content contentResult;
 
@@ -871,12 +879,22 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                               LOGGER.debug(e.getMessage(),e);
                           }
                       }
-                      return (contentResult != null);
+                      if (contentResult == null) {
+                          close();
+                          return false;
+                      }
+                      return true;
                   }
 
                   protected Content internalNext() {
                       return contentResult;
                   }
+                  
+                  @Override
+                  public void close() {
+                      clientSearchKeysIterator.close();
+                      super.close();
+                  };
               };
             } catch (StorageClientException e) {
               LOGGER.error("Unable to iterate over sparsemap search results.", e);
@@ -891,9 +909,15 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         b.putAll(countSearch);
         b.put(StorageConstants.CUSTOM_STATEMENT_SET, "countestimate");
         b.put(StorageConstants.RAWRESULTS, true);
-        Iterator<Map<String,Object>> counts = client.find(keySpace, contentColumnFamily, b.build());
-        Map<String, Object> count = counts.next();
-        return Integer.parseInt(String.valueOf(count.get("1")));
+        DisposableIterator<Map<String,Object>> counts = client.find(keySpace, contentColumnFamily, b.build());
+        try {
+            Map<String, Object> count = counts.next();
+            return Integer.parseInt(String.valueOf(count.get("1")));
+        } finally {
+            if ( counts != null ) {
+                counts.close();
+            }
+        }
     }
 
 

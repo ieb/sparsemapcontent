@@ -743,5 +743,27 @@ public abstract class AbstractContentManagerTest {
 
   }
 
+  // @Test This Test runs forever and tests for OOM on disposables.
+  public void testOOM() throws StorageClientException, AccessDeniedException {
+      AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+      User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
+      AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+              currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
+
+      ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
+              configuration, null,  new LoggingStorageListener());
+      contentManager.update(new Content("/testCreateContent", ImmutableMap.of("prop1", (Object) "value1")));
+      contentManager.update(new Content("/testCreateContent/test", ImmutableMap.of("prop1", (Object) "value2")));
+      contentManager
+              .update(new Content("/testCreateContent/test/ing", ImmutableMap.of("prop1", (Object) "value3")));
+
+
+      Content obj = contentManager.get("/testCreateContent");
+      Assert.assertNotNull(obj);
+      while (true) {
+        for (Content child : obj.listChildren()) {
+        }
+      }
+  }
 }

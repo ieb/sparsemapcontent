@@ -18,7 +18,11 @@
 package org.sakaiproject.nakamura.lite.storage;
 
 /**
- * Things that are disposable, must be closed.
+ * Things that are disposable, must be closed. If they are not, resources will
+ * be exhausted and OOM errors may appear. This interface is not an API
+ * interface and its an internal responsibility of this bundle/jar to dispose of
+ * a Disposable. No code should require clients of this bundle to dispose of a
+ * Disposable.
  * 
  * @author ieb
  * 
@@ -26,5 +30,7 @@ package org.sakaiproject.nakamura.lite.storage;
 public interface Disposable {
 
     void close();
+    
+    void setDisposer(Disposer disposer);
 
 }

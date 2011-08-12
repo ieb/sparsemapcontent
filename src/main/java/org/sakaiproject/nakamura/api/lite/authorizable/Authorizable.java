@@ -378,6 +378,7 @@ public class Authorizable {
                         LOGGER.debug(e.getMessage(), e);
                     }
                 }
+                close();
                 return false;
             }
 

@@ -260,6 +260,7 @@ public class MemoryStorageClient implements StorageClient {
                    }
                 }
                 nextMap = null;
+                close();
                 return false;
             }
 

@@ -20,7 +20,11 @@ package org.sakaiproject.nakamura.lite.storage;
 import java.util.Iterator;
 
 /**
- * Disposable Iterators must be closed when they have been used.
+ * Disposable Iterators must be closed when they have been used. If they are
+ * registered with a disposer, they should be disposed of by the disposer and
+ * there is no requirement for the user of the Iterator to dispose of the
+ * iterator. Failure to dispose a DispsableIterator will cause resource
+ * exhaustion. eg out of SQL cursors, out of files, out of memory.
  * 
  * @author ieb
  * 

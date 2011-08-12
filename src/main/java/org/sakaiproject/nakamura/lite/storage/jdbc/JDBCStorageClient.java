@@ -54,6 +54,7 @@ import org.sakaiproject.nakamura.lite.content.InternalContent;
 import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
 import org.sakaiproject.nakamura.lite.storage.Disposable;
 import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.Disposer;
 import org.sakaiproject.nakamura.lite.storage.RowHasher;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.types.Types;
@@ -67,7 +68,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-public class JDBCStorageClient implements StorageClient, RowHasher {
+public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
 
 private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
 
@@ -731,13 +732,30 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
 
     private void disposeDisposables() {
         passivate = new Exception("Passivate Traceback");
-        for (Disposable d : toDispose) {
+        List<Disposable> dList = null;
+        // this shoud not be necessary, but just in case.
+        synchronized (toDispose) {
+            dList = toDispose;
+            toDispose = Lists.newArrayList();            
+        }
+        for (Disposable d : dList) {
             d.close();
+        }
+        dList.clear();
+    }
+    
+    public void unregisterDisposable(Disposable disposable) {
+        synchronized (toDispose) {
+            toDispose.remove(disposable);
         }
     }
 
     private <T extends Disposable> T registerDisposable(T disposable) {
-        toDispose.add(disposable);
+        // this should not be necessary, but just in case some one is sharing the client between threads.
+        synchronized (toDispose) {
+            toDispose.add(disposable);
+            disposable.setDisposer(this);
+        }
         return disposable;
     }
 
@@ -875,6 +893,7 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
             registerDisposable(new Disposable() {
     
                 private boolean open = true;
+                private Disposer disposer = null;
     
                 public void close() {
                     if (open && in != null) {
@@ -883,9 +902,15 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
                         } catch (IOException e) {
                             LOGGER.warn(e.getMessage(), e);
                         }
+                        if ( disposer != null ) {
+                            disposer.unregisterDisposable(this);
+                        }
                         open = false;
-                    }
-    
+                        
+                    } 
+                }
+                public void setDisposer(Disposer disposer) {
+                    this.disposer = disposer;
                 }
             });
         }
@@ -1029,6 +1054,7 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
         if (where.length() == 0) {
             return new DisposableIterator<Map<String,Object>>() {
 
+                private Disposer disposer;
                 public boolean hasNext() {
                     return false;
                 }
@@ -1041,7 +1067,14 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
                 }
 
                 public void close() {
+                    if ( disposer != null ) {
+                        disposer.unregisterDisposable(this);
+                    }
                 }
+                public void setDisposer(Disposer disposer) {
+                    this.disposer = disposer;
+                }
+
             };
         }
 
@@ -1161,6 +1194,7 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
                         } catch (SQLException e) {
                             LOGGER.warn(e.getMessage(), e);
                         }
+                        super.close();
                     }
 
                 }
