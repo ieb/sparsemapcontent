@@ -83,7 +83,6 @@ public class ConfigurationImpl implements Configuration {
     @Property
     protected static final String UUID_FIELD_NAME = "uuid-field-name";
 
-
     private String aclColumnFamily;
     private String keySpace;
     private String authorizableColumnFamily;
@@ -168,10 +167,12 @@ public class ConfigurationImpl implements Configuration {
     public String getContentColumnFamily() {
         return contentColumnFamily;
     }
+
     public String[] getIndexColumnNames() {
         return indexColumnNames;
     }
     public Map<String, String> getSharedConfig() {
         return sharedProperties;
     }
+
 }
