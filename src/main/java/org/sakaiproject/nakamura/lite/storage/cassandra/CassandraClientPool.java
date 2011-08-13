@@ -39,13 +39,14 @@ import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
+import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;;
+import java.util.Map;
 
 @Component(enabled = false, metatype = true, inherit = true)
 @Service(value = StorageClientPool.class)
@@ -179,51 +180,56 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
 
     @Activate
     public void activate(Map<String, Object> properties) throws ClassNotFoundException {
-        connections = StorageClientUtils.getSetting(properties.get(CONNECTION_POOL),
-                new String[] { "localhost:9160" });
-        this.properties = properties;
-        super.activate(properties);
-        // this should come from the memory service ultimately.
-        
-           CassandraClient client = null;
-           try {
-               client = (CassandraClient) getClient();
-               if (client == null) {
-                   LOGGER.warn("No connection");
-               }
-               else{       
-                   client.insert(PROPERTIES_KEYSPACE, INDEX_COLUMN_FAMILY, ROW_OF_PROPERTIES, ImmutableMap.of(PROPERTIES_INDEX_COLUMN_NAME,
-                   properties.get(PROPERTIES_INDEX_COLUMN_NAME)), true);            
-               } 
-           } catch (ClientPoolException e) {
-               LOGGER.error("Failed to check Schema", e);
-           } catch(StorageClientException e){
-               LOGGER.error("Storage client exception",e);
+      connections = StorageClientUtils.getSetting(properties.get(CONNECTION_POOL),
+              new String[] { "localhost:9160" });
+      this.properties = properties;
+      super.activate(properties);
+      // this should come from the memory service ultimately.
+      
+         CassandraClient client = null;
+         try {
+             client = (CassandraClient) getClient();
+             if (client == null) {
+                 LOGGER.warn("No connection");
              }
-             finally {
-                  if (client != null) {
-                     client.close();
-                  }
-               } 
+             else{  
+                 // Check if properties map is already stored in the database.
+                 Map<String, Object> cacheProperties = client.get(PROPERTIES_KEYSPACE,INDEX_COLUMN_FAMILY, ROW_OF_PROPERTIES);
+               
+                 // If not stored, store default values.
+                 if (cacheProperties == null) {
+                   client.insert(PROPERTIES_KEYSPACE, INDEX_COLUMN_FAMILY, ROW_OF_PROPERTIES,ImmutableMap.of(PROPERTIES_INDEX_COLUMN_NAME,(Object) (new ConfigurationImpl().getIndexColumnNames())),true);
+                 } 
+             } 
+         } catch (ClientPoolException e) {
+             LOGGER.error("Failed to check Schema", e);
+         } catch(StorageClientException e){
+             LOGGER.error("Storage client exception",e);
+           }
+           finally {
+                if (client != null) {
+                   client.close();
+                }
+             } 
+   
      
-       
-        sharedCache = new ConcurrentLRUMap<String, CacheHolder>(10000);
-        defaultStorageManagerCache = new StorageCacheManager() {
-            
-            public Map<String, CacheHolder> getContentCache() {
-                return sharedCache;
-            }
-            
-            public Map<String, CacheHolder> getAuthorizableCache() {
-                return sharedCache;
-            }
-            
-            public Map<String, CacheHolder> getAccessControlCache() {
-                return sharedCache;
-            }
-        };
+      sharedCache = new ConcurrentLRUMap<String, CacheHolder>(10000);
+      defaultStorageManagerCache = new StorageCacheManager() {
+          
+          public Map<String, CacheHolder> getContentCache() {
+              return sharedCache;
+          }
+          
+          public Map<String, CacheHolder> getAuthorizableCache() {
+              return sharedCache;
+          }
+          
+          public Map<String, CacheHolder> getAccessControlCache() {
+              return sharedCache;
+          }
+      };
 
-    }
+  }
 
     @Deactivate
     public void deactivate(Map<String, Object> properties) {
