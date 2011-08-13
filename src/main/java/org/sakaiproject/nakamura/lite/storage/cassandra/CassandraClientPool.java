@@ -46,7 +46,7 @@ import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;;
+import java.util.Map;
 
 @Component(enabled = false, metatype = true, inherit = true)
 @Service(value = StorageClientPool.class)
