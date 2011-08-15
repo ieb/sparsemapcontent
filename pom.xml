@@ -90,6 +90,7 @@
               org.sakaiproject.nakamura.api.lite.*
 			</Export-Package>
 			<DynamicImport-Package>*</DynamicImport-Package>
+               
 			<Import-Package>
 			   !org.apache.xpath.*,
 			   !org.apache.xalan.*,
@@ -109,7 +110,7 @@
                 -->
                *
 			</Import-Package>
-            <Private-Package>org.sakaiproject.nakamura.lite.*</Private-Package>
+            <Private-Package>!org.sakaiproject.nakamura.lite.storage.hbase.*,org.sakaiproject.nakamura.lite.*</Private-Package>
             <!-- For Oracle, include ojdbc in your Embed-Dependency element -->
             <!-- <Embed-Dependency>libthrift,apache-cassandra,mysql-connector-java,derby,ojdbc</Embed-Dependency> -->
             <!--  <Embed-Dependency>libthrift,apache-cassandra,mysql-connector-java,derby</Embed-Dependency> -->
