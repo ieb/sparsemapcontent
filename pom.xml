@@ -264,6 +264,11 @@
 	  <artifactId>postgresql</artifactId>
 	  <version>9.0-801.jdbc4</version>    
     </dependency>
+    <dependency>
+	  <groupId>org.apache.hbase</groupId>
+	  <artifactId>hbase</artifactId>
+	  <version>0.90.3</version>    
+    </dependency>
 <!--
     To use Oracle, install ojdbc14.jar to your local mvn
     repository and then uncomment the dependency below.
