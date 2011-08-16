@@ -14,7 +14,7 @@ public class Type1UUIDTest {
 
     
     protected static final Logger LOGGER = LoggerFactory.getLogger(Type1UUIDTest.class);
-    protected static final int TEST_SIZE = 100000;
+    protected static final int TEST_SIZE = 10000;
     private static final int N_THREADS = 4;
     protected Map<String,Long> check = new ConcurrentHashMap<String, Long>(TEST_SIZE*N_THREADS);
     private int errors;

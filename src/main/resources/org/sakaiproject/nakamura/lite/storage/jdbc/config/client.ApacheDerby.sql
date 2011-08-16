@@ -74,3 +74,29 @@ use-batch-inserts = 0
 # Logging is performed against org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClient.SlowQueryLogger
 slow-query-time = 50
 very-slow-query-time = 100
+
+Xindex-column-name-select = select cf, cid, cname from css_wr
+Xindex-column-name-insert = insert into css_wr ( cf, cid, cname ) values ( ? , ? , ? )
+
+exists-widestring-row = select rid from css_w where rid = ?
+exists-widestring-row.n.cn = select rid from cn_css_w where rid = ?
+exists-widestring-row.n.ac = select rid from ac_css_w where rid = ?
+exists-widestring-row.n.au = select rid from au_css_w where rid = ?
+
+
+delete-widestring-row = delete from css_w where rid = ?
+delete-widestring-row.n.cn = delete from cn_css_w where rid = ?
+delete-widestring-row.n.ac = delete from ac_css_w where rid = ?
+delete-widestring-row.n.au = delete from au_css_w where rid = ?
+
+update-widestring-row = update css_w {0} {1} where rid = ?; {0} = ?
+update-widestring-row.n.cn = update cn_css_w {0} {1} where rid = ?; {0} = ?
+update-widestring-row.n.ac = update ac_css_w {0} {1} where rid = ?; {0} = ?
+update-widestring-row.n.au = update au_css_w {0} {1} where rid = ?; {0} = ?
+
+
+insert-widestring-row = insert into css_w ( rid {0} ) values ( ? {1} )
+insert-widestring-row.n.cn = insert into cn_css_w ( rid {0} ) values ( ? {1} )
+insert-widestring-row.n.ac = insert into ac_css_w ( rid {0} ) values ( ? {1} )
+insert-widestring-row.n.au = insert into au_css_w ( rid {0} ) values ( ? {1} )
+

@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -14,13 +15,12 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
 
-public class NonBatchInsertIndexer implements Indexer {
+public class NonBatchInsertIndexer extends KeyValueIndexer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NonBatchInsertIndexer.class);
-    private JDBCStorageClient client;
 
-    public NonBatchInsertIndexer(JDBCStorageClient jdbcStorageClient) {
-        this.client = jdbcStorageClient;
+    public NonBatchInsertIndexer(JDBCStorageClient jdbcStorageClient, Set<String> indexColumns, Map<String, Object> sqlConfig) {
+        super(jdbcStorageClient, indexColumns, sqlConfig);
     }
 
     public void index( Map<String, PreparedStatement> statementCache, String keySpace, String columnFamily, String key, String rid, Map<String, Object> values) throws StorageClientException, SQLException {
@@ -28,7 +28,7 @@ public class NonBatchInsertIndexer implements Indexer {
         for (Entry<String, Object> e : values.entrySet()) {
             String k = e.getKey();
             Object o = e.getValue();
-            if (client.shouldIndex(keySpace, columnFamily, k)) {
+            if (shouldIndex(keySpace, columnFamily, k)) {
                 if (o instanceof RemoveProperty || o == null) {
                     PreparedStatement removeStringColumn = client.getStatement(keySpace,
                             columnFamily, JDBCStorageClient.SQL_REMOVE_STRING_COLUMN, rid, statementCache);
@@ -136,5 +136,6 @@ public class NonBatchInsertIndexer implements Indexer {
         }
 
     }
+
 
 }

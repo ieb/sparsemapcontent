@@ -3,6 +3,7 @@ package org.sakaiproject.nakamura.lite.storage.jdbc;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.text.MessageFormat;
 import java.util.Map;
 import java.util.Set;
@@ -11,20 +12,26 @@ import java.util.Map.Entry;
 import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.ImmutableMap.Builder;
 
-public class WideColumnIndexer implements Indexer {
+public class WideColumnIndexer extends AbstractIndexer {
 
+    private static final String SQL_INSERT_WIDESTRING_ROW = "insert-widestring-row";
+    private static final String SQL_UPDATE_WIDESTRING_ROW = "update-widestring-row";
+    private static final String SQL_DELETE_WIDESTRING_ROW = "delete-widestring-row";
+    private static final String SQL_EXISTS_WIDESTRING_ROW = "exists-widestring-row";
     private JDBCStorageClient client;
     private Map<String, String> indexColumnsNames;
     private Map<String, String> indexColumnsTypes;
 
     public WideColumnIndexer(JDBCStorageClient jdbcStorageClient,
-            Map<String, String> indexColumnsNames, Set<String> indexColumnTypes) {
+            Map<String, String> indexColumnsNames, Set<String> indexColumnTypes, Map<String, Object> sqlConfig) {
+        super(indexColumnsNames.keySet());
         this.client = jdbcStorageClient;
         this.indexColumnsNames = indexColumnsNames;
         Builder<String, String> b = ImmutableMap.builder();
@@ -49,7 +56,7 @@ public class WideColumnIndexer implements Indexer {
                 String k = e.getKey();
                 Object o = e.getValue();
                 Object[] valueMembers = (o instanceof Object[]) ? (Object[]) o : new Object[] { o };
-                if (client.shouldIndex(keySpace, columnFamily, k)) {
+                if (shouldIndex(keySpace, columnFamily, k)) {
                     if (isColumnArray(keySpace, columnFamily, k)) {
                         if (o instanceof RemoveProperty || o == null) {
                             removeArrayColumns.add(k);
@@ -108,7 +115,7 @@ public class WideColumnIndexer implements Indexer {
 
             // now update the wide column.
             PreparedStatement wideColumnExists = client.getStatement(keySpace, columnFamily,
-                    "exists-widestring-row", rid, statementCache);
+                    SQL_EXISTS_WIDESTRING_ROW, rid, statementCache);
             wideColumnExists.clearParameters();
             wideColumnExists.setString(1, rid);
             rs = wideColumnExists.executeQuery();
@@ -119,7 +126,7 @@ public class WideColumnIndexer implements Indexer {
                     // delete row this assumes that the starting point is a
                     // complete map
                     PreparedStatement deleteWideStringColumn = client.getStatement(keySpace,
-                            columnFamily, "delete-widestring-row", rid, statementCache);
+                            columnFamily, SQL_DELETE_WIDESTRING_ROW, rid, statementCache);
                     deleteWideStringColumn.clearParameters();
                     deleteWideStringColumn.setString(1, rid);
                     deleteWideStringColumn.execute();
@@ -128,7 +135,7 @@ public class WideColumnIndexer implements Indexer {
                     // build an update query, record does not exists, but there
                     // is stuff to add
                     String[] sqlParts = StringUtils.split(client.getSql(keySpace, columnFamily,
-                            "update-widestring-row"));
+                            SQL_UPDATE_WIDESTRING_ROW));
                     StringBuilder setOperations = new StringBuilder();
                     for (Entry<String, Object> e : updateColumns.entrySet()) {
                         if (setOperations.length() > 0) {
@@ -141,7 +148,7 @@ public class WideColumnIndexer implements Indexer {
                         if (setOperations.length() > 0) {
                             setOperations.append(" ,");
                         }
-                        setOperations.append(MessageFormat.format(sqlParts[2],
+                        setOperations.append(MessageFormat.format(sqlParts[1],
                                 indexColumnsNames.get(columnFamily + ":" + toRemove)));
                     }
                     String finalSql = MessageFormat.format(sqlParts[0], setOperations);
@@ -152,6 +159,10 @@ public class WideColumnIndexer implements Indexer {
                     int i = 1;
                     for (Entry<String, Object> e : updateColumns.entrySet()) {
                         updateColumnPst.setString(i, e.getValue().toString());
+                        i++;
+                    }
+                    for (String toRemove : removeColumns) {
+                        updateColumnPst.setNull(i, toSqlType(columnFamily, toRemove));
                         i++;
                     }
                     updateColumnPst.setString(i, rid);
@@ -172,7 +183,7 @@ public class WideColumnIndexer implements Indexer {
                     paramHolders.append("?");
                 }
                 String finalSql = MessageFormat.format(
-                        client.getSql(keySpace, columnFamily, "insert-widestring-row"),
+                        client.getSql(keySpace, columnFamily, SQL_INSERT_WIDESTRING_ROW),
                         columnNames, paramHolders);
                 PreparedStatement insertColumnPst = client.getStatement(finalSql, statementCache);
                 insertColumnPst.clearWarnings();
@@ -195,12 +206,32 @@ public class WideColumnIndexer implements Indexer {
 
     }
 
+    private int toSqlType(String columnFamily, String k) {
+        String type = indexColumnsTypes.get(columnFamily+":"+k);
+        if ( type == null ) {
+            return Types.VARCHAR;
+        } else if (type.startsWith("String")) {
+            return Types.VARCHAR;
+        } else if (type.startsWith("int")) {
+            return Types.INTEGER;
+        } else if (type.startsWith("Date")) {
+            return Types.DATE;
+        }
+        return Types.VARCHAR;
+    }
+
     private boolean isColumnArray(String keySpace, String columnFamily, String k) {
         String type = indexColumnsTypes.get(columnFamily + ":" + k);
         if (type != null && type.endsWith("[]")) {
             return true;
         }
         return false;
+    }
+
+    public DisposableIterator<Map<String, Object>> find(String keySpace, String columnFamily,
+            Map<String, Object> properties) throws StorageClientException {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

@@ -19,13 +19,12 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-public class BatchInsertIndexer implements Indexer {
+public class BatchInsertIndexer extends KeyValueIndexer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BatchInsertIndexer.class);
-    private JDBCStorageClient client;
 
-    public BatchInsertIndexer(JDBCStorageClient jdbcStorageClient) {
-        this.client = jdbcStorageClient;
+    public BatchInsertIndexer(JDBCStorageClient jdbcStorageClient, Set<String> indexColumns, Map<String, Object> sqlConfig) {
+        super(jdbcStorageClient, indexColumns, sqlConfig);
     }
 
     public void index(Map<String, PreparedStatement> statementCache, String keySpace, String columnFamily, String key, String rid, Map<String, Object> values) throws StorageClientException, SQLException {
@@ -39,7 +38,7 @@ public class BatchInsertIndexer implements Indexer {
         for (Entry<String, Object> e : values.entrySet()) {
             String k = e.getKey();
             Object o = e.getValue();
-            if (client.shouldIndex(keySpace, columnFamily, k)) {
+            if (shouldIndex(keySpace, columnFamily, k)) {
                 if ( o instanceof RemoveProperty || o == null ) {
                     PreparedStatement removeStringColumn = client.getStatement(keySpace,
                             columnFamily, JDBCStorageClient.SQL_REMOVE_STRING_COLUMN, rid, statementCache);

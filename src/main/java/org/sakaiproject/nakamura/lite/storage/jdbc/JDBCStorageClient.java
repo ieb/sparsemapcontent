@@ -28,12 +28,8 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -48,7 +44,6 @@ import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.StorageConstants;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
-import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.sakaiproject.nakamura.lite.content.FileStreamContentHelper;
 import org.sakaiproject.nakamura.lite.content.InternalContent;
 import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
@@ -70,17 +65,19 @@ import com.google.common.collect.Sets;
 
 public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
 
-private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
-
     public class SlowQueryLogger {
         // only used to define the logger.
     }
+    
+    private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
     private static final Logger LOGGER = LoggerFactory.getLogger(JDBCStorageClient.class);
-    private static final Logger SQL_LOGGER = LoggerFactory.getLogger(SlowQueryLogger.class);
+    static final Logger SQL_LOGGER = LoggerFactory.getLogger(SlowQueryLogger.class);
     private static final String SQL_VALIDATE = "validate";
     private static final String SQL_CHECKSCHEMA = "check-schema";
     private static final String SQL_COMMENT = "#";
     private static final String SQL_EOL = ";";
+    private static final String SQL_INDEX_COLUMN_NAME_SELECT = "index-column-name-select";
+    private static final String SQL_INDEX_COLUMN_NAME_INSERT = "index-column-name-insert";
     static final String SQL_DELETE_STRING_ROW = "delete-string-row";
     static final String SQL_INSERT_STRING_COLUMN = "insert-string-column";
     static final String SQL_REMOVE_STRING_COLUMN = "remove-string-column";
@@ -102,18 +99,10 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
             "cn:_:parenthash=String",
             "au:_:parenthash=String",
             "ac:_:parenthash=String");
-    private static final Set<String> AUTO_INDEX_COLUMNS = ImmutableSet.of(
+    static final Set<String> AUTO_INDEX_COLUMNS = ImmutableSet.of(
             "cn:_:parenthash",
             "au:_:parenthash",
             "ac:_:parenthash");
-    private static final int STMT_BASE = 0;
-    private static final int STMT_TABLE_JOIN = 1;
-    private static final int STMT_WHERE = 2;
-    private static final int STMT_WHERE_SORT = 3;
-    private static final int STMT_ORDER = 4;
-    private static final int STMT_EXTRA_COLUMNS = 5;
-    private static final Object SLOW_QUERY_THRESHOLD = "slow-query-time";
-    private static final Object VERY_SLOW_QUERY_THRESHOLD = "very-slow-query-time";
 
     private JDBCStorageClientPool jcbcStorageClientConnection;
     private Map<String, Object> sqlConfig;
@@ -125,8 +114,6 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
     private String rowidHash;
     private Map<String, AtomicInteger> counters = Maps.newConcurrentHashMap();
     private Set<String> indexColumns;
-    private long slowQueryThreshold;
-    private long verySlowQueryThreshold;
     private Indexer indexer;
 
     public JDBCStorageClient(JDBCStorageClientPool jdbcStorageClientConnectionPool,
@@ -154,20 +141,12 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
             rowidHash = "MD5";
         }
         active = true;
-        slowQueryThreshold = 50L;
-        verySlowQueryThreshold = 100L;
-        if (sqlConfig.containsKey(SLOW_QUERY_THRESHOLD)) {
-            slowQueryThreshold = Long.parseLong((String)sqlConfig.get(SLOW_QUERY_THRESHOLD));
-        }
-        if (sqlConfig.containsKey(VERY_SLOW_QUERY_THRESHOLD)) {
-            verySlowQueryThreshold = Long.parseLong((String)sqlConfig.get(VERY_SLOW_QUERY_THRESHOLD));
-        }
         if ( indexColumnsNames != null ) {
-            indexer = new WideColumnIndexer(this,indexColumnsNames, indexColumnTypes);
+            indexer = new WideColumnIndexer(this,indexColumnsNames, indexColumnTypes, sqlConfig);
         } else if ("1".equals(getSql(USE_BATCH_INSERTS))) {
-            indexer = new BatchInsertIndexer(this);
+            indexer = new BatchInsertIndexer(this, indexColumns, sqlConfig);
         } else {
-            indexer = new NonBatchInsertIndexer(this);
+            indexer = new NonBatchInsertIndexer(this, indexColumns, sqlConfig);
         }
     }
 
@@ -177,7 +156,7 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
         String rid = rowHash(keySpace, columnFamily, key);
         return internalGet(keySpace, columnFamily, rid);
     }
-    private Map<String, Object> internalGet(String keySpace, String columnFamily, String rid) throws StorageClientException {
+    Map<String, Object> internalGet(String keySpace, String columnFamily, String rid) throws StorageClientException {
         ResultSet body = null;
         Map<String, Object> result = Maps.newHashMap();
         PreparedStatement selectStringRow = null;
@@ -411,25 +390,6 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
         return autoCommit;
       }
 
-    private boolean shouldFind(String keySpace, String columnFamily, String k) {
-        String key = columnFamily+":"+k;
-        if ( AUTO_INDEX_COLUMNS.contains(key) || indexColumns.contains(key)) {
-            return true;
-        } else {
-            LOGGER.debug("Ignoring Find operation on {}:{}", columnFamily, k);     
-        }
-        return false;
-    }
-    boolean shouldIndex(String keySpace, String columnFamily, String k) {
-        String key = columnFamily+":"+k;
-        if ( AUTO_INDEX_COLUMNS.contains(key) || indexColumns.contains(key)) {
-            LOGGER.debug("Will Index {}:{}", columnFamily, k);
-            return true;
-        } else {
-            LOGGER.debug("Will Not Index {}:{}", columnFamily, k);
-            return false;
-        }
-    }
 
     String getRowId(String keySpace, String columnFamily, String key) {
         return keySpace + ":" + columnFamily + ":" + key;
@@ -572,7 +532,7 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
         }
     }
 
-    private <T extends Disposable> T registerDisposable(T disposable) {
+    <T extends Disposable> T registerDisposable(T disposable) {
         // this should not be necessary, but just in case some one is sharing the client between threads.
         synchronized (toDispose) {
             toDispose.add(disposable);
@@ -603,7 +563,7 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
         }
     }
     
-    private String getSql(String[] keys) {
+    String getSql(String[] keys) {
         for (String statementKey : keys) {
             String sql = getSql(statementKey);
             if (sql != null) {
@@ -771,335 +731,14 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
             Map<String, Object> properties) throws StorageClientException {
         checkClosed();
         
-        String[] keys = null;
-        if ( properties != null  && properties.containsKey(StorageConstants.CUSTOM_STATEMENT_SET)) {
-            String customStatement = (String) properties.get(StorageConstants.CUSTOM_STATEMENT_SET);
-            keys = new String[] { 
-                    customStatement+ "." + keySpace + "." + columnFamily,
-                    customStatement +  "." + columnFamily, 
-                    customStatement, 
-                    "block-find." + keySpace + "." + columnFamily,
-                    "block-find." + columnFamily, 
-                    "block-find" 
-           };            
-        } else {
-            keys = new String[] { "block-find." + keySpace + "." + columnFamily,
-                    "block-find." + columnFamily, "block-find" };            
-        }
+        return indexer.find(keySpace, columnFamily, properties);
         
-        final boolean rawResults = properties != null && properties.containsKey(StorageConstants.RAWRESULTS);
-
-        String sql = getSql(keys);
-        if (sql == null) {
-            throw new StorageClientException("Failed to locate SQL statement for any of  "
-                    + Arrays.toString(keys));
-        }
-
-        String[] statementParts = StringUtils.split(sql, ';');
-
-        StringBuilder tables = new StringBuilder();
-        StringBuilder where = new StringBuilder();
-        StringBuilder order = new StringBuilder();
-        StringBuilder extraColumns = new StringBuilder();
-
-        // collect information on paging
-        long page = 0;
-        long items = 25;
-        if (properties != null) {
-          if (properties.containsKey(StorageConstants.PAGE)) {
-            page = Long.valueOf(String.valueOf(properties.get(StorageConstants.PAGE)));
-          }
-          if (properties.containsKey(StorageConstants.ITEMS)) {
-            items = Long.valueOf(String.valueOf(properties.get(StorageConstants.ITEMS)));
-          }
-        }
-        long offset = page * items;
-
-        // collect information on sorting
-        String[] sorts = new String[] { null, "asc" };
-        String _sortProp = (String) properties.get(StorageConstants.SORT);
-        if (_sortProp != null) {
-          String[] _sorts = StringUtils.split(_sortProp);
-          if (_sorts.length == 1) {
-            sorts[0] = _sorts[0];
-          } else if (_sorts.length == 2) {
-            sorts[0] = _sorts[0];
-            sorts[1] = _sorts[1];
-          }
-        }
-
-        List<Object> parameters = Lists.newArrayList();
-        int set = 0;
-        for (Entry<String, Object> e : properties.entrySet()) {
-            Object v = e.getValue();
-            String k = e.getKey();
-            if ( shouldFind(keySpace, columnFamily, k) || (v instanceof Map)) {
-                if (v != null) {
-                  // check for a value map and treat sub terms as for OR terms.
-                  // Only go 1 level deep; don't recurse. That's just silly.
-                  if (v instanceof Map) {
-                    // start the OR grouping
-                    where.append(" (");
-                    @SuppressWarnings("unchecked")
-                    Set<Entry<String, Object>> subterms = ((Map<String, Object>) v).entrySet();
-                    for(Iterator<Entry<String, Object>> subtermsIter = subterms.iterator(); subtermsIter.hasNext();) {
-                      Entry<String, Object> subterm = subtermsIter.next();
-                      String subk = subterm.getKey();
-                      Object subv = subterm.getValue();
-                      // check that each subterm should be indexed
-                      if (shouldFind(keySpace, columnFamily, subk)) {
-                        set = processEntry(statementParts, tables, where, order, extraColumns, parameters, subk, subv, sorts, set);
-                        // as long as there are more add OR
-                        if (subtermsIter.hasNext()) {
-                          where.append(" OR");
-                        }
-                      }
-                    }
-                    // end the OR grouping
-                    where.append(") AND");
-                  } else {
-                    // process a first level non-map value as an AND term
-
-                      if (v instanceof Iterable<?>) {
-                          for (Object vo : (Iterable<?>)v) {
-                              set = processEntry(statementParts, tables, where, order, extraColumns, parameters, k, vo, sorts, set);
-                              where.append(" AND");
-                          }
-                      } else {
-                          set = processEntry(statementParts, tables, where, order, extraColumns, parameters, k, v, sorts, set);
-                          where.append(" AND");
-                      }
-                  }
-                } else if (!k.startsWith("_")) {
-                  LOGGER.debug("Search on {}:{} filter dropped due to null value.", columnFamily, k);
-                }
-            } else {
-              if (!k.startsWith("_")) {
-                  LOGGER.warn("Search on {}:{} is not supported, filter dropped ",columnFamily,k);
-              }
-            }
-        }
-        if (where.length() == 0) {
-            return new DisposableIterator<Map<String,Object>>() {
-
-                private Disposer disposer;
-                public boolean hasNext() {
-                    return false;
-                }
-
-                public Map<String, Object> next() {
-                    return null;
-                }
-
-                public void remove() {
-                }
-
-                public void close() {
-                    if ( disposer != null ) {
-                        disposer.unregisterDisposable(this);
-                    }
-                }
-                public void setDisposer(Disposer disposer) {
-                    this.disposer = disposer;
-                }
-
-            };
-        }
-
-        if (sorts[0] != null && order.length() == 0) {
-          if (shouldFind(keySpace, columnFamily, sorts[0])) {
-            String t = "a"+set;
-            if ( statementParts.length > STMT_EXTRA_COLUMNS ) {
-                extraColumns.append(MessageFormat.format(statementParts[STMT_EXTRA_COLUMNS], t));
-            }
-            tables.append(MessageFormat.format(statementParts[STMT_TABLE_JOIN], t));
-            parameters.add(sorts[0]);
-            where.append(MessageFormat.format(statementParts[STMT_WHERE_SORT], t)).append(" AND");
-            order.append(MessageFormat.format(statementParts[STMT_ORDER], t, sorts[1]));
-          } else {
-            LOGGER.warn("Sort on {}:{} is not supported, sort dropped", columnFamily,
-                sorts[0]);
-          }
-        }
-
-
-        final String sqlStatement = MessageFormat.format(statementParts[STMT_BASE],
-            tables.toString(), where.toString(), order.toString(), items, offset, extraColumns.toString());
-
-        PreparedStatement tpst = null;
-        ResultSet trs = null;
-        try {
-            LOGGER.debug("Preparing {} ", sqlStatement);
-            tpst = jcbcStorageClientConnection.getConnection().prepareStatement(sqlStatement);
-            inc("iterator");
-            tpst.clearParameters();
-            int i = 1;
-            for (Object params : parameters) {
-                tpst.setObject(i, params);
-                LOGGER.debug("Setting {} ", params);
-
-                i++;
-            }
-
-            long qtime = System.currentTimeMillis();
-            trs = tpst.executeQuery();
-            qtime = System.currentTimeMillis() - qtime;
-            if ( qtime > slowQueryThreshold && qtime < verySlowQueryThreshold) {
-                SQL_LOGGER.warn("Slow Query {}ms {} params:[{}]",new Object[]{qtime,sqlStatement,Arrays.toString(parameters.toArray(new String[parameters.size()]))});
-            } else if ( qtime > verySlowQueryThreshold ) {
-                SQL_LOGGER.error("Very Slow Query {}ms {} params:[{}]",new Object[]{qtime,sqlStatement,Arrays.toString(parameters.toArray(new String[parameters.size()]))});
-            }
-            inc("iterator r");
-            LOGGER.debug("Executed ");
-
-            // pass control to the iterator.
-            final PreparedStatement pst = tpst;
-            final ResultSet rs = trs;
-            final ResultSetMetaData rsmd = rs.getMetaData();
-            tpst = null;
-            trs = null;
-            return registerDisposable(new PreemptiveIterator<Map<String, Object>>() {
-
-                private Map<String, Object> nextValue = Maps.newHashMap();
-                private boolean open = true;
-
-                @Override
-                protected Map<String, Object> internalNext() {
-                    return nextValue;
-                }
-
-                @Override
-                protected boolean internalHasNext() {
-                    try {
-                        if (open && rs.next()) {
-                            if ( rawResults ) {
-                                Builder<String, Object> b = ImmutableMap.builder();
-                                for  (int i = 1; i <= rsmd.getColumnCount(); i++ ) {
-                                    b.put(String.valueOf(i), rs.getObject(i));
-                                }
-                                nextValue = b.build();
-                            } else {
-                               String id = rs.getString(1);
-                               nextValue = internalGet(keySpace, columnFamily, id);
-                               LOGGER.debug("Got Row ID {} {} ", id, nextValue);
-                            }
-                            return true;
-                        }
-                        close();
-                        nextValue = null;
-                        LOGGER.debug("End of Set ");
-                        return false;
-                    } catch (SQLException e) {
-                        LOGGER.error(e.getMessage(), e);
-                        close();
-                        nextValue = null;
-                        return false;
-                    } catch (StorageClientException e) {
-                        LOGGER.error(e.getMessage(), e);
-                        close();
-                        nextValue = null;
-                        return false;
-                    }
-                }
-
-                @Override
-                public void close() {
-                    if (open) {
-                        open = false;
-                        try {
-                            if (rs != null) {
-                                rs.close();
-                                dec("iterator r");
-                            }
-                        } catch (SQLException e) {
-                            LOGGER.warn(e.getMessage(), e);
-                        }
-                        try {
-                            if (pst != null) {
-                                pst.close();
-                                dec("iterator");
-                            }
-                        } catch (SQLException e) {
-                            LOGGER.warn(e.getMessage(), e);
-                        }
-                        super.close();
-                    }
-
-                }
-            });
-        } catch (SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new StorageClientException(e.getMessage() + " SQL Statement was " + sqlStatement,
-                    e);
-        } finally {
-            // trs and tpst will only be non null if control has not been passed
-            // to the iterator.
-            try {
-                if (trs != null) {
-                    trs.close();
-                    dec("iterator r");
-                }
-            } catch (SQLException e) {
-                LOGGER.warn(e.getMessage(), e);
-            }
-            try {
-                if (tpst != null) {
-                    tpst.close();
-                    dec("iterator");
-                }
-            } catch (SQLException e) {
-                LOGGER.warn(e.getMessage(), e);
-            }
-        }
 
     }
 
 
-    /**
-     * @param statementParts
-     * @param where
-     * @param params
-     * @param k
-     * @param v
-     * @param t
-     * @param conjunctionOr
-     */
-    private int processEntry(String[] statementParts, StringBuilder tables,
-        StringBuilder where, StringBuilder order, StringBuilder extraColumns, List<Object> params, String k, Object v,
-        String[] sorts, int set) {
-      String t = "a" + set;
-      tables.append(MessageFormat.format(statementParts[STMT_TABLE_JOIN], t));
 
-      if (v instanceof Iterable<?>) {
-        for (Iterator<?> vi = ((Iterable<?>) v).iterator(); vi.hasNext();) {
-          Object viObj = vi.next();
-          
-          params.add(k);
-          params.add(viObj);
-          where.append(" (").append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(")");
-
-          // as long as there are more add OR
-          if (vi.hasNext()) {
-            where.append(" OR");
-          }
-        }
-      } else {
-        params.add(k);
-        params.add(v);
-        where.append(" (").append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(")");
-      }
-
-      // add in sorting based on the table ref and value
-      if (k.equals(sorts[0])) {
-        order.append(MessageFormat.format(statementParts[STMT_ORDER], t, sorts[1]));
-        if ( statementParts.length > STMT_EXTRA_COLUMNS ) {
-            extraColumns.append(MessageFormat.format(statementParts[STMT_EXTRA_COLUMNS], t));
-        }
-      }
-      return set+1;
-    }
-
-    private void dec(String key) {
+    void dec(String key) {
         AtomicInteger cn = counters.get(key);
         if (cn == null) {
             LOGGER.warn("Never Statement/ResultSet Created Counter {} ", key);
@@ -1108,7 +747,7 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
         }
     }
 
-    private void inc(String key) {
+    void inc(String key) {
         AtomicInteger cn = counters.get(key);
         if (cn == null) {
             cn = new AtomicInteger();
@@ -1159,8 +798,8 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
 
     public Map<String, String> syncIndexColumns() throws StorageClientException, SQLException {
         checkClosed();
-        String selectColumns = getSql("index-column-name-select");
-        String insertColumns = getSql("index-column-name-insert");
+        String selectColumns = getSql(SQL_INDEX_COLUMN_NAME_SELECT);
+        String insertColumns = getSql(SQL_INDEX_COLUMN_NAME_INSERT);
         if ( selectColumns == null || insertColumns == null ) {
             LOGGER.warn("Using Key Value Pair Tables for indexing ");
             LOGGER.warn("     This will cause scalability problems eventually, please see KERN-1957 ");
