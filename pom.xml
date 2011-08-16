@@ -85,7 +85,8 @@
         <extensions>true</extensions>
         <configuration>
           <instructions>
-            <Bundle-Category>sakai-nakamura</Bundle-Category>
+            <Bundle-Category>sparsemapcontent</Bundle-Category>
+            <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
             <Export-Package>
               org.sakaiproject.nakamura.api.lite.*
 			</Export-Package>
