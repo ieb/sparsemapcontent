@@ -22,6 +22,8 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -44,6 +46,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.text.MessageFormat;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -85,9 +88,16 @@ public class JDBCStorageClientTest {
 
 
     sqlConfig = new JDBCStorageClientPool().getSqlConfig(conn);
+    Set<String> colnames = ImmutableSet.of("conjunctions:key1","conjunctions:key2","conjunctions:key3","conjunctions:key4",
+            "conjunctions:testKey1","conjunctions:testKey2","conjunctions:testKey3","conjunctions:testKey4");
+    Builder<String, String> b = ImmutableMap.builder();
+    int i = 0;
+    for ( String k : colnames) {
+        b.put(k, "v"+i);
+        i++;
+    }
 
-    client = new JDBCStorageClient(connPool, properties, sqlConfig, ImmutableSet.of("conjunctions:key1","conjunctions:key2","conjunctions:key3","conjunctions:key4",
-             "conjunctions:testKey1","conjunctions:testKey2","conjunctions:testKey3","conjunctions:testKey4"));
+    client = new JDBCStorageClient(connPool, properties, sqlConfig, colnames, ImmutableSet.of("test=String","test2=String[]"), b.build());
   }
 
   @Test

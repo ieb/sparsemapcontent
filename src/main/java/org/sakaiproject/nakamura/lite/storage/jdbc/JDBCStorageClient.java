@@ -81,14 +81,14 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
     private static final String SQL_CHECKSCHEMA = "check-schema";
     private static final String SQL_COMMENT = "#";
     private static final String SQL_EOL = ";";
-    private static final String SQL_DELETE_STRING_ROW = "delete-string-row";
-    private static final String SQL_INSERT_STRING_COLUMN = "insert-string-column";
-    private static final String SQL_REMOVE_STRING_COLUMN = "remove-string-column";
+    static final String SQL_DELETE_STRING_ROW = "delete-string-row";
+    static final String SQL_INSERT_STRING_COLUMN = "insert-string-column";
+    static final String SQL_REMOVE_STRING_COLUMN = "remove-string-column";
 
-    private static final String SQL_BLOCK_DELETE_ROW = "block-delete-row";
-    private static final String SQL_BLOCK_SELECT_ROW = "block-select-row";
-    private static final String SQL_BLOCK_INSERT_ROW = "block-insert-row";
-    private static final String SQL_BLOCK_UPDATE_ROW = "block-update-row";
+    static final String SQL_BLOCK_DELETE_ROW = "block-delete-row";
+    static final String SQL_BLOCK_SELECT_ROW = "block-select-row";
+    static final String SQL_BLOCK_INSERT_ROW = "block-insert-row";
+    static final String SQL_BLOCK_UPDATE_ROW = "block-update-row";
 
     private static final String PROP_HASH_ALG = "rowid-hash";
     private static final String USE_BATCH_INSERTS = "use-batch-inserts";
@@ -98,6 +98,10 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
     /**
      * A set of columns that are indexed to allow operations within the driver.
      */
+    static final Set<String> AUTO_INDEX_COLUMNS_TYPES = ImmutableSet.of(
+            "cn:_:parenthash=String",
+            "au:_:parenthash=String",
+            "ac:_:parenthash=String");
     private static final Set<String> AUTO_INDEX_COLUMNS = ImmutableSet.of(
             "cn:_:parenthash",
             "au:_:parenthash",
@@ -123,9 +127,10 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
     private Set<String> indexColumns;
     private long slowQueryThreshold;
     private long verySlowQueryThreshold;
+    private Indexer indexer;
 
     public JDBCStorageClient(JDBCStorageClientPool jdbcStorageClientConnectionPool,
-            Map<String, Object> properties, Map<String, Object> sqlConfig, Set<String> indexColumns) throws SQLException,
+            Map<String, Object> properties, Map<String, Object> sqlConfig, Set<String> indexColumns, Set<String> indexColumnTypes, Map<String, String> indexColumnsNames) throws SQLException,
             NoSuchAlgorithmException, StorageClientException {
         if ( jdbcStorageClientConnectionPool == null ) {
             throw new StorageClientException("Null Connection Pool, cant create Client");
@@ -156,6 +161,13 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
         }
         if (sqlConfig.containsKey(VERY_SLOW_QUERY_THRESHOLD)) {
             verySlowQueryThreshold = Long.parseLong((String)sqlConfig.get(VERY_SLOW_QUERY_THRESHOLD));
+        }
+        if ( indexColumnsNames != null ) {
+            indexer = new WideColumnIndexer(this,indexColumnsNames, indexColumnTypes);
+        } else if ("1".equals(getSql(USE_BATCH_INSERTS))) {
+            indexer = new BatchInsertIndexer(this);
+        } else {
+            indexer = new NonBatchInsertIndexer(this);
         }
     }
 
@@ -344,224 +356,10 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
                     LOGGER.debug("Updated {} ", rid);
                 }
             }
-            if ("1".equals(getSql(USE_BATCH_INSERTS))) {
-                Set<PreparedStatement> removeSet = Sets.newHashSet();
-                // execute the updates and add the necessary inserts.
-                Map<PreparedStatement, List<Entry<String, Object>>> insertSequence = Maps
-                        .newHashMap();
-
-                Set<PreparedStatement> insertSet = Sets.newHashSet();
-
-                for (Entry<String, Object> e : values.entrySet()) {
-                    String k = e.getKey();
-                    Object o = e.getValue();
-                    if (shouldIndex(keySpace, columnFamily, k)) {
-                        if ( o instanceof RemoveProperty || o == null ) {
-                            PreparedStatement removeStringColumn = getStatement(keySpace,
-                                    columnFamily, SQL_REMOVE_STRING_COLUMN, rid, statementCache);
-                            removeStringColumn.setString(1, rid);
-                            removeStringColumn.setString(2, k);
-                            removeStringColumn.addBatch();
-                            removeSet.add(removeStringColumn);
-                        } else {
-                            // remove all previous values
-                            PreparedStatement removeStringColumn = getStatement(keySpace,
-                                    columnFamily, SQL_REMOVE_STRING_COLUMN, rid, statementCache);
-                            removeStringColumn.setString(1, rid);
-                            removeStringColumn.setString(2, k);
-                            removeStringColumn.addBatch();
-                            removeSet.add(removeStringColumn);
-                            // insert new values, as we just removed them we know we can insert, no need to attempt update
-                            // the only thing that we know is the colum value changes so we have to re-index the whole
-                            // property
-                            Object[] valueMembers = (o instanceof Object[]) ? (Object[]) o : new Object[] { o };
-                            for (Object ov : valueMembers) {
-                                String valueMember = ov.toString();
-                                PreparedStatement insertStringColumn = getStatement(keySpace,
-                                    columnFamily, SQL_INSERT_STRING_COLUMN, rid, statementCache);
-                                insertStringColumn.setString(1, valueMember);
-                                insertStringColumn.setString(2, rid);
-                                insertStringColumn.setString(3, k);
-                                insertStringColumn.addBatch();
-                                LOGGER.debug("Insert Index {} {}", k, valueMember);
-                                insertSet.add(insertStringColumn);
-                                List<Entry<String, Object>> insertSeq = insertSequence
-                                .get(insertStringColumn);
-                                if (insertSeq == null) {
-                                  insertSeq = Lists.newArrayList();
-                                  insertSequence.put(insertStringColumn, insertSeq);
-                                }
-                                insertSeq.add(e);
-                            }
-                        }
-                    }
-                }
-
-                if ( !StorageClientUtils.isRoot(key)) {
-                    // create a holding map containing a rowhash of the parent and then process the entry to generate a update operation.
-                    Map<String, Object> autoIndexMap = ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)rowHash(keySpace, columnFamily, StorageClientUtils.getParentObjectPath(key)));
-                    for ( Entry<String, Object> e : autoIndexMap.entrySet()) {
-                        // remove all previous values
-                        PreparedStatement removeStringColumn = getStatement(keySpace,
-                                columnFamily, SQL_REMOVE_STRING_COLUMN, rid, statementCache);
-                        removeStringColumn.setString(1, rid);
-                        removeStringColumn.setString(2, e.getKey());
-                        removeStringColumn.addBatch();
-                        removeSet.add(removeStringColumn);
-                        PreparedStatement insertStringColumn = getStatement(keySpace,
-                                columnFamily, SQL_INSERT_STRING_COLUMN, rid, statementCache);
-                        insertStringColumn.setString(1, (String)e.getValue());
-                        insertStringColumn.setString(2, rid);
-                        insertStringColumn.setString(3, e.getKey());
-                        insertStringColumn.addBatch();
-                        LOGGER.debug("Insert {} {}", e.getKey(), e.getValue());
-                        insertSet.add(insertStringColumn);
-                        List<Entry<String, Object>> insertSeq = insertSequence
-                                .get(insertStringColumn);
-                        if (insertSeq == null) {
-                            insertSeq = Lists.newArrayList();
-                            insertSequence.put(insertStringColumn, insertSeq);
-                        }
-                        insertSeq.add(e);
-                    }
-                }
-
-                LOGGER.debug("Remove set {}", removeSet);
-
-                for (PreparedStatement pst : removeSet) {
-                    pst.executeBatch();
-                }
-
-                LOGGER.debug("Insert set {}", insertSet);
-                for (PreparedStatement pst : insertSet) {
-                    int[] res = pst.executeBatch();
-                    List<Entry<String, Object>> insertSeq = insertSequence.get(pst);
-                    for (int i = 0; i < res.length; i++ ) {
-                        Entry<String, Object> e = insertSeq.get(i);
-                        if ( res[i] <= 0 && res[i] != -2 ) { // Oracle drivers respond with -2 on a successful insert when the number is not known http://download.oracle.com/javase/1.3/docs/guide/jdbc/spec2/jdbc2.1.frame6.html
-                            LOGGER.warn("Index failed for {} {} ", new Object[] { rid, e.getKey(),
-                                    e.getValue() });
-                            
-                        } else {
-                            LOGGER.debug("Index inserted for {} {} ", new Object[] { rid, e.getKey(),
-                                    e.getValue() });
-
-                        }
-                    }
-                }
-
-            } else {
-                for (Entry<String, Object> e : values.entrySet()) {
-                    String k = e.getKey();
-                    Object o = e.getValue();
-                    if (shouldIndex(keySpace, columnFamily, k)) {
-                        if (o instanceof RemoveProperty || o == null) {
-                            PreparedStatement removeStringColumn = getStatement(keySpace,
-                                    columnFamily, SQL_REMOVE_STRING_COLUMN, rid, statementCache);
-                            removeStringColumn.clearWarnings();
-                            removeStringColumn.clearParameters();
-                            removeStringColumn.setString(1, rid);
-                            removeStringColumn.setString(2, k);
-                            int nrows = removeStringColumn.executeUpdate();
-                            if (nrows == 0) {
-                                m = get(keySpace, columnFamily, key);
-                                LOGGER.debug(
-                                        "Column Not present did not remove {} {} Current Column:{} ",
-                                        new Object[] { getRowId(keySpace, columnFamily, key), k, m });
-                            } else {
-                                LOGGER.debug("Removed Index {} {} {} ",
-                                        new Object[]{getRowId(keySpace, columnFamily, key), k, nrows});
-                            }
-                        } else {
-                            PreparedStatement removeStringColumn = getStatement(keySpace,
-                                    columnFamily, SQL_REMOVE_STRING_COLUMN, rid, statementCache);
-                            removeStringColumn.clearWarnings();
-                            removeStringColumn.clearParameters();
-                            removeStringColumn.setString(1, rid);
-                            removeStringColumn.setString(2, k);
-                            int nrows = removeStringColumn.executeUpdate();
-                            if (nrows == 0) {
-                                m = get(keySpace, columnFamily, key);
-                                LOGGER.debug(
-                                        "Column Not present did not remove {} {} Current Column:{} ",
-                                        new Object[] { getRowId(keySpace, columnFamily, key), k, m });
-                            } else {
-                                LOGGER.debug("Removed Index {} {} {} ",
-                                        new Object[]{getRowId(keySpace, columnFamily, key), k, nrows});
-                            }
-                            Object[] os = (o instanceof Object[]) ? (Object[]) o : new Object[] { o };
-                            for (Object ov : os) {
-                                String v = ov.toString();
-                                PreparedStatement insertStringColumn = getStatement(keySpace,
-                                        columnFamily, SQL_INSERT_STRING_COLUMN, rid, statementCache);
-                                insertStringColumn.clearWarnings();
-                                insertStringColumn.clearParameters();
-                                insertStringColumn.setString(1, v);
-                                insertStringColumn.setString(2, rid);
-                                insertStringColumn.setString(3, k);
-                                LOGGER.debug("Non Batch Insert Index {} {}", k, v);
-                                if (insertStringColumn.executeUpdate() == 0) {
-                                    throw new StorageClientException("Failed to save "
-                                            + getRowId(keySpace, columnFamily, key) + "  column:["
-                                            + k + "] ");
-                                } else {
-                                    LOGGER.debug("Inserted Index {} {} [{}]",
-                                            new Object[] { getRowId(keySpace, columnFamily, key),
-                                                    k, v });
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (!StorageClientUtils.isRoot(key)) {
-                    String parent = StorageClientUtils.getParentObjectPath(key);
-                    String hash = rowHash(keySpace, columnFamily, parent);
-                    LOGGER.debug("Hash of {}:{}:{} is {} ", new Object[] { keySpace, columnFamily,
-                            parent, hash });
-                    Map<String, Object> autoIndexMap = ImmutableMap.of(
-                            InternalContent.PARENT_HASH_FIELD, (Object) hash);
-                    for (Entry<String, Object> e : autoIndexMap.entrySet()) {
-                        String k = e.getKey();
-                        Object v = e.getValue();
-                        PreparedStatement removeStringColumn = getStatement(keySpace, columnFamily,
-                                SQL_REMOVE_STRING_COLUMN, rid, statementCache);
-                        removeStringColumn.clearWarnings();
-                        removeStringColumn.clearParameters();
-                        removeStringColumn.setString(1, rid);
-                        removeStringColumn.setString(2, k);
-                        int nrows = removeStringColumn.executeUpdate();
-                        if (nrows == 0) {
-                            m = get(keySpace, columnFamily, key);
-                            LOGGER.debug(
-                                    "Column Not present did not remove {} {} Current Column:{} ",
-                                    new Object[] { getRowId(keySpace, columnFamily, key), k, m });
-                        } else {
-                            LOGGER.debug(
-                                    "Removed Index {} {} {} ",
-                                    new Object[] { getRowId(keySpace, columnFamily, key), k, nrows });
-                        }
-
-                        PreparedStatement insertStringColumn = getStatement(keySpace, columnFamily,
-                                SQL_INSERT_STRING_COLUMN, rid, statementCache);
-                        insertStringColumn.clearWarnings();
-                        insertStringColumn.clearParameters();
-                        insertStringColumn.setString(1, v.toString());
-                        insertStringColumn.setString(2, rid);
-                        insertStringColumn.setString(3, k);
-                        LOGGER.debug("Non Batch Insert Index {} {}", k, v);
-                        if (insertStringColumn.executeUpdate() == 0) {
-                            throw new StorageClientException("Failed to save "
-                                    + getRowId(keySpace, columnFamily, key) + "  column:[" + k
-                                    + "] ");
-                        } else {
-                            LOGGER.debug("Inserted Index {} {} [{}]",
-                                    new Object[] { getRowId(keySpace, columnFamily, key), k, v });
-                        }
-                    }
-                }
-
-            }
+            
+            // Indexing ---------------------------------------------------------------------------
+            indexer.index(statementCache, keySpace, columnFamily, key, rid, values);
+            
             endBlock(autoCommit);
         } catch (SQLException e) {
             abandonBlock(autoCommit);
@@ -576,6 +374,14 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
         } finally {
             close(statementCache);
         }
+    }
+
+    String getSql(String keySpace, String columnFamily, String name) {
+        return getSql(new String[]{
+           name+"."+keySpace+"."+columnFamily,
+           name+"."+keySpace,
+           name
+        });
     }
 
     private void abandonBlock(boolean autoCommit) {
@@ -614,7 +420,7 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
         }
         return false;
     }
-    private boolean shouldIndex(String keySpace, String columnFamily, String k) {
+    boolean shouldIndex(String keySpace, String columnFamily, String k) {
         String key = columnFamily+":"+k;
         if ( AUTO_INDEX_COLUMNS.contains(key) || indexColumns.contains(key)) {
             LOGGER.debug("Will Index {}:{}", columnFamily, k);
@@ -625,7 +431,7 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
         }
     }
 
-    private String getRowId(String keySpace, String columnFamily, String key) {
+    String getRowId(String keySpace, String columnFamily, String key) {
         return keySpace + ":" + columnFamily + ":" + key;
     }
 
@@ -693,7 +499,7 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
      * @return
      * @throws SQLException
      */
-    private PreparedStatement getStatement(String keySpace, String columnFamily,
+    PreparedStatement getStatement(String keySpace, String columnFamily,
             String sqlSelectStringRow, String rid, Map<String, PreparedStatement> statementCache)
             throws SQLException {
         String shard = rid.substring(0, 1);
@@ -721,6 +527,22 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
             }
         }
         return null;
+    }
+    
+    PreparedStatement getStatement(String sql,   Map<String, PreparedStatement> statementCache) throws SQLException {
+        PreparedStatement pst = null;
+        if ( statementCache != null ) {
+            if ( statementCache.containsKey(sql)) {
+                pst =  statementCache.get(sql);
+            } else {
+                pst = jcbcStorageClientConnection.getConnection().prepareStatement(sql);
+                inc("cachedStatement");
+                statementCache.put(sql, pst);
+            }
+        } else {
+            pst = jcbcStorageClientConnection.getConnection().prepareStatement(sql);            
+        }
+        return pst;
     }
 
     public void shutdownConnection() {
@@ -779,6 +601,16 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
                 LOGGER.debug("Failed to close statement in validate ", e);
             }
         }
+    }
+    
+    private String getSql(String[] keys) {
+        for (String statementKey : keys) {
+            String sql = getSql(statementKey);
+            if (sql != null) {
+                return sql;
+            }
+        }
+        return null;
     }
 
     private String getSql(String statementName) {
@@ -865,6 +697,8 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
                 LOGGER.debug("Failed to close statement in validate ", e);
             }
         }
+        
+        
     }
 
     public void activate() {
@@ -955,13 +789,7 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
         
         final boolean rawResults = properties != null && properties.containsKey(StorageConstants.RAWRESULTS);
 
-        String sql = null;
-        for (String statementKey : keys) {
-            sql = getSql(statementKey);
-            if (sql != null) {
-                break;
-            }
-        }
+        String sql = getSql(keys);
         if (sql == null) {
             throw new StorageClientException("Failed to locate SQL statement for any of  "
                     + Arrays.toString(keys));
@@ -1226,6 +1054,7 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
 
     }
 
+
     /**
      * @param statementParts
      * @param where
@@ -1323,6 +1152,87 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
                     dec("cachedStatement");
                 } catch (SQLException e) {
                     LOGGER.debug(e.getMessage(), e);
+                }
+            }
+        }
+    }
+
+    public Map<String, String> syncIndexColumns() throws StorageClientException, SQLException {
+        checkClosed();
+        String selectColumns = getSql("index-column-name-select");
+        String insertColumns = getSql("index-column-name-insert");
+        if ( selectColumns == null || insertColumns == null ) {
+            LOGGER.warn("Using Key Value Pair Tables for indexing ");
+            LOGGER.warn("     This will cause scalability problems eventually, please see KERN-1957 ");
+            LOGGER.warn("     To fix, port your SQL Configuration file to use a wide index table. ");
+            return null; // no wide column support in this JDBC config.
+        }
+        PreparedStatement selectColumnsPst = null;
+        PreparedStatement insertColumnsPst = null;
+        ResultSet rs = null;
+        Connection connection = jcbcStorageClientConnection.getConnection();
+        try {
+            selectColumnsPst = connection.prepareStatement(selectColumns);
+            insertColumnsPst = connection.prepareStatement(insertColumns);
+            rs = selectColumnsPst.executeQuery();
+            Map<String, Integer> cnames = Maps.newHashMap();  
+            while(rs.next()) {
+                cnames.put(rs.getString(1)+":"+rs.getString(2),rs.getInt(3));
+            }
+            Map<String, Integer> maxCols = Maps.newHashMap();
+            for (Entry<String, Integer> e : cnames.entrySet()) {
+                String[] k = StringUtils.split(e.getKey(),":",2);
+                if ( maxCols.containsKey(k[0])) {
+                    if ( e.getValue().intValue() >  maxCols.get(k[0]).intValue() ) {
+                        maxCols.put(k[0],e.getValue());
+                    }
+                } else {
+                    maxCols.put(k[0],e.getValue());
+                }
+            }
+            // maxCols contiains the max col number for each cf.
+            // cnames contains a map of column Families each containing a map of columns with numbers.
+            
+            for (String k : Sets.union(indexColumns, AUTO_INDEX_COLUMNS)) {
+                if ( !cnames.containsKey(k) ) {
+                    String[] cf = StringUtils.split(k,":",2);
+                    int cv = maxCols.get(cf[0]).intValue()+1;
+                    insertColumnsPst.clearParameters();
+                    insertColumnsPst.setString(1, cf[0]);
+                    insertColumnsPst.setString(1, cf[1]);
+                    insertColumnsPst.setInt(1, cv);
+                    insertColumnsPst.executeUpdate();
+                    cnames.put(k, cv);
+                    maxCols.put(cf[0], cv);
+                }
+            }
+            // sync done, now create a quick lookup table to extract the storage column for any column name, 
+            Builder<String, String> b = ImmutableMap.builder();
+            for (Entry<String,Integer> e : cnames.entrySet()) {
+                b.put(e.getKey(), "v"+e.getValue().toString());
+            }
+            
+            return b.build();
+        } finally {
+            if ( rs != null ) {
+                try {
+                    rs.close();
+                } catch ( SQLException e ) {
+                    LOGGER.debug(e.getMessage(),e);
+                }
+            }
+            if ( selectColumnsPst != null ) {
+                try {
+                    selectColumnsPst.close();
+                } catch ( SQLException e ) {
+                    LOGGER.debug(e.getMessage(),e);
+                }
+            }
+            if ( insertColumnsPst != null ) {
+                try {
+                    insertColumnsPst.close();
+                } catch ( SQLException e ) {
+                    LOGGER.debug(e.getMessage(),e);
                 }
             }
         }

@@ -56,6 +56,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Enumeration;
 import java.util.Properties;
+import java.util.Set;
 import java.util.Timer;
 
 @Component(immediate = true, metatype = true, inherit = true)
@@ -98,7 +99,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
 
         public Object makeObject() throws Exception {
             return checkSchema(new JDBCStorageClient(JDBCStorageClientPool.this, properties,
-                    getSqlConfig(), getIndexColumns()));
+                    getSqlConfig(), getIndexColumns(), getIndexColumnsTypes(), getIndexColumnsNames() ));
         }
 
         public void passivateObject(Object obj) throws Exception {
@@ -137,6 +138,10 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
     private StorageCacheManager defaultStorageManagerCache;
 
     private Map<String, CacheHolder> sharedCache;
+
+    private Map<String, String> indexColumnsMap;
+
+    private Set<String> indexColumnsTypes;
 
 
     @Override
@@ -220,6 +225,17 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
 
     }
 
+
+    public Set<String> getIndexColumnsTypes() {
+        return indexColumnsTypes;
+    }
+
+
+    public Map<String, String> getIndexColumnsNames() {
+        return indexColumnsMap;
+    }
+
+
     @Override
     @Deactivate
     public void deactivate(Map<String, Object> properties) {
@@ -270,6 +286,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
                     LOGGER.info("   Database URL   : {} ", properties.get(CONNECTION_URL));
                     client.checkSchema(getClientConfigLocations(client.getConnection()));
                     schemaHasBeenChecked = true;
+                    indexColumnsMap = client.syncIndexColumns();
                 } catch (Throwable e) {
                     LOGGER.warn("Failed to check Schema", e);
                 }
