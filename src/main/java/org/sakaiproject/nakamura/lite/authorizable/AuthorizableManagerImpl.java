@@ -60,6 +60,7 @@ import com.google.common.collect.Maps;
  */
 public class AuthorizableManagerImpl extends CachingManager implements AuthorizableManager {
 
+    private static final String DISABLED_PASSWORD_HASH = "--disabled--";
     private static final Set<String> FILTER_ON_UPDATE = ImmutableSet.of(Authorizable.ID_FIELD,
             Authorizable.PASSWORD_FIELD);
     private static final Set<String> FILTER_ON_CREATE = ImmutableSet.of(Authorizable.ID_FIELD,
@@ -497,6 +498,28 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
     @Override
     protected Logger getLogger() {
         return LOGGER;
+    }
+
+    public void disablePassword(Authorizable authorizable) throws StorageClientException,
+            AccessDeniedException {
+        String id = authorizable.getId();
+
+        if (thisUser.isAdmin()) {
+            putCached(keySpace, authorizableColumnFamily, id, ImmutableMap.of(
+                    Authorizable.LASTMODIFIED_FIELD,
+                    (Object)System.currentTimeMillis(),
+                    Authorizable.LASTMODIFIED_BY_FIELD,
+                    accessControlManager.getCurrentUserId(),
+                    Authorizable.PASSWORD_FIELD,
+                    DISABLED_PASSWORD_HASH), false);
+
+            storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, currentUserId, false, null, "op:disable-password");
+
+        } else {
+            throw new AccessDeniedException(Security.ZONE_ADMIN, id,
+                    "Not allowed to disable the password, must be an admin user",
+                    currentUserId);
+        }
     }
 
 

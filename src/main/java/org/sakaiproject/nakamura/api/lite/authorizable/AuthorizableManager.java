@@ -94,6 +94,16 @@ public interface AuthorizableManager {
     void changePassword(Authorizable authorizable, String password, String oldPassword)
             throws StorageClientException, AccessDeniedException;
 
+    
+    /**
+     * Administratively disable a password for the supplied user. Only admin can do this.
+     * @param authorizable
+     * @throws StorageClientException
+     * @throws AccessDeniedException
+     */
+    void disablePassword(Authorizable authorizable)
+        throws StorageClientException, AccessDeniedException;
+
     /**
      * Find authorizables by exact property matches
      * @param propertyName the name of the property
@@ -104,5 +114,10 @@ public interface AuthorizableManager {
      */
     Iterator<Authorizable> findAuthorizable(String propertyName, String value,
             Class<? extends Authorizable> authorizableType) throws StorageClientException;
+
+    /**
+     * @return the user bound to this authorizable manager.
+     */
+    User getUser();
 
 }
