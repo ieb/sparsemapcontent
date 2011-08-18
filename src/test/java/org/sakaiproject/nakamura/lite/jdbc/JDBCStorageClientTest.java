@@ -90,14 +90,8 @@ public class JDBCStorageClientTest {
     sqlConfig = new JDBCStorageClientPool().getSqlConfig(conn);
     Set<String> colnames = ImmutableSet.of("conjunctions:key1","conjunctions:key2","conjunctions:key3","conjunctions:key4",
             "conjunctions:testKey1","conjunctions:testKey2","conjunctions:testKey3","conjunctions:testKey4");
-    Builder<String, String> b = ImmutableMap.builder();
-    int i = 0;
-    for ( String k : colnames) {
-        b.put(k, "v"+i);
-        i++;
-    }
 
-    client = new JDBCStorageClient(connPool, properties, sqlConfig, colnames, ImmutableSet.of("test=String","test2=String[]"), b.build());
+    client = new JDBCStorageClient(connPool, properties, sqlConfig, colnames, null, null);
   }
 
   @Test
