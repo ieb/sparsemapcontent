@@ -766,4 +766,46 @@ public abstract class AbstractContentManagerTest {
         }
       }
   }
+  
+  
+  @Test
+  public void testTrigger() throws StorageClientException, AccessDeniedException {
+    AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+    User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+    AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+        currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver);
+
+    ContentManagerImpl contentManager = new ContentManagerImpl(client,
+        accessControlManager, configuration, null, new LoggingStorageListener());
+    contentManager.update(new Content("/testMoveWithChildren", ImmutableMap.of("prop1", (Object) "value1")));
+    contentManager.update(new Content("/testMoveWithChildren/movewc", ImmutableMap.of("prop1",
+        (Object) "value2")));
+    contentManager.update(new Content("/testMoveWithChildren/test", ImmutableMap
+        .of("prop1", (Object) "value3")));
+    contentManager.update(new Content("/testMoveWithChildren/test/ing", ImmutableMap.of("prop1",
+        (Object) "value4")));
+    contentManager.triggerRefresh("/testMoveWithChildren/test/ing");
+  }
+
+  @Test
+  public void testTriggerAll() throws StorageClientException, AccessDeniedException {
+    AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+    User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+    AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+        currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver);
+
+    ContentManagerImpl contentManager = new ContentManagerImpl(client,
+        accessControlManager, configuration, null, new LoggingStorageListener());
+    contentManager.update(new Content("/testMoveWithChildren", ImmutableMap.of("prop1", (Object) "value1")));
+    contentManager.update(new Content("/testMoveWithChildren/movewc", ImmutableMap.of("prop1",
+        (Object) "value2")));
+    contentManager.update(new Content("/testMoveWithChildren/test", ImmutableMap
+        .of("prop1", (Object) "value3")));
+    contentManager.update(new Content("/testMoveWithChildren/test/ing", ImmutableMap.of("prop1",
+        (Object) "value4")));
+    contentManager.triggerRefreshAll();
+  }
+
 }

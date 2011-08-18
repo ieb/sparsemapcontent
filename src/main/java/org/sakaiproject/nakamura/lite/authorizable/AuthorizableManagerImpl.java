@@ -17,6 +17,9 @@
  */
 package org.sakaiproject.nakamura.lite.authorizable;
 
+import static org.sakaiproject.nakamura.lite.content.InternalContent.PATH_FIELD;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.STRUCTURE_UUID_FIELD;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,6 +39,7 @@ import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
+import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.sakaiproject.nakamura.lite.CachingManager;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
@@ -522,5 +526,26 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         }
     }
 
+
+    public void triggerRefresh(String id) throws StorageClientException, AccessDeniedException {
+        Authorizable c = findAuthorizable(id);
+        if ( c != null ) {
+            storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id,
+                    accessControlManager.getCurrentUserId(), false, c.getOriginalProperties(),
+                    new String[] { (c instanceof Group) ? "type:group" : "type:user" });
+        }
+    }
+    
+    public void triggerRefreshAll() throws StorageClientException {
+        if (User.ADMIN_USER.equals(accessControlManager.getCurrentUserId()) ) {
+            DisposableIterator<Map<String, Object>> all = client.listAll(keySpace, authorizableColumnFamily);
+            while(all.hasNext()) {
+                Map<String, Object> c = all.next();
+                if ( c.containsKey(PATH_FIELD) && !c.containsKey(STRUCTURE_UUID_FIELD)) {
+                    storeListener.onUpdate(Security.ZONE_CONTENT, (String)c.get(Authorizable.ID_FIELD), User.ADMIN_USER, false, ImmutableMap.copyOf(c), (String[]) null);                    
+                }
+            }
+        }
+    }
 
 }

@@ -285,5 +285,36 @@ public class MemoryStorageClient implements StorageClient {
         return find(keySpace, columnFamily, ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash));
     }
 
+    public DisposableIterator<Map<String, Object>> listAll(String keySpace, String columnFamily) {
+        final Iterator<Entry<String, Object>> entries = store.entrySet().iterator();
+        final String keyMatch = keySpace+":"+columnFamily+":";
+        return new PreemptiveIterator<Map<String,Object>>() {
+
+            private Map<String, Object> nextMap;
+
+            @SuppressWarnings("unchecked")
+            @Override
+            protected boolean internalHasNext() {
+                while(entries.hasNext()) {
+                   Entry<String, Object> e = entries.next();
+                   if ( e.getKey().startsWith(keyMatch)) {
+                       nextMap = (Map<String, Object>) e.getValue();
+                       if ( nextMap != null ) {
+                           return true;
+                       }
+                   }
+                }
+                nextMap = null;
+                close();
+                return false;
+            }
+
+            @Override
+            protected Map<String, Object> internalNext() {
+                return nextMap;
+            }
+        };
+    }
+
 
 }

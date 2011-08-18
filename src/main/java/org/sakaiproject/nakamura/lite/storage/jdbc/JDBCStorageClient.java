@@ -1226,6 +1226,8 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
 
     }
 
+    
+
     /**
      * @param statementParts
      * @param where
@@ -1269,6 +1271,131 @@ private static final String INVALID_DATA_ERROR = "Data invalid for storage.";
       }
       return set+1;
     }
+    
+    public DisposableIterator<Map<String, Object>> listAll(String keySpace, final String columnFamily) throws StorageClientException {
+        String[] keys = new String[] { "list-all." + keySpace + "." + columnFamily,
+                "list-all." + columnFamily, "list-all" };     
+        String sql = null;
+        for (String statementKey : keys) {
+            sql = getSql(statementKey);
+            if (sql != null) {
+                break;
+            }
+        }
+        if ( sql == null ) {
+            throw new StorageClientException("Cant find sql statement for one of "+Arrays.toString(keys));
+        }
+        PreparedStatement tpst = null;
+        ResultSet trs = null;
+        try {
+            LOGGER.debug("Preparing {} ", sql);
+            tpst = jcbcStorageClientConnection.getConnection().prepareStatement(sql);
+            inc("iterator");
+            tpst.clearParameters();
+
+            long qtime = System.currentTimeMillis();
+            trs = tpst.executeQuery();
+            qtime = System.currentTimeMillis() - qtime;
+            if ( qtime > slowQueryThreshold && qtime < verySlowQueryThreshold) {
+                SQL_LOGGER.warn("Slow Query {}ms {} params:[{}]",new Object[]{qtime,sql});
+            } else if ( qtime > verySlowQueryThreshold ) {
+                SQL_LOGGER.error("Very Slow Query {}ms {} params:[{}]",new Object[]{qtime,sql});
+            }
+            inc("iterator r");
+            LOGGER.debug("Executed ");
+
+            // pass control to the iterator.
+            final PreparedStatement pst = tpst;
+            final ResultSet rs = trs;
+            final ResultSetMetaData rsmd = rs.getMetaData();
+            tpst = null;
+            trs = null;
+            return registerDisposable(new PreemptiveIterator<Map<String, Object>>() {
+
+                private Map<String, Object> nextValue = Maps.newHashMap();
+                private boolean open = true;
+
+                @Override
+                protected Map<String, Object> internalNext() {
+                    return nextValue;
+                }
+
+                @Override
+                protected boolean internalHasNext() {
+                    try {
+                        while (open && rs.next()) {
+                            try {
+                                nextValue = Maps.newHashMap();
+                                    Types.loadFromStream(rs.getString(1), nextValue, rs.getBinaryStream(2), columnFamily);
+                                    return true;
+                            } catch (IOException e) {
+                                LOGGER.error(e.getMessage(),e);
+                                nextValue = null;
+                            }
+                        }
+                        close();
+                        nextValue = null;
+                        LOGGER.debug("End of Set ");
+                        return false;
+                    } catch (SQLException e) {
+                        LOGGER.error(e.getMessage(), e);
+                        close();
+                        nextValue = null;
+                        return false;
+                    }
+                }
+
+                @Override
+                public void close() {
+                    if (open) {
+                        open = false;
+                        try {
+                            if (rs != null) {
+                                rs.close();
+                                dec("iterator r");
+                            }
+                        } catch (SQLException e) {
+                            LOGGER.warn(e.getMessage(), e);
+                        }
+                        try {
+                            if (pst != null) {
+                                pst.close();
+                                dec("iterator");
+                            }
+                        } catch (SQLException e) {
+                            LOGGER.warn(e.getMessage(), e);
+                        }
+                        super.close();
+                    }
+
+                }
+            });
+        } catch (SQLException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new StorageClientException(e.getMessage() + " SQL Statement was " + sql,
+                    e);
+        } finally {
+            // trs and tpst will only be non null if control has not been passed
+            // to the iterator.
+            try {
+                if (trs != null) {
+                    trs.close();
+                    dec("iterator r");
+                }
+            } catch (SQLException e) {
+                LOGGER.warn(e.getMessage(), e);
+            }
+            try {
+                if (tpst != null) {
+                    tpst.close();
+                    dec("iterator");
+                }
+            } catch (SQLException e) {
+                LOGGER.warn(e.getMessage(), e);
+            }
+        }
+
+   }
 
     private void dec(String key) {
         AtomicInteger cn = counters.get(key);

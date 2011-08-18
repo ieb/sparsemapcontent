@@ -321,6 +321,25 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
             }
         };
     }
+    
+    public void triggerRefresh(String path) throws StorageClientException, AccessDeniedException {
+        Content c = get(path);
+        if ( c != null ) {
+            eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), false, c.getOriginalProperties(), "op:update");
+        }
+    }
+    
+    public void triggerRefreshAll() throws StorageClientException {
+        if (User.ADMIN_USER.equals(accessControlManager.getCurrentUserId()) ) {
+            DisposableIterator<Map<String, Object>> all = client.listAll(keySpace, contentColumnFamily);
+            while(all.hasNext()) {
+                Map<String, Object> c = all.next();
+                if ( c.containsKey(PATH_FIELD) && !c.containsKey(STRUCTURE_UUID_FIELD)) {
+                    eventListener.onUpdate(Security.ZONE_CONTENT, (String)c.get(PATH_FIELD), User.ADMIN_USER, false, ImmutableMap.copyOf(c), "op:update");                    
+                }
+            }
+        }
+    }
 
     public void update(Content excontent) throws AccessDeniedException, StorageClientException {
         checkOpen();

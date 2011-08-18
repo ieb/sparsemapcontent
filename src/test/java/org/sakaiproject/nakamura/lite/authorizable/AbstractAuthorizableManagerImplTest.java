@@ -436,4 +436,56 @@ public abstract class AbstractAuthorizableManagerImplTest {
         Assert.assertTrue(group instanceof Group);
     }
 
+    @Test
+    public void testAuthorizableManagerTrigger() throws StorageClientException,
+            AccessDeniedException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+        AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
+
+        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
+                client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
+
+        authorizableManager.delete("testuser");
+
+        Assert.assertTrue(authorizableManager.createUser("testuser", "Test User", "test",
+                ImmutableMap.of("testkey", (Object) "testvalue", Authorizable.PRINCIPALS_FIELD,
+                        "administrators;testers", Authorizable.AUTHORIZABLE_TYPE_FIELD,
+                        Authorizable.GROUP_VALUE)));
+        Assert.assertFalse(authorizableManager.createUser("testuser", "Test User", "test",
+                ImmutableMap.of("testkey", (Object) "testvalue", Authorizable.PRINCIPALS_FIELD,
+                        "administrators;testers")));
+        
+        authorizableManager.triggerRefresh("testuser");
+
+    }
+
+    @Test
+    public void testAuthorizableManagerTriggerAll() throws StorageClientException,
+            AccessDeniedException {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+        AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
+
+        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
+                client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
+
+        authorizableManager.delete("testuser");
+
+        Assert.assertTrue(authorizableManager.createUser("testuser", "Test User", "test",
+                ImmutableMap.of("testkey", (Object) "testvalue", Authorizable.PRINCIPALS_FIELD,
+                        "administrators;testers", Authorizable.AUTHORIZABLE_TYPE_FIELD,
+                        Authorizable.GROUP_VALUE)));
+        Assert.assertFalse(authorizableManager.createUser("testuser", "Test User", "test",
+                ImmutableMap.of("testkey", (Object) "testvalue", Authorizable.PRINCIPALS_FIELD,
+                        "administrators;testers")));
+        
+        authorizableManager.triggerRefreshAll();
+
+    }
+
 }

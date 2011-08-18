@@ -30,6 +30,9 @@ public class ContentManagerImplMan extends AbstractContentManagerTest {
   @Override
   protected StorageClientPool getClientPool(Configuration configuration)
       throws ClassNotFoundException {
+      if ( true ) {
+          throw new RuntimeException("Not active");
+      }
     HBaseStorageClientPool cp = new HBaseStorageClientPool();
     cp.activate(ImmutableMap.of("test", (Object) "test",
         BlockContentHelper.CONFIG_MAX_CHUNKS_PER_BLOCK, 9, Configuration.class.getName(),

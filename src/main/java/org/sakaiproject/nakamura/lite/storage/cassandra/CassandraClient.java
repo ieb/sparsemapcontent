@@ -488,6 +488,11 @@ public class CassandraClient extends Client implements StorageClient {
       for (Disposable d : toDispose) {
           d.close();
       }
-  }  
+  }
+
+    public DisposableIterator<Map<String, Object>> listAll(String keySpace, String columnFamily) {
+        // TODO Auto-generated method stub
+        return null;
+    }  
     
 }
