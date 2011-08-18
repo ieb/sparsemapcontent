@@ -62,4 +62,10 @@ public interface Configuration {
      */
     String[] getIndexColumnNames();
 
+    /**
+     * 
+     * @return an array of index column types
+     */
+    String[] getIndexColumnTypes();
+
 }

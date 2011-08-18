@@ -77,6 +77,8 @@ very-slow-query-time = 100
 
 Xindex-column-name-select = select cf, cid, cname from css_wr
 Xindex-column-name-insert = insert into css_wr ( cf, cid, cname ) values ( ? , ? , ? )
+alter-widestring-table = ALTER TABLE {0}_css_w ADD {1} varchar(780)
+index-widestring-table = CREATE INDEX {0}_css_w_{1} ON {0}_css_w ({1})
 
 exists-widestring-row = select rid from css_w where rid = ?
 exists-widestring-row.n.cn = select rid from cn_css_w where rid = ?

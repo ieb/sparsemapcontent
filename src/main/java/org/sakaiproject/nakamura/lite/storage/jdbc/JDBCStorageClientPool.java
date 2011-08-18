@@ -141,9 +141,6 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
 
     private Map<String, String> indexColumnsMap;
 
-    private Set<String> indexColumnsTypes;
-
-
     @Override
     @Activate
     @SuppressWarnings(value={"NP_CLOSING_NULL"},justification="Invalid report, if this was the case then nothing would work")
@@ -226,9 +223,6 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
     }
 
 
-    public Set<String> getIndexColumnsTypes() {
-        return indexColumnsTypes;
-    }
 
 
     public Map<String, String> getIndexColumnsNames() {

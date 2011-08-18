@@ -30,6 +30,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -103,6 +104,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             "cn:_:parenthash",
             "au:_:parenthash",
             "ac:_:parenthash");
+    private static final Map<String, String> COLUMN_NAME_MAPPING = ImmutableMap.of("_:parenthash","parenthash");
 
     private JDBCStorageClientPool jcbcStorageClientConnection;
     private Map<String, Object> sqlConfig;
@@ -730,7 +732,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     public DisposableIterator<Map<String,Object>> find(final String keySpace, final String columnFamily,
             Map<String, Object> properties) throws StorageClientException {
         checkClosed();
-        
+        LOGGER.info("Indexer is {} ",indexer);
         return indexer.find(keySpace, columnFamily, properties);
         
 
@@ -800,6 +802,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
         checkClosed();
         String selectColumns = getSql(SQL_INDEX_COLUMN_NAME_SELECT);
         String insertColumns = getSql(SQL_INDEX_COLUMN_NAME_INSERT);
+        String updateTable = getSql("alter-widestring-table");
+        String updateIndexes = getSql("index-widestring-table");
         if ( selectColumns == null || insertColumns == null ) {
             LOGGER.warn("Using Key Value Pair Tables for indexing ");
             LOGGER.warn("     This will cause scalability problems eventually, please see KERN-1957 ");
@@ -810,46 +814,75 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
         PreparedStatement insertColumnsPst = null;
         ResultSet rs = null;
         Connection connection = jcbcStorageClientConnection.getConnection();
+        Statement statement = null;
         try {
             selectColumnsPst = connection.prepareStatement(selectColumns);
             insertColumnsPst = connection.prepareStatement(insertColumns);
+            statement = connection.createStatement();
             rs = selectColumnsPst.executeQuery();
-            Map<String, Integer> cnames = Maps.newHashMap();  
+            Map<String, String> cnames = Maps.newHashMap();  
+            Set<String> usedColumns = Sets.newHashSet();  
             while(rs.next()) {
-                cnames.put(rs.getString(1)+":"+rs.getString(2),rs.getInt(3));
-            }
-            Map<String, Integer> maxCols = Maps.newHashMap();
-            for (Entry<String, Integer> e : cnames.entrySet()) {
-                String[] k = StringUtils.split(e.getKey(),":",2);
-                if ( maxCols.containsKey(k[0])) {
-                    if ( e.getValue().intValue() >  maxCols.get(k[0]).intValue() ) {
-                        maxCols.put(k[0],e.getValue());
-                    }
-                } else {
-                    maxCols.put(k[0],e.getValue());
-                }
+                String columnFamily = rs.getString(1);
+                String column = rs.getString(2);
+                String columnName = rs.getString(3);
+                cnames.put(columnFamily+":"+column, columnName);
+                usedColumns.add(columnFamily+":"+columnName);
             }
             // maxCols contiains the max col number for each cf.
             // cnames contains a map of column Families each containing a map of columns with numbers.
             
             for (String k : Sets.union(indexColumns, AUTO_INDEX_COLUMNS)) {
+                String[] cf = StringUtils.split(k,":",2);
                 if ( !cnames.containsKey(k) ) {
-                    String[] cf = StringUtils.split(k,":",2);
-                    int cv = maxCols.get(cf[0]).intValue()+1;
+                    String cv = makeNameSafeSQL(cf[1]);
+                    if ( usedColumns.contains(cf[0]+":"+cv)) {
+                        LOGGER.info(
+                                "Column already exists, please provide explicit mapping indexing {}  already used column {} ",
+                                k, cv);
+                        throw new StorageClientException(
+                                "Column already exists, please provide explicit mapping indexing ["
+                                        + k + "]  already used column [" + cv + "]");
+                    }
                     insertColumnsPst.clearParameters();
                     insertColumnsPst.setString(1, cf[0]);
-                    insertColumnsPst.setString(1, cf[1]);
-                    insertColumnsPst.setInt(1, cv);
+                    insertColumnsPst.setString(2, cf[1]);
+                    insertColumnsPst.setString(3, cv);
                     insertColumnsPst.executeUpdate();
                     cnames.put(k, cv);
-                    maxCols.put(cf[0], cv);
+                    usedColumns.add(cf[0]+":"+cv);
+                    try {
+                        statement.executeUpdate(MessageFormat.format(updateTable, cf[0], cv));
+                        LOGGER.info("Added Index Column OK    {}   Table:{} Column:{} ",
+                                new Object[] { k, cf[0], cv });
+                    } catch (SQLException e) {
+                        LOGGER.warn(
+                                "Added Index Column Error    {}   Table:{} Column:{} Cause:{} ",
+                                new Object[] { k, cf[0], cv, e.getMessage() });
+                        LOGGER.warn("SQL is {} ",MessageFormat.format(updateTable, cf[0], cv));
+                        throw new StorageClientException(e.getMessage(),e);
+                    }
+                    try {
+                        statement.executeUpdate(MessageFormat.format(updateIndexes, cf[0], cv));
+                        LOGGER.info("Added Index Column OK    {}   Table:{} Column:{} ",
+                                new Object[] { k, cf[0], cv });
+                    } catch (SQLException e) {
+                        LOGGER.warn(
+                                "Added Index Column Error    {}   Table:{} Column:{} Cause:{} ",
+                                new Object[] { k, cf[0], cv, e.getMessage() });
+                        LOGGER.warn("SQL is {} ",MessageFormat.format(updateIndexes, cf[0], cv));
+                        throw new StorageClientException(e.getMessage(),e);
+                    }
                 }
             }
             // sync done, now create a quick lookup table to extract the storage column for any column name, 
             Builder<String, String> b = ImmutableMap.builder();
-            for (Entry<String,Integer> e : cnames.entrySet()) {
+            for (Entry<String,String> e : cnames.entrySet()) {
                 b.put(e.getKey(), "v"+e.getValue().toString());
+                LOGGER.info("Column Config {} maps to {} ",e.getKey(), e.getValue());
             }
+            
+            
             
             return b.build();
         } finally {
@@ -875,5 +908,21 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
                 }
             }
         }
+    }
+
+    private String makeNameSafeSQL(String name) {
+        if ( COLUMN_NAME_MAPPING.containsKey(name)) {
+            return COLUMN_NAME_MAPPING.get(name);
+        }
+        char[] c = name.toCharArray();
+        for(int i = 0; i < c.length; i++) {
+            if ( !Character.isLetterOrDigit(c[i]) ) {
+                c[i] = '_';
+            }
+        }
+        if ( c[0] == '_') {
+            c[0] = 'X';
+        }
+        return new String(c);
     }
 }
