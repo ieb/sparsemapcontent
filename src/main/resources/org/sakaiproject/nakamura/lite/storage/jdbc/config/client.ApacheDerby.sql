@@ -75,8 +75,8 @@ use-batch-inserts = 0
 slow-query-time = 50
 very-slow-query-time = 100
 
-Xindex-column-name-select = select cf, cid, cname from css_wr
-Xindex-column-name-insert = insert into css_wr ( cf, cid, cname ) values ( ? , ? , ? )
+index-column-name-select = select cf, cid, cname from css_wr
+index-column-name-insert = insert into css_wr ( cf, cid, cname ) values ( ? , ? , ? )
 alter-widestring-table = ALTER TABLE {0}_css_w ADD {1} varchar(780)
 index-widestring-table = CREATE INDEX {0}_css_w_{1} ON {0}_css_w ({1})
 
@@ -101,4 +101,16 @@ insert-widestring-row = insert into css_w ( rid {0} ) values ( ? {1} )
 insert-widestring-row.n.cn = insert into cn_css_w ( rid {0} ) values ( ? {1} )
 insert-widestring-row.n.ac = insert into ac_css_w ( rid {0} ) values ( ? {1} )
 insert-widestring-row.n.au = insert into au_css_w ( rid {0} ) values ( ? {1} )
+
+
+##Part 1 basic SQL template; {0} is the where clause {1} is the sort clause {2} is the from {3} is the to record.
+##Part 2 where clause for non array matches; {0} is the columnName
+##Part 3 where clause for array matches (not possible to sort on array matches) {0} is the column name
+##Part 4 sort clause {0} is the list to sort by
+##Part 5 sort elements, {0} is the column, {1} is the order
+##Dont include , AND or OR, the code will add those as appropriate. 
+wide-block-find = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R from (select a.rid from css_w a where {0} {1} ) as s) as TR where TR.R > {3,number,#} and TR.R <= {2,number,#}+{3,number,#};{0} = ?;a.rid in ( select rid from css where cid = ? and v = ? );sort by {0};{0} {1}
+wide-block-find.n.cn = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R from (select a.rid from cn_css_w a where {0} {1} ) as s) as TR where TR.R > {3,number,#} and TR.R <= {2,number,#}+{3,number,#};{0} = ?;a.rid in ( select rid from cn_css where cid = ? and v = ? );sort by {0};{0} {1}
+wide-block-find.n.ac = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R from (select a.rid from cn_css_w a where {0} {1} ) as s) as TR where TR.R > {3,number,#} and TR.R <= {2,number,#}+{3,number,#};{0} = ?;a.rid in ( select rid from cn_css where cid = ? and v = ? );sort by {0};{0} {1}
+wide-block-find.n.au = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R from (select a.rid from cn_css_w a where {0} {1} ) as s) as TR where TR.R > {3,number,#} and TR.R <= {2,number,#}+{3,number,#};{0} = ?;a.rid in ( select rid from cn_css where cid = ? and v = ? );sort by {0};{0} {1}
 
