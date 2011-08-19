@@ -376,6 +376,20 @@ public interface ContentManager {
      */
     void setMaintanenceMode(boolean maintanenceMode);
 
+    
+    /**
+     * @param path cause an event to be emitted for the path that will cause a refresh.
+     * @throws AccessDeniedException 
+     * @throws StorageClientException 
+     */
+    void triggerRefresh(String path) throws StorageClientException, AccessDeniedException;
+    
+    
+    /**
+     * Cause an event to be emitted for all items.
+     * @throws StorageClientException 
+     */
+    void triggerRefreshAll() throws StorageClientException;
 
 
 

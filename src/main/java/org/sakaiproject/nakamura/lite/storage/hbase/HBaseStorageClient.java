@@ -455,4 +455,9 @@ public class HBaseStorageClient implements StorageClient {
     }
   }
 
+public DisposableIterator<Map<String, Object>> listAll(String keySpace, String columnFamily) {
+    // TODO Auto-generated method stub
+    return null;
+}
+
 }

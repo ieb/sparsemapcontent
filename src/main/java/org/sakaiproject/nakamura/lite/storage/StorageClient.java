@@ -128,4 +128,13 @@ public interface StorageClient {
      */
     boolean hasBody( Map<String, Object> content, String streamId);
 
+    /**
+     * List all objects of the type
+     * @param keySpace the key space
+     * @param columnFamily
+     * @return a Disposable iterator containing all raw objects of the type in question.
+     * @throws StorageClientException 
+     */
+    DisposableIterator<Map<String, Object>> listAll(String keySpace, String columnFamily) throws StorageClientException;
+
 }
