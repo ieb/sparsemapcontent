@@ -126,6 +126,13 @@ wide-block-find.n.cn = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS
 wide-block-find.n.ac = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R from (select a.rid from ac_css_w a where {0} {1} ) as s) as TR where TR.R > {3,number,#} and TR.R <= {2,number,#}+{3,number,#};a.{0} = ?;a.rid in ( select {0}.rid from ac_css {0} where {1} );{0}.cid = ? and {0}.v = ?;sort by {0};{0} {1}
 wide-block-find.n.au = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R from (select a.rid from au_css_w a where {0} {1} ) as s) as TR where TR.R > {3,number,#} and TR.R <= {2,number,#}+{3,number,#};a.{0} = ?;a.rid in ( select {0}.rid from au_css {0} where {1} );{0}.cid = ? and {0}.v = ?;sort by {0};{0} {1}
 
+wide-listchildren = select a.rid from css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from css {0} where {1} );{0}.cid = ? and {0}.v = ?;sort by {0};{0} {1}
+wide-listchildren.n.cn = select a.rid from cn_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from cn_css {0} where {1} );{0}.cid = ? and {0}.v = ?;sort by {0};{0} {1}
+wide-listchildren.n.ac = select a.rid from ac_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from ac_css {0} where {1} );{0}.cid = ? and {0}.v = ?;sort by {0};{0} {1}
+wide-listchildren.n.au = select a.rid from au_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from au_css {0} where {1} );{0}.cid = ? and {0}.v = ?;sort by {0};{0} {1}
 
-
+wide-countestimate = select count(*) from css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from css {0} where {1} );{0}.cid = ? and {0}.v = ?;sort by {0};{0} {1}
+wide-countestimate.n.cn = select count(*) from cn_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from cn_css {0} where {1} );{0}.cid = ? and {0}.v = ?;sort by {0};{0} {1}
+wide-countestimate.n.ac = select count(*) from ac_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from ac_css {0} where {1} );{0}.cid = ? and {0}.v = ?;sort by {0};{0} {1}
+wide-countestimate.n.au = select count(*) from au_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from au_css {0} where {1} );{0}.cid = ? and {0}.v = ?;sort by {0};{0} {1}
 
