@@ -10,25 +10,27 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.hamcrest.core.IsAnything;
 import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.StorageConstants;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
+import org.sakaiproject.nakamura.lite.content.InternalContent;
 import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
 import org.sakaiproject.nakamura.lite.storage.Disposer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.collect.ImmutableMap.Builder;
 
 public class WideColumnIndexer extends AbstractIndexer {
 
@@ -36,6 +38,13 @@ public class WideColumnIndexer extends AbstractIndexer {
     private static final String SQL_UPDATE_WIDESTRING_ROW = "update-widestring-row";
     private static final String SQL_DELETE_WIDESTRING_ROW = "delete-widestring-row";
     private static final String SQL_EXISTS_WIDESTRING_ROW = "exists-widestring-row";
+    private static final int SQL_QUERY_TEMPLATE_PART = 0;
+    private static final int SQL_WHERE_PART = 1;
+    private static final int SQL_WHERE_ARRAY_PART = 2;
+    private static final int SQL_WHERE_ARRAY_WHERE_PART = 3;
+    private static final int SQL_SORT_CLAUSE_PART = 4;
+    private static final int SQL_SORT_LIST_PART = 5;
+    
     private static final Logger LOGGER = LoggerFactory.getLogger(WideColumnIndexer.class);
     private JDBCStorageClient client;
     private Map<String, String> indexColumnsNames;
@@ -86,6 +95,20 @@ public class WideColumnIndexer extends AbstractIndexer {
                     }
                 }
             }
+            
+            if (!StorageClientUtils.isRoot(key)) {
+                String parent = StorageClientUtils.getParentObjectPath(key);
+                String hash = client.rowHash(keySpace, columnFamily, parent);
+                LOGGER.debug("Hash of {}:{}:{} is {} ", new Object[] { keySpace, columnFamily,
+                        parent, hash });
+                updateColumns.put(InternalContent.PARENT_HASH_FIELD, hash);
+            }
+
+            
+            LOGGER.info("Removing Array {} ",removeArrayColumns);
+            LOGGER.info("Updating Array {} ",updateArrayColumns);
+            LOGGER.info("Removing  {} ",removeColumns);
+            LOGGER.info("Updating  {} ",updateColumns);
 
             // arrays are stored in css, so we can re-use css sql.
             PreparedStatement removeStringColumn = client.getStatement(keySpace, columnFamily,
@@ -97,6 +120,7 @@ public class WideColumnIndexer extends AbstractIndexer {
                 removeStringColumn.setString(1, rid);
                 removeStringColumn.setString(2, column);
                 removeStringColumn.addBatch();
+                LOGGER.info("Removing {} {} ",rid,column);
                 nbatch++;
             }
             if (nbatch > 0) {
@@ -114,6 +138,8 @@ public class WideColumnIndexer extends AbstractIndexer {
                     insertStringColumn.setString(1, o.toString());
                     insertStringColumn.setString(2, rid);
                     insertStringColumn.setString(3, e.getKey());
+                    insertStringColumn.addBatch();
+                    LOGGER.info("Inserting {} {} {} ",new Object[]{o.toString(),rid,e.getKey()});
                     nbatch++;
                 }
             }
@@ -133,7 +159,7 @@ public class WideColumnIndexer extends AbstractIndexer {
             rs = wideColumnExists.executeQuery();
             boolean exists = rs.next();
             if (exists) {
-                if (removeColumns.size() > 0 && updateArrayColumns.size() == 0) {
+                if (removeColumns.size() > 0 && updateColumns.size() == 0) {
                     // exists, columns to remove, none to update, therefore
                     // delete row this assumes that the starting point is a
                     // complete map
@@ -142,28 +168,24 @@ public class WideColumnIndexer extends AbstractIndexer {
                     deleteWideStringColumn.clearParameters();
                     deleteWideStringColumn.setString(1, rid);
                     deleteWideStringColumn.execute();
+                    LOGGER.info("Executed {} with {} ",deleteWideStringColumn, rid);
                 } else {
                     //
                     // build an update query, record does not exists, but there
                     // is stuff to add
                     String[] sqlParts = StringUtils.split(client.getSql(keySpace, columnFamily,
-                            SQL_UPDATE_WIDESTRING_ROW));
+                            SQL_UPDATE_WIDESTRING_ROW),";");
                     StringBuilder setOperations = new StringBuilder();
                     for (Entry<String, Object> e : updateColumns.entrySet()) {
-                        if (setOperations.length() > 0) {
-                            setOperations.append(" ,");
-                        }
-                        setOperations.append(MessageFormat.format(sqlParts[1],
-                                indexColumnsNames.get(columnFamily + ":" + e.getKey())));
+                        join(setOperations," ,").append(MessageFormat.format(sqlParts[1],
+                                getColumnName(keySpace, columnFamily, e.getKey())));
                     }
                     for (String toRemove : removeColumns) {
-                        if (setOperations.length() > 0) {
-                            setOperations.append(" ,");
-                        }
-                        setOperations.append(MessageFormat.format(sqlParts[1],
+                        join(setOperations," ,").append(MessageFormat.format(sqlParts[1],
                                 indexColumnsNames.get(columnFamily + ":" + toRemove)));
                     }
                     String finalSql = MessageFormat.format(sqlParts[0], setOperations);
+                    LOGGER.info("Performing {} ",finalSql);
                     PreparedStatement updateColumnPst = client.getStatement(finalSql,
                             statementCache);
                     updateColumnPst.clearWarnings();
@@ -171,38 +193,38 @@ public class WideColumnIndexer extends AbstractIndexer {
                     int i = 1;
                     for (Entry<String, Object> e : updateColumns.entrySet()) {
                         updateColumnPst.setString(i, e.getValue().toString());
+                        LOGGER.info("   Param {} {} ",i,e.getValue().toString());
                         i++;
                     }
                     for (String toRemove : removeColumns) {
                         updateColumnPst.setNull(i, toSqlType(columnFamily, toRemove));
+                        LOGGER.info("   Param {} NULL ",i);
                         i++;
                     }
                     updateColumnPst.setString(i, rid);
                     updateColumnPst.executeUpdate();
                 }
-            } else if (updateArrayColumns.size() > 0) {
+            } else if (updateColumns.size() > 0) {
                 // part 0 is the final ,part 1 is the template for column names,
                 // part 2 is the template for parameters.
                 // insert into x ( columnsnames ) values ()
                 StringBuilder columnNames = new StringBuilder();
                 StringBuilder paramHolders = new StringBuilder();
                 for (Entry<String, Object> e : updateColumns.entrySet()) {
-                    if (columnNames.length() > 0) {
-                        columnNames.append(" ,");
-                        paramHolders.append(" ,");
-                    }
-                    columnNames.append(indexColumnsNames.get(columnFamily + ":" + e.getKey()));
-                    paramHolders.append("?");
+                    columnNames.append(" ,").append(getColumnName(keySpace, columnFamily, e.getKey()));
+                    paramHolders.append(" ,").append("?");
                 }
                 String finalSql = MessageFormat.format(
                         client.getSql(keySpace, columnFamily, SQL_INSERT_WIDESTRING_ROW),
-                        columnNames, paramHolders);
+                        columnNames.toString(), paramHolders.toString());
+                LOGGER.info("Insert SQL {} ",finalSql);
                 PreparedStatement insertColumnPst = client.getStatement(finalSql, statementCache);
                 insertColumnPst.clearWarnings();
                 insertColumnPst.clearParameters();
                 insertColumnPst.setString(1, rid);
                 int i = 2;
                 for (Entry<String, Object> e : updateColumns.entrySet()) {
+                    LOGGER.info("   Param {} {} ",i,e.getValue().toString());
                     insertColumnPst.setString(i, e.getValue().toString());
                     i++;
                 }
@@ -217,6 +239,10 @@ public class WideColumnIndexer extends AbstractIndexer {
         }
 
     }
+
+    private String getColumnName(String keySpace, String columnFamily, String key) {
+        return indexColumnsNames.get(columnFamily + ":" + key); 
+   }
 
     private int toSqlType(String columnFamily, String k) {
         String type = indexColumnsTypes.get(columnFamily+":"+k);
@@ -240,7 +266,7 @@ public class WideColumnIndexer extends AbstractIndexer {
         return false;
     }
 
-    public DisposableIterator<Map<String, Object>> find(String keySpace, String columnFamily,
+    public DisposableIterator<Map<String, Object>> find(final String keySpace, final String columnFamily,
             Map<String, Object> properties) throws StorageClientException {
         String[] keys = null;
         if ( properties != null  && properties.containsKey(StorageConstants.CUSTOM_STATEMENT_SET)) {
@@ -281,25 +307,39 @@ public class WideColumnIndexer extends AbstractIndexer {
         long offset = page * items;
 
         // collect information on sorting
-        String[] sorts = new String[] { null, "asc" };
-        String _sortProp = (String) properties.get(StorageConstants.SORT);
-        if (_sortProp != null) {
-          String[] _sorts = StringUtils.split(_sortProp);
-          if (_sorts.length == 1) {
-            sorts[0] = _sorts[0];
-          } else if (_sorts.length == 2) {
-            sorts[0] = _sorts[0];
-            sorts[1] = _sorts[1];
+        List<String> sortingList = Lists.newArrayList();
+        String sortProp = (String) properties.get(StorageConstants.SORT);
+        if (sortProp != null) {
+          String[] sorts = StringUtils.split(sortProp);
+          if (sorts.length == 1) {
+              if ( shouldIndex(keySpace, columnFamily, sorts[0]) && !isColumnArray(keySpace, columnFamily, sorts[0]) ) {
+                  sortingList.add(getColumnName(keySpace, columnFamily, sorts[0]));
+                  sortingList.add("asc");
+              }
+          } else if (sorts.length > 1) {
+              for ( int i = 0; i < sorts.length; i+=2) {
+                  if ( shouldIndex(keySpace, columnFamily, sorts[0]) && !isColumnArray(keySpace, columnFamily, sorts[i]) ) {
+                      sortingList.add(getColumnName(keySpace, columnFamily, sorts[0]));
+                      sortingList.add(sorts[i+1]);
+                  }
+              }
           }
         }
-
+        String[] sorts = sortingList.toArray(new String[sortingList.size()]);
         String[] statementParts = StringUtils.split(sql, ';');
         /*
-         * Part 1 basic SQL template; {0} is the where clause {1} is the sort clause {2} is the from {3} is the to record
-         * Part 2 where clause for non array matches; {0} is the columnName
-         * Part 3 where clause for array matches (not possible to sort on array matches) {0} is the column name
-         * Part 4 sort clause {0} is the list to sort by
-         * Part 5 sort elements, {0} is the column, {1} is the order
+         * Part 0 basic SQL template; {0} is the where clause {1} is the sort clause {2} is the from {3} is the to record
+         *   eg select rid from css where {0} {1} LIMIT {2} ROWS {3}
+         * Part 1 where clause for non array matches; {0} is the columnName
+         *   eg {0} = ?
+         * Part 2 where clause for array matches (not possible to sort on array matches) {0} is the table alias, {1} is the where clause
+         *   eg rid in ( select {0}.rid from css {0} where {1} )
+         * Part 3 the where clause for array matches {0} is the table alias
+         *   eg {0}.cid = ? and {0}.v = ?  
+         * Part 3 sort clause {0} is the list to sort by
+         *   eg sort by {0}
+         * Part 4 sort elements, {0} is the column, {1} is the order
+         *   eg {0} {1}
          * Dont include , AND or OR, the code will add those as appropriate. 
          */
 
@@ -324,7 +364,7 @@ public class WideColumnIndexer extends AbstractIndexer {
                         Object subv = subterm.getValue();
                         // check that each subterm should be indexed
                         if (shouldFind(keySpace, columnFamily, subk)) {
-                          set = processEntry(statementParts, subQuery, parameters, subk, subv, sorts, set, " OR ");
+                          set = processEntry(statementParts, keySpace, columnFamily, subQuery, parameters, subk, subv, sorts, set, " OR ");
                         }
                       }
                       if ( subQuery.length() > 0 ) {
@@ -335,10 +375,10 @@ public class WideColumnIndexer extends AbstractIndexer {
 
                       if (v instanceof Iterable<?>) {
                           for (Object vo : (Iterable<?>)v) {
-                              set = processEntry(statementParts, whereClause, parameters, k, vo, sorts, set, " AND ");
+                              set = processEntry(statementParts, keySpace, columnFamily, whereClause, parameters, k, vo, sorts, set, " AND ");
                           }
                       } else {
-                          set = processEntry(statementParts, whereClause, parameters, k, v, sorts, set, " AND ");
+                          set = processEntry(statementParts, keySpace, columnFamily, whereClause, parameters, k, v, sorts, set, " AND ");
                       }
                   }
                 } else if (!k.startsWith("_")) {
@@ -350,6 +390,8 @@ public class WideColumnIndexer extends AbstractIndexer {
               }
             }
         }
+        // there was no where clause generated
+        // to avoid returneing everything, we wont return anything.
         if (whereClause.length() == 0) {
             return new DisposableIterator<Map<String,Object>>() {
 
@@ -377,47 +419,43 @@ public class WideColumnIndexer extends AbstractIndexer {
             };
         }
 
-        if (sorts[0] != null && order.length() == 0) {
-          if (shouldFind(keySpace, columnFamily, sorts[0])) {
-            String t = "a"+set;
-            if ( statementParts.length > STMT_EXTRA_COLUMNS ) {
-                extraColumns.append(MessageFormat.format(statementParts[STMT_EXTRA_COLUMNS], t));
+        StringBuilder sortClause = new StringBuilder();
+        if ( statementParts.length > SQL_SORT_CLAUSE_PART ) {
+            StringBuilder sortList = new StringBuilder();
+            for ( int i = 0; i < sorts.length; i+= 2) {
+                if (shouldFind(keySpace, columnFamily, sorts[0])) {
+                    join(sortList, ", ").append(MessageFormat.format(statementParts[SQL_SORT_LIST_PART], sorts[i], sorts[i+1]));
+                }
             }
-            tables.append(MessageFormat.format(statementParts[STMT_TABLE_JOIN], t));
-            parameters.add(sorts[0]);
-            where.append(MessageFormat.format(statementParts[STMT_WHERE_SORT], t)).append(" AND");
-            order.append(MessageFormat.format(statementParts[STMT_ORDER], t, sorts[1]));
-          } else {
-            LOGGER.warn("Sort on {}:{} is not supported, sort dropped", columnFamily,
-                sorts[0]);
-          }
+            if ( sortList.length() > 0 ) {
+                sortClause.append(MessageFormat.format(statementParts[SQL_SORT_CLAUSE_PART], sortList.toString()));
+            }
         }
 
-
-        final String sqlStatement = MessageFormat.format(statementParts[STMT_BASE],
-            tables.toString(), where.toString(), order.toString(), items, offset, extraColumns.toString());
+        final String sqlStatement = MessageFormat.format(statementParts[SQL_QUERY_TEMPLATE_PART],
+            whereClause.toString(), sortClause.toString(), items, offset);
 
         PreparedStatement tpst = null;
         ResultSet trs = null;
         try {
-            LOGGER.debug("Preparing {} ", sqlStatement);
+
+            LOGGER.info("Preparing {} ", sqlStatement);
             tpst = client.getConnection().prepareStatement(sqlStatement);
             client.inc("iterator");
             tpst.clearParameters();
             int i = 1;
             for (Object params : parameters) {
                 tpst.setObject(i, params);
-                LOGGER.debug("Setting {} ", params);
-
+                LOGGER.info("Setting {} ", params);
                 i++;
             }
 
             long qtime = System.currentTimeMillis();
             trs = tpst.executeQuery();
             qtime = System.currentTimeMillis() - qtime;
-            if ( qtime > slowQueryThreshold && qtime < verySlowQueryThreshold) {
+            if ( qtime > client.getSlowQueryThreshold() && qtime < client.getVerySlowQueryThreshold()) {
                 JDBCStorageClient.SQL_LOGGER.warn("Slow Query {}ms {} params:[{}]",new Object[]{qtime,sqlStatement,Arrays.toString(parameters.toArray(new String[parameters.size()]))});
-            } else if ( qtime > verySlowQueryThreshold ) {
+            } else if ( qtime > client.getVerySlowQueryThreshold() ) {
                 JDBCStorageClient.SQL_LOGGER.error("Very Slow Query {}ms {} params:[{}]",new Object[]{qtime,sqlStatement,Arrays.toString(parameters.toArray(new String[parameters.size()]))});
             }
             client.inc("iterator r");
@@ -525,9 +563,12 @@ public class WideColumnIndexer extends AbstractIndexer {
     }
 
 
+
     private StringBuilder join(StringBuilder sb, String joinWord) {
         if ( sb.length() > 0 ) {
             sb.append(joinWord);
+        } else {
+            LOGGER.info(" Not prepending with [{}] [{}] ",joinWord, sb.toString());
         }
         return sb;
     }
@@ -541,39 +582,53 @@ public class WideColumnIndexer extends AbstractIndexer {
      * @param t
      * @param conjunctionOr
      */
-    private int processEntry(String[] statementParts, StringBuilder tables,
-        StringBuilder where, StringBuilder order, StringBuilder extraColumns, List<Object> params, String k, Object v,
-        String[] sorts, int set) {
-      String t = "a" + set;
-      tables.append(MessageFormat.format(statementParts[STMT_TABLE_JOIN], t));
-
-      if (v instanceof Iterable<?>) {
-        for (Iterator<?> vi = ((Iterable<?>) v).iterator(); vi.hasNext();) {
-          Object viObj = vi.next();
-          
-          params.add(k);
-          params.add(viObj);
-          where.append(" (").append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(")");
-
-          // as long as there are more add OR
-          if (vi.hasNext()) {
-            where.append(" OR");
-          }
+    private int processEntry(String[] statementParts, String keySpace, String columnFamily, StringBuilder subQuery,
+            List<Object> params, String key, Object value, String[] sorts, int tableIndex,
+            String logicalJoin) {
+        if ( isColumnArray(keySpace, columnFamily, key)) {
+            String tableName = "a"+tableIndex;
+            tableIndex++;
+            if (value instanceof Iterable<?>) {
+                StringBuilder arraySubQuery = new StringBuilder();
+                // SQL_WHERE_ARRAY_WHERE_PART is ( {0}cid = ? AND {0}v = ? ) 
+                for (Iterator<?> valueIterator = ((Iterable<?>) value).iterator(); valueIterator.hasNext();) {
+                    Object o = valueIterator.next();
+                    params.add(key);
+                    params.add(o);
+                    join(arraySubQuery, " OR ").append(MessageFormat.format(statementParts[SQL_WHERE_ARRAY_WHERE_PART],tableName));                    
+                }
+                // SQL_WHERE_ARRAY_PART is rid in (select rid from css {0} where {1} )
+                if ( arraySubQuery.length() > 0 ) {
+                    join(subQuery, logicalJoin).append(MessageFormat.format(statementParts[SQL_WHERE_ARRAY_PART], tableName, arraySubQuery));
+                }
+            } else {
+                params.add(key);
+                params.add(value);
+                String whereClause = MessageFormat.format(statementParts[SQL_WHERE_ARRAY_WHERE_PART],tableName);
+                join(subQuery, logicalJoin).append(MessageFormat.format(statementParts[SQL_WHERE_ARRAY_PART], tableName, whereClause));
+            }
+        } else {
+            String column = getColumnName(keySpace, columnFamily, key);
+            if (value instanceof Iterable<?>) {
+                StringBuilder arraySubQuery = new StringBuilder();
+                // SQL_WHERE_PART is {0} = ?
+                for (Iterator<?> valueIterator = ((Iterable<?>) value).iterator(); valueIterator.hasNext();) {
+                  Object o = valueIterator.next();
+                  params.add(o);
+                  join(arraySubQuery, " OR ").append(MessageFormat.format(statementParts[SQL_WHERE_PART], column));
+                }
+                if ( arraySubQuery.length() > 0 ) {
+                    join(subQuery, logicalJoin).append(" ( ").append(arraySubQuery.toString()).append(" ) ");
+                }
+              } else {
+                params.add(value);
+                LOGGER.info("Adding {} {} ",statementParts[SQL_WHERE_PART],column);
+                join(subQuery, logicalJoin).append(MessageFormat.format(statementParts[SQL_WHERE_PART], column));
+              }
+            
         }
-      } else {
-        params.add(k);
-        params.add(v);
-        where.append(" (").append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(")");
-      }
+        return tableIndex;
 
-      // add in sorting based on the table ref and value
-      if (k.equals(sorts[0])) {
-        order.append(MessageFormat.format(statementParts[STMT_ORDER], t, sorts[1]));
-        if ( statementParts.length > STMT_EXTRA_COLUMNS ) {
-            extraColumns.append(MessageFormat.format(statementParts[STMT_EXTRA_COLUMNS], t));
-        }
-      }
-      return set+1;
     }
 
 }

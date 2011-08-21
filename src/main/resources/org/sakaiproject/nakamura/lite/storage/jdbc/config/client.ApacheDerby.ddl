@@ -33,12 +33,11 @@ CREATE INDEX cn_css_i ON cn_css (rid, cid);
 
 CREATE TABLE css_w (
   id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1),
-  rid varchar(32) NOT NULL
+  rid varchar(32) NOT NULL,
   primary key(id));
 CREATE UNIQUE INDEX css_w_rid ON css (rid);
 
 
-# CREATE INDEX css_w_v0 ON css_w (v0);
   
 CREATE TABLE ac_css_w (
   id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1),

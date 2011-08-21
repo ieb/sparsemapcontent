@@ -31,6 +31,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -45,6 +46,7 @@ import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.StorageConstants;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.sakaiproject.nakamura.lite.content.FileStreamContentHelper;
 import org.sakaiproject.nakamura.lite.content.InternalContent;
 import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
@@ -93,6 +95,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     private static final String JDBC_SUPPORT_LEVEL = "jdbc-support-level";
     private static final String SQL_STATEMENT_SEQUENCE = "sql-statement-sequence";
     private static final String UPDATE_FIRST_SEQUENCE = "updateFirst";
+    private static final Object SLOW_QUERY_THRESHOLD = "slow-query-time";
+    private static final Object VERY_SLOW_QUERY_THRESHOLD = "very-slow-query-time";
     /**
      * A set of columns that are indexed to allow operations within the driver.
      */
@@ -117,6 +121,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     private Map<String, AtomicInteger> counters = Maps.newConcurrentHashMap();
     private Set<String> indexColumns;
     private Indexer indexer;
+    private long slowQueryThreshold;
+    private long verySlowQueryThreshold;
 
     public JDBCStorageClient(JDBCStorageClientPool jdbcStorageClientConnectionPool,
             Map<String, Object> properties, Map<String, Object> sqlConfig, Set<String> indexColumns, Set<String> indexColumnTypes, Map<String, String> indexColumnsNames) throws SQLException,
@@ -150,6 +156,16 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
         } else {
             indexer = new NonBatchInsertIndexer(this, indexColumns, sqlConfig);
         }
+        
+        slowQueryThreshold = 50L;
+        verySlowQueryThreshold = 100L;
+        if (sqlConfig.containsKey(SLOW_QUERY_THRESHOLD)) {
+            slowQueryThreshold = Long.parseLong((String)sqlConfig.get(SLOW_QUERY_THRESHOLD));
+        }
+        if (sqlConfig.containsKey(VERY_SLOW_QUERY_THRESHOLD)) {
+            verySlowQueryThreshold = Long.parseLong((String)sqlConfig.get(VERY_SLOW_QUERY_THRESHOLD));
+        }
+
     }
 
     public Map<String, Object> get(String keySpace, String columnFamily, String key)
@@ -475,9 +491,11 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
                 sqlSelectStringRow };
         for (String k : keys) {
             if (sqlConfig.containsKey(k)) {
+                LOGGER.info("Using Statement {} ",sqlConfig.get(k));
                 if (statementCache != null && statementCache.containsKey(k)) {
                     return statementCache.get(k);
                 } else {
+                    
                     PreparedStatement pst = jcbcStorageClientConnection.getConnection()
                             .prepareStatement((String) sqlConfig.get(k));
                     if (statementCache != null) {
@@ -774,7 +792,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             // pass control to the iterator.
             final PreparedStatement pst = tpst;
             final ResultSet rs = trs;
-            final ResultSetMetaData rsmd = rs.getMetaData();
             tpst = null;
             trs = null;
             return registerDisposable(new PreemptiveIterator<Map<String, Object>>() {
@@ -1002,7 +1019,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             // sync done, now create a quick lookup table to extract the storage column for any column name, 
             Builder<String, String> b = ImmutableMap.builder();
             for (Entry<String,String> e : cnames.entrySet()) {
-                b.put(e.getKey(), "v"+e.getValue().toString());
+                b.put(e.getKey(), e.getValue().toString());
                 LOGGER.info("Column Config {} maps to {} ",e.getKey(), e.getValue());
             }
             
@@ -1048,5 +1065,13 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             c[0] = 'X';
         }
         return new String(c);
+    }
+
+    public long getSlowQueryThreshold() {
+        return slowQueryThreshold;
+    }
+
+    public long getVerySlowQueryThreshold() {
+        return verySlowQueryThreshold;
     }
 }

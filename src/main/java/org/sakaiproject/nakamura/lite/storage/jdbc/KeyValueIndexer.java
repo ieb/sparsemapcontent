@@ -34,25 +34,13 @@ public abstract class KeyValueIndexer extends AbstractIndexer {
     private static final int STMT_WHERE_SORT = 3;
     private static final int STMT_ORDER = 4;
     private static final int STMT_EXTRA_COLUMNS = 5;
-    private static final Object SLOW_QUERY_THRESHOLD = "slow-query-time";
-    private static final Object VERY_SLOW_QUERY_THRESHOLD = "very-slow-query-time";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyValueIndexer.class);
     protected JDBCStorageClient client;
-    private long slowQueryThreshold;
-    private long verySlowQueryThreshold;
 
     public KeyValueIndexer(JDBCStorageClient jdbcStorageClient, Set<String> indexColumns, Map<String, Object> sqlConfig) {
         super(indexColumns);
         this.client = jdbcStorageClient;
-        slowQueryThreshold = 50L;
-        verySlowQueryThreshold = 100L;
-        if (sqlConfig.containsKey(SLOW_QUERY_THRESHOLD)) {
-            slowQueryThreshold = Long.parseLong((String)sqlConfig.get(SLOW_QUERY_THRESHOLD));
-        }
-        if (sqlConfig.containsKey(VERY_SLOW_QUERY_THRESHOLD)) {
-            verySlowQueryThreshold = Long.parseLong((String)sqlConfig.get(VERY_SLOW_QUERY_THRESHOLD));
-        }
     }
 
     public DisposableIterator<Map<String, Object>> find(final String keySpace, final String columnFamily,
@@ -230,9 +218,9 @@ public abstract class KeyValueIndexer extends AbstractIndexer {
             long qtime = System.currentTimeMillis();
             trs = tpst.executeQuery();
             qtime = System.currentTimeMillis() - qtime;
-            if ( qtime > slowQueryThreshold && qtime < verySlowQueryThreshold) {
+            if ( qtime > client.getSlowQueryThreshold() && qtime < client.getVerySlowQueryThreshold()) {
                 JDBCStorageClient.SQL_LOGGER.warn("Slow Query {}ms {} params:[{}]",new Object[]{qtime,sqlStatement,Arrays.toString(parameters.toArray(new String[parameters.size()]))});
-            } else if ( qtime > verySlowQueryThreshold ) {
+            } else if ( qtime > client.getVerySlowQueryThreshold() ) {
                 JDBCStorageClient.SQL_LOGGER.error("Very Slow Query {}ms {} params:[{}]",new Object[]{qtime,sqlStatement,Arrays.toString(parameters.toArray(new String[parameters.size()]))});
             }
             client.inc("iterator r");

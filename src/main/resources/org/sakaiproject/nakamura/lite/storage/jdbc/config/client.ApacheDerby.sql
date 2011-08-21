@@ -96,10 +96,10 @@ delete-widestring-row.n.cn = delete from cn_css_w where rid = ?
 delete-widestring-row.n.ac = delete from ac_css_w where rid = ?
 delete-widestring-row.n.au = delete from au_css_w where rid = ?
 
-update-widestring-row = update css_w {0} {1} where rid = ?; {0} = ?
-update-widestring-row.n.cn = update cn_css_w {0} {1} where rid = ?; {0} = ?
-update-widestring-row.n.ac = update ac_css_w {0} {1} where rid = ?; {0} = ?
-update-widestring-row.n.au = update au_css_w {0} {1} where rid = ?; {0} = ?
+update-widestring-row = update css_w set {0} where rid = ?; {0} = ?
+update-widestring-row.n.cn = update cn_css_w set {0} where rid = ?; {0} = ?
+update-widestring-row.n.ac = update ac_css_w set {0} where rid = ?; {0} = ?
+update-widestring-row.n.au = update au_css_w set {0} where rid = ?; {0} = ?
 
 
 insert-widestring-row = insert into css_w ( rid {0} ) values ( ? {1} )
@@ -108,14 +108,24 @@ insert-widestring-row.n.ac = insert into ac_css_w ( rid {0} ) values ( ? {1} )
 insert-widestring-row.n.au = insert into au_css_w ( rid {0} ) values ( ? {1} )
 
 
-##Part 1 basic SQL template; {0} is the where clause {1} is the sort clause {2} is the from {3} is the to record.
-##Part 2 where clause for non array matches; {0} is the columnName
-##Part 3 where clause for array matches (not possible to sort on array matches) {0} is the column name
-##Part 4 sort clause {0} is the list to sort by
-##Part 5 sort elements, {0} is the column, {1} is the order
-##Dont include , AND or OR, the code will add those as appropriate. 
-wide-block-find = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R from (select a.rid from css_w a where {0} {1} ) as s) as TR where TR.R > {3,number,#} and TR.R <= {2,number,#}+{3,number,#};{0} = ?;a.rid in ( select rid from css where cid = ? and v = ? );sort by {0};{0} {1}
-wide-block-find.n.cn = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R from (select a.rid from cn_css_w a where {0} {1} ) as s) as TR where TR.R > {3,number,#} and TR.R <= {2,number,#}+{3,number,#};{0} = ?;a.rid in ( select rid from cn_css where cid = ? and v = ? );sort by {0};{0} {1}
-wide-block-find.n.ac = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R from (select a.rid from cn_css_w a where {0} {1} ) as s) as TR where TR.R > {3,number,#} and TR.R <= {2,number,#}+{3,number,#};{0} = ?;a.rid in ( select rid from cn_css where cid = ? and v = ? );sort by {0};{0} {1}
-wide-block-find.n.au = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R from (select a.rid from cn_css_w a where {0} {1} ) as s) as TR where TR.R > {3,number,#} and TR.R <= {2,number,#}+{3,number,#};{0} = ?;a.rid in ( select rid from cn_css where cid = ? and v = ? );sort by {0};{0} {1}
+##         * Part 0 basic SQL template; {0} is the where clause {1} is the sort clause {2} is the from {3} is the to record
+##         *   eg select rid from css where {0} {1} LIMIT {2} ROWS {3}
+##         * Part 1 where clause for non array matches; {0} is the columnName
+##         *   eg {0} = ?
+##         * Part 2 where clause for array matches (not possible to sort on array matches) {0} is the table alias, {1} is the where clause
+##         *   eg rid in ( select {0}.rid from css {0} where {1} )
+##         * Part 3 the where clause for array matches {0} is the table alias
+##         *   eg {0}.cid = ? and {0}.v = ?  
+##         * Part 3 sort clause {0} is the list to sort by
+##         *   eg sort by {0}
+##         * Part 4 sort elements, {0} is the column, {1} is the order
+##         *   eg {0} {1}
+##         * Dont include , AND or OR, the code will add those as appropriate. 
+wide-block-find = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R from (select a.rid from css_w a where {0} {1} ) as s) as TR where TR.R > {3,number,#} and TR.R <= {2,number,#}+{3,number,#};a.{0} = ?;a.rid in ( select {0}.rid from css {0} where {1} );{0}.cid = ? and {0}.v = ?;sort by {0};{0} {1}
+wide-block-find.n.cn = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R from (select a.rid from cn_css_w a where {0} {1} ) as s) as TR where TR.R > {3,number,#} and TR.R <= {2,number,#}+{3,number,#};a.{0} = ?;a.rid in ( select {0}.rid from cn_css {0} where {1} );{0}.cid = ? and {0}.v = ?;sort by {0};{0} {1}
+wide-block-find.n.ac = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R from (select a.rid from ac_css_w a where {0} {1} ) as s) as TR where TR.R > {3,number,#} and TR.R <= {2,number,#}+{3,number,#};a.{0} = ?;a.rid in ( select {0}.rid from ac_css {0} where {1} );{0}.cid = ? and {0}.v = ?;sort by {0};{0} {1}
+wide-block-find.n.au = select TR.rid from (select s.rid, ROW_NUMBER() OVER () AS R from (select a.rid from au_css_w a where {0} {1} ) as s) as TR where TR.R > {3,number,#} and TR.R <= {2,number,#}+{3,number,#};a.{0} = ?;a.rid in ( select {0}.rid from au_css {0} where {1} );{0}.cid = ? and {0}.v = ?;sort by {0};{0} {1}
+
+
+
 
