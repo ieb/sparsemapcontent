@@ -226,7 +226,6 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
 
 
     public Map<String, String> getIndexColumnsNames() {
-        LOGGER.info("Creating Clinet with index Column Names {} ", indexColumnsMap);
         return indexColumnsMap;
     }
 
