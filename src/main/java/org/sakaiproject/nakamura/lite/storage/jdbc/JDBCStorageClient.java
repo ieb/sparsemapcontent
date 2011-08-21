@@ -750,7 +750,6 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     public DisposableIterator<Map<String,Object>> find(final String keySpace, final String columnFamily,
             Map<String, Object> properties) throws StorageClientException {
         checkClosed();
-        LOGGER.info("Indexer is {} ",indexer);
         return indexer.find(keySpace, columnFamily, properties);
         
 
