@@ -1149,7 +1149,7 @@ public abstract class AbstractContentManagerFinderTest {
   }
 
   private static class MV {
-    private static final String propKey = "sakai:tag-uuid";
+    private static final String propKey = "sakai:category";
     private static final String pathA = "/multi/pathA";
     private static final String pathB = "/multi/pathB";
     private static final String[] multiValueA = new String[] { "valueA", "valueB" };
