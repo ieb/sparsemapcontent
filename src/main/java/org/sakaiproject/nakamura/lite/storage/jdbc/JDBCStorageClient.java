@@ -491,7 +491,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
                 sqlSelectStringRow };
         for (String k : keys) {
             if (sqlConfig.containsKey(k)) {
-                LOGGER.info("Using Statement {} ",sqlConfig.get(k));
+                LOGGER.debug("Using Statement {} ",sqlConfig.get(k));
                 if (statementCache != null && statementCache.containsKey(k)) {
                     return statementCache.get(k);
                 } else {

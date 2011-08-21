@@ -105,10 +105,10 @@ public class WideColumnIndexer extends AbstractIndexer {
             }
 
             
-            LOGGER.info("Removing Array {} ",removeArrayColumns);
-            LOGGER.info("Updating Array {} ",updateArrayColumns);
-            LOGGER.info("Removing  {} ",removeColumns);
-            LOGGER.info("Updating  {} ",updateColumns);
+            LOGGER.debug("Removing Array {} ",removeArrayColumns);
+            LOGGER.debug("Updating Array {} ",updateArrayColumns);
+            LOGGER.debug("Removing  {} ",removeColumns);
+            LOGGER.debug("Updating  {} ",updateColumns);
 
             // arrays are stored in css, so we can re-use css sql.
             PreparedStatement removeStringColumn = client.getStatement(keySpace, columnFamily,
@@ -120,7 +120,7 @@ public class WideColumnIndexer extends AbstractIndexer {
                 removeStringColumn.setString(1, rid);
                 removeStringColumn.setString(2, column);
                 removeStringColumn.addBatch();
-                LOGGER.info("Removing {} {} ",rid,column);
+                LOGGER.debug("Removing {} {} ",rid,column);
                 nbatch++;
             }
             if (nbatch > 0) {
@@ -139,7 +139,7 @@ public class WideColumnIndexer extends AbstractIndexer {
                     insertStringColumn.setString(2, rid);
                     insertStringColumn.setString(3, e.getKey());
                     insertStringColumn.addBatch();
-                    LOGGER.info("Inserting {} {} {} ",new Object[]{o.toString(),rid,e.getKey()});
+                    LOGGER.debug("Inserting {} {} {} ",new Object[]{o.toString(),rid,e.getKey()});
                     nbatch++;
                 }
             }
@@ -168,7 +168,7 @@ public class WideColumnIndexer extends AbstractIndexer {
                     deleteWideStringColumn.clearParameters();
                     deleteWideStringColumn.setString(1, rid);
                     deleteWideStringColumn.execute();
-                    LOGGER.info("Executed {} with {} ",deleteWideStringColumn, rid);
+                    LOGGER.debug("Executed {} with {} ",deleteWideStringColumn, rid);
                 } else {
                     //
                     // build an update query, record does not exists, but there
@@ -185,7 +185,7 @@ public class WideColumnIndexer extends AbstractIndexer {
                                 indexColumnsNames.get(columnFamily + ":" + toRemove)));
                     }
                     String finalSql = MessageFormat.format(sqlParts[0], setOperations);
-                    LOGGER.info("Performing {} ",finalSql);
+                    LOGGER.debug("Performing {} ",finalSql);
                     PreparedStatement updateColumnPst = client.getStatement(finalSql,
                             statementCache);
                     updateColumnPst.clearWarnings();
@@ -193,12 +193,12 @@ public class WideColumnIndexer extends AbstractIndexer {
                     int i = 1;
                     for (Entry<String, Object> e : updateColumns.entrySet()) {
                         updateColumnPst.setString(i, e.getValue().toString());
-                        LOGGER.info("   Param {} {} ",i,e.getValue().toString());
+                        LOGGER.debug("   Param {} {} ",i,e.getValue().toString());
                         i++;
                     }
                     for (String toRemove : removeColumns) {
                         updateColumnPst.setNull(i, toSqlType(columnFamily, toRemove));
-                        LOGGER.info("   Param {} NULL ",i);
+                        LOGGER.debug("   Param {} NULL ",i);
                         i++;
                     }
                     updateColumnPst.setString(i, rid);
@@ -217,14 +217,14 @@ public class WideColumnIndexer extends AbstractIndexer {
                 String finalSql = MessageFormat.format(
                         client.getSql(keySpace, columnFamily, SQL_INSERT_WIDESTRING_ROW),
                         columnNames.toString(), paramHolders.toString());
-                LOGGER.info("Insert SQL {} ",finalSql);
+                LOGGER.debug("Insert SQL {} ",finalSql);
                 PreparedStatement insertColumnPst = client.getStatement(finalSql, statementCache);
                 insertColumnPst.clearWarnings();
                 insertColumnPst.clearParameters();
                 insertColumnPst.setString(1, rid);
                 int i = 2;
                 for (Entry<String, Object> e : updateColumns.entrySet()) {
-                    LOGGER.info("   Param {} {} ",i,e.getValue().toString());
+                    LOGGER.debug("   Param {} {} ",i,e.getValue().toString());
                     insertColumnPst.setString(i, e.getValue().toString());
                     i++;
                 }
@@ -439,14 +439,14 @@ public class WideColumnIndexer extends AbstractIndexer {
         ResultSet trs = null;
         try {
 
-            LOGGER.info("Preparing {} ", sqlStatement);
+            LOGGER.debug("Preparing {} ", sqlStatement);
             tpst = client.getConnection().prepareStatement(sqlStatement);
             client.inc("iterator");
             tpst.clearParameters();
             int i = 1;
             for (Object params : parameters) {
                 tpst.setObject(i, params);
-                LOGGER.info("Setting {} ", params);
+                LOGGER.debug("Setting {} ", params);
                 i++;
             }
 
@@ -567,8 +567,6 @@ public class WideColumnIndexer extends AbstractIndexer {
     private StringBuilder join(StringBuilder sb, String joinWord) {
         if ( sb.length() > 0 ) {
             sb.append(joinWord);
-        } else {
-            LOGGER.info(" Not prepending with [{}] [{}] ",joinWord, sb.toString());
         }
         return sb;
     }
@@ -622,7 +620,7 @@ public class WideColumnIndexer extends AbstractIndexer {
                 }
               } else {
                 params.add(value);
-                LOGGER.info("Adding {} {} ",statementParts[SQL_WHERE_PART],column);
+                LOGGER.debug("Adding {} {} ",statementParts[SQL_WHERE_PART],column);
                 join(subQuery, logicalJoin).append(MessageFormat.format(statementParts[SQL_WHERE_PART], column));
               }
             
