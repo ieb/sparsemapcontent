@@ -138,20 +138,20 @@ public abstract class AbstractContentManagerFinderTest {
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
                 configuration, null, new LoggingStorageListener());
-        contentManager.update(new Content("/simpleArrayFind", ImmutableMap.of("sakai:marker",
+        contentManager.update(new Content("/simpleArrayFind", ImmutableMap.of("sakai:category",
                 (Object) new String[] { "testSimpleArrayFindvalue88", "testSimpleArrayFindvalue1" })));
-        contentManager.update(new Content("/simpleArrayFind/item2", ImmutableMap.of("sakai:marker",
+        contentManager.update(new Content("/simpleArrayFind/item2", ImmutableMap.of("sakai:category",
                 (Object) new String[] { "testSimpleArrayFindvalue88", "testSimpleArrayFindvalue1" })));
-        contentManager.update(new Content("/simpleArrayFind/test", ImmutableMap.of("sakai:marker",
+        contentManager.update(new Content("/simpleArrayFind/test", ImmutableMap.of("sakai:category",
                 (Object) new String[] { "testSimpleArrayFindvalue44", "testSimpleArrayFindvalue3" })));
         contentManager.update(new Content("/simpleArrayFind/test/ing", ImmutableMap.of(
-                "sakai:marker", (Object) new String[] { "testSimpleArrayFindvalue88", "testSimpleArrayFindvalue4" })));
+                "sakai:category", (Object) new String[] { "testSimpleArrayFindvalue88", "testSimpleArrayFindvalue4" })));
 
-        verifyResults(contentManager.find(ImmutableMap.of("sakai:marker", (Object) "testSimpleArrayFindvalue4")),
+        verifyResults(contentManager.find(ImmutableMap.of("sakai:category", (Object) "testSimpleArrayFindvalue4")),
                 ImmutableSet.of("/simpleArrayFind/test/ing"));
-        verifyResults(contentManager.find(ImmutableMap.of("sakai:marker", (Object) "testSimpleArrayFindvalue1")),
+        verifyResults(contentManager.find(ImmutableMap.of("sakai:category", (Object) "testSimpleArrayFindvalue1")),
                 ImmutableSet.of("/simpleArrayFind", "/simpleArrayFind/item2"));
-        verifyResults(contentManager.find(ImmutableMap.of("sakai:marker", (Object) "testSimpleArrayFindvalue88")),
+        verifyResults(contentManager.find(ImmutableMap.of("sakai:category", (Object) "testSimpleArrayFindvalue88")),
                 ImmutableSet.of("/simpleArrayFind/test/ing", "/simpleArrayFind",
                         "/simpleArrayFind/item2"));
 
