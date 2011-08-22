@@ -34,6 +34,8 @@ import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
 import org.sakaiproject.nakamura.lite.content.BlockSetContentHelper;
 import org.sakaiproject.nakamura.lite.content.InternalContent;
 import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.SparseMapRow;
+import org.sakaiproject.nakamura.lite.storage.SparseRow;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -285,12 +287,12 @@ public class MemoryStorageClient implements StorageClient {
         return find(keySpace, columnFamily, ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash));
     }
 
-    public DisposableIterator<Map<String, Object>> listAll(String keySpace, String columnFamily) {
+    public DisposableIterator<SparseRow> listAll(String keySpace, String columnFamily) {
         final Iterator<Entry<String, Object>> entries = store.entrySet().iterator();
         final String keyMatch = keySpace+":"+columnFamily+":";
-        return new PreemptiveIterator<Map<String,Object>>() {
+        return new PreemptiveIterator<SparseRow>() {
 
-            private Map<String, Object> nextMap;
+            private SparseRow nextRow = null;
 
             @SuppressWarnings("unchecked")
             @Override
@@ -298,20 +300,21 @@ public class MemoryStorageClient implements StorageClient {
                 while(entries.hasNext()) {
                    Entry<String, Object> e = entries.next();
                    if ( e.getKey().startsWith(keyMatch)) {
-                       nextMap = (Map<String, Object>) e.getValue();
+                       Map<String, Object>nextMap = (Map<String, Object>) e.getValue();
                        if ( nextMap != null ) {
+                           nextRow = new SparseMapRow(e.getKey(),nextMap);
                            return true;
                        }
                    }
                 }
-                nextMap = null;
+                nextRow = null;
                 close();
                 return false;
             }
 
             @Override
-            protected Map<String, Object> internalNext() {
-                return nextMap;
+            protected SparseRow internalNext() {
+                return nextRow;
             }
         };
     }

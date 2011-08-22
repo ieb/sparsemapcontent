@@ -115,4 +115,8 @@ public class SessionImpl implements Session {
         }
     }
 
+    public StorageClient getClient() {
+        return client;
+    }
+
 }

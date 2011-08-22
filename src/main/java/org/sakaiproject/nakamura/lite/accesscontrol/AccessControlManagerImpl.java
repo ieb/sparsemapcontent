@@ -61,7 +61,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
     private static final String _SECRET_KEY = "_secretKey";
     private static final String _PATH = "_aclPath";
     private static final String _OBJECT_TYPE = "_aclType";
-    private static final String _KEY = "_aclKey";
+    public static final String _KEY = "_aclKey";
     private static final Logger LOGGER = LoggerFactory.getLogger(AccessControlManagerImpl.class);
     private static final Set<String> PROTECTED_PROPERTIES = ImmutableSet.of(_SECRET_KEY);
     private static final Set<String> READ_ONLY_PROPERTIES = ImmutableSet.of(_SECRET_KEY, _PATH, _OBJECT_TYPE, _KEY);

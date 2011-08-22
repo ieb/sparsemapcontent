@@ -135,6 +135,6 @@ public interface StorageClient {
      * @return a Disposable iterator containing all raw objects of the type in question.
      * @throws StorageClientException 
      */
-    DisposableIterator<Map<String, Object>> listAll(String keySpace, String columnFamily) throws StorageClientException;
+    DisposableIterator<SparseRow> listAll(String keySpace, String columnFamily) throws StorageClientException;
 
 }

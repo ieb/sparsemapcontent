@@ -17,10 +17,19 @@
  */
 package org.sakaiproject.nakamura.lite.storage.jdbc;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
-
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Enumeration;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Timer;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.pool.PoolableObjectFactory;
@@ -44,20 +53,10 @@ import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.Driver;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Enumeration;
-import java.util.Properties;
-import java.util.Set;
-import java.util.Timer;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
+
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 @Component(immediate = true, metatype = true, inherit = true)
 @Service(value = StorageClientPool.class)

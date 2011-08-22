@@ -24,7 +24,7 @@ public class NonBatchInsertIndexer extends KeyValueIndexer {
     }
 
     public void index( Map<String, PreparedStatement> statementCache, String keySpace, String columnFamily, String key, String rid, Map<String, Object> values) throws StorageClientException, SQLException {
-        String rowId = client.getRowId(keySpace, columnFamily, key);
+        String rowId = client.getDebugRowId(keySpace, columnFamily, key);
         for (Entry<String, Object> e : values.entrySet()) {
             String k = e.getKey();
             Object o = e.getValue();

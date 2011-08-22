@@ -54,6 +54,8 @@ import org.sakaiproject.nakamura.lite.storage.Disposable;
 import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
 import org.sakaiproject.nakamura.lite.storage.Disposer;
 import org.sakaiproject.nakamura.lite.storage.RowHasher;
+import org.sakaiproject.nakamura.lite.storage.SparseMapRow;
+import org.sakaiproject.nakamura.lite.storage.SparseRow;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.types.Types;
 import org.slf4j.Logger;
@@ -79,7 +81,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     private static final String SQL_CHECKSCHEMA = "check-schema";
     private static final String SQL_COMMENT = "#";
     private static final String SQL_EOL = ";";
-    private static final String SQL_INDEX_COLUMN_NAME_SELECT = "index-column-name-select";
+    public static final String SQL_INDEX_COLUMN_NAME_SELECT = "index-column-name-select";
     private static final String SQL_INDEX_COLUMN_NAME_INSERT = "index-column-name-insert";
     static final String SQL_DELETE_STRING_ROW = "delete-string-row";
     static final String SQL_INSERT_STRING_COLUMN = "insert-string-column";
@@ -409,7 +411,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
       }
 
 
-    String getRowId(String keySpace, String columnFamily, String key) {
+    String getDebugRowId(String keySpace, String columnFamily, String key) {
         return keySpace + ":" + columnFamily + ":" + key;
     }
 
@@ -756,7 +758,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     }
 
     
-    public DisposableIterator<Map<String, Object>> listAll(String keySpace, final String columnFamily) throws StorageClientException {
+    public DisposableIterator<SparseRow> listAll(String keySpace, final String columnFamily) throws StorageClientException {
         String[] keys = new String[] { "list-all." + keySpace + "." + columnFamily,
                 "list-all." + columnFamily, "list-all" };     
         String sql = null;
@@ -793,13 +795,13 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             final ResultSet rs = trs;
             tpst = null;
             trs = null;
-            return registerDisposable(new PreemptiveIterator<Map<String, Object>>() {
+            return registerDisposable(new PreemptiveIterator<SparseRow>() {
 
-                private Map<String, Object> nextValue = Maps.newHashMap();
+                private SparseRow nextValue = null;
                 private boolean open = true;
 
                 @Override
-                protected Map<String, Object> internalNext() {
+                protected SparseRow internalNext() {
                     return nextValue;
                 }
 
@@ -808,9 +810,11 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
                     try {
                         while (open && rs.next()) {
                             try {
-                                nextValue = Maps.newHashMap();
-                                    Types.loadFromStream(rs.getString(1), nextValue, rs.getBinaryStream(2), columnFamily);
-                                    return true;
+                                Map<String, Object> values = Maps.newHashMap();
+                                String rid = rs.getString(1);
+                                Types.loadFromStream(rid, values, rs.getBinaryStream(2), columnFamily);
+                                nextValue = new SparseMapRow(rid,values);
+                                return true;
                             } catch (IOException e) {
                                 LOGGER.error(e.getMessage(),e);
                                 nextValue = null;
@@ -1072,5 +1076,9 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
 
     public long getVerySlowQueryThreshold() {
         return verySlowQueryThreshold;
+    }
+
+    public Indexer getIndexer() {
+        return indexer;
     }
 }
