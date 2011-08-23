@@ -1114,9 +1114,10 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             }
             inc("iterator r");
             LOGGER.debug("Executed ");
-
-            return trs.getLong(1);
-            
+            if ( trs.next() ) {
+                return trs.getLong(1);
+            } 
+            return 0;
         } catch (SQLException e) {
             LOGGER.error(e.getMessage(), e);
             throw new StorageClientException(e.getMessage() + " SQL Statement was " + sql,

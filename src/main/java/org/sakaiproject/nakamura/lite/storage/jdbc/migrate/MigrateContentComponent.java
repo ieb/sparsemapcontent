@@ -8,6 +8,7 @@ import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.Service;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.PropertyMigrator;
 import org.sakaiproject.nakamura.api.lite.Repository;
@@ -16,6 +17,7 @@ import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.content.Content;
+import org.sakaiproject.nakamura.lite.ManualOperationService;
 import org.sakaiproject.nakamura.lite.SessionImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.content.BlockSetContentHelper;
@@ -29,8 +31,9 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
 
-@Component(immediate = false, enabled = false)
-public class MigrateContentComponent {
+@Component(immediate = true, enabled = false, metatype=true)
+@Service(value=ManualOperationService.class)
+public class MigrateContentComponent implements ManualOperationService {
 
     public interface IdExtractor {
 
