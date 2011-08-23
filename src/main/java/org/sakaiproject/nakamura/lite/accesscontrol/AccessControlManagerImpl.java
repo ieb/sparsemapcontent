@@ -77,6 +77,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
     private AuthorizableManager authorizableManager;
     private Map<String, String[]> principalCache = new ConcurrentHashMap<String, String[]>();
     private ThreadLocal<String> principalRecursionLock = new ThreadLocal<String>();
+    private ThreadBoundStackReferenceCounter compilingPermissions = new ThreadBoundStackReferenceCounter();
 
     public AccessControlManagerImpl(StorageClient client, User currentUser, Configuration config,
             Map<String, CacheHolder> sharedCache, StoreListener storeListener, PrincipalValidatorResolver principalValidatorResolver) throws StorageClientException {
@@ -221,6 +222,9 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         if (user.isAdmin()) {
             return;
         }
+        if ( compilingPermissions.isSet() ) {
+            return;
+        }
         // users can always operate on their own user object.
         if (Security.ZONE_AUTHORIZABLES.equals(objectType) && user.getId().equals(objectPath)) {
             return;
@@ -231,6 +235,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
                     user.getId());
         }
     }
+
 
     private String getAclKey(String objectType, String objectPath) {
         return objectType + ";" + objectPath;
@@ -251,158 +256,172 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         } else {
             LOGGER.debug("Cache Miss {} [{}] ", cache, key);
         }
-
-        Map<String, Object> acl = getCached(keySpace, aclColumnFamily, key);
-        LOGGER.debug("ACL on {} is {} ", key, acl);
-
-        int grants = 0;
-        int denies = 0;
-        if (acl != null) {
-
-            {
-                String principal = authorizable.getId();
-                int tg = toInt(acl.get(principal
-                        + AclModification.GRANTED_MARKER));
-                int td = toInt(acl
-                        .get(principal + AclModification.DENIED_MARKER));
-                grants = grants | tg;
-                denies = denies | td;
-                LOGGER.debug("Added Permissions for {} g{} d{} => g{} d{}",new
-                Object[]{principal,tg,td,grants,denies});
-
-            }
-            /*
-             * Deal with any proxy principals, these override groups 
-             */
-            if (principalTokenResolver != null) {
-                Set<String> inspected = Sets.newHashSet();
-                if ( acl.containsKey(_SECRET_KEY)) {
-                    String secretKey = (String) acl.get(_SECRET_KEY);
-                    if ( secretKey != null ) {
-                        for (Entry<String, Object> ace : acl.entrySet()) {
-                            String k = ace.getKey();
-                            LOGGER.debug("Checking {} ",k);
-                            if (k.startsWith(DYNAMIC_PRINCIPAL_STEM)) {
-                                String proxyPrincipal = AclModification.getPrincipal(k).substring(DYNAMIC_PRINCIPAL_STEM.length());
-                                if ( !inspected.contains(proxyPrincipal)) {
-                                    inspected.add(proxyPrincipal);
-                                    LOGGER.debug("Is Dynamic {}, checking ",k);
-                                    List<Content> proxyPrincipalTokens = Lists.newArrayList();
-                                    principalTokenResolver.resolveTokens(proxyPrincipal, proxyPrincipalTokens);
-                                    for ( Content proxyPrincipalToken : proxyPrincipalTokens ) {
-                                        if ( principalTokenValidator.validatePrincipal(proxyPrincipalToken, secretKey)) {
-                                            String pname = DYNAMIC_PRINCIPAL_STEM+proxyPrincipal;
-                                            LOGGER.debug("Has this principal {} ", proxyPrincipal);
-                                            int tg = toInt(acl.get(pname
-                                                    + AclModification.GRANTED_MARKER));
-                                            int td = toInt(acl.get(pname
-                                                    + AclModification.DENIED_MARKER));
-                                            grants = grants | tg;
-                                            denies = denies | td;
-                                            LOGGER.debug("Added Permissions for {} g{} d{} => g{} d{}",new
-                                                    Object[]{pname, tg,td,grants,denies});
-                                            break;
+        try {
+            // we need to allow the permissions compile to bypass access control as it needs to see everything.
+            compilingPermissions.inc();
+            Map<String, Object> acl = getCached(keySpace, aclColumnFamily, key);
+            LOGGER.debug("ACL on {} is {} ", key, acl);
+    
+            int grants = 0;
+            int denies = 0;
+            if (acl != null) {
+    
+                {
+                    String principal = authorizable.getId();
+                    int tg = toInt(acl.get(principal
+                            + AclModification.GRANTED_MARKER));
+                    int td = toInt(acl
+                            .get(principal + AclModification.DENIED_MARKER));
+                    grants = grants | tg;
+                    denies = denies | td;
+                    LOGGER.debug("Added Permissions for {} g{} d{} => g{} d{}",new
+                    Object[]{principal,tg,td,grants,denies});
+    
+                }
+                /*
+                 * Deal with any proxy principals, these override groups 
+                 */
+                if (principalTokenResolver != null) {
+                    Set<String> inspected = Sets.newHashSet();
+                    if ( acl.containsKey(_SECRET_KEY)) {
+                        String secretKey = (String) acl.get(_SECRET_KEY);
+                        if ( secretKey != null ) {
+                            for (Entry<String, Object> ace : acl.entrySet()) {
+                                String k = ace.getKey();
+                                LOGGER.debug("Checking {} ",k);
+                                if (k.startsWith(DYNAMIC_PRINCIPAL_STEM)) {
+                                    String proxyPrincipal = AclModification.getPrincipal(k).substring(DYNAMIC_PRINCIPAL_STEM.length());
+                                    if ( !inspected.contains(proxyPrincipal)) {
+                                        inspected.add(proxyPrincipal);
+                                        LOGGER.debug("Is Dynamic {}, checking ",k);
+                                        List<Content> proxyPrincipalTokens = Lists.newArrayList();
+                                        try {
+                                            // principalTokenValidators are not safe code, hence we must re-enable full access control.
+                                            compilingPermissions.suspend();
+                                            principalTokenResolver.resolveTokens(proxyPrincipal, proxyPrincipalTokens);
+                                            for ( Content proxyPrincipalToken : proxyPrincipalTokens ) {
+                                                if ( principalTokenValidator.validatePrincipal(proxyPrincipalToken, secretKey)) {
+                                                    String pname = DYNAMIC_PRINCIPAL_STEM+proxyPrincipal;
+                                                    LOGGER.debug("Has this principal {} ", proxyPrincipal);
+                                                    int tg = toInt(acl.get(pname
+                                                            + AclModification.GRANTED_MARKER));
+                                                    int td = toInt(acl.get(pname
+                                                            + AclModification.DENIED_MARKER));
+                                                    grants = grants | tg;
+                                                    denies = denies | td;
+                                                    LOGGER.debug("Added Permissions for {} g{} d{} => g{} d{}",new
+                                                            Object[]{pname, tg,td,grants,denies});
+                                                    break;
+                                                }
+                                            }
+                                        } finally {
+                                            // when done, we must resume compiling permissions where we were. 
+                                            // NB, the code is re-entrant.
+                                            compilingPermissions.resume();
                                         }
                                     }
                                 }
                             }
+                        } else {
+                            LOGGER.debug("Secret Key is null");
                         }
                     } else {
-                        LOGGER.debug("Secret Key is null");
+                        LOGGER.debug("No Secret Key Key ");
                     }
                 } else {
-                    LOGGER.debug("No Secret Key Key ");
+                    LOGGER.debug("No principalToken Resolver");
                 }
-            } else {
-                LOGGER.debug("No principalToken Resolver");
-            }
-            // then deal with static principals
-            for (String principal : getPrincipals(authorizable) ) {
-                int tg = toInt(acl.get(principal
-                        + AclModification.GRANTED_MARKER));
-                int td = toInt(acl
-                        .get(principal + AclModification.DENIED_MARKER));
-                grants = grants | tg;
-                denies = denies | td;
-                LOGGER.debug("Added Permissions for {} g{} d{} => g{} d{}",new
-                  Object[]{principal,tg,td,grants,denies});
-            }
-
-            // Everyone must be the last principal to be applied
-            if (!User.ANON_USER.equals(authorizable.getId())) {
-                // all users except anon are in the group everyone, by default
-                // but only if not already denied or granted by a more specific
-                // permission.
-                int tg = (toInt(acl.get(Group.EVERYONE
-                        + AclModification.GRANTED_MARKER)) & ~denies);
-                int td = (toInt(acl.get(Group.EVERYONE
-                        + AclModification.DENIED_MARKER)) & ~grants);
-                grants = grants | tg;
-                denies = denies | td;
-                LOGGER.debug("Added Permissions for {} g{} d{} => g{} d{}",new
-                        Object[]{Group.EVERYONE,tg,td,grants,denies});
-
-            }
-            /*
-             * grants contains the granted permissions in a bitmap denies
-             * contains the denied permissions in a bitmap
-             */
-            int granted = grants;
-            int denied = denies;
-
-            /*
-             * Only look to parent objects if this is not the root object and
-             * everything is not granted and denied
-             */
-            if (recursion < 20 && !StorageClientUtils.isRoot(objectPath)
-                    && (granted != 0xffff || denied != 0xffff)) {
-                recursion++;
-                int[] parentPriv = compilePermission(authorizable, objectType,
-                        StorageClientUtils.getParentObjectPath(objectPath), recursion);
-                if (parentPriv != null) {
-                    /*
-                     * Grant permission not denied at this level parentPriv[0]
-                     * is permissions granted by the parent ~denies is
-                     * permissions not denied here parentPriv[0] & ~denies is
-                     * permissions granted by the parent that have not been
-                     * denied here. we need to add those to things granted here.
-                     * ie |
-                     */
-                    granted = grants | (parentPriv[0] & ~denies);
-                    /*
-                     * Deny permissions not granted at this level
-                     */
-                    denied = denies | (parentPriv[1] & ~grants);
+                // then deal with static principals
+                for (String principal : getPrincipals(authorizable) ) {
+                    int tg = toInt(acl.get(principal
+                            + AclModification.GRANTED_MARKER));
+                    int td = toInt(acl
+                            .get(principal + AclModification.DENIED_MARKER));
+                    grants = grants | tg;
+                    denies = denies | td;
+                    LOGGER.debug("Added Permissions for {} g{} d{} => g{} d{}",new
+                      Object[]{principal,tg,td,grants,denies});
                 }
+    
+                // Everyone must be the last principal to be applied
+                if (!User.ANON_USER.equals(authorizable.getId())) {
+                    // all users except anon are in the group everyone, by default
+                    // but only if not already denied or granted by a more specific
+                    // permission.
+                    int tg = (toInt(acl.get(Group.EVERYONE
+                            + AclModification.GRANTED_MARKER)) & ~denies);
+                    int td = (toInt(acl.get(Group.EVERYONE
+                            + AclModification.DENIED_MARKER)) & ~grants);
+                    grants = grants | tg;
+                    denies = denies | td;
+                    LOGGER.debug("Added Permissions for {} g{} d{} => g{} d{}",new
+                            Object[]{Group.EVERYONE,tg,td,grants,denies});
+    
+                }
+                /*
+                 * grants contains the granted permissions in a bitmap denies
+                 * contains the denied permissions in a bitmap
+                 */
+                int granted = grants;
+                int denied = denies;
+    
+                /*
+                 * Only look to parent objects if this is not the root object and
+                 * everything is not granted and denied
+                 */
+                if (recursion < 20 && !StorageClientUtils.isRoot(objectPath)
+                        && (granted != 0xffff || denied != 0xffff)) {
+                    recursion++;
+                    int[] parentPriv = compilePermission(authorizable, objectType,
+                            StorageClientUtils.getParentObjectPath(objectPath), recursion);
+                    if (parentPriv != null) {
+                        /*
+                         * Grant permission not denied at this level parentPriv[0]
+                         * is permissions granted by the parent ~denies is
+                         * permissions not denied here parentPriv[0] & ~denies is
+                         * permissions granted by the parent that have not been
+                         * denied here. we need to add those to things granted here.
+                         * ie |
+                         */
+                        granted = grants | (parentPriv[0] & ~denies);
+                        /*
+                         * Deny permissions not granted at this level
+                         */
+                        denied = denies | (parentPriv[1] & ~grants);
+                    }
+                }
+                // If not denied all users and groups can read other users and
+                // groups and all content can be read
+                if (((denied & Permissions.CAN_READ.getPermission()) == 0)
+                        && (Security.ZONE_AUTHORIZABLES.equals(objectType) || Security.ZONE_CONTENT
+                                .equals(objectType))) {
+                    granted = granted | Permissions.CAN_READ.getPermission();
+                    LOGGER.debug("Default Read Permission set {} {} ",key,denied);
+                } else {
+                    LOGGER.debug("Default Read has been denied {} {} ",key,
+                     denied);
+                }
+                LOGGER.debug("Permissions on {} for {} is {} {} ",new
+                   Object[]{key,user.getId(),granted,denied});
+                /*
+                 * Keep a cached copy
+                 */
+                if (user.getId().equals(authorizable.getId())) {
+                    cache.put(key, new int[] { granted, denied });
+                }
+                return new int[] { granted, denied };
+    
             }
-            // If not denied all users and groups can read other users and
-            // groups and all content can be read
-            if (((denied & Permissions.CAN_READ.getPermission()) == 0)
-                    && (Security.ZONE_AUTHORIZABLES.equals(objectType) || Security.ZONE_CONTENT
-                            .equals(objectType))) {
-                granted = granted | Permissions.CAN_READ.getPermission();
-                LOGGER.debug("Default Read Permission set {} {} ",key,denied);
-            } else {
-                LOGGER.debug("Default Read has been denied {} {} ",key,
-                 denied);
+            if (Security.ZONE_AUTHORIZABLES.equals(objectType)
+                    || Security.ZONE_CONTENT.equals(objectType)) {
+                // unless explicitly denied all users can read other users.
+                return new int[] { Permissions.CAN_READ.getPermission(), 0 };
             }
-            LOGGER.debug("Permissions on {} for {} is {} {} ",new
-               Object[]{key,user.getId(),granted,denied});
-            /*
-             * Keep a cached copy
-             */
-            if (user.getId().equals(authorizable.getId())) {
-                cache.put(key, new int[] { granted, denied });
-            }
-            return new int[] { granted, denied };
-
+            return new int[] { 0, 0 };
+        } finally {
+            // decrement the counter from here.
+            compilingPermissions.dec();
         }
-        if (Security.ZONE_AUTHORIZABLES.equals(objectType)
-                || Security.ZONE_CONTENT.equals(objectType)) {
-            // unless explicitly denied all users can read other users.
-            return new int[] { Permissions.CAN_READ.getPermission(), 0 };
-        }
-        return new int[] { 0, 0 };
     }
 
 
@@ -456,6 +475,9 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
 
     public boolean can(Authorizable authorizable, String objectType, String objectPath,
             Permission permission) {
+        if ( compilingPermissions.isSet() ) {
+            return true;
+        }
         if (authorizable instanceof User && ((User) authorizable).isAdmin()) {
             return true;
         }
@@ -606,5 +628,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
     public void setAuthorizableManager(AuthorizableManager authorizableManager) {
         this.authorizableManager = authorizableManager;
     }
+    
+
 
 }
