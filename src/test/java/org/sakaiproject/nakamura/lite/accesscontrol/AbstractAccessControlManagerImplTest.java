@@ -29,6 +29,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Configuration;
+import org.sakaiproject.nakamura.api.lite.Repository;
+import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessControlManager;
@@ -42,6 +44,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorPlugin
 import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorResolver;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
+import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.lite.content.Content;
@@ -51,6 +54,9 @@ import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
+import org.sakaiproject.nakamura.api.lite.content.ContentManager;
+import org.sakaiproject.nakamura.lite.BaseMemoryRepository;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,9 +67,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 public abstract class AbstractAccessControlManagerImplTest {
     private static final Logger LOGGER = LoggerFactory
             .getLogger(AbstractAccessControlManagerImplTest.class);
+    private static final int ALL_ACCESS = 28679;
+    // Read + Read ACL
+    private static final int READ_ACCESS = 0x0001 + 0x1000;
     private StorageClient client;
     private ConfigurationImpl configuration;
     private StorageClientPool clientPool;
@@ -468,6 +480,75 @@ public abstract class AbstractAccessControlManagerImplTest {
         LOGGER.info("Done Checking token");
         principalValidatorResolver.unregisterPlugin("testvalidator");
 
+    }
+
+    @Test
+    public void testAccessInheritance() throws Exception {
+        // for KERN-2158
+        // all our dependencies
+        Repository repository = (Repository) new BaseMemoryRepository().getRepository();
+        Session adminSession = repository.loginAdministrative();
+        AuthorizableManager adminAuthorizableManager = adminSession.getAuthorizableManager();
+        ContentManager adminContentManager = adminSession.getContentManager();
+        AccessControlManager adminAccessControlManager = adminSession.getAccessControlManager();
+
+        // create two users
+        assertTrue(adminAuthorizableManager.createUser("suzy", "suzy", "secret", ImmutableMap.of("firstName", (Object) "Suzy", "lastName", "Queue")));
+        assertTrue(adminAuthorizableManager.createUser("zach", "zach", "secret", ImmutableMap.of("firstName", (Object) "Zach", "lastName", "Thomas")));
+
+        // Create the innermost group and make suzy a member.
+        Group group;
+        assertTrue(adminAuthorizableManager.createGroup("inner", "inner", null));
+        group = (Group) adminAuthorizableManager.findAuthorizable("inner");
+        group.addMember("suzy");
+        adminAuthorizableManager.updateAuthorizable(group);
+        adminAccessControlManager.setAcl("AU", "inner", new AclModification[] { new AclModification("inner@g", READ_ACCESS, AclModification.Operation.OP_REPLACE)});
+        adminAccessControlManager.setAcl("AU", "inner", new AclModification[] { new AclModification("everyone@d", ALL_ACCESS, AclModification.Operation.OP_REPLACE)});
+        adminAccessControlManager.setAcl("AU", "inner", new AclModification[] { new AclModification("anonymous@d", ALL_ACCESS, AclModification.Operation.OP_REPLACE)});
+        adminAuthorizableManager.updateAuthorizable(group);
+
+        // Create a wrapper group.
+        assertTrue(adminAuthorizableManager.createGroup("wrapper", "wrapper", null));
+        group = (Group) adminAuthorizableManager.findAuthorizable("wrapper");
+        group.addMember("inner");
+        adminAuthorizableManager.updateAuthorizable(group);
+        adminAccessControlManager.setAcl("AU", "wrapper", new AclModification[] { new AclModification("wrapper@g", READ_ACCESS, AclModification.Operation.OP_REPLACE)});
+        adminAccessControlManager.setAcl("AU", "wrapper", new AclModification[] { new AclModification("everyone@d", ALL_ACCESS, AclModification.Operation.OP_REPLACE)});
+        adminAccessControlManager.setAcl("AU", "wrapper", new AclModification[] { new AclModification("anonymous@d", ALL_ACCESS, AclModification.Operation.OP_REPLACE)});
+        adminAuthorizableManager.updateAuthorizable(group);
+
+        // Create some content to test.
+        adminContentManager.update(new Content("a:wrapper", null));
+        adminAccessControlManager.setAcl("CO", "a:wrapper", new AclModification[] { new AclModification("wrapper@g", READ_ACCESS, AclModification.Operation.OP_REPLACE)});
+        adminAccessControlManager.setAcl("CO", "a:wrapper", new AclModification[] { new AclModification("everyone@d", ALL_ACCESS, AclModification.Operation.OP_REPLACE)});
+        adminAccessControlManager.setAcl("CO", "a:wrapper", new AclModification[] { new AclModification("anonymous@d", ALL_ACCESS, AclModification.Operation.OP_REPLACE)});
+
+        // Start a new session.
+        adminSession.logout();
+        adminSession = null;
+        adminSession = repository.loginAdministrative();
+        adminAuthorizableManager = adminSession.getAuthorizableManager();
+        adminContentManager = adminSession.getContentManager();
+        adminAccessControlManager = adminSession.getAccessControlManager();
+
+        // make sure suzy can read
+        Authorizable suzy = adminAuthorizableManager.findAuthorizable("suzy");
+        assertTrue(adminAccessControlManager.can(suzy, "AU", "inner", Permissions.CAN_READ));
+        assertTrue(adminAccessControlManager.can(suzy, "AU", "wrapper", Permissions.CAN_READ));
+        assertFalse(adminAccessControlManager.can(suzy, "AU", "wrapper", Permissions.CAN_WRITE));
+        assertFalse(adminAccessControlManager.can(suzy, "CO", "a:wrapper", Permissions.CAN_WRITE));
+        assertTrue(adminAccessControlManager.can(suzy, "CO", "a:wrapper", Permissions.CAN_READ));
+
+        // Make sure zach cannot
+        Authorizable zach = adminAuthorizableManager.findAuthorizable("zach");
+        assertFalse(adminAccessControlManager.can(zach, "AU", "wrapper", Permissions.CAN_READ));
+        assertFalse(adminAccessControlManager.can(zach, "CO", "a:wrapper", Permissions.CAN_READ));
+
+        final Session normalSession = repository.loginAdministrative("suzy");
+        final AuthorizableManager normalAuthorizableManager = normalSession.getAuthorizableManager();
+        final AccessControlManager normalAccessControlManager = normalSession.getAccessControlManager();
+        Authorizable normalSuzy = normalAuthorizableManager.findAuthorizable("suzy");
+        assertTrue(normalAccessControlManager.can(normalSuzy, "AU", "wrapper", Permissions.CAN_READ));
     }
 
 }
