@@ -549,11 +549,15 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
     public void triggerRefreshAll() throws StorageClientException {
         if (User.ADMIN_USER.equals(accessControlManager.getCurrentUserId()) ) {
             DisposableIterator<SparseRow> all = client.listAll(keySpace, authorizableColumnFamily);
-            while(all.hasNext()) {
-                Map<String, Object> c = all.next().getProperties();
-                if ( c.containsKey(PATH_FIELD) && !c.containsKey(STRUCTURE_UUID_FIELD)) {
-                    storeListener.onUpdate(Security.ZONE_CONTENT, (String)c.get(Authorizable.ID_FIELD), User.ADMIN_USER, false, ImmutableMap.copyOf(c), (String[]) null);                    
+            try {
+                while(all.hasNext()) {
+                    Map<String, Object> c = all.next().getProperties();
+                    if ( c.containsKey(Authorizable.ID_FIELD) ) {
+                        storeListener.onUpdate(Security.ZONE_CONTENT, (String)c.get(Authorizable.ID_FIELD), User.ADMIN_USER, false, ImmutableMap.copyOf(c), (String[]) null);                    
+                    }
                 }
+            } finally {
+                all.close(); // not necessary if the wile completes, but if there is an error it might be.
             }
         }
     }
