@@ -146,7 +146,7 @@ public class Authorizable {
     protected boolean principalsModified;
 
     /**
-     * true if the objec is new.
+     * true if the object is new.
      */
     private boolean isObjectNew = true;
 
