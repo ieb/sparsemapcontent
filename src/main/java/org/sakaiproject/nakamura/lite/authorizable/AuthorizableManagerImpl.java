@@ -138,6 +138,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         if ( authorizable.isReadOnly() ) {
             return;
         }
+        if ( authorizable.isNew() ) {
+            throw new StorageClientException("You must create an authorizable if its new, you cant update an new authorizable");
+        }
         accessControlManager.check(Security.ZONE_AUTHORIZABLES, id, Permissions.CAN_WRITE);
         if ( !authorizable.isModified() ) {
             return;
@@ -264,6 +267,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 authorizable.getPropertiesForUpdate(), FILTER_ON_UPDATE);
         encodedProperties.put(Authorizable.LASTMODIFIED_FIELD,System.currentTimeMillis());
         encodedProperties.put(Authorizable.LASTMODIFIED_BY_FIELD,accessControlManager.getCurrentUserId());
+        
         putCached(keySpace, authorizableColumnFamily, id, encodedProperties, authorizable.isNew());
 
         authorizable.reset(getCached(keySpace, authorizableColumnFamily, id));
