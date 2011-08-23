@@ -319,5 +319,10 @@ public class MemoryStorageClient implements StorageClient {
         };
     }
 
+    public long allCount(String keySpace, String columnFamily) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
 
 }

@@ -461,4 +461,9 @@ public DisposableIterator<SparseRow> listAll(String keySpace, String columnFamil
     return null;
 }
 
+public long allCount(String keySpace, String columnFamily) {
+    // TODO Auto-generated method stub
+    return 0;
+}
+
 }

@@ -137,4 +137,13 @@ public interface StorageClient {
      */
     DisposableIterator<SparseRow> listAll(String keySpace, String columnFamily) throws StorageClientException;
 
+    /**
+     * Count all the objects in a column Family.
+     * @param keySpace
+     * @param columnFamily
+     * @return the number of objects
+     * @throws StorageClientException 
+     */
+    long allCount(String keySpace, String columnFamily) throws StorageClientException;
+
 }

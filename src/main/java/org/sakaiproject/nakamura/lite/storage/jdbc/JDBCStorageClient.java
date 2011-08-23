@@ -1081,4 +1081,63 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     public Indexer getIndexer() {
         return indexer;
     }
+
+    public long allCount(String keySpace, String columnFamily) throws StorageClientException {
+        
+        String[] keys = new String[] { "list-all-count." + keySpace + "." + columnFamily,
+                "list-all-count." + columnFamily, "list-all-count" };     
+        String sql = null;
+        for (String statementKey : keys) {
+            sql = getSql(statementKey);
+            if (sql != null) {
+                break;
+            }
+        }
+        if ( sql == null ) {
+            throw new StorageClientException("Cant find sql statement for one of "+Arrays.toString(keys));
+        }
+        PreparedStatement tpst = null;
+        ResultSet trs = null;
+        try {
+            LOGGER.debug("Preparing {} ", sql);
+            tpst = jcbcStorageClientConnection.getConnection().prepareStatement(sql);
+            inc("iterator");
+            tpst.clearParameters();
+
+            long qtime = System.currentTimeMillis();
+            trs = tpst.executeQuery();
+            qtime = System.currentTimeMillis() - qtime;
+            if ( qtime > slowQueryThreshold && qtime < verySlowQueryThreshold) {
+                SQL_LOGGER.warn("Slow Query {}ms {} params:[{}]",new Object[]{qtime,sql});
+            } else if ( qtime > verySlowQueryThreshold ) {
+                SQL_LOGGER.error("Very Slow Query {}ms {} params:[{}]",new Object[]{qtime,sql});
+            }
+            inc("iterator r");
+            LOGGER.debug("Executed ");
+
+            return trs.getLong(1);
+            
+        } catch (SQLException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new StorageClientException(e.getMessage() + " SQL Statement was " + sql,
+                    e);
+        } finally {
+            try {
+                if (trs != null) {
+                    trs.close();
+                    dec("iterator r");
+                }
+            } catch (SQLException e) {
+                LOGGER.warn(e.getMessage(), e);
+            }
+            try {
+                if (tpst != null) {
+                    tpst.close();
+                    dec("iterator");
+                }
+            } catch (SQLException e) {
+                LOGGER.warn(e.getMessage(), e);
+            }
+        }
+    }
 }

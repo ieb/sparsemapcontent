@@ -36,24 +36,28 @@ block-delete-row = delete from css_b where rid = ?
 block-insert-row = insert into css_b (rid,b) values (?, ?)
 block-update-row = update css_b set b = ? where rid = ?
 list-all = select rid, b from css_b
+list-all-count = select count(*) from css_b
 
 block-select-row.n.ac = select b from ac_css_b where rid = ?
 block-delete-row.n.ac = delete from ac_css_b where rid = ?
 block-insert-row.n.ac = insert into ac_css_b (rid,b) values (?, ?)
 block-update-row.n.ac = update ac_css_b set b = ? where rid = ?
 list-all.n.ac = select rid, b from ac_css_b
+list-all-count.n.ac = select count(*) from ac_css_b
 
 block-select-row.n.cn = select b from cn_css_b where rid = ?
 block-delete-row.n.cn = delete from cn_css_b where rid = ?
 block-insert-row.n.cn = insert into cn_css_b (rid,b) values (?, ?)
 block-update-row.n.cn = update cn_css_b set b = ? where rid = ?
 list-all.n.cn = select rid, b from cn_css_b
+list-all-count.n.cn = select count(*) from cn_css_b
 
 block-select-row.n.au = select b from au_css_b where rid = ?
 block-delete-row.n.au = delete from au_css_b where rid = ?
 block-insert-row.n.au = insert into au_css_b (rid,b) values (?, ?)
 block-update-row.n.au = update au_css_b set b = ? where rid = ?
 list-all.n.au = select rid, b from au_css_b
+list-all-count.n.au = select count(*) from au_css_b
 
 #
 # These are finder statements
