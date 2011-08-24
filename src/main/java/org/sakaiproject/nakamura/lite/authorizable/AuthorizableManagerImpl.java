@@ -138,6 +138,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         if ( authorizable.isReadOnly() ) {
             return;
         }
+        if ( authorizable.isNew() ) {
+            throw new StorageClientException("You must create an authorizable if its new, you cant update an new authorizable");
+        }
         accessControlManager.check(Security.ZONE_AUTHORIZABLES, id, Permissions.CAN_WRITE);
         if ( !authorizable.isModified() ) {
             return;
@@ -217,6 +220,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                         Map<String, Object> encodedProperties = StorageClientUtils
                                 .getFilteredAndEcodedMap(newMember.getPropertiesForUpdate(),
                                         FILTER_ON_UPDATE);
+                        encodedProperties.put(Authorizable.ID_FIELD, newMember.getId());
                         putCached(keySpace, authorizableColumnFamily, newMember.getId(),
                                 encodedProperties, newMember.isNew());
                         LOGGER.debug("Updated {} with principal {} {} ",new Object[]{newMember.getId(), group.getId(), encodedProperties});
@@ -235,6 +239,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                         Map<String, Object> encodedProperties = StorageClientUtils
                                 .getFilteredAndEcodedMap(retiredMember.getPropertiesForUpdate(),
                                         FILTER_ON_UPDATE);
+                        encodedProperties.put(Authorizable.ID_FIELD, retiredMember.getId());
                         putCached(keySpace, authorizableColumnFamily, retiredMember.getId(),
                                 encodedProperties, retiredMember.isNew());
                         changes++;
@@ -264,6 +269,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 authorizable.getPropertiesForUpdate(), FILTER_ON_UPDATE);
         encodedProperties.put(Authorizable.LASTMODIFIED_FIELD,System.currentTimeMillis());
         encodedProperties.put(Authorizable.LASTMODIFIED_BY_FIELD,accessControlManager.getCurrentUserId());
+        encodedProperties.put(Authorizable.ID_FIELD, id); // make certain the ID is always there.
         putCached(keySpace, authorizableColumnFamily, id, encodedProperties, authorizable.isNew());
 
         authorizable.reset(getCached(keySpace, authorizableColumnFamily, id));
@@ -392,6 +398,8 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             putCached(keySpace, authorizableColumnFamily, id, ImmutableMap.of(
                     Authorizable.LASTMODIFIED_FIELD,
                     (Object)System.currentTimeMillis(),
+                    Authorizable.ID_FIELD,
+                    id,
                     Authorizable.LASTMODIFIED_BY_FIELD,
                     accessControlManager.getCurrentUserId(),
                     Authorizable.PASSWORD_FIELD,
@@ -512,6 +520,8 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             putCached(keySpace, authorizableColumnFamily, id, ImmutableMap.of(
                     Authorizable.LASTMODIFIED_FIELD,
                     (Object)System.currentTimeMillis(),
+                    Authorizable.ID_FIELD,
+                    id,
                     Authorizable.LASTMODIFIED_BY_FIELD,
                     accessControlManager.getCurrentUserId(),
                     Authorizable.PASSWORD_FIELD,
@@ -539,11 +549,15 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
     public void triggerRefreshAll() throws StorageClientException {
         if (User.ADMIN_USER.equals(accessControlManager.getCurrentUserId()) ) {
             DisposableIterator<SparseRow> all = client.listAll(keySpace, authorizableColumnFamily);
-            while(all.hasNext()) {
-                Map<String, Object> c = all.next().getProperties();
-                if ( c.containsKey(PATH_FIELD) && !c.containsKey(STRUCTURE_UUID_FIELD)) {
-                    storeListener.onUpdate(Security.ZONE_CONTENT, (String)c.get(Authorizable.ID_FIELD), User.ADMIN_USER, false, ImmutableMap.copyOf(c), (String[]) null);                    
+            try {
+                while(all.hasNext()) {
+                    Map<String, Object> c = all.next().getProperties();
+                    if ( c.containsKey(Authorizable.ID_FIELD) ) {
+                        storeListener.onUpdate(Security.ZONE_CONTENT, (String)c.get(Authorizable.ID_FIELD), User.ADMIN_USER, false, ImmutableMap.copyOf(c), (String[]) null);                    
+                    }
                 }
+            } finally {
+                all.close(); // not necessary if the wile completes, but if there is an error it might be.
             }
         }
     }
