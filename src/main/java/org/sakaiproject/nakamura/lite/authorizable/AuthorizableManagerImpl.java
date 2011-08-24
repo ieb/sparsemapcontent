@@ -553,7 +553,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 while(all.hasNext()) {
                     Map<String, Object> c = all.next().getProperties();
                     if ( c.containsKey(Authorizable.ID_FIELD) ) {
-                        storeListener.onUpdate(Security.ZONE_CONTENT, (String)c.get(Authorizable.ID_FIELD), User.ADMIN_USER, false, ImmutableMap.copyOf(c), (String[]) null);                    
+                        storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, (String)c.get(Authorizable.ID_FIELD), User.ADMIN_USER, false, ImmutableMap.copyOf(c), (String[]) null);                    
                     }
                 }
             } finally {
