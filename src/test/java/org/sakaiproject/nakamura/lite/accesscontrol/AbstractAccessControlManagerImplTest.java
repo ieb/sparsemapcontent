@@ -70,9 +70,6 @@ import java.util.Set;
 public abstract class AbstractAccessControlManagerImplTest {
     private static final Logger LOGGER = LoggerFactory
             .getLogger(AbstractAccessControlManagerImplTest.class);
-    private static final int ALL_ACCESS = 28679;
-    // Read + Read ACL
-    private static final int READ_ACCESS = 0x0001 + 0x1000;
     private StorageClient client;
     private ConfigurationImpl configuration;
     private StorageClientPool clientPool;
@@ -556,13 +553,13 @@ public abstract class AbstractAccessControlManagerImplTest {
         group.addMember("suzy");
         adminAuthorizableManager.updateAuthorizable(group);
         adminAccessControlManager.setAcl(Security.ZONE_AUTHORIZABLES, "inner",
-                new AclModification[] { new AclModification("inner@g", READ_ACCESS,
+                new AclModification[] { new AclModification("inner@g", Permissions.CAN_READ.getPermission(),
                         AclModification.Operation.OP_REPLACE) });
         adminAccessControlManager.setAcl(Security.ZONE_AUTHORIZABLES, "inner",
-                new AclModification[] { new AclModification("everyone@d", ALL_ACCESS,
+                new AclModification[] { new AclModification("everyone@d", Permissions.ALL.getPermission(),
                         AclModification.Operation.OP_REPLACE) });
         adminAccessControlManager.setAcl(Security.ZONE_AUTHORIZABLES, "inner",
-                new AclModification[] { new AclModification("anonymous@d", ALL_ACCESS,
+                new AclModification[] { new AclModification("anonymous@d", Permissions.ALL.getPermission(),
                         AclModification.Operation.OP_REPLACE) });
         adminAuthorizableManager.updateAuthorizable(group);
 
@@ -572,26 +569,26 @@ public abstract class AbstractAccessControlManagerImplTest {
         group.addMember("inner");
         adminAuthorizableManager.updateAuthorizable(group);
         adminAccessControlManager.setAcl(Security.ZONE_AUTHORIZABLES, "wrapper",
-                new AclModification[] { new AclModification("wrapper@g", READ_ACCESS,
+                new AclModification[] { new AclModification("wrapper@g", Permissions.CAN_READ.getPermission(),
                         AclModification.Operation.OP_REPLACE) });
         adminAccessControlManager.setAcl(Security.ZONE_AUTHORIZABLES, "wrapper",
-                new AclModification[] { new AclModification("everyone@d", ALL_ACCESS,
+                new AclModification[] { new AclModification("everyone@d", Permissions.ALL.getPermission(),
                         AclModification.Operation.OP_REPLACE) });
         adminAccessControlManager.setAcl(Security.ZONE_AUTHORIZABLES, "wrapper",
-                new AclModification[] { new AclModification("anonymous@d", ALL_ACCESS,
+                new AclModification[] { new AclModification("anonymous@d", Permissions.ALL.getPermission(),
                         AclModification.Operation.OP_REPLACE) });
         adminAuthorizableManager.updateAuthorizable(group);
 
         // Create some content to test.
         adminContentManager.update(new Content("a:wrapper", null));
         adminAccessControlManager.setAcl(Security.ZONE_CONTENT, "a:wrapper",
-                new AclModification[] { new AclModification("wrapper@g", READ_ACCESS,
+                new AclModification[] { new AclModification("wrapper@g", Permissions.CAN_READ.getPermission(),
                         AclModification.Operation.OP_REPLACE) });
         adminAccessControlManager.setAcl(Security.ZONE_CONTENT, "a:wrapper",
-                new AclModification[] { new AclModification("everyone@d", ALL_ACCESS,
+                new AclModification[] { new AclModification("everyone@d", Permissions.ALL.getPermission(),
                         AclModification.Operation.OP_REPLACE) });
         adminAccessControlManager.setAcl(Security.ZONE_CONTENT, "a:wrapper",
-                new AclModification[] { new AclModification("anonymous@d", ALL_ACCESS,
+                new AclModification[] { new AclModification("anonymous@d", Permissions.ALL.getPermission(),
                         AclModification.Operation.OP_REPLACE) });
 
         // Start a new session.
