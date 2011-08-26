@@ -17,9 +17,6 @@
  */
 package org.sakaiproject.nakamura.lite.authorizable;
 
-import static org.sakaiproject.nakamura.lite.content.InternalContent.PATH_FIELD;
-import static org.sakaiproject.nakamura.lite.content.InternalContent.STRUCTURE_UUID_FIELD;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

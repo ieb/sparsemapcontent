@@ -67,9 +67,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 public abstract class AbstractAccessControlManagerImplTest {
     private static final Logger LOGGER = LoggerFactory
             .getLogger(AbstractAccessControlManagerImplTest.class);
@@ -88,7 +85,7 @@ public abstract class AbstractAccessControlManagerImplTest {
         Map<String, Object> properties = Maps.newHashMap();
         properties.put("keyspace", "n");
         properties.put("acl-column-family", "ac");
-        properties.put("authorizable-column-family", "au");
+        properties.put("authorizable-column-family", Security.ZONE_AUTHORIZABLES);
         configuration.activate(properties);
         clientPool = getClientPool(configuration);
         client = clientPool.getClient();
@@ -98,7 +95,8 @@ public abstract class AbstractAccessControlManagerImplTest {
         LOGGER.info("Setup Complete");
     }
 
-    protected abstract StorageClientPool getClientPool(Configuration configuration) throws ClassNotFoundException;
+    protected abstract StorageClientPool getClientPool(Configuration configuration)
+            throws ClassNotFoundException;
 
     @After
     public void after() throws ClientPoolException {
@@ -109,20 +107,22 @@ public abstract class AbstractAccessControlManagerImplTest {
     public void test() throws StorageClientException, AccessDeniedException {
         AuthenticatorImpl authenticator = new AuthenticatorImpl(client, configuration);
         User currentUser = authenticator.authenticate("admin", "admin");
-        String u1 = "user1-"+System.currentTimeMillis();
-        String u2 = "user2-"+System.currentTimeMillis();
-        String u3 = "user3-"+System.currentTimeMillis();
+        String u1 = "user1-" + System.currentTimeMillis();
+        String u2 = "user2-" + System.currentTimeMillis();
+        String u3 = "user3-" + System.currentTimeMillis();
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver);
-        AclModification user1 = new AclModification(AclModification.grantKey(u1), Permissions.CAN_ANYTHING.combine(
-                Permissions.CAN_ANYTHING_ACL).getPermission(), AclModification.Operation.OP_REPLACE);
-        AclModification user2 = new AclModification(AclModification.grantKey(u2), Permissions.CAN_READ
-                .combine(Permissions.CAN_WRITE).combine(Permissions.CAN_DELETE).getPermission(),
+                currentUser, configuration, null, new LoggingStorageListener(),
+                principalValidatorResolver);
+        AclModification user1 = new AclModification(AclModification.grantKey(u1),
+                Permissions.CAN_ANYTHING.combine(Permissions.CAN_ANYTHING_ACL).getPermission(),
                 AclModification.Operation.OP_REPLACE);
-        AclModification user3 = new AclModification(AclModification.grantKey(u3), Permissions.CAN_READ.getPermission(),
-                AclModification.Operation.OP_REPLACE);
-        String basepath = "testpath"+System.currentTimeMillis();
+        AclModification user2 = new AclModification(AclModification.grantKey(u2),
+                Permissions.CAN_READ.combine(Permissions.CAN_WRITE).combine(Permissions.CAN_DELETE)
+                        .getPermission(), AclModification.Operation.OP_REPLACE);
+        AclModification user3 = new AclModification(AclModification.grantKey(u3),
+                Permissions.CAN_READ.getPermission(), AclModification.Operation.OP_REPLACE);
+        String basepath = "testpath" + System.currentTimeMillis();
 
         accessControlManagerImpl.setAcl(Security.ZONE_AUTHORIZABLES, basepath,
                 new AclModification[] { user1, user2, user3 });
@@ -130,65 +130,71 @@ public abstract class AbstractAccessControlManagerImplTest {
         Map<String, Object> acl = accessControlManagerImpl.getAcl(Security.ZONE_AUTHORIZABLES,
                 basepath);
         Assert.assertEquals(Integer.toHexString(Permissions.CAN_ANYTHING.combine(
-                Permissions.CAN_ANYTHING_ACL).getPermission()), Integer
-                .toHexString((Integer) acl.get(AclModification.grantKey(u1))));
+                Permissions.CAN_ANYTHING_ACL).getPermission()), Integer.toHexString((Integer) acl
+                .get(AclModification.grantKey(u1))));
         Assert.assertEquals(
                 Permissions.CAN_READ.combine(Permissions.CAN_WRITE).combine(Permissions.CAN_DELETE)
-                        .getPermission(), ((Integer)acl.get(AclModification.grantKey(u2))).intValue());
+                        .getPermission(),
+                ((Integer) acl.get(AclModification.grantKey(u2))).intValue());
         Assert.assertEquals(Permissions.CAN_READ.getPermission(),
-                ((Integer)acl.get(AclModification.grantKey(u3))).intValue());
+                ((Integer) acl.get(AclModification.grantKey(u3))).intValue());
         for (Entry<String, Object> e : acl.entrySet()) {
             LOGGER.info(" ACE {} : {} ", e.getKey(), e.getValue());
         }
         LOGGER.info("Got ACL {}", acl);
 
     }
-    
+
     @Test
     public void testKern1515() throws Exception {
-      AuthenticatorImpl authenticator = new AuthenticatorImpl(client, configuration);
-      User currentUser = authenticator.authenticate("admin", "admin");
-      String u3 = "user3-"+System.currentTimeMillis();
-      String basepath = "testpath"+System.currentTimeMillis();
+        AuthenticatorImpl authenticator = new AuthenticatorImpl(client, configuration);
+        User currentUser = authenticator.authenticate("admin", "admin");
+        String u3 = "user3-" + System.currentTimeMillis();
+        String basepath = "testpath" + System.currentTimeMillis();
 
-      AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-              currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
-      AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser, client,
-          configuration, accessControlManagerImpl, null,  new LoggingStorageListener());
-      authorizableManager.createUser(u3, "User 3", "test",
-          ImmutableMap.of("test", (Object)"test"));
+        AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
+                currentUser, configuration, null, new LoggingStorageListener(),
+                principalValidatorResolver);
+        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
+                client, configuration, accessControlManagerImpl, null, new LoggingStorageListener());
+        authorizableManager.createUser(u3, "User 3", "test",
+                ImmutableMap.of("test", (Object) "test"));
 
-      AclModification user3canRead = new AclModification(AclModification.grantKey(u3),
-              Permissions.CAN_READ.getPermission(), AclModification.Operation.OP_OR);
-      
-      AclModification user3canWrite = new AclModification(AclModification.grantKey(u3),
-          Permissions.CAN_WRITE.getPermission(), AclModification.Operation.OP_OR);
-      
-      AclModification user3cannotWrite = new AclModification(AclModification.denyKey(u3),
-          Permissions.CAN_WRITE.getPermission(), AclModification.Operation.OP_OR);
-      
-      accessControlManagerImpl.setAcl(Security.ZONE_CONTENT, basepath+"/zach", 
-          new AclModification[] { user3canRead, user3canWrite });
-      
-      accessControlManagerImpl.setAcl(Security.ZONE_CONTENT, basepath+"/zach", new AclModification[] { user3cannotWrite });
-      
-      Assert.assertFalse("User should not be able to write.", 
-          accessControlManagerImpl.can(authorizableManager.findAuthorizable(u3), Security.ZONE_CONTENT, basepath+"/zach", Permissions.CAN_WRITE));
-      Assert.assertTrue("User should be able to read.", 
-          accessControlManagerImpl.can(authorizableManager.findAuthorizable(u3), Security.ZONE_CONTENT, basepath+"/zach", Permissions.CAN_READ));
+        AclModification user3canRead = new AclModification(AclModification.grantKey(u3),
+                Permissions.CAN_READ.getPermission(), AclModification.Operation.OP_OR);
+
+        AclModification user3canWrite = new AclModification(AclModification.grantKey(u3),
+                Permissions.CAN_WRITE.getPermission(), AclModification.Operation.OP_OR);
+
+        AclModification user3cannotWrite = new AclModification(AclModification.denyKey(u3),
+                Permissions.CAN_WRITE.getPermission(), AclModification.Operation.OP_OR);
+
+        accessControlManagerImpl.setAcl(Security.ZONE_CONTENT, basepath + "/zach",
+                new AclModification[] { user3canRead, user3canWrite });
+
+        accessControlManagerImpl.setAcl(Security.ZONE_CONTENT, basepath + "/zach",
+                new AclModification[] { user3cannotWrite });
+
+        Assert.assertFalse("User should not be able to write.", accessControlManagerImpl.can(
+                authorizableManager.findAuthorizable(u3), Security.ZONE_CONTENT,
+                basepath + "/zach", Permissions.CAN_WRITE));
+        Assert.assertTrue("User should be able to read.", accessControlManagerImpl.can(
+                authorizableManager.findAuthorizable(u3), Security.ZONE_CONTENT,
+                basepath + "/zach", Permissions.CAN_READ));
     }
 
     @Test
     public void testPrivileges() throws StorageClientException, AccessDeniedException {
         AuthenticatorImpl authenticator = new AuthenticatorImpl(client, configuration);
         User currentUser = authenticator.authenticate("admin", "admin");
-        String u1 = "user1-"+System.currentTimeMillis();
-        String u2 = "user2-"+System.currentTimeMillis();
-        String u3 = "user3-"+System.currentTimeMillis();
-        String basepath = "testpath"+System.currentTimeMillis();
+        String u1 = "user1-" + System.currentTimeMillis();
+        String u2 = "user2-" + System.currentTimeMillis();
+        String u3 = "user3-" + System.currentTimeMillis();
+        String basepath = "testpath" + System.currentTimeMillis();
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
+                currentUser, configuration, null, new LoggingStorageListener(),
+                principalValidatorResolver);
         AclModification user1CanAnything = new AclModification(AclModification.grantKey(u1),
                 Permissions.CAN_ANYTHING.combine(Permissions.CAN_ANYTHING_ACL).getPermission(),
                 AclModification.Operation.OP_REPLACE);
@@ -208,44 +214,46 @@ public abstract class AbstractAccessControlManagerImplTest {
                         .getPermission(), AclModification.Operation.OP_REPLACE);
         AclModification user3canRead = new AclModification(AclModification.grantKey(u3),
                 Permissions.CAN_READ.getPermission(), AclModification.Operation.OP_REPLACE);
-        
-        accessControlManagerImpl.setAcl(Security.ZONE_CONTENT, basepath+"/a/b/c",
+
+        accessControlManagerImpl.setAcl(Security.ZONE_CONTENT, basepath + "/a/b/c",
                 new AclModification[] { user1CanAnything, user2CantReadWrite, user3cantRead,
                         denyAnon, denyEveryone });
-        accessControlManagerImpl.setAcl(Security.ZONE_CONTENT, basepath+"/a/b",
+        accessControlManagerImpl.setAcl(Security.ZONE_CONTENT, basepath + "/a/b",
                 new AclModification[] { user1CanAnything, user2CanReadWrite });
-        accessControlManagerImpl.setAcl(Security.ZONE_CONTENT, basepath+"/a", new AclModification[] {
-                user1CanAnything, user3canRead });
+        accessControlManagerImpl.setAcl(Security.ZONE_CONTENT, basepath + "/a",
+                new AclModification[] { user1CanAnything, user3canRead });
 
-        Map<String, Object> acl = accessControlManagerImpl
-                .getAcl(Security.ZONE_CONTENT, basepath);
+        Map<String, Object> acl = accessControlManagerImpl.getAcl(Security.ZONE_CONTENT, basepath);
         Assert.assertArrayEquals(new String[] {}, acl.keySet().toArray());
 
-        acl = accessControlManagerImpl.getAcl(Security.ZONE_CONTENT, basepath+"/a");
-        acl = StorageClientUtils.getFilterMap(acl, null,null,ImmutableSet.of("_aclKey","_aclPath","_aclType"), false);
-        Assert.assertArrayEquals(Arrays.toString(sortToArray(acl.keySet())),
-                new String[] { AclModification.grantKey(u1), AclModification.grantKey(u3) },
+        acl = accessControlManagerImpl.getAcl(Security.ZONE_CONTENT, basepath + "/a");
+        acl = StorageClientUtils.getFilterMap(acl, null, null,
+                ImmutableSet.of("_aclKey", "_aclPath", "_aclType"), false);
+        Assert.assertArrayEquals(Arrays.toString(sortToArray(acl.keySet())), new String[] {
+                AclModification.grantKey(u1), AclModification.grantKey(u3) },
                 sortToArray(acl.keySet()));
-        acl = accessControlManagerImpl.getAcl(Security.ZONE_CONTENT, basepath+"/a/b");
-        acl = StorageClientUtils.getFilterMap(acl, null,null,ImmutableSet.of("_aclKey","_aclPath","_aclType"), false);
+        acl = accessControlManagerImpl.getAcl(Security.ZONE_CONTENT, basepath + "/a/b");
+        acl = StorageClientUtils.getFilterMap(acl, null, null,
+                ImmutableSet.of("_aclKey", "_aclPath", "_aclType"), false);
         Assert.assertArrayEquals(
                 new String[] { AclModification.grantKey(u1), AclModification.grantKey(u2) },
                 sortToArray(acl.keySet()));
-        acl = accessControlManagerImpl.getAcl(Security.ZONE_CONTENT, basepath+"/a/b/c");
-        acl = StorageClientUtils.getFilterMap(acl, null,null,ImmutableSet.of("_aclKey","_aclPath","_aclType"), false);
+        acl = accessControlManagerImpl.getAcl(Security.ZONE_CONTENT, basepath + "/a/b/c");
+        acl = StorageClientUtils.getFilterMap(acl, null, null,
+                ImmutableSet.of("_aclKey", "_aclPath", "_aclType"), false);
         Assert.assertArrayEquals(new String[] { AclModification.denyKey(User.ANON_USER),
                 AclModification.denyKey(Group.EVERYONE), AclModification.grantKey(u1),
                 AclModification.denyKey(u2), AclModification.denyKey(u3) },
                 sortToArray(acl.keySet()));
 
-        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser, client,
-                configuration, accessControlManagerImpl, null,  new LoggingStorageListener());
+        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
+                client, configuration, accessControlManagerImpl, null, new LoggingStorageListener());
         authorizableManager.createUser(u1, "User 1", "test",
-                ImmutableMap.of("test", (Object)"test"));
+                ImmutableMap.of("test", (Object) "test"));
         authorizableManager.createUser(u2, "User 2", "test",
-                ImmutableMap.of("test", (Object)"test"));
+                ImmutableMap.of("test", (Object) "test"));
         authorizableManager.createUser(u3, "User 3", "test",
-                ImmutableMap.of("test", (Object)"test"));
+                ImmutableMap.of("test", (Object) "test"));
 
         User user1 = (User) authorizableManager.findAuthorizable(u1);
         User user2 = (User) authorizableManager.findAuthorizable(u2);
@@ -253,60 +261,94 @@ public abstract class AbstractAccessControlManagerImplTest {
         User adminUser = (User) authorizableManager.findAuthorizable(User.ADMIN_USER);
         User anonUser = (User) authorizableManager.findAuthorizable(User.ANON_USER);
         Group everyoneGroup = (Group) authorizableManager.findAuthorizable(Group.EVERYONE);
-       
-        
-        
+
         Assert.assertNotNull(user1);
         Assert.assertNotNull(user2);
         Assert.assertNotNull(user3);
         Assert.assertNotNull(adminUser);
         Assert.assertNotNull(anonUser);
         Assert.assertNotNull(everyoneGroup);
-        
-        Assert.assertTrue(accessControlManagerImpl.can(user1, Security.ZONE_CONTENT, basepath, Permissions.CAN_READ));
-        Assert.assertFalse(accessControlManagerImpl.can(user1, Security.ZONE_CONTENT, basepath, Permissions.ALL));
-        Assert.assertTrue(accessControlManagerImpl.can(adminUser, Security.ZONE_CONTENT, basepath, Permissions.ALL));
-        Assert.assertTrue(accessControlManagerImpl.can(user2, Security.ZONE_CONTENT, basepath, Permissions.CAN_READ));
-        Assert.assertFalse(accessControlManagerImpl.can(user2, Security.ZONE_CONTENT, basepath, Permissions.ALL));
-        Assert.assertTrue(accessControlManagerImpl.can(user3, Security.ZONE_CONTENT, basepath, Permissions.CAN_READ));
-        Assert.assertFalse(accessControlManagerImpl.can(user3, Security.ZONE_CONTENT, basepath, Permissions.ALL));
-        Assert.assertTrue(accessControlManagerImpl.can(anonUser, Security.ZONE_CONTENT, basepath, Permissions.CAN_READ));
-        Assert.assertFalse(accessControlManagerImpl.can(anonUser, Security.ZONE_CONTENT, basepath, Permissions.ALL));
-        Assert.assertTrue(accessControlManagerImpl.can(everyoneGroup, Security.ZONE_CONTENT, basepath, Permissions.CAN_READ));
-        Assert.assertFalse(accessControlManagerImpl.can(everyoneGroup, Security.ZONE_CONTENT, basepath, Permissions.ALL));
 
-        Assert.assertTrue(accessControlManagerImpl.can(user1, Security.ZONE_CONTENT, basepath+"/a/b/c", Permissions.ALL));
-        Assert.assertTrue(accessControlManagerImpl.can(adminUser, Security.ZONE_CONTENT, basepath+"/a/b/c", Permissions.ALL));
-        Assert.assertFalse(accessControlManagerImpl.can(user2, Security.ZONE_CONTENT, basepath+"/a/b/c", Permissions.CAN_READ));
-        Assert.assertFalse(accessControlManagerImpl.can(anonUser, Security.ZONE_CONTENT, basepath+"/a/b/c", Permissions.CAN_READ));
-        Assert.assertFalse(accessControlManagerImpl.can(everyoneGroup, Security.ZONE_CONTENT, basepath+"/a/b/c", Permissions.CAN_READ));
-        Assert.assertFalse(accessControlManagerImpl.can(user3, Security.ZONE_CONTENT, basepath+"/a/b/c", Permissions.CAN_READ));
+        Assert.assertTrue(accessControlManagerImpl.can(user1, Security.ZONE_CONTENT, basepath,
+                Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(user1, Security.ZONE_CONTENT, basepath,
+                Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl.can(adminUser, Security.ZONE_CONTENT, basepath,
+                Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl.can(user2, Security.ZONE_CONTENT, basepath,
+                Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(user2, Security.ZONE_CONTENT, basepath,
+                Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl.can(user3, Security.ZONE_CONTENT, basepath,
+                Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(user3, Security.ZONE_CONTENT, basepath,
+                Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl.can(anonUser, Security.ZONE_CONTENT, basepath,
+                Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(anonUser, Security.ZONE_CONTENT, basepath,
+                Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl.can(everyoneGroup, Security.ZONE_CONTENT,
+                basepath, Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(everyoneGroup, Security.ZONE_CONTENT,
+                basepath, Permissions.ALL));
 
+        Assert.assertTrue(accessControlManagerImpl.can(user1, Security.ZONE_CONTENT, basepath
+                + "/a/b/c", Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl.can(adminUser, Security.ZONE_CONTENT, basepath
+                + "/a/b/c", Permissions.ALL));
+        Assert.assertFalse(accessControlManagerImpl.can(user2, Security.ZONE_CONTENT, basepath
+                + "/a/b/c", Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(anonUser, Security.ZONE_CONTENT, basepath
+                + "/a/b/c", Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(everyoneGroup, Security.ZONE_CONTENT,
+                basepath + "/a/b/c", Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(user3, Security.ZONE_CONTENT, basepath
+                + "/a/b/c", Permissions.CAN_READ));
 
-        Assert.assertTrue(accessControlManagerImpl.can(user1, Security.ZONE_CONTENT, basepath+"/a/b", Permissions.ALL));
-        Assert.assertTrue(accessControlManagerImpl.can(adminUser, Security.ZONE_CONTENT, basepath+"/a/b", Permissions.ALL));
-        Assert.assertTrue(accessControlManagerImpl.can(user2, Security.ZONE_CONTENT, basepath+"/a/b", Permissions.CAN_WRITE.combine(Permissions.CAN_READ).combine(Permissions.CAN_DELETE)));
-        Assert.assertFalse(accessControlManagerImpl.can(user2, Security.ZONE_CONTENT, basepath+"/a/b", Permissions.ALL));
-        Assert.assertTrue(accessControlManagerImpl.can(user3, Security.ZONE_CONTENT, basepath+"/a/b", Permissions.CAN_READ));
-        Assert.assertFalse(accessControlManagerImpl.can(user3, Security.ZONE_CONTENT, basepath+"/a/b", Permissions.ALL));
-        Assert.assertTrue(accessControlManagerImpl.can(anonUser, Security.ZONE_CONTENT, basepath+"/a/b", Permissions.CAN_READ));
-        Assert.assertFalse(accessControlManagerImpl.can(anonUser, Security.ZONE_CONTENT, basepath+"/a/b", Permissions.ALL));
-        Assert.assertTrue(accessControlManagerImpl.can(everyoneGroup, Security.ZONE_CONTENT, basepath+"/a/b", Permissions.CAN_READ));
-        Assert.assertFalse(accessControlManagerImpl.can(everyoneGroup, Security.ZONE_CONTENT, basepath+"/a/b", Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl.can(user1, Security.ZONE_CONTENT, basepath
+                + "/a/b", Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl.can(adminUser, Security.ZONE_CONTENT, basepath
+                + "/a/b", Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl
+                .can(user2, Security.ZONE_CONTENT, basepath + "/a/b", Permissions.CAN_WRITE
+                        .combine(Permissions.CAN_READ).combine(Permissions.CAN_DELETE)));
+        Assert.assertFalse(accessControlManagerImpl.can(user2, Security.ZONE_CONTENT, basepath
+                + "/a/b", Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl.can(user3, Security.ZONE_CONTENT, basepath
+                + "/a/b", Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(user3, Security.ZONE_CONTENT, basepath
+                + "/a/b", Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl.can(anonUser, Security.ZONE_CONTENT, basepath
+                + "/a/b", Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(anonUser, Security.ZONE_CONTENT, basepath
+                + "/a/b", Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl.can(everyoneGroup, Security.ZONE_CONTENT,
+                basepath + "/a/b", Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(everyoneGroup, Security.ZONE_CONTENT,
+                basepath + "/a/b", Permissions.ALL));
 
-        Assert.assertTrue(accessControlManagerImpl.can(user1, Security.ZONE_CONTENT, basepath+"/a", Permissions.ALL));
-        Assert.assertTrue(accessControlManagerImpl.can(adminUser, Security.ZONE_CONTENT, basepath+"/a", Permissions.ALL));
-        Assert.assertTrue(accessControlManagerImpl.can(user2, Security.ZONE_CONTENT, basepath+"/a", Permissions.CAN_READ));
-        Assert.assertFalse(accessControlManagerImpl.can(user2, Security.ZONE_CONTENT, basepath+"/a", Permissions.ALL));
-        Assert.assertTrue(accessControlManagerImpl.can(user3, Security.ZONE_CONTENT, basepath+"/a", Permissions.CAN_READ));
-        Assert.assertFalse(accessControlManagerImpl.can(user3, Security.ZONE_CONTENT, basepath+"/a", Permissions.ALL));
-        Assert.assertTrue(accessControlManagerImpl.can(anonUser, Security.ZONE_CONTENT, basepath+"/a", Permissions.CAN_READ));
-        Assert.assertFalse(accessControlManagerImpl.can(anonUser, Security.ZONE_CONTENT, basepath+"/a", Permissions.ALL));
-        Assert.assertTrue(accessControlManagerImpl.can(everyoneGroup, Security.ZONE_CONTENT, basepath+"/a", Permissions.CAN_READ));
-        Assert.assertFalse(accessControlManagerImpl.can(everyoneGroup, Security.ZONE_CONTENT, basepath+"/a", Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl.can(user1, Security.ZONE_CONTENT, basepath
+                + "/a", Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl.can(adminUser, Security.ZONE_CONTENT, basepath
+                + "/a", Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl.can(user2, Security.ZONE_CONTENT, basepath
+                + "/a", Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(user2, Security.ZONE_CONTENT, basepath
+                + "/a", Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl.can(user3, Security.ZONE_CONTENT, basepath
+                + "/a", Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(user3, Security.ZONE_CONTENT, basepath
+                + "/a", Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl.can(anonUser, Security.ZONE_CONTENT, basepath
+                + "/a", Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(anonUser, Security.ZONE_CONTENT, basepath
+                + "/a", Permissions.ALL));
+        Assert.assertTrue(accessControlManagerImpl.can(everyoneGroup, Security.ZONE_CONTENT,
+                basepath + "/a", Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(everyoneGroup, Security.ZONE_CONTENT,
+                basepath + "/a", Permissions.ALL));
 
-
-        String[] testpaths = { basepath, basepath+"/a", basepath+"/a/b", basepath+"/a/b/c", };
+        String[] testpaths = { basepath, basepath + "/a", basepath + "/a/b", basepath + "/a/b/c", };
 
         checkPermissions(user1, testpaths, new Permission[][] {
                 { Permissions.CAN_READ },
@@ -319,21 +361,19 @@ public abstract class AbstractAccessControlManagerImplTest {
                 { Permissions.CAN_READ, Permissions.CAN_WRITE, Permissions.CAN_DELETE,
                         Permissions.CAN_READ_ACL, Permissions.CAN_WRITE_ACL,
                         Permissions.CAN_DELETE_ACL, Permissions.CAN_MANAGE, Permissions.ALL } },
-                new String[][] {
-                        { User.ADMIN_USER, User.ANON_USER, Group.EVERYONE },
+                new String[][] { { User.ADMIN_USER, User.ANON_USER, Group.EVERYONE },
                         { User.ADMIN_USER, User.ANON_USER, Group.EVERYONE, u1, u3 },
-                        { User.ADMIN_USER, User.ANON_USER, Group.EVERYONE, u1, u2,
-                                u3 }, { User.ADMIN_USER, u1 } }, new String[][] { {}, {},
-                        {}, { User.ANON_USER, Group.EVERYONE, u2, u3 } });
+                        { User.ADMIN_USER, User.ANON_USER, Group.EVERYONE, u1, u2, u3 },
+                        { User.ADMIN_USER, u1 } }, new String[][] { {}, {}, {},
+                        { User.ANON_USER, Group.EVERYONE, u2, u3 } });
         checkPermissions(user2, testpaths, new Permission[][] { { Permissions.CAN_READ },
                 { Permissions.CAN_READ },
                 { Permissions.CAN_READ, Permissions.CAN_WRITE, Permissions.CAN_DELETE }, {} },
-                new String[][] {
-                        { User.ADMIN_USER, User.ANON_USER, Group.EVERYONE },
+                new String[][] { { User.ADMIN_USER, User.ANON_USER, Group.EVERYONE },
                         { User.ADMIN_USER, User.ANON_USER, Group.EVERYONE, u1, u3 },
-                        { User.ADMIN_USER, User.ANON_USER, Group.EVERYONE, u1, u2,
-                                u3 }, { User.ADMIN_USER, u1 } }, new String[][] { {}, {},
-                        {}, { User.ANON_USER, Group.EVERYONE, u2, u3 } });
+                        { User.ADMIN_USER, User.ANON_USER, Group.EVERYONE, u1, u2, u3 },
+                        { User.ADMIN_USER, u1 } }, new String[][] { {}, {}, {},
+                        { User.ANON_USER, Group.EVERYONE, u2, u3 } });
         checkPermissions(user3, testpaths, new Permission[][] { { Permissions.CAN_READ },
                 { Permissions.CAN_READ }, { Permissions.CAN_READ }, {} }, new String[][] {
                 { User.ADMIN_USER, User.ANON_USER, Group.EVERYONE },
@@ -341,13 +381,13 @@ public abstract class AbstractAccessControlManagerImplTest {
                 { User.ADMIN_USER, User.ANON_USER, Group.EVERYONE, u1, u2, u3 },
                 { User.ADMIN_USER, u1 } }, new String[][] { {}, {}, {},
                 { User.ANON_USER, Group.EVERYONE, u2, u3 } });
-        
 
     }
 
     private void checkPermissions(User u, String[] testPath, Object[][] expectedPermissions,
             String[][] readers, String[][] deniedReaders) throws StorageClientException {
-        AccessControlManagerImpl acmU = new AccessControlManagerImpl(client, u, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
+        AccessControlManagerImpl acmU = new AccessControlManagerImpl(client, u, configuration,
+                null, new LoggingStorageListener(), principalValidatorResolver);
 
         for (int i = 0; i < testPath.length; i++) {
             Permission[] p = acmU.getPermissions(Security.ZONE_CONTENT, testPath[i]);
@@ -367,23 +407,25 @@ public abstract class AbstractAccessControlManagerImplTest {
     private String[] sortToArray(Set<String> keySet) {
         return Lists.sortedCopy(keySet).toArray(new String[keySet.size()]);
     }
+
     @Test
     public void testTokenPermission() throws StorageClientException, AccessDeniedException {
         AuthenticatorImpl authenticator = new AuthenticatorImpl(client, configuration);
         User currentUser = authenticator.authenticate("admin", "admin");
-        String u3 = "user3-"+System.currentTimeMillis();
+        String u3 = "user3-" + System.currentTimeMillis();
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
-        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser, client,
-            configuration, accessControlManagerImpl, null,  new LoggingStorageListener());
+                currentUser, configuration, null, new LoggingStorageListener(),
+                principalValidatorResolver);
+        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
+                client, configuration, accessControlManagerImpl, null, new LoggingStorageListener());
         authorizableManager.createUser(u3, "User 3", "test",
-            ImmutableMap.of("test", (Object)"test"));
+                ImmutableMap.of("test", (Object) "test"));
         Authorizable user3Auth = authorizableManager.findAuthorizable(u3);
-        String targetContentPath = "targetContentPath"+System.currentTimeMillis();
+        String targetContentPath = "targetContentPath" + System.currentTimeMillis();
         int grantedBitmap = Permissions.CAN_WRITE.getPermission();
         int deniedBitmap = Permissions.CAN_MANAGE.getPermission();
-        String aclID = Integer.toHexString(grantedBitmap)+"_"+Integer.toHexString(deniedBitmap);
+        String aclID = Integer.toHexString(grantedBitmap) + "_" + Integer.toHexString(deniedBitmap);
         String tokenPrincipal = AccessControlManager.DYNAMIC_PRINCIPAL_STEM + aclID;
 
         // grant access to the token, but deny access to everyone else.
@@ -391,17 +433,16 @@ public abstract class AbstractAccessControlManagerImplTest {
                 Security.ZONE_CONTENT,
                 targetContentPath,
                 new AclModification[] {
-                    new AclModification(AclModification.denyKey(tokenPrincipal), deniedBitmap,
-                        Operation.OP_REPLACE),
-                    new AclModification(AclModification.grantKey(tokenPrincipal),
-                                grantedBitmap, Operation.OP_REPLACE),
-                      new AclModification(AclModification.denyKey(Group.EVERYONE), Permissions.CAN_READ.getPermission(),
+                        new AclModification(AclModification.denyKey(tokenPrincipal), deniedBitmap,
                                 Operation.OP_REPLACE),
-                                new AclModification(AclModification.denyKey(User.ANON_USER), Permissions.CAN_READ.getPermission(),
-                                        Operation.OP_REPLACE)
-                            });
-        // the tokens should not be setup, 
-        final Content tokentContent = new Content("testtoken/"+tokenPrincipal, null);
+                        new AclModification(AclModification.grantKey(tokenPrincipal),
+                                grantedBitmap, Operation.OP_REPLACE),
+                        new AclModification(AclModification.denyKey(Group.EVERYONE),
+                                Permissions.CAN_READ.getPermission(), Operation.OP_REPLACE),
+                        new AclModification(AclModification.denyKey(User.ANON_USER),
+                                Permissions.CAN_READ.getPermission(), Operation.OP_REPLACE) });
+        // the tokens should not be setup,
+        final Content tokentContent = new Content("testtoken/" + tokenPrincipal, null);
         accessControlManagerImpl.signContentToken(tokentContent, targetContentPath);
         LOGGER.info("Checking Token {} ", tokentContent);
         accessControlManagerImpl.setRequestPrincipalResolver(new PrincipalTokenResolver() {
@@ -410,31 +451,36 @@ public abstract class AbstractAccessControlManagerImplTest {
                 LOGGER.info("Principal {} checked tokens {}", principal, tokens);
             }
         });
-        Assert.assertTrue(accessControlManagerImpl.can(user3Auth, Security.ZONE_CONTENT, targetContentPath, Permissions.CAN_WRITE));
-        Assert.assertFalse(accessControlManagerImpl.can(user3Auth, Security.ZONE_CONTENT, targetContentPath, Permissions.CAN_READ));
-        Assert.assertFalse(accessControlManagerImpl.can(user3Auth, Security.ZONE_CONTENT, targetContentPath, Permissions.CAN_MANAGE));
+        Assert.assertTrue(accessControlManagerImpl.can(user3Auth, Security.ZONE_CONTENT,
+                targetContentPath, Permissions.CAN_WRITE));
+        Assert.assertFalse(accessControlManagerImpl.can(user3Auth, Security.ZONE_CONTENT,
+                targetContentPath, Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(user3Auth, Security.ZONE_CONTENT,
+                targetContentPath, Permissions.CAN_MANAGE));
 
         accessControlManagerImpl.clearRequestPrincipalResolver();
         LOGGER.info("Done Checking token");
     }
 
     @Test
-    public void testTokenPermissionWithPlugin() throws StorageClientException, AccessDeniedException {
+    public void testTokenPermissionWithPlugin() throws StorageClientException,
+            AccessDeniedException {
         AuthenticatorImpl authenticator = new AuthenticatorImpl(client, configuration);
         User currentUser = authenticator.authenticate("admin", "admin");
-        String u3 = "user3-"+System.currentTimeMillis();
+        String u3 = "user3-" + System.currentTimeMillis();
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
-                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
-        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser, client,
-            configuration, accessControlManagerImpl, null,  new LoggingStorageListener());
+                currentUser, configuration, null, new LoggingStorageListener(),
+                principalValidatorResolver);
+        AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
+                client, configuration, accessControlManagerImpl, null, new LoggingStorageListener());
         authorizableManager.createUser(u3, "User 3", "test",
-            ImmutableMap.of("test", (Object)"test"));
+                ImmutableMap.of("test", (Object) "test"));
         Authorizable user3Auth = authorizableManager.findAuthorizable(u3);
-        String targetContentPath = "targetContentPath"+System.currentTimeMillis();
+        String targetContentPath = "targetContentPath" + System.currentTimeMillis();
         int grantedBitmap = Permissions.CAN_WRITE.getPermission();
         int deniedBitmap = Permissions.CAN_MANAGE.getPermission();
-        String aclID = Integer.toHexString(grantedBitmap)+"_"+Integer.toHexString(deniedBitmap);
+        String aclID = Integer.toHexString(grantedBitmap) + "_" + Integer.toHexString(deniedBitmap);
         String tokenPrincipal = AccessControlManager.DYNAMIC_PRINCIPAL_STEM + aclID;
 
         // grant access to the token, but deny access to everyone else.
@@ -442,15 +488,14 @@ public abstract class AbstractAccessControlManagerImplTest {
                 Security.ZONE_CONTENT,
                 targetContentPath,
                 new AclModification[] {
-                    new AclModification(AclModification.denyKey(tokenPrincipal), deniedBitmap,
+                        new AclModification(AclModification.denyKey(tokenPrincipal), deniedBitmap,
                                 Operation.OP_REPLACE),
-                    new AclModification(AclModification.grantKey(tokenPrincipal),
-                        grantedBitmap, Operation.OP_REPLACE),
-                    new AclModification(AclModification.denyKey(Group.EVERYONE), Permissions.CAN_READ.getPermission(),
-                                Operation.OP_REPLACE),
-                                new AclModification(AclModification.denyKey(User.ANON_USER), Permissions.CAN_READ.getPermission(),
-                                        Operation.OP_REPLACE)
-                            });
+                        new AclModification(AclModification.grantKey(tokenPrincipal),
+                                grantedBitmap, Operation.OP_REPLACE),
+                        new AclModification(AclModification.denyKey(Group.EVERYONE),
+                                Permissions.CAN_READ.getPermission(), Operation.OP_REPLACE),
+                        new AclModification(AclModification.denyKey(User.ANON_USER),
+                                Permissions.CAN_READ.getPermission(), Operation.OP_REPLACE) });
         // the tokens should not be setup,
         final Set<Content> checked = Sets.newHashSet();
         principalValidatorResolver.registerPlugin("testvalidator", new PrincipalValidatorPlugin() {
@@ -458,11 +503,14 @@ public abstract class AbstractAccessControlManagerImplTest {
                 checked.add(proxyPrincipalToken);
                 return proxyPrincipalToken.hasProperty("protectedfield");
             }
+
             public String[] getProtectedFields() {
-                return new String[]{"protectedfield", "nullprotectedfield"} ;
+                return new String[] { "protectedfield", "nullprotectedfield" };
             }
         });
-        final Content tokentContent = new Content("testtokenwithPlugin/"+tokenPrincipal, ImmutableMap.of(PrincipalTokenValidator.VALIDATORPLUGIN, (Object)"testvalidator", "protectedfield", "protected"));
+        final Content tokentContent = new Content("testtokenwithPlugin/" + tokenPrincipal,
+                ImmutableMap.of(PrincipalTokenValidator.VALIDATORPLUGIN, (Object) "testvalidator",
+                        "protectedfield", "protected"));
         accessControlManagerImpl.signContentToken(tokentContent, targetContentPath);
         LOGGER.info("Checking Token {} ", tokentContent);
         accessControlManagerImpl.setRequestPrincipalResolver(new PrincipalTokenResolver() {
@@ -471,9 +519,12 @@ public abstract class AbstractAccessControlManagerImplTest {
                 LOGGER.info("Principal {} checked tokens {}", principal, tokens);
             }
         });
-        Assert.assertTrue(accessControlManagerImpl.can(user3Auth, Security.ZONE_CONTENT, targetContentPath, Permissions.CAN_WRITE));
-        Assert.assertFalse(accessControlManagerImpl.can(user3Auth, Security.ZONE_CONTENT, targetContentPath, Permissions.CAN_READ));
-        Assert.assertFalse(accessControlManagerImpl.can(user3Auth, Security.ZONE_CONTENT, targetContentPath, Permissions.CAN_MANAGE));
+        Assert.assertTrue(accessControlManagerImpl.can(user3Auth, Security.ZONE_CONTENT,
+                targetContentPath, Permissions.CAN_WRITE));
+        Assert.assertFalse(accessControlManagerImpl.can(user3Auth, Security.ZONE_CONTENT,
+                targetContentPath, Permissions.CAN_READ));
+        Assert.assertFalse(accessControlManagerImpl.can(user3Auth, Security.ZONE_CONTENT,
+                targetContentPath, Permissions.CAN_MANAGE));
 
         Assert.assertEquals(1, checked.size());
         accessControlManagerImpl.clearRequestPrincipalResolver();
@@ -493,35 +544,55 @@ public abstract class AbstractAccessControlManagerImplTest {
         AccessControlManager adminAccessControlManager = adminSession.getAccessControlManager();
 
         // create two users
-        assertTrue(adminAuthorizableManager.createUser("suzy", "suzy", "secret", ImmutableMap.of("firstName", (Object) "Suzy", "lastName", "Queue")));
-        assertTrue(adminAuthorizableManager.createUser("zach", "zach", "secret", ImmutableMap.of("firstName", (Object) "Zach", "lastName", "Thomas")));
+        Assert.assertTrue(adminAuthorizableManager.createUser("suzy", "suzy", "secret",
+                ImmutableMap.of("firstName", (Object) "Suzy", "lastName", "Queue")));
+        Assert.assertTrue(adminAuthorizableManager.createUser("zach", "zach", "secret",
+                ImmutableMap.of("firstName", (Object) "Zach", "lastName", "Thomas")));
 
         // Create the innermost group and make suzy a member.
         Group group;
-        assertTrue(adminAuthorizableManager.createGroup("inner", "inner", null));
+        Assert.assertTrue(adminAuthorizableManager.createGroup("inner", "inner", null));
         group = (Group) adminAuthorizableManager.findAuthorizable("inner");
         group.addMember("suzy");
         adminAuthorizableManager.updateAuthorizable(group);
-        adminAccessControlManager.setAcl("AU", "inner", new AclModification[] { new AclModification("inner@g", READ_ACCESS, AclModification.Operation.OP_REPLACE)});
-        adminAccessControlManager.setAcl("AU", "inner", new AclModification[] { new AclModification("everyone@d", ALL_ACCESS, AclModification.Operation.OP_REPLACE)});
-        adminAccessControlManager.setAcl("AU", "inner", new AclModification[] { new AclModification("anonymous@d", ALL_ACCESS, AclModification.Operation.OP_REPLACE)});
+        adminAccessControlManager.setAcl(Security.ZONE_AUTHORIZABLES, "inner",
+                new AclModification[] { new AclModification("inner@g", READ_ACCESS,
+                        AclModification.Operation.OP_REPLACE) });
+        adminAccessControlManager.setAcl(Security.ZONE_AUTHORIZABLES, "inner",
+                new AclModification[] { new AclModification("everyone@d", ALL_ACCESS,
+                        AclModification.Operation.OP_REPLACE) });
+        adminAccessControlManager.setAcl(Security.ZONE_AUTHORIZABLES, "inner",
+                new AclModification[] { new AclModification("anonymous@d", ALL_ACCESS,
+                        AclModification.Operation.OP_REPLACE) });
         adminAuthorizableManager.updateAuthorizable(group);
 
         // Create a wrapper group.
-        assertTrue(adminAuthorizableManager.createGroup("wrapper", "wrapper", null));
+        Assert.assertTrue(adminAuthorizableManager.createGroup("wrapper", "wrapper", null));
         group = (Group) adminAuthorizableManager.findAuthorizable("wrapper");
         group.addMember("inner");
         adminAuthorizableManager.updateAuthorizable(group);
-        adminAccessControlManager.setAcl("AU", "wrapper", new AclModification[] { new AclModification("wrapper@g", READ_ACCESS, AclModification.Operation.OP_REPLACE)});
-        adminAccessControlManager.setAcl("AU", "wrapper", new AclModification[] { new AclModification("everyone@d", ALL_ACCESS, AclModification.Operation.OP_REPLACE)});
-        adminAccessControlManager.setAcl("AU", "wrapper", new AclModification[] { new AclModification("anonymous@d", ALL_ACCESS, AclModification.Operation.OP_REPLACE)});
+        adminAccessControlManager.setAcl(Security.ZONE_AUTHORIZABLES, "wrapper",
+                new AclModification[] { new AclModification("wrapper@g", READ_ACCESS,
+                        AclModification.Operation.OP_REPLACE) });
+        adminAccessControlManager.setAcl(Security.ZONE_AUTHORIZABLES, "wrapper",
+                new AclModification[] { new AclModification("everyone@d", ALL_ACCESS,
+                        AclModification.Operation.OP_REPLACE) });
+        adminAccessControlManager.setAcl(Security.ZONE_AUTHORIZABLES, "wrapper",
+                new AclModification[] { new AclModification("anonymous@d", ALL_ACCESS,
+                        AclModification.Operation.OP_REPLACE) });
         adminAuthorizableManager.updateAuthorizable(group);
 
         // Create some content to test.
         adminContentManager.update(new Content("a:wrapper", null));
-        adminAccessControlManager.setAcl("CO", "a:wrapper", new AclModification[] { new AclModification("wrapper@g", READ_ACCESS, AclModification.Operation.OP_REPLACE)});
-        adminAccessControlManager.setAcl("CO", "a:wrapper", new AclModification[] { new AclModification("everyone@d", ALL_ACCESS, AclModification.Operation.OP_REPLACE)});
-        adminAccessControlManager.setAcl("CO", "a:wrapper", new AclModification[] { new AclModification("anonymous@d", ALL_ACCESS, AclModification.Operation.OP_REPLACE)});
+        adminAccessControlManager.setAcl(Security.ZONE_CONTENT, "a:wrapper",
+                new AclModification[] { new AclModification("wrapper@g", READ_ACCESS,
+                        AclModification.Operation.OP_REPLACE) });
+        adminAccessControlManager.setAcl(Security.ZONE_CONTENT, "a:wrapper",
+                new AclModification[] { new AclModification("everyone@d", ALL_ACCESS,
+                        AclModification.Operation.OP_REPLACE) });
+        adminAccessControlManager.setAcl(Security.ZONE_CONTENT, "a:wrapper",
+                new AclModification[] { new AclModification("anonymous@d", ALL_ACCESS,
+                        AclModification.Operation.OP_REPLACE) });
 
         // Start a new session.
         adminSession.logout();
@@ -533,22 +604,32 @@ public abstract class AbstractAccessControlManagerImplTest {
 
         // make sure suzy can read
         Authorizable suzy = adminAuthorizableManager.findAuthorizable("suzy");
-        assertTrue(adminAccessControlManager.can(suzy, "AU", "inner", Permissions.CAN_READ));
-        assertTrue(adminAccessControlManager.can(suzy, "AU", "wrapper", Permissions.CAN_READ));
-        assertFalse(adminAccessControlManager.can(suzy, "AU", "wrapper", Permissions.CAN_WRITE));
-        assertFalse(adminAccessControlManager.can(suzy, "CO", "a:wrapper", Permissions.CAN_WRITE));
-        assertTrue(adminAccessControlManager.can(suzy, "CO", "a:wrapper", Permissions.CAN_READ));
+        Assert.assertTrue(adminAccessControlManager.can(suzy, Security.ZONE_AUTHORIZABLES, "inner",
+                Permissions.CAN_READ));
+        Assert.assertTrue(adminAccessControlManager.can(suzy, Security.ZONE_AUTHORIZABLES,
+                "wrapper", Permissions.CAN_READ));
+        Assert.assertFalse(adminAccessControlManager.can(suzy, Security.ZONE_AUTHORIZABLES,
+                "wrapper", Permissions.CAN_WRITE));
+        Assert.assertFalse(adminAccessControlManager.can(suzy, Security.ZONE_CONTENT, "a:wrapper",
+                Permissions.CAN_WRITE));
+        Assert.assertTrue(adminAccessControlManager.can(suzy, Security.ZONE_CONTENT, "a:wrapper",
+                Permissions.CAN_READ));
 
         // Make sure zach cannot
         Authorizable zach = adminAuthorizableManager.findAuthorizable("zach");
-        assertFalse(adminAccessControlManager.can(zach, "AU", "wrapper", Permissions.CAN_READ));
-        assertFalse(adminAccessControlManager.can(zach, "CO", "a:wrapper", Permissions.CAN_READ));
+        Assert.assertFalse(adminAccessControlManager.can(zach, Security.ZONE_AUTHORIZABLES,
+                "wrapper", Permissions.CAN_READ));
+        Assert.assertFalse(adminAccessControlManager.can(zach, Security.ZONE_CONTENT, "a:wrapper",
+                Permissions.CAN_READ));
 
         final Session normalSession = repository.loginAdministrative("suzy");
-        final AuthorizableManager normalAuthorizableManager = normalSession.getAuthorizableManager();
-        final AccessControlManager normalAccessControlManager = normalSession.getAccessControlManager();
+        final AuthorizableManager normalAuthorizableManager = normalSession
+                .getAuthorizableManager();
+        final AccessControlManager normalAccessControlManager = normalSession
+                .getAccessControlManager();
         Authorizable normalSuzy = normalAuthorizableManager.findAuthorizable("suzy");
-        assertTrue(normalAccessControlManager.can(normalSuzy, "AU", "wrapper", Permissions.CAN_READ));
+        Assert.assertTrue(normalAccessControlManager.can(normalSuzy, Security.ZONE_AUTHORIZABLES,
+                "wrapper", Permissions.CAN_READ));
     }
 
 }
