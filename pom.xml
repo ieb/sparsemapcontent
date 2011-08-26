@@ -348,7 +348,7 @@
 <!-- D I S T R I B U T I O N M A N A G E M E N T -->
 <!-- ====================================================================== -->
   <distributionManagement>
-    <downloadUrl>http://catnep.caret.cam.ac.uk/home/www2/htdocs/maven2/</downloadUrl>
+    <downloadUrl>http://www2.caret.cam.ac.uk/maven2/</downloadUrl>
     <snapshotRepository>
        <uniqueVersion>false</uniqueVersion>
        <id>caret-maven-snapshots-scp</id>
