@@ -31,6 +31,9 @@ public class Permissions {
     public static final Permission CAN_WRITE = new Permission(0x0002, "Write");
     public static final Permission CAN_DELETE = new Permission(0x0004, "Delete");
     public static final Permission CAN_ANYTHING = CAN_READ.combine(CAN_WRITE).combine(CAN_DELETE);
+    public static final Permission CAN_READ_PROPERTY = new Permission(0x0010, "Read Property");
+    public static final Permission CAN_WRITE_PROPERTY = new Permission(0x0020, "Write Property");
+    public static final Permission CAN_ANYTHING_PROPERTY = CAN_READ_PROPERTY.combine(CAN_WRITE_PROPERTY);
     public static final Permission CAN_READ_ACL = new Permission(0x1000, "Read ACL");
     public static final Permission CAN_WRITE_ACL = new Permission(0x2000, "Write ACL");
     public static final Permission CAN_DELETE_ACL = new Permission(0x4000, "Delete ACL");

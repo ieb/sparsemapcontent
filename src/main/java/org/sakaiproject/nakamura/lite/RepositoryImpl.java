@@ -62,6 +62,13 @@ public class RepositoryImpl implements Repository {
     public RepositoryImpl() {
     }
 
+    public RepositoryImpl(Configuration configuration, StorageClientPool clientPool,
+            LoggingStorageListener listener) {
+        this.configuration = configuration;
+        this.clientPool = clientPool;
+        this.storeListener = listener;
+    }
+
     @Activate
     public void activate(Map<String, Object> properties) throws ClientPoolException,
             StorageClientException, AccessDeniedException {

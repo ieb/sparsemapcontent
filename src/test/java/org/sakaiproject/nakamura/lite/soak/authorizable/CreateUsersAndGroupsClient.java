@@ -62,7 +62,7 @@ public class CreateUsersAndGroupsClient extends AbstractScalingClient {
                     client, currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
 
             AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
-                    client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
+                    null, client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
 
             for (int i = 0; i < nusers; i++) {
                 String userId = tname + "_" + i;

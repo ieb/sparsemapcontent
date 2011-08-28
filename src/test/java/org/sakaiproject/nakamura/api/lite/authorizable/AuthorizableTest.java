@@ -10,13 +10,15 @@ import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 
 public class AuthorizableTest {
 	
 	protected Authorizable u;
 	
 	@Before
-	public void setup(){
+	public void setup() throws StorageClientException, AccessDeniedException{
 		// u is an empty, non-anonymous, user at the beginning of each test.
 		u = new User(new HashMap<String, Object>()); 
 	}
@@ -31,7 +33,7 @@ public class AuthorizableTest {
 	}
 
 	@Test 
-	public void testInitAnonymous(){
+	public void testInitAnonymous() throws StorageClientException, AccessDeniedException {
 		Map<String,Object> props = new HashMap<String, Object>();
 		props.put(Authorizable.ID_FIELD, User.ANON_USER);
 		Authorizable a = new User(props);
@@ -40,7 +42,7 @@ public class AuthorizableTest {
 	}
 
 	@Test 
-	public void testInitPrincipals(){
+	public void testInitPrincipals() throws StorageClientException, AccessDeniedException {
 		Map<String,Object> props = new HashMap<String, Object>();
 		props.put(Authorizable.PRINCIPALS_FIELD, "principal1-managers;principal2");
 		Authorizable a = new User(props);

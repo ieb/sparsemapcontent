@@ -20,6 +20,7 @@ package org.sakaiproject.nakamura.api.lite.accesscontrol;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.content.Content;
+import org.sakaiproject.nakamura.lite.accesscontrol.PropertyAcl;
 
 import java.util.Map;
 
@@ -29,6 +30,8 @@ import java.util.Map;
 public interface AccessControlManager {
 
     public static final String DYNAMIC_PRINCIPAL_STEM = "_tp_";
+
+    public static final String PROPERTY_PRINCIPAL_STEM = "_pp_";
 
     /**
      * Get an ACL at an object of a defined type. Do not look at parent objects
@@ -167,6 +170,9 @@ public interface AccessControlManager {
      */
     void signContentToken(Content token, String objectPath) throws StorageClientException,
             AccessDeniedException;
+
+
+    PropertyAcl getPropertyAcl(String objectType, String objectPath) throws AccessDeniedException, StorageClientException;
 
 
 }

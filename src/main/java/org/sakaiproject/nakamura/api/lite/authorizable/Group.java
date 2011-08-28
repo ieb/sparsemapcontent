@@ -21,6 +21,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
 import org.apache.commons.lang.StringUtils;
+import org.sakaiproject.nakamura.api.lite.Session;
+import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.util.Iterables;
 import org.sakaiproject.nakamura.lite.authorizable.GroupInternal;
 
@@ -41,21 +44,35 @@ public class Group extends Authorizable {
      * The ID of the everyone group. Includes all users except anon.
      */
     public static final String EVERYONE = "everyone";
-    public static final Group EVERYONE_GROUP = new GroupInternal(ImmutableMap.of("id",(Object)EVERYONE), false, true);
+    public static final Group EVERYONE_GROUP = getEveryone();
     private Set<String> members;
     private Set<String> membersAdded;
     private Set<String> membersRemoved;
     private boolean membersModified;
 
-    public Group(Map<String, Object> groupMap) {
-        super(groupMap);
+    public Group(Map<String, Object> groupMap) throws StorageClientException, AccessDeniedException {
+        this(groupMap, null);
+    }
+
+    public Group(Map<String, Object> groupMap, Session session) throws StorageClientException, AccessDeniedException {
+        super(groupMap, session);
         this.members = Sets.newLinkedHashSet(Iterables.of(StringUtils.split(
                 (String) authorizableMap.get(MEMBERS_FIELD), ';')));
         this.membersAdded = Sets.newHashSet();
         this.membersRemoved = Sets.newHashSet();
         membersModified = true;
     }
-    
+
+    private static Group getEveryone() {
+        try {
+            return new GroupInternal(ImmutableMap.of("id", (Object) EVERYONE), null, false, true);
+        } catch (StorageClientException e) {
+            // it cant throw this since the session is null
+        } catch (AccessDeniedException e) {
+            // it cant throw this since the session is null
+        }
+        return null;
+    }
 
     /**
      * {@inheritDoc}
@@ -70,10 +87,10 @@ public class Group extends Authorizable {
      */
     @Override
     public Map<String, Object> getPropertiesForUpdate() {
-        if ( !readOnly && membersModified ) {
+        if (!readOnly && membersModified) {
             modifiedMap.put(MEMBERS_FIELD, StringUtils.join(members, ';'));
         }
-        Map<String, Object> propertiesForUpdate =  super.getPropertiesForUpdate();
+        Map<String, Object> propertiesForUpdate = super.getPropertiesForUpdate();
         return propertiesForUpdate;
     }
 
@@ -83,7 +100,7 @@ public class Group extends Authorizable {
     @Override
     // TODO: Unit test
     public Map<String, Object> getSafeProperties() {
-        if ( !readOnly && membersModified ) {
+        if (!readOnly && membersModified) {
             modifiedMap.put(MEMBERS_FIELD, StringUtils.join(members, ';'));
         }
         return super.getSafeProperties();
@@ -104,25 +121,27 @@ public class Group extends Authorizable {
 
     public void addMember(String member) {
         if (!readOnly && !members.contains(member)) {
-            LOGGER.debug(" {} adding Member {} to {} ",new Object[]{this,member, members});
+            LOGGER.debug(" {} adding Member {} to {} ", new Object[] { this, member, members });
             members.add(member);
             membersAdded.add(member);
             membersRemoved.remove(member);
             membersModified = true;
         } else {
-            LOGGER.debug("{} Member {} already present in {} ",new Object[]{this,member,members});
+            LOGGER.debug("{} Member {} already present in {} ", new Object[] { this, member,
+                    members });
         }
     }
 
     public void removeMember(String member) {
         if (!readOnly && members.contains(member)) {
-            LOGGER.debug(" {} removing Member {} to {} ",new Object[]{this,member, members});
+            LOGGER.debug(" {} removing Member {} to {} ", new Object[] { this, member, members });
             members.remove(member);
             membersAdded.remove(member);
             membersRemoved.add(member);
             membersModified = true;
         } else {
-            LOGGER.debug("{} Member {} already not present in {} ",new Object[]{this,member,members});
+            LOGGER.debug("{} Member {} already not present in {} ", new Object[] { this, member,
+                    members });
         }
     }
 
@@ -135,9 +154,9 @@ public class Group extends Authorizable {
     }
 
     public void reset(Map<String, Object> newMap) {
-        if (!readOnly ) {
+        if (!readOnly) {
             super.reset(newMap);
-            LOGGER.debug("{} reset ",new Object[]{this});
+            LOGGER.debug("{} reset ", new Object[] { this });
             this.members = Sets.newLinkedHashSet(Iterables.of(StringUtils.split(
                     (String) authorizableMap.get(MEMBERS_FIELD), ';')));
             membersAdded.clear();

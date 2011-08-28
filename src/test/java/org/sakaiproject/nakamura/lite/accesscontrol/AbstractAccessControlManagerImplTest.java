@@ -153,7 +153,7 @@ public abstract class AbstractAccessControlManagerImplTest {
                 currentUser, configuration, null, new LoggingStorageListener(),
                 principalValidatorResolver);
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
-                client, configuration, accessControlManagerImpl, null, new LoggingStorageListener());
+                null, client, configuration, accessControlManagerImpl, null, new LoggingStorageListener());
         authorizableManager.createUser(u3, "User 3", "test",
                 ImmutableMap.of("test", (Object) "test"));
 
@@ -244,7 +244,7 @@ public abstract class AbstractAccessControlManagerImplTest {
                 sortToArray(acl.keySet()));
 
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
-                client, configuration, accessControlManagerImpl, null, new LoggingStorageListener());
+                null, client, configuration, accessControlManagerImpl, null, new LoggingStorageListener());
         authorizableManager.createUser(u1, "User 1", "test",
                 ImmutableMap.of("test", (Object) "test"));
         authorizableManager.createUser(u2, "User 2", "test",
@@ -415,7 +415,7 @@ public abstract class AbstractAccessControlManagerImplTest {
                 currentUser, configuration, null, new LoggingStorageListener(),
                 principalValidatorResolver);
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
-                client, configuration, accessControlManagerImpl, null, new LoggingStorageListener());
+                null, client, configuration, accessControlManagerImpl, null, new LoggingStorageListener());
         authorizableManager.createUser(u3, "User 3", "test",
                 ImmutableMap.of("test", (Object) "test"));
         Authorizable user3Auth = authorizableManager.findAuthorizable(u3);
@@ -470,7 +470,7 @@ public abstract class AbstractAccessControlManagerImplTest {
                 currentUser, configuration, null, new LoggingStorageListener(),
                 principalValidatorResolver);
         AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
-                client, configuration, accessControlManagerImpl, null, new LoggingStorageListener());
+                null, client, configuration, accessControlManagerImpl, null, new LoggingStorageListener());
         authorizableManager.createUser(u3, "User 3", "test",
                 ImmutableMap.of("test", (Object) "test"));
         Authorizable user3Auth = authorizableManager.findAuthorizable(u3);

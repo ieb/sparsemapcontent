@@ -17,12 +17,18 @@
  */
 package org.sakaiproject.nakamura.lite.accesscontrol;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -46,15 +52,10 @@ import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 public class AccessControlManagerImpl extends CachingManager implements AccessControlManager {
 
@@ -100,6 +101,66 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         return StorageClientUtils.getFilterMap(getCached(keySpace, aclColumnFamily, key), null, null, PROTECTED_PROPERTIES, false);
     }
     
+    public PropertyAcl getPropertyAcl(String objectType, String objectPath) throws AccessDeniedException, StorageClientException {
+        checkOpen();
+        compilingPermissions.inc();
+        try {
+            String key = this.getAclKey(objectType, objectPath);
+            Map<String, Object> objectAcl = getCached(keySpace, aclColumnFamily, key);
+            Set<String> orderedPrincipals = Sets.newLinkedHashSet();
+            {
+                String principal = user.getId();
+                if ( principal.startsWith("_") ) {
+                    throw new StorageClientException("Princials may not start with _ ");
+                }
+                orderedPrincipals.add(principal);
+            }
+            for (String principal : getPrincipals(user) ) {
+                if ( principal.startsWith("_") ) {
+                    throw new StorageClientException("Princials may not start with _ ");
+                }
+                orderedPrincipals.add(principal);
+            }
+            // Everyone must be the last principal to be applied
+            if (!User.ANON_USER.equals(user.getId())) {
+                orderedPrincipals.add(Group.EVERYONE);
+            }
+            // go through each principal
+            Map<String,Integer> grants = Maps.newHashMap();
+            Map<String,Integer> denies = Maps.newHashMap();
+            for ( String principal : orderedPrincipals) {
+                // got through each property
+                String ppk = PROPERTY_PRINCIPAL_STEM+principal;
+                for(Entry<String,Object> e : objectAcl.entrySet()) {
+                    String k = e.getKey();
+                    if ( k.startsWith(ppk)) {
+                        String[] parts = StringUtils.split(k.substring(PROPERTY_PRINCIPAL_STEM.length()),"@");
+                        String propertyName = parts[1];
+                        if ( AclModification.isDeny(k)) {
+                            int td = toInt(e.getValue());
+                            denies.put(propertyName, toInt(denies.get(propertyName)) | td);
+                        } else if ( AclModification.isGrant(k)) {
+                            int tg = toInt(e.getValue());
+                            grants.put(propertyName, toInt(grants.get(propertyName)) | tg);
+                        }
+                    }
+                }
+            }
+            // if the property has been granted, then that should remove the deny
+            for ( Entry<String, Integer> g : grants.entrySet()) {
+                String k = g.getKey();
+                if ( denies.containsKey(k)) {
+                    denies.put(k,  toInt(denies.get(k)) & ~g.getValue());
+                }
+            }
+            return new PropertyAcl(denies);
+        } finally {
+            compilingPermissions.dec();
+        }
+
+    }
+
+
     public Map<String, Object> getEffectiveAcl(String objectType, String objectPath)
             throws StorageClientException, AccessDeniedException {
         throw new UnsupportedOperationException("Nag someone to implement this");
@@ -268,6 +329,9 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
     
                 {
                     String principal = authorizable.getId();
+                    if ( principal.startsWith("_") ) {
+                        throw new StorageClientException("Princials may not start with _ ");
+                    }
                     int tg = toInt(acl.get(principal
                             + AclModification.GRANTED_MARKER));
                     int td = toInt(acl
@@ -333,6 +397,9 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
                 }
                 // then deal with static principals
                 for (String principal : getPrincipals(authorizable) ) {
+                    if ( principal.startsWith("_") ) {
+                        throw new StorageClientException("Princials may not start with _ ");
+                    }
                     int tg = toInt(acl.get(principal
                             + AclModification.GRANTED_MARKER));
                     int td = toInt(acl
@@ -628,6 +695,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
     public void setAuthorizableManager(AuthorizableManager authorizableManager) {
         this.authorizableManager = authorizableManager;
     }
+
     
 
 

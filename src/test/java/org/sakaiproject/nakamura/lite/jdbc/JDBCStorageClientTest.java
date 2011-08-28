@@ -22,11 +22,12 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.text.MessageFormat;
+import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Assert;
 
@@ -41,12 +42,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClient;
 import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClientPool;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.text.MessageFormat;
-import java.util.Map;
-import java.util.Set;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 /**
  *

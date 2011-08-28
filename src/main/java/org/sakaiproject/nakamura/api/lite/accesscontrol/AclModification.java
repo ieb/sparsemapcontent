@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
+
 /**
  * Specification of a modification to be applied to an ACL.
  */
@@ -205,6 +207,10 @@ public class AclModification {
             }
         }
         return permissions.toArray(new Permission[permissions.size()]);
+    }
+
+    public static String getPropertyKey(String id, String propertyName) {
+        return AccessControlManager.PROPERTY_PRINCIPAL_STEM+id+"@"+propertyName;
     }
 
 }

@@ -24,6 +24,7 @@ import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.Configuration;
+import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.StoreListener;
@@ -76,8 +77,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
     private boolean closed;
     private Authenticator authenticator;
     private StoreListener storeListener;
+    private Session session;
 
-    public AuthorizableManagerImpl(User currentUser, StorageClient client,
+    public AuthorizableManagerImpl(User currentUser, Session session, StorageClient client,
             Configuration configuration, AccessControlManagerImpl accessControlManager,
             Map<String, CacheHolder> sharedCache, StoreListener storeListener) throws StorageClientException,
             AccessDeniedException {
@@ -87,6 +89,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             throw new RuntimeException("Current User ID shoud not be null");
         }
         this.thisUser = currentUser;
+        this.session = session;
         this.client = client;
         this.accessControlManager = accessControlManager;
         this.keySpace = configuration.getKeySpace();
@@ -118,9 +121,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             return null;
         }
         if (isAUser(authorizableMap)) {
-            return new UserInternal(authorizableMap, false);
+            return new UserInternal(authorizableMap, session, false);
         } else if (isAGroup(authorizableMap)) {
-            return new GroupInternal(authorizableMap, false);
+            return new GroupInternal(authorizableMap, session, false);
         }
         return null;
     }
@@ -291,6 +294,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
     public boolean createAuthorizable(String authorizableId, String authorizableName,
             String password, Map<String, Object> properties) throws AccessDeniedException,
             StorageClientException {
+        checkId(authorizableId);
         if (properties == null) {
           properties = Maps.newHashMap();
         }
@@ -328,6 +332,20 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 accessControlManager.getCurrentUserId());
         putCached(keySpace, authorizableColumnFamily, authorizableId, encodedProperties, true);
         return true;
+    }
+
+    private void checkId(String authorizableId) throws StorageClientException {
+        if ( authorizableId.charAt(0) == '_') {
+            throw new StorageClientException("Authorizables may not start with _  :"+authorizableId);
+        }
+        for ( int i = 0; i < authorizableId.length(); i++) {
+            int cp = authorizableId.codePointAt(i);
+            if ( Character.isWhitespace(cp) ||
+            Character.isISOControl(cp) ||
+            Character.isMirrored(cp) ) {
+                throw new StorageClientException("Authorizables may not contain :"+authorizableId.charAt(i));
+            }
+        }
     }
 
     public boolean createUser(String authorizableId, String authorizableName, String password,
@@ -445,10 +463,10 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                                     .check(Security.ZONE_AUTHORIZABLES, (String) authMap.get(Authorizable.ID_FIELD),
                                             Permissions.CAN_READ);
                             if (isAUser(authMap)) {
-                                authorizable = new UserInternal(authMap, false);
+                                authorizable = new UserInternal(authMap, session, false);
                                 return true;
                             } else if (isAGroup(authMap))
-                                authorizable = new GroupInternal(authMap, false);
+                                authorizable = new GroupInternal(authMap, session, false);
                             return true;
                         } catch (AccessDeniedException e) {
                             LOGGER.debug("Search result filtered ", e.getMessage());

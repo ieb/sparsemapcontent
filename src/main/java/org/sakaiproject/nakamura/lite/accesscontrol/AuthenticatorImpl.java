@@ -20,6 +20,7 @@ package org.sakaiproject.nakamura.lite.accesscontrol;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Authenticator;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.authorizable.UserInternal;
@@ -55,11 +56,13 @@ public class AuthenticatorImpl implements Authenticator {
             String storedPassword = (String) userAuthMap
                     .get(User.PASSWORD_FIELD);
             if (passwordHash.equals(storedPassword)) {
-                return new UserInternal(userAuthMap, false);
+                return new UserInternal(userAuthMap, null, false);
             }
             LOGGER.debug("Failed to authentication, passwords did not match");
         } catch (StorageClientException e) {
             LOGGER.debug("Failed To authenticate " + e.getMessage(), e);
+        } catch (AccessDeniedException e) {
+            LOGGER.debug("Failed To system authenticate user " + e.getMessage(), e);
         }
         return null;
 
@@ -73,8 +76,10 @@ public class AuthenticatorImpl implements Authenticator {
                 LOGGER.debug("User was not found {}", userid);
                 return null;
             }
-            return new UserInternal(userAuthMap, false);
+            return new UserInternal(userAuthMap, null, false);
         } catch (StorageClientException e) {
+            LOGGER.debug("Failed To system authenticate user " + e.getMessage(), e);
+        } catch (AccessDeniedException e) {
             LOGGER.debug("Failed To system authenticate user " + e.getMessage(), e);
         }
         return null;

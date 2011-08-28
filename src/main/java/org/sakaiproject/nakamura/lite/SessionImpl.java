@@ -54,7 +54,7 @@ public class SessionImpl implements Session {
         this.client = client;
         accessControlManager = new AccessControlManagerImpl(client, currentUser, configuration,
                 storageCacheManager.getAccessControlCache(), storeListener, principalValidatorResolver);
-        authorizableManager = new AuthorizableManagerImpl(currentUser, client, configuration,
+        authorizableManager = new AuthorizableManagerImpl(currentUser, this, client, configuration,
                 accessControlManager, storageCacheManager.getAuthorizableCache(), storeListener);
 
         contentManager = new ContentManagerImpl(client, accessControlManager, configuration, storageCacheManager.getContentCache(), storeListener);

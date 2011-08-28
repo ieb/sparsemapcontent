@@ -9,6 +9,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.Permission;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalTokenResolver;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.content.Content;
+import org.sakaiproject.nakamura.lite.accesscontrol.PropertyAcl;
 
 import java.util.Map;
 
@@ -109,6 +110,16 @@ public class AccessControlManagerTokenWrapper implements AccessControlManager {
         try {
             delegate.setRequestPrincipalResolver(principalTokenResovler);
             delegate.signContentToken(token, objectPath);
+        } finally {
+            delegate.clearRequestPrincipalResolver();
+        }
+    }
+
+    public PropertyAcl getPropertyAcl(String objectType, String objectPath)
+            throws AccessDeniedException, StorageClientException {
+        try {
+            delegate.setRequestPrincipalResolver(principalTokenResovler);
+            return delegate.getPropertyAcl(objectType, objectPath);
         } finally {
             delegate.clearRequestPrincipalResolver();
         }

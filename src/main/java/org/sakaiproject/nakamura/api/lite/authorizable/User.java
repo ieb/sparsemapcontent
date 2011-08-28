@@ -20,6 +20,9 @@ package org.sakaiproject.nakamura.api.lite.authorizable;
 import com.google.common.collect.ImmutableSet;
 
 import org.apache.commons.lang.StringUtils;
+import org.sakaiproject.nakamura.api.lite.Session;
+import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 
 import java.security.Principal;
 import java.util.Map;
@@ -46,8 +49,12 @@ public class User extends Authorizable {
     public static final String SYSTEM_USER = "system";
     public static final String IMPERSONATORS_FIELD = "impersonators";
 
-    public User(Map<String, Object> userMap) {
-        super(userMap);
+    public User(Map<String, Object> userMap) throws StorageClientException, AccessDeniedException {
+        this(userMap, null);
+    }
+
+    public User(Map<String, Object> userMap, Session session) throws StorageClientException, AccessDeniedException {
+        super(userMap, session);
     }
 
     /**

@@ -17,27 +17,30 @@
  */
 package org.sakaiproject.nakamura.api.lite.authorizable;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-
-import org.apache.commons.lang.StringUtils;
-import org.sakaiproject.nakamura.api.lite.RemoveProperty;
-import org.sakaiproject.nakamura.api.lite.StorageClientException;
-import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
-import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
-import org.sakaiproject.nakamura.api.lite.util.Iterables;
-import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.lang.StringUtils;
+import org.sakaiproject.nakamura.api.lite.RemoveProperty;
+import org.sakaiproject.nakamura.api.lite.Session;
+import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessControlManager;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
+import org.sakaiproject.nakamura.api.lite.util.Iterables;
+import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
+import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlledMap;
+import org.sakaiproject.nakamura.lite.accesscontrol.PropertyAcl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 
 /**
  * Base Authorizable object.
@@ -125,7 +128,7 @@ public class Authorizable {
     /**
      * A read only copy of the map, protected by an Immutable Wrapper
      */
-    protected ImmutableMap<String, Object> authorizableMap;
+    protected Map<String, Object> authorizableMap;
     /**
      * A set of principals that this Authorizable has.
      */
@@ -157,14 +160,32 @@ public class Authorizable {
 
     private boolean immutable;
 
-    public Authorizable(Map<String, Object> autorizableMap) {
+    /**
+     * The Acl at load time for properties on this authorizable.
+     */
+    private PropertyAcl propertyAcl;
+
+    public Authorizable(Map<String, Object> autorizableMap) throws StorageClientException, AccessDeniedException {
+        this(autorizableMap, null);
+    }
+    public Authorizable(Map<String, Object> authorizableMap, Session session) throws StorageClientException, AccessDeniedException {
         principalsModified = false;
-        modifiedMap = Maps.newHashMap();
-        init(autorizableMap);
+        this.id = (String) authorizableMap.get(ID_FIELD);
+        if (id == null || id.charAt(0) == '_') {
+            LOGGER.warn("Authorizables cant be null or start with _ this {} will cause problems ", id);
+        }
+        if ( session != null ) {
+            AccessControlManager accessControlManager = session.getAccessControlManager();
+            propertyAcl = accessControlManager.getPropertyAcl(Security.ZONE_AUTHORIZABLES, id );
+        } else {
+            propertyAcl = new PropertyAcl();
+        }
+        modifiedMap = new AccessControlledMap<String, Object>(propertyAcl);
+        init(authorizableMap, propertyAcl);
     }
 
-    private void init(Map<String, Object> newMap) {
-        this.authorizableMap = ImmutableMap.copyOf(newMap);
+    private void init(Map<String, Object> newMap, PropertyAcl propertyAcl) {
+        this.authorizableMap = StorageClientUtils.getFilterMap(newMap, null, null, propertyAcl.readDeniedSet(), false);
         Object principalsB = authorizableMap.get(PRINCIPALS_FIELD);
         if (principalsB == null) {
             this.principals = Sets.newLinkedHashSet();
@@ -172,7 +193,6 @@ public class Authorizable {
             this.principals = Sets.newLinkedHashSet(Iterables.of(StringUtils.split(
                     (String) principalsB, ';')));
         }
-        this.id = (String) authorizableMap.get(ID_FIELD);
         if (!User.ANON_USER.equals(this.id)) {
             this.principals.add(Group.EVERYONE);
         }
@@ -186,7 +206,7 @@ public class Authorizable {
         if (!readOnly) {
             principalsModified = false;
             modifiedMap.clear();
-            init(newMap);
+            init(newMap, propertyAcl);
 
             LOGGER.debug("After Update to Authorizable {} ", authorizableMap);
         }
