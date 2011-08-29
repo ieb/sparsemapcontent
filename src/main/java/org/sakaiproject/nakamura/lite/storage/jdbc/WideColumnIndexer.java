@@ -78,20 +78,21 @@ public class WideColumnIndexer extends AbstractIndexer {
                 Object[] valueMembers = (o instanceof Object[]) ? (Object[]) o : new Object[] { o };
                 if (shouldIndex(keySpace, columnFamily, k)) {
                     if (isColumnArray(keySpace, columnFamily, k)) {
-                        if (o instanceof RemoveProperty || o == null) {
+                        if (o instanceof RemoveProperty || o == null || valueMembers.length == 0) {
                             removeArrayColumns.add(k);
                         } else {
                             removeArrayColumns.add(k);
                             updateArrayColumns.put(k, valueMembers);
                         }
                     } else {
-                        if (o instanceof RemoveProperty || o == null) {
+                        if (o instanceof RemoveProperty || o == null || valueMembers.length == 0) {
                             removeColumns.add(k);
                         } else {
                             updateColumns.put(k, valueMembers[0]);
                         }
 
                     }
+                }
                 }
             }
             
