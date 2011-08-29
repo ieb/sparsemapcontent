@@ -93,7 +93,6 @@ public class WideColumnIndexer extends AbstractIndexer {
 
                     }
                 }
-                }
             }
             
             if (!StorageClientUtils.isRoot(key)) {
