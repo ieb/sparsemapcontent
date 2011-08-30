@@ -707,29 +707,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
         final InputStream in = streamedContentHelper.readBody(keySpace, columnFamily,
                 contentBlockId, streamId, content);
         if ( in != null ) {
-            registerDisposable(new Disposable() {
-    
-                private boolean open = true;
-                private Disposer disposer = null;
-    
-                public void close() {
-                    if (open && in != null) {
-                        try {
-                            in.close();
-                        } catch (IOException e) {
-                            LOGGER.warn(e.getMessage(), e);
-                        }
-                        if ( disposer != null ) {
-                            disposer.unregisterDisposable(this);
-                        }
-                        open = false;
-                        
-                    } 
-                }
-                public void setDisposer(Disposer disposer) {
-                    this.disposer = disposer;
-                }
-            });
+            registerDisposable(new StreamDisposable(in));
         }
         return in;
     }
@@ -1023,7 +1001,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             // sync done, now create a quick lookup table to extract the storage column for any column name, 
             Builder<String, String> b = ImmutableMap.builder();
             for (Entry<String,String> e : cnames.entrySet()) {
-                b.put(e.getKey(), e.getValue().toString());
+                b.put(e.getKey(), e.getValue());
                 LOGGER.info("Column Config {} maps to {} ",e.getKey(), e.getValue());
             }
             
