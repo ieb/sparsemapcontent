@@ -185,6 +185,9 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         check(objectType, objectPath, Permissions.CAN_READ_ACL);
         String key = this.getAclKey(objectType, objectPath);
         Map<String, Object> currentAcl = getCached(keySpace, aclColumnFamily, key);
+        if ( currentAcl == null ) {
+            currentAcl = Maps.newHashMap();
+        }
         // every ACL gets a secret key, which avoids doing it later with a special call
         Map<String, Object> modifications = Maps.newLinkedHashMap();
         if ( !currentAcl.containsKey(_SECRET_KEY)) {

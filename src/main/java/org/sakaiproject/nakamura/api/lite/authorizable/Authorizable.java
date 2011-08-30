@@ -174,7 +174,7 @@ public class Authorizable {
         if (id == null || id.charAt(0) == '_') {
             LOGGER.warn("Authorizables cant be null or start with _ this {} will cause problems ", id);
         }
-        if ( session != null ) {
+        if ( session != null && !User.ADMIN_USER.equals(session.getUserId()) ) {
             AccessControlManager accessControlManager = session.getAccessControlManager();
             propertyAcl = accessControlManager.getPropertyAcl(Security.ZONE_AUTHORIZABLES, id );
         } else {

@@ -593,30 +593,28 @@ public abstract class AbstractAccessControlManagerImplTest {
 
         // Start a new session.
         adminSession.logout();
-        adminSession = null;
-        adminSession = repository.loginAdministrative();
-        adminAuthorizableManager = adminSession.getAuthorizableManager();
-        adminContentManager = adminSession.getContentManager();
-        adminAccessControlManager = adminSession.getAccessControlManager();
+        Session adminSession2 = repository.loginAdministrative();
+        AuthorizableManager adminAuthorizableManager2 = adminSession2.getAuthorizableManager();
+        AccessControlManager adminAccessControlManager2 = adminSession2.getAccessControlManager();
 
         // make sure suzy can read
-        Authorizable suzy = adminAuthorizableManager.findAuthorizable("suzy");
-        Assert.assertTrue(adminAccessControlManager.can(suzy, Security.ZONE_AUTHORIZABLES, "inner",
+        Authorizable suzy = adminAuthorizableManager2.findAuthorizable("suzy");
+        Assert.assertTrue(adminAccessControlManager2.can(suzy, Security.ZONE_AUTHORIZABLES, "inner",
                 Permissions.CAN_READ));
-        Assert.assertTrue(adminAccessControlManager.can(suzy, Security.ZONE_AUTHORIZABLES,
+        Assert.assertTrue(adminAccessControlManager2.can(suzy, Security.ZONE_AUTHORIZABLES,
                 "wrapper", Permissions.CAN_READ));
-        Assert.assertFalse(adminAccessControlManager.can(suzy, Security.ZONE_AUTHORIZABLES,
+        Assert.assertFalse(adminAccessControlManager2.can(suzy, Security.ZONE_AUTHORIZABLES,
                 "wrapper", Permissions.CAN_WRITE));
-        Assert.assertFalse(adminAccessControlManager.can(suzy, Security.ZONE_CONTENT, "a:wrapper",
+        Assert.assertFalse(adminAccessControlManager2.can(suzy, Security.ZONE_CONTENT, "a:wrapper",
                 Permissions.CAN_WRITE));
-        Assert.assertTrue(adminAccessControlManager.can(suzy, Security.ZONE_CONTENT, "a:wrapper",
+        Assert.assertTrue(adminAccessControlManager2.can(suzy, Security.ZONE_CONTENT, "a:wrapper",
                 Permissions.CAN_READ));
 
         // Make sure zach cannot
-        Authorizable zach = adminAuthorizableManager.findAuthorizable("zach");
-        Assert.assertFalse(adminAccessControlManager.can(zach, Security.ZONE_AUTHORIZABLES,
+        Authorizable zach = adminAuthorizableManager2.findAuthorizable("zach");
+        Assert.assertFalse(adminAccessControlManager2.can(zach, Security.ZONE_AUTHORIZABLES,
                 "wrapper", Permissions.CAN_READ));
-        Assert.assertFalse(adminAccessControlManager.can(zach, Security.ZONE_CONTENT, "a:wrapper",
+        Assert.assertFalse(adminAccessControlManager2.can(zach, Security.ZONE_CONTENT, "a:wrapper",
                 Permissions.CAN_READ));
 
         final Session normalSession = repository.loginAdministrative("suzy");

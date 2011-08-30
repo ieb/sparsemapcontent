@@ -86,6 +86,8 @@ public abstract class KeyValueIndexer extends AbstractIndexer {
           if (properties.containsKey(StorageConstants.ITEMS)) {
             items = Long.valueOf(String.valueOf(properties.get(StorageConstants.ITEMS)));
           }
+        } else {
+            properties = ImmutableMap.of();
         }
         long offset = page * items;
 

@@ -217,7 +217,7 @@ public class CassandraClient extends Client implements StorageClient {
                     }
                     catch(IOException e)
                     {
-                         LOGGER.debug("IOException. Stack trace:"+e.getStackTrace());
+                         LOGGER.debug("IOException. Stack trace:",e);
                     }  
                 }
             }
@@ -237,9 +237,8 @@ public class CassandraClient extends Client implements StorageClient {
     public void remove(String keySpace, String columnFamily, String key)
             throws StorageClientException {
       if(!columnFamily.equals(INDEX_COLUMN_FAMILY)){
-        Map<String, Object> row = new HashMap<String, Object>();
-        Map<String, Object> indexRow = new HashMap<String, Object>();
-        row=get(keySpace, columnFamily, key);
+        Map<String, Object> indexRow = null;
+        Map<String, Object> row = get(keySpace, columnFamily, key);
         
         for (Entry<String, Object> value : row.entrySet()) {
           try {
@@ -253,7 +252,7 @@ public class CassandraClient extends Client implements StorageClient {
             remove(keySpace,INDEX_COLUMN_FAMILY,indexKey);
             insert(keySpace,INDEX_COLUMN_FAMILY,indexKey,indexRow,true);
           }  catch (IOException e) {
-            LOGGER.debug("IOException. Stack trace:"+e.getStackTrace());
+            LOGGER.debug("IOException. ",e);
           }
         }
       }
@@ -293,8 +292,6 @@ public class CassandraClient extends Client implements StorageClient {
     final String fKeyspace = keySpace;
     final String fAuthorizableColumnFamily = authorizableColumnFamily;
     List<Set<String>> andTerms = new ArrayList<Set<String>>();
-    Map<String, Object> tempRow = new HashMap<String, Object>();
-    String indexKey = new String();
 
     for (Entry<String, Object> e : properties.entrySet()) {
       String k = e.getKey();
@@ -311,26 +308,26 @@ public class CassandraClient extends Client implements StorageClient {
 
             for (Iterator<Entry<String, Object>> subtermsIter = subterms.iterator(); subtermsIter
                 .hasNext();) {
-              Set<String> or = new HashSet<String>();
               Entry<String, Object> subterm = subtermsIter.next();
               String subk = subterm.getKey();
               Object subv = subterm.getValue();
               if (shouldIndex(keySpace, authorizableColumnFamily, subk)) {
                 try {
-                  indexKey = new String(subk.getBytes("UTF-8"))
+                  Set<String> or = new HashSet<String>();
+                  String indexKey = new String(subk.getBytes("UTF-8"))
                       + ":"
                       + authorizableColumnFamily
                       + ":"
                       + StorageClientUtils.insecureHash(new String(Types
                           .toByteArray(subv)));
+                  Map<String, Object> tempRow = get(keySpace, INDEX_COLUMN_FAMILY, indexKey);
+                  for (Entry<String, Object> tempRows : tempRow.entrySet()) {
+                    or.add(tempRows.getKey());
+                  }
+                  orTerms.add(or);
                 } catch (IOException e1) {
                   LOGGER.warn("IOException {}", e1.getMessage());
                 }
-                tempRow = get(keySpace, INDEX_COLUMN_FAMILY, indexKey);
-                for (Entry<String, Object> tempRows : tempRow.entrySet()) {
-                  or.add(tempRows.getKey());
-                }
-                orTerms.add(or);
               }
             }
 
@@ -343,19 +340,19 @@ public class CassandraClient extends Client implements StorageClient {
             }
             andTerms.add(orResultSet);
           } else {
-            Set<String> and = new HashSet<String>();
             try {
-              indexKey = new String(k.getBytes("UTF-8")) + ":" + authorizableColumnFamily
+              Set<String> and = new HashSet<String>();
+              String indexKey = new String(k.getBytes("UTF-8")) + ":" + authorizableColumnFamily
                   + ":"
                   + StorageClientUtils.insecureHash(new String(Types.toByteArray(v)));
+              Map<String, Object> tempRow = get(keySpace, INDEX_COLUMN_FAMILY, indexKey);
+              for (Entry<String, Object> tempRows : tempRow.entrySet()) {
+                and.add(tempRows.getKey());
+              }
+              andTerms.add(and);
             } catch (IOException e1) {
               LOGGER.warn("IOException {}", e1.getMessage());
             }
-            tempRow = get(keySpace, INDEX_COLUMN_FAMILY, indexKey);
-            for (Entry<String, Object> tempRows : tempRow.entrySet()) {
-              and.add(tempRows.getKey());
-            }
-            andTerms.add(and);
           }
         }
       }
@@ -458,7 +455,7 @@ public class CassandraClient extends Client implements StorageClient {
             throws StorageClientException {
         String indexKey = new String(bname) + ":" + columnFamily + ":" + StorageClientUtils.insecureHash(b);
         Map<String, Object> values = new HashMap<String, Object>();
-        values.put(key, (Object) (new String("Whatever value of index")));
+        values.put(key, (Object) "Whatever value of index");
         insert(keySpace, INDEX_COLUMN_FAMILY, indexKey, values, true);
 }
 

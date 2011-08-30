@@ -29,9 +29,8 @@ public class TestTypes {
     public void testTypes() {
         Map<Integer, Type<?>> typeById = Types.getTypeByIdMap();
         Assert.assertNotNull(typeById);
-        @SuppressWarnings("unused")
         Map<Class<?>, Type<?>> typeByClass = Types.getTypeMap();
-        Assert.assertNotNull(typeById);  
+        Assert.assertNotNull(typeByClass);  
     }
     
     @Test

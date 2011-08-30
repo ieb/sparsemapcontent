@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
 
 /**
  * Specification of a modification to be applied to an ACL.

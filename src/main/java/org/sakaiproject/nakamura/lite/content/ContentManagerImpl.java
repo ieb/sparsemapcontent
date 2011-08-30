@@ -268,7 +268,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                 if  (content == null) {
                     // this is over the top as a disposable iterator should close auto
                     childContent.close();
-                    close();
+                    super.close();
                     return false;
                 }
                 return true;
@@ -312,7 +312,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                 }
                 LOGGER.debug("No more");
                 childPath = null;
-                close();
+                super.close();
                 return false;
             }
 

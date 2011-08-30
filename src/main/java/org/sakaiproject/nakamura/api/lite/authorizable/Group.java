@@ -164,5 +164,15 @@ public class Group extends Authorizable {
             membersModified = false;
         }
     }
+    
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj); // Group and User shared the same key space.
+    }
+    
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
 
 }

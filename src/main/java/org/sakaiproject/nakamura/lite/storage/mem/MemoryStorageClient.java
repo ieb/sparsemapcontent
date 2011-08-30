@@ -262,7 +262,7 @@ public class MemoryStorageClient implements StorageClient {
                    }
                 }
                 nextMap = null;
-                close();
+                super.close();
                 return false;
             }
 
@@ -308,7 +308,7 @@ public class MemoryStorageClient implements StorageClient {
                    }
                 }
                 nextRow = null;
-                close();
+                super.close();
                 return false;
             }
 

@@ -490,7 +490,7 @@ public class StorageClientUtils {
             } else if ( defaultValue instanceof Integer ) {
                 return (T) new Integer(String.valueOf(setting));
             } else if (defaultValue instanceof Boolean ) {
-                return (T) new Boolean(String.valueOf(setting));
+                return (T) Boolean.valueOf(String.valueOf(setting));
             } else if ( defaultValue instanceof Double ) {
                 return (T) new Double(String.valueOf(setting));
             } else if ( defaultValue instanceof String[] ) {

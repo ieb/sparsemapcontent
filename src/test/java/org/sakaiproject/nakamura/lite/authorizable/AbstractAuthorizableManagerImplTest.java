@@ -533,6 +533,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
                 "password",
                 ImmutableMap.of("publicproperty", (Object) "publicvalue", "privateproperty",
                         "privatevalue", "protectedproperty", "protectedvalue"));
+   
         adminSession.getAuthorizableManager().createUser(
                 "testAuthorizablePermissions.user2",
                 "User2-testAuthorizablePermissions",
@@ -541,7 +542,17 @@ public abstract class AbstractAuthorizableManagerImplTest {
                         "privatevalue", "protectedproperty", "protectedvalue"));
         User user1 = (User) adminSession.getAuthorizableManager().findAuthorizable("testAuthorizablePermissions.user1");
         User user2 = (User) adminSession.getAuthorizableManager().findAuthorizable("testAuthorizablePermissions.user2");
-
+        user1.setProperty("publicproperty", "publicvalue");
+        user1.setProperty("privateproperty", "privatevalue");
+        user1.setProperty("protectedproperty", "protectedvalue");
+        adminSession.getAuthorizableManager().updateAuthorizable(user1);
+        user2.setProperty("publicproperty", "publicvalue");
+        user2.setProperty("privateproperty", "privatevalue");
+        user2.setProperty("protectedproperty", "protectedvalue");
+        adminSession.getAuthorizableManager().updateAuthorizable(user2);
+        user1 = (User) adminSession.getAuthorizableManager().findAuthorizable("testAuthorizablePermissions.user1");
+        user2 = (User) adminSession.getAuthorizableManager().findAuthorizable("testAuthorizablePermissions.user2");
+        
         List<AclModification> modifications = Lists.newArrayList();
         // grant user 1 read and write
         AclModification.addAcl(true, Permissions.CAN_ANYTHING_PROPERTY,

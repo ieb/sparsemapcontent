@@ -64,7 +64,7 @@ public class LongString {
         if ( obj instanceof LongString ) {
             return location.equals(((LongString) obj).location);
         }
-        return location.equals(obj);
+        return false;
     }
     
     @Override

@@ -125,6 +125,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     private Indexer indexer;
     private long slowQueryThreshold;
     private long verySlowQueryThreshold;
+    private Object desponseLock = new Object();
 
     public JDBCStorageClient(JDBCStorageClientPool jdbcStorageClientConnectionPool,
             Map<String, Object> properties, Map<String, Object> sqlConfig, Set<String> indexColumns, Set<String> indexColumnTypes, Map<String, String> indexColumnsNames) throws SQLException,
@@ -538,7 +539,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
         passivate = new Exception("Passivate Traceback");
         List<Disposable> dList = null;
         // this shoud not be necessary, but just in case.
-        synchronized (toDispose) {
+        synchronized (desponseLock ) {
             dList = toDispose;
             toDispose = Lists.newArrayList();            
         }
@@ -549,14 +550,14 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     }
     
     public void unregisterDisposable(Disposable disposable) {
-        synchronized (toDispose) {
+        synchronized (desponseLock) {
             toDispose.remove(disposable);
         }
     }
 
     <T extends Disposable> T registerDisposable(T disposable) {
         // this should not be necessary, but just in case some one is sharing the client between threads.
-        synchronized (toDispose) {
+        synchronized (desponseLock) {
             toDispose.add(disposable);
             disposable.setDisposer(this);
         }
@@ -1047,6 +1048,13 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             if ( insertColumnsPst != null ) {
                 try {
                     insertColumnsPst.close();
+                } catch ( SQLException e ) {
+                    LOGGER.debug(e.getMessage(),e);
+                }
+            }
+            if ( statement != null ) {
+                try {
+                    statement.close();
                 } catch ( SQLException e ) {
                     LOGGER.debug(e.getMessage(),e);
                 }
