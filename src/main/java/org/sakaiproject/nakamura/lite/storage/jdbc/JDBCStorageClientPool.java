@@ -177,11 +177,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
             LOGGER.info("Loaded Driver Class {} with classloader {} ", driverClass, driverClass.getClassLoader());
             try {
                 Driver d = (Driver) driverClass.newInstance();
-                if ( d == null ) {
-                    LOGGER.error("Error creating driver instance, got null from {} ",driverClass);
-                } else {
-                    LOGGER.info("Created Driver Instance as {} ", d);
-                }
+                LOGGER.info("Created Driver Instance as {} ", d);
             } catch (InstantiationException e) {
                 LOGGER.info("Error Creating Driver {} ", driverClass, e);
             } catch (IllegalAccessException e) {
