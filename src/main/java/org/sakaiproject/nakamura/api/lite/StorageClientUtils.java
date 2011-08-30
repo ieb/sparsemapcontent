@@ -61,12 +61,7 @@ public class StorageClientUtils {
      * Default hashing algorithm for passwords
      */
     public final static String SECURE_HASH_DIGEST = "SHA-512";
-    /**
-     * Charset for encoding byte data as char
-     * @deprecated not of any use for encoding, use encode(byte[])
-     */
-    public static final char[] URL_SAFE_ENCODING = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-            .toCharArray();
+    
     /**
      * Based on JackRabbit: Jackrabbit uses a subset of 8601 (8601:2000) for
      * their date times.
