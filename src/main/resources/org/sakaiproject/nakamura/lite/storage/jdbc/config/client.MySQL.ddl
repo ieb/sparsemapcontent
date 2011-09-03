@@ -17,7 +17,7 @@ CREATE TABLE  `css` (
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
   PRIMARY KEY  (`id`),
-  KEY `rowkey` USING HASH (`rid`,`cid`),
+  KEY `rowkey`  (`rid`,`cid`),
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -31,7 +31,7 @@ CREATE TABLE  `au_css` (
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
   PRIMARY KEY  (`id`),
-  KEY `rowkey` USING HASH (`rid`,`cid`),
+  KEY `rowkey`  (`rid`,`cid`),
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -44,7 +44,7 @@ CREATE TABLE  `cn_css` (
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
   PRIMARY KEY  (`id`),
-  KEY `rowkey` USING HASH (`rid`,`cid`),
+  KEY `rowkey`  (`rid`,`cid`),
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -58,7 +58,7 @@ CREATE TABLE  `ac_css` (
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
   PRIMARY KEY  (`id`),
-  KEY `rowkey` USING HASH (`rid`,`cid`),
+  KEY `rowkey`  (`rid`,`cid`),
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -71,28 +71,28 @@ CREATE TABLE  `ac_css` (
 CREATE TABLE  `css_b` (
   `rid` varchar(32) NOT NULL,
   `b` blob,
-  primary key USING HASH (`rid`)
+  primary key (`rid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 # Central Store for Object bodies, serialized content maps rather than columns
 CREATE TABLE  `cn_css_b` (
   `rid` varchar(32) NOT NULL,
   `b` blob,
-  primary key USING HASH (`rid`)
+  primary key  (`rid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 # Central Store for Object bodies, serialized content maps rather than columns
 CREATE TABLE  `au_css_b` (
   `rid` varchar(32) NOT NULL,
   `b` blob,
-  primary key USING HASH (`rid`)
+  primary key  (`rid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 # Central Store for Object bodies, serialized content maps rather than columns
 CREATE TABLE  `ac_css_b` (
   `rid` varchar(32) NOT NULL,
   `b` blob,
-  primary key USING HASH (`rid`)
+  primary key  (`rid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 

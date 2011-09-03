@@ -286,7 +286,9 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
                 }
                 int rowsInserted = 0;
                 try {
+                    long t1 = System.currentTimeMillis();
                     rowsInserted = insertBlockRow.executeUpdate();
+                    checkSlow(t1, getSql(keySpace, columnFamily,SQL_BLOCK_INSERT_ROW));
                 } catch ( SQLException e ) {
                     LOGGER.debug(e.getMessage(),e);
                 }
@@ -306,7 +308,10 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
                     } else {
                       updateBlockRow.setBinaryStream(1, insertStream);
                     }
-                    if( updateBlockRow.executeUpdate() == 0) {
+                    long t = System.currentTimeMillis();
+                    int u = updateBlockRow.executeUpdate();
+                    checkSlow(t, getSql(keySpace, columnFamily, SQL_BLOCK_UPDATE_ROW));
+                    if( u == 0) {
                         throw new StorageClientException("Failed to save " + rid);
                     } else {
                         LOGGER.debug("Updated {} ", rid);
@@ -331,23 +336,30 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
                 } else {
                   updateBlockRow.setBinaryStream(1, updateStream);
                 }
-                if (updateBlockRow.executeUpdate() == 0) {
+                long t = System.currentTimeMillis();
+                int u = updateBlockRow.executeUpdate();
+                checkSlow(t, getSql(keySpace, columnFamily, SQL_BLOCK_UPDATE_ROW));
+                if (u == 0) {
                     PreparedStatement insertBlockRow = getStatement(keySpace, columnFamily,
                             SQL_BLOCK_INSERT_ROW, rid, statementCache);
                     insertBlockRow.clearWarnings();
                     insertBlockRow.clearParameters();
                     insertBlockRow.setString(1, rid);
-                  try {
-                    updateStream = Types.storeMapToStream(rid, m, columnFamily);
-                  } catch (UTFDataFormatException e) {
-                    throw new DataFormatException(INVALID_DATA_ERROR, e);
-                  }
-                  if ("1.5".equals(getSql(JDBC_SUPPORT_LEVEL))) {
-                      insertBlockRow.setBinaryStream(2, updateStream, updateStream.available());
-                    } else {
-                      insertBlockRow.setBinaryStream(2, updateStream);
+                    try {
+                      updateStream = Types.storeMapToStream(rid, m, columnFamily);
+                    } catch (UTFDataFormatException e) {
+                      throw new DataFormatException(INVALID_DATA_ERROR, e);
                     }
-                    if (insertBlockRow.executeUpdate() == 0) {
+                    if ("1.5".equals(getSql(JDBC_SUPPORT_LEVEL))) {
+                       insertBlockRow.setBinaryStream(2, updateStream, updateStream.available());
+                    } else {
+                       insertBlockRow.setBinaryStream(2, updateStream);
+                    }
+                    t = System.currentTimeMillis();
+                    u = insertBlockRow.executeUpdate();
+                    checkSlow(t, getSql(keySpace, columnFamily, SQL_BLOCK_INSERT_ROW));
+                  
+                    if (u == 0) {
                         throw new StorageClientException("Failed to save " + rid);
                     } else {
                         LOGGER.debug("Inserted {} ", rid);
@@ -374,6 +386,13 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
         } finally {
             close(statementCache);
         }
+    }
+
+    private void checkSlow(long t, String sql) {
+        t = System.currentTimeMillis() - t;
+        if ( t > 10 ) {
+            SQL_LOGGER.info("Slow Query {} {} ",t, sql);
+        }        
     }
 
     String getSql(String keySpace, String columnFamily, String name) {

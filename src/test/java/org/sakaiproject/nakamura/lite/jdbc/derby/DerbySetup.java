@@ -18,6 +18,7 @@
 package org.sakaiproject.nakamura.lite.jdbc.derby;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClientPool;
@@ -26,23 +27,32 @@ public class DerbySetup {
 
     private static JDBCStorageClientPool clientPool = null;
 
-    private synchronized static JDBCStorageClientPool createClientPool(Configuration configuration) {
+    private synchronized static JDBCStorageClientPool createClientPool(Configuration configuration, String location) {
         try {
             JDBCStorageClientPool connectionPool = new JDBCStorageClientPool();
-            connectionPool.activate(ImmutableMap.of(JDBCStorageClientPool.CONNECTION_URL,
-                    (Object) "jdbc:derby:memory:MyDB;create=true",
-                    JDBCStorageClientPool.JDBC_DRIVER, "org.apache.derby.jdbc.EmbeddedDriver",
-                    "store-base-dir", "target/store",
-                    Configuration.class.getName(), configuration));
+            Builder<String, Object> configBuilder = ImmutableMap.builder();
+            if ( location == null ) {
+                location = "jdbc:derby:memory:MyDB;create=true";
+            }
+            configBuilder.put(JDBCStorageClientPool.CONNECTION_URL,
+            location);
+            configBuilder.put(JDBCStorageClientPool.JDBC_DRIVER, "org.apache.derby.jdbc.EmbeddedDriver");
+            configBuilder.put("store-base-dir", "target/store");
+            configBuilder.put(Configuration.class.getName(), configuration);
+            connectionPool.activate(configBuilder.build());
             return connectionPool;
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
+    
+    public static JDBCStorageClientPool  getClientPool(Configuration configuration) {
+        return getClientPool(configuration, null);
+    }
 
-    public synchronized static JDBCStorageClientPool getClientPool(Configuration configuration) {
+    public synchronized static JDBCStorageClientPool getClientPool(Configuration configuration, String location) {
         if ( clientPool == null ) {
-            clientPool = createClientPool(configuration);
+            clientPool = createClientPool(configuration, location);
         }
         return clientPool;
     }

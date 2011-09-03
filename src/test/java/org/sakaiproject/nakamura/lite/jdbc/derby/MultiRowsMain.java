@@ -77,6 +77,7 @@ public class MultiRowsMain {
         PreparedStatement p = connection.prepareStatement(sb.toString());
         MessageDigest sha1 = MessageDigest.getInstance("SHA1");
         SecureRandom sr = new SecureRandom();
+        long cst = System.currentTimeMillis();
         long cs = System.currentTimeMillis();
         ResultSet rs = connection.createStatement().executeQuery("select count(*) from cn_css_index");
         rs.next();
@@ -101,6 +102,8 @@ public class MultiRowsMain {
                 connection.commit();
             }
         }
+        long ctt = System.currentTimeMillis();
+        System.err.println("Commit "+records+" "+(ctt-cst)+" ms average time per row to insert "+((double)records/((double)ctt-(double)cst)));
         p.close();   
     }
     private void close() throws SQLException {

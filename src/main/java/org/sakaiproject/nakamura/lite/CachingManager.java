@@ -81,7 +81,7 @@ public abstract class CachingManager {
             }
         }
         calls++;
-        if ((calls % 1000) == 0) {
+        if ((calls % 10000) == 0) {
             getLogger().info("Cache Stats Hits {} Misses {}  hit% {}", new Object[] { hit, miss,
                     ((100 * hit) / (hit + miss)) });
         }

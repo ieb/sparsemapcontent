@@ -32,35 +32,27 @@ CREATE TABLE cn_css (
 CREATE INDEX cn_css_i ON cn_css (rid, cid);
 
 CREATE TABLE css_w (
-  id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1),
   rid varchar(32) NOT NULL,
-  primary key(id));
-CREATE UNIQUE INDEX css_w_rid ON css (rid);
+  primary key(rid));
 
 
   
 CREATE TABLE ac_css_w (
-  id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1),
   rid varchar(32) NOT NULL,
-  primary key(id));
-CREATE UNIQUE INDEX ac_css_w_rid ON css (rid);
+  primary key(rid));
 
 
 
   
   
 CREATE TABLE au_css_w (
-  id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1),
   rid varchar(32) NOT NULL,
-  primary key(id));
-CREATE UNIQUE INDEX au_css_w_rid ON css (rid);
+  primary key(rid));
 
 
 CREATE TABLE cn_css_w (
-  id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1),
   rid varchar(32) NOT NULL,
-  primary key(id));
-CREATE UNIQUE INDEX cn_css_w_rid ON css (rid);
+  primary key(rid));
 
 
 CREATE TABLE  css_wr (

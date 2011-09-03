@@ -22,6 +22,10 @@
     <developerConnection>scm:git:git@github.com:ieb/sparsemapcontent.git</developerConnection>
     <url>http://github.com/ieb/sparsemapcontent/</url>
   </scm>
+  <prerequisites>
+    <maven>3.3.0</maven>
+  </prerequisites>
+
   <build>
     <plugins>
       <plugin>
