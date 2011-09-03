@@ -31,7 +31,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.jdbc.derby.DerbySetup;
 import org.sakaiproject.nakamura.lite.soak.AbstractSoakController;
-import org.sakaiproject.nakamura.lite.soak.authorizable.ContentCreateClient;
+import org.sakaiproject.nakamura.lite.soak.content.ContentCreateClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

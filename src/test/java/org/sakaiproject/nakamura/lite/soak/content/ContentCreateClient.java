@@ -1,5 +1,6 @@
-package org.sakaiproject.nakamura.lite.soak.authorizable;
+package org.sakaiproject.nakamura.lite.soak.content;
 
+import java.util.Iterator;
 import java.util.Map;
 
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
@@ -58,11 +59,13 @@ public class ContentCreateClient extends AbstractScalingClient {
                     accessControlManagerImpl, configuration, sharedCache,
                     new LoggingStorageListener(true));
 
-            String basePath = String.valueOf(System.currentTimeMillis()) + "/";
+            String basePath = String.valueOf(System.currentTimeMillis());
             long s = System.currentTimeMillis();
             long s100 = s;
+            Content baseContent = new Content(basePath, propertyMap);
+            contentManagerImpl.update(baseContent);
             for (int i = 0; i < totalContentItems; i++) {
-                Content content = new Content(basePath + i, propertyMap);
+                Content content = new Content(basePath + "/"  + i, propertyMap);
                 contentManagerImpl.update(content);
                 if (i > 0 && i % 1000 == 0) {
                     long tn = System.currentTimeMillis();
@@ -77,7 +80,7 @@ public class ContentCreateClient extends AbstractScalingClient {
             LOGGER.info("Created {} items in {}, each item {} ms ", new Object[] {
                     totalContentItems, t, ((double) t / (double) totalContentItems) });
             for (int i = 0; i < totalContentItems; i++) {
-                Content content = contentManagerImpl.get(basePath + i);
+                Content content = contentManagerImpl.get(basePath + "/" + i);
                 content.setProperty("sling:resourceType", "somethingelse");
                 contentManagerImpl.update(content);
                 if (i > 0 && i % 1000 == 0) {
@@ -92,7 +95,29 @@ public class ContentCreateClient extends AbstractScalingClient {
             t = System.currentTimeMillis() - s;
             LOGGER.info("Updated {} items in {}, each item {} ms ", new Object[] {
                     totalContentItems, t, ((double) t / (double) totalContentItems) });
-
+            
+            Content parent = contentManagerImpl.get(basePath);
+            s = System.currentTimeMillis();
+            Iterable<String> i = parent.listChildPaths();
+            t = System.currentTimeMillis();
+            LOGGER.info("Getting Child iterable took {} ms ", (t-s));
+            s = t;
+            Iterator<String> iterator = i.iterator();
+            t = System.currentTimeMillis();
+            LOGGER.info("Getting Child iterator took {} ms ", (t-s));
+            s = t;
+            int n = 0;
+            while(iterator.hasNext()) {
+                String p = iterator.next();
+                if ( n == 0 ) {
+                    t = System.currentTimeMillis();
+                    LOGGER.info("Getting First Child took {} ms ", (t-s));
+                    s = t;
+                }
+                n++;
+            }
+            t = System.currentTimeMillis();
+            LOGGER.info("Getting All Children took {} ms ", (t-s));
         } catch (StorageClientException e) {
             LOGGER.error(e.getMessage(), e);
         } catch (AccessDeniedException e) {

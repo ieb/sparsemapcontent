@@ -28,7 +28,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.jdbc.mysql.MysqlSetup;
 import org.sakaiproject.nakamura.lite.soak.AbstractSoakController;
-import org.sakaiproject.nakamura.lite.soak.authorizable.ContentCreateClient;
+import org.sakaiproject.nakamura.lite.soak.content.ContentCreateClient;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
 import com.google.common.collect.Maps;
