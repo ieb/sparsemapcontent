@@ -390,7 +390,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
 
     private void checkSlow(long t, String sql) {
         t = System.currentTimeMillis() - t;
-        if ( t > 10 ) {
+        if ( t > 100 ) {
             SQL_LOGGER.info("Slow Query {} {} ",t, sql);
         }        
     }
