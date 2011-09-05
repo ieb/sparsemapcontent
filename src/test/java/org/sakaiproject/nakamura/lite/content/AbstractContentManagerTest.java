@@ -17,9 +17,15 @@
  */
 package org.sakaiproject.nakamura.lite.content;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -46,15 +52,10 @@ import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 public abstract class AbstractContentManagerTest {
 
@@ -231,7 +232,7 @@ public abstract class AbstractContentManagerTest {
 
 
     }
-    
+
 
     @Test
     public void testCopySimple() throws StorageClientException, AccessDeniedException, IOException {
@@ -366,7 +367,7 @@ public abstract class AbstractContentManagerTest {
         Content content = contentManager.get(path);
         Assert.assertNotNull(content);
         Assert.assertEquals("value1", content.getProperty("prop1"));
-        
+
         contentManager.delete(path);
         Assert.assertNull(contentManager.get(path));
         content = contentManager.get(parentPath);
@@ -394,7 +395,7 @@ public abstract class AbstractContentManagerTest {
         Content content = contentManager.get(path);
         Assert.assertNotNull(content);
         Assert.assertEquals("value1", content.getProperty("prop1"));
-        
+
         contentManager.delete(path);
         Assert.assertNull(contentManager.get(path));
         content = contentManager.get(parentPath);
@@ -743,6 +744,40 @@ public abstract class AbstractContentManagerTest {
 
   }
 
+  @Test
+  public void testListChildren() throws StorageClientException, AccessDeniedException {
+	  AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+	    User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+	    AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+	        currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver);
+
+	    ContentManagerImpl contentManager = new ContentManagerImpl(client,
+	        accessControlManager, configuration, null, new LoggingStorageListener());
+
+	    Iterator<Content> children = contentManager.listChildren("/testListChildrenDoesNotExist");
+	    Assert.assertEquals(0, Iterators.size(children));
+
+	    StorageClientUtils.deleteTree(contentManager, "/testListChildren");
+	    contentManager.update(new Content("/testListChildren", ImmutableMap.of("prop1", (Object) "parent")));
+	    children = contentManager.listChildren("/testListChildren");
+	    Assert.assertEquals(0, Iterators.size(children));
+
+	    contentManager.update(new Content("/testListChildren/child1", ImmutableMap.of("someprop1", (Object) "value1")));
+	    contentManager.update(new Content("/testListChildren/child2", ImmutableMap.of("someprop1", (Object) "value2")));
+	    contentManager.update(new Content("/testListChildren/child3", ImmutableMap.of("someprop1",(Object) "value3")));
+	    contentManager.update(new Content("/youreNotMyDad/child4", ImmutableMap.of("someprop1",(Object) "value4")));
+
+	    children = contentManager.listChildren("/testListChildren");
+	    int childCount = 0;
+	    while (children.hasNext()){
+            // Make sure we're getting back the children we saved
+            Assert.assertNotNull(children.next().getProperty("someprop1"));
+            childCount++;
+	    }
+	    Assert.assertEquals(3, childCount);
+  }
+
   // @Test This Test runs forever and tests for OOM on disposables.
   public void testOOM() throws StorageClientException, AccessDeniedException {
       AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
@@ -766,8 +801,8 @@ public abstract class AbstractContentManagerTest {
         }
       }
   }
-  
-  
+
+
   @Test
   public void testTrigger() throws StorageClientException, AccessDeniedException {
     AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
