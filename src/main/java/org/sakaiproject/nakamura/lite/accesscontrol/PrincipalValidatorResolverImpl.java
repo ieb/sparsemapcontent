@@ -13,7 +13,7 @@ import java.util.Map;
 @Service(value=PrincipalValidatorResolver.class)
 public class PrincipalValidatorResolverImpl implements PrincipalValidatorResolver {
 
-    protected Map<String, PrincipalValidatorPlugin> pluginStore = Maps.newConcurrentHashMap();
+    protected Map<String, PrincipalValidatorPlugin> pluginStore = Maps.newConcurrentMap();
 
     public PrincipalValidatorPlugin getPluginByName(String key) {
         return pluginStore.get(key);

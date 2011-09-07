@@ -102,8 +102,8 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
         if ( configuration == null ) {
             configuration = (Configuration) properties.get(Configuration.class.getName());
         }
-        indexColumns = ImmutableSet.of(configuration.getIndexColumnNames());
-        indexColumnsTypes = ImmutableSet.of(configuration.getIndexColumnTypes());
+        indexColumns = ImmutableSet.copyOf(configuration.getIndexColumnNames());
+        indexColumnsTypes = ImmutableSet.copyOf(configuration.getIndexColumnTypes());
         int maxActive = StorageClientUtils.getSetting(properties.get(MAX_ACTIVE), 200);
         byte whenExhaustedAction = GenericObjectPool.DEFAULT_WHEN_EXHAUSTED_ACTION;
         String whenExhausted = (String) properties.get(WHEN_EHAUSTED);

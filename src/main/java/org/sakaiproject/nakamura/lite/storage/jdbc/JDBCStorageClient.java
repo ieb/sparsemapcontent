@@ -121,7 +121,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     private Exception closed;
     private Exception passivate;
     private String rowidHash;
-    private Map<String, AtomicInteger> counters = Maps.newConcurrentHashMap();
+    private Map<String, AtomicInteger> counters = Maps.newConcurrentMap();
     private Set<String> indexColumns;
     private Indexer indexer;
     private long slowQueryThreshold;

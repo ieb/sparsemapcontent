@@ -81,7 +81,7 @@ public class User extends Authorizable {
         if (impersonators == null) {
             return false;
         }
-        Set<String> impersonatorSet = ImmutableSet.of(StringUtils.split(impersonators, ';'));
+        Set<String> impersonatorSet = ImmutableSet.copyOf(StringUtils.split(impersonators, ';'));
         for (Principal p : impersSubject.getPrincipals()) {
 
             if (ADMIN_USER.equals(p.getName()) || SYSTEM_USER.equals(p.getName())

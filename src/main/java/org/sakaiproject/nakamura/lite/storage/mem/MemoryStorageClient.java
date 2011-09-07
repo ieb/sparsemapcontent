@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MemoryStorageClient implements StorageClient {
 
@@ -98,7 +99,7 @@ public class MemoryStorageClient implements StorageClient {
         String keyName = rowHash(keySpace, columnFamily, key);
 
         if (!store.containsKey(keyName)) {
-            Map<String, Object> row = Maps.newConcurrentHashMap();
+            Map<String, Object> row = Maps.newConcurrentMap();
             store.put(keyName, row);
             LOGGER.debug("Created {}  as {} ", new Object[] { keyName, row });
             return row;
@@ -159,8 +160,8 @@ public class MemoryStorageClient implements StorageClient {
         @SuppressWarnings("unchecked")
         Set<String> index = (Set<String>) store.get(indexKey);
         if ( index == null ) {
-            index = Sets.newConcurrentHashSet();
-            store.put(indexKey, index);
+          index = Sets.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+          store.put(indexKey, index);
         }
         index.add(rowHash(keySpace,columnFamily, key));
     }

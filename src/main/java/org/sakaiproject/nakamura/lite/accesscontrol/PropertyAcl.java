@@ -32,8 +32,8 @@ public class PropertyAcl  implements Serializable {
                 w.add(ace.getKey());
             }
         }
-        readDenied = ImmutableSet.of(r.toArray(new String[r.size()]));
-        writeDenied = ImmutableSet.of(w.toArray(new String[w.size()]));
+        readDenied = ImmutableSet.copyOf(r.toArray(new String[r.size()]));
+        writeDenied = ImmutableSet.copyOf(w.toArray(new String[w.size()]));
     }
 
     public PropertyAcl() {

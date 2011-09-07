@@ -33,6 +33,7 @@ import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -256,11 +257,11 @@ public class InternalContent {
 
     /**
      * Convert a new content object to an internal version.
-     * 
-     * @param structure
-     *            the structure object
+     *
      * @param contentManager
      *            the content manager now managing this content object.
+     *
+     * @param readOnly sets this contentManager to be either read-only or not.
      */
     void internalize(ContentManagerImpl contentManager, boolean readOnly) {
         this.contentManager = contentManager;
@@ -402,7 +403,7 @@ public class InternalContent {
      */
     public Iterable<Content> listChildren() {
         if (newcontent) {
-            return Iterables.emptyIterable();
+            return Collections.<Content>emptyList();
         }
         return new Iterable<Content>() {
 
@@ -422,7 +423,7 @@ public class InternalContent {
      */
     public Iterable<String> listChildPaths() {
         if (newcontent) {
-            return Iterables.emptyIterable();
+            return Collections.<String>emptyList();
         }
         return new Iterable<String>() {
 

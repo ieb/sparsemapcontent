@@ -44,6 +44,7 @@ import static org.sakaiproject.nakamura.lite.content.InternalContent.VERSION_NUM
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -52,6 +53,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.google.common.collect.Ordering;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -778,20 +780,19 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                     final Map<String, Object> versionHistory = getCached(keySpace,
                             contentColumnFamily, versionHistoryId);
                     LOGGER.debug("Loaded Version History  {} {} ", versionHistoryId, versionHistory);
-                    return Lists.sortedCopy(versionHistory.keySet(), new Comparator<String>() {
-                        public int compare(String o1, String o2) {
-                            long l1 = (Long) versionHistory.get(o1);
-                            long l2 = (Long) versionHistory.get(o2);
-                            long r = l2 - l1;
-                            if (r == 0) {
-                                return 0;
-                            } else if (r < 0) {
-                                return -1;
-                            }
-                            return 1;
+                  return Ordering.from(new Comparator<String>() {
+                      public int compare(String o1, String o2) {
+                        long l1 = (Long) versionHistory.get(o1);
+                        long l2 = (Long) versionHistory.get(o2);
+                        long r = l2 - l1;
+                        if (r == 0) {
+                          return 0;
+                        } else if (r < 0) {
+                          return -1;
                         }
-                    });
-
+                        return 1;
+                      }
+                    }).sortedCopy(versionHistory.keySet());
                 }
             }
         }

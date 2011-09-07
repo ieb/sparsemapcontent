@@ -26,9 +26,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.text.MessageFormat;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableList;
 import junit.framework.Assert;
 
 import org.apache.commons.lang.StringUtils;
@@ -310,7 +312,7 @@ public class JDBCStorageClientTest {
     String keySpace = "cn";
     String columnFamily = "conjunctions";
     Map<String, Object> props = Maps.newLinkedHashMap();
-    props.put("key1", Lists.immutableList("val1", "val2"));
+    props.put("key1", ImmutableList.of("val1", "val2"));
     props.put("key2", "val2");
     client.find(keySpace, columnFamily, props);
 
@@ -350,7 +352,7 @@ public class JDBCStorageClientTest {
     String columnFamily = "conjunctions";
     Map<String, Object> container = Maps.newHashMap();
     Map<String, Object> orSet = Maps.newLinkedHashMap();
-    orSet.put("key1", Lists.immutableList("val1", "val2"));
+    orSet.put("key1", ImmutableList.of("val1", "val2"));
     orSet.put("key2", "val2");
     container.put("orSet", orSet);
     client.find(keySpace, columnFamily, container);

@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 
 import org.junit.After;
@@ -393,16 +394,16 @@ public abstract class AbstractAccessControlManagerImplTest {
             Assert.assertArrayEquals(expectedPermissions[i], p);
             String[] r = acmU.findPrincipals(Security.ZONE_CONTENT, testPath[i],
                     Permissions.CAN_READ.getPermission(), true);
-            Assert.assertArrayEquals(readers[i], sortToArray(ImmutableSet.of(r)));
+            Assert.assertArrayEquals(readers[i], sortToArray(ImmutableSet.copyOf(r)));
             r = acmU.findPrincipals(Security.ZONE_CONTENT, testPath[i],
                     Permissions.CAN_READ.getPermission(), false);
-            Assert.assertArrayEquals(deniedReaders[i], sortToArray(ImmutableSet.of(r)));
+            Assert.assertArrayEquals(deniedReaders[i], sortToArray(ImmutableSet.copyOf(r)));
         }
 
     }
 
     private String[] sortToArray(Set<String> keySet) {
-        return Lists.sortedCopy(keySet).toArray(new String[keySet.size()]);
+        return Ordering.natural().sortedCopy(keySet).toArray(new String[keySet.size()]);
     }
 
     @Test
