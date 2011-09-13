@@ -47,9 +47,6 @@
             <Import-Package>
                *
             </Import-Package>
-            <Include-Resource>
-              target/unpacked-resources
-            </Include-Resource>
           </instructions>
         </configuration>
       </plugin>

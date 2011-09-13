@@ -1,4 +1,4 @@
-package uk.co.tfd.sm.wedav;
+package uk.co.tfd.sm.webdav;
 
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -31,7 +31,8 @@ public class MiltonSecurityManager implements SecurityManager {
 
 	public Object authenticate(String user, String password) {
 		try {
-			if (user == null || User.ADMIN_USER.equals(user)) {
+			LOGGER.info("Authenticating {} ",user);
+			if (user == null || User.ANON_USER.equals(user)) {
 				return reposiotry.login();
 			}
 			return reposiotry.login(user, password);

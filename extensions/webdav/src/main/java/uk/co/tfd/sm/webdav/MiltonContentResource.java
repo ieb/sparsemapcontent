@@ -1,4 +1,4 @@
-package uk.co.tfd.sm.wedav;
+package uk.co.tfd.sm.webdav;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -65,6 +65,7 @@ public class MiltonContentResource implements FileResource, FolderResource {
 		this.path = path;
 		this.content = content;
 		this.session = session;
+		LOGGER.info("Created content with content object of {} {} ", this, this.content);
 	}
 
 	private static Map<Method, Permission> getMethodPermissionMap() {
@@ -124,6 +125,7 @@ public class MiltonContentResource implements FileResource, FolderResource {
 	}
 
 	public String getUniqueId() {
+		LOGGER.info("Getting Unique ID from {} ",content);
 		return content.getId();
 	}
 
@@ -163,8 +165,6 @@ public class MiltonContentResource implements FileResource, FolderResource {
 		try {
 			session.getAccessControlManager().check(Security.ZONE_CONTENT,
 					path, permission);
-			content = session.getContentManager().get(path);
-			this.session = session;
 			return true;
 		} catch (AccessDeniedException e) {
 			LOGGER.error(e.getMessage(), e);
@@ -180,8 +180,12 @@ public class MiltonContentResource implements FileResource, FolderResource {
 
 	public Date getModifiedDate() {
 		if (content != null) {
-			return new Date(
-					(Long) content.getProperty(Content.LASTMODIFIED_FIELD));
+			if ( content.hasProperty(Content.LASTMODIFIED_FIELD)) {
+				return new Date(
+						(Long) content.getProperty(Content.LASTMODIFIED_FIELD));
+			} else {
+				return new Date();				
+			}
 		}
 		return new Date(0L);
 	}
@@ -218,6 +222,9 @@ public class MiltonContentResource implements FileResource, FolderResource {
 				in = session.getContentManager().getInputStream(path);
 			} catch (IOException e) {
 				throw new BadRequestException(this, e.getMessage());
+			}
+			if ( in == null ) {
+				return;
 			}
 			byte[] buffer = new byte[10240];
 			try {
@@ -270,6 +277,9 @@ public class MiltonContentResource implements FileResource, FolderResource {
 		}
 		String contentType = (String) content
 				.getProperty(Content.MIMETYPE_FIELD);
+		if ( contentType == null ) {
+			return null;
+		}
 		return ContentTypeUtils.findAcceptableContentType(contentType, accepts);
 	}
 
@@ -358,11 +368,13 @@ public class MiltonContentResource implements FileResource, FolderResource {
 
 					@Override
 					protected boolean internalHasNext() {
-						if (children.hasNext()) {
+						while (children.hasNext()) {
 							Content n = children.next();
-							resource = new MiltonContentResource(n.getPath(),
-									session, n);
-							return true;
+							if ( n != null ) {
+								resource = new MiltonContentResource(n.getPath(),
+										session, n);
+								return true;
+							}
 						}
 						resource = null;
 						return false;
