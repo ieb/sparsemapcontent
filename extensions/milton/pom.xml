@@ -23,7 +23,7 @@
   <packaging>bundle</packaging>
   <version>1.6.3-SNAPSHOT</version>
   <name>Sakai Nakamura :: Milton Support</name>
-  <description>Provides PostgreSQL driver for Sparse, optional bundle </description>
+  <description>Provides Milton Jar  </description>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -44,31 +44,21 @@
             <Bundle-Category>sakai-nakamura,driver</Bundle-Category>
             <Export-Package>com.bradmcevoy.*;-split-package:=merge-first,com.ettrema.*</Export-Package>
             <Import-Package>
+              !org.springframework.*,
+              !oracle.*,
+              !org.jaxen.*,
+              !org.apache.xerces.*,
                *
             </Import-Package>
-            <Include-Resource>
-              target/unpacked-resources
-            </Include-Resource>
+            <Embed-Dependency>
+	                            milton-api,
+	                            milton-servlet,
+	                            mime-util,
+	                            jdom,
+	                            commons-beanutils
+	        </Embed-Dependency>
           </instructions>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>embed-dependencies</id>
-            <goals>
-              <goal>unpack-dependencies</goal>
-            </goals>
-            <configuration>
-              <includeArtifactIds>milton-api,milton-servlet</includeArtifactIds>
-              <outputDirectory>target/unpacked-resources</outputDirectory>
-              <includes>META-INF/**</includes>
-              <excludes>META-INF/MANIFEST.MF</excludes>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>
@@ -77,6 +67,21 @@
 	  <groupId>com.ettrema</groupId>
 	  <artifactId>milton-api</artifactId>
 	  <version>1.6.3</version>    
+    </dependency>
+    <dependency>
+	  <groupId>eu.medsea.mimeutil</groupId>
+	  <artifactId>mime-util</artifactId>
+	  <version>2.1.3</version>    
+    </dependency>
+    <dependency>
+      <groupId>org.jdom</groupId>
+      <artifactId>jdom</artifactId>
+      <version>1.1</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-beanutils</groupId>
+      <artifactId>commons-beanutils</artifactId>
+      <version>1.8.3</version>
     </dependency>
     <dependency>
 	  <groupId>com.ettrema</groupId>
