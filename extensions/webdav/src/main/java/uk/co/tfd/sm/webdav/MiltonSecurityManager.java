@@ -21,17 +21,21 @@ public class MiltonSecurityManager implements SecurityManager {
 	private String realm;
 	private Repository reposiotry;
 
-	public MiltonSecurityManager(Repository repository) {
+	public MiltonSecurityManager(Repository repository, String realm) {
 		this.reposiotry = repository;
+		this.realm = realm;
 	}
 
 	public Object authenticate(DigestResponse digestRequest) {
-		return null;
+		throw new RuntimeException(
+				"Digest authentication is not supported since it depends on"
+						+ " either storing passwords clear text or storing user:realm:password md5 hashed,"
+						+ " both of which represent major security issues on a server.");
 	}
 
 	public Object authenticate(String user, String password) {
 		try {
-			LOGGER.info("Authenticating {} ",user);
+			LOGGER.info("Authenticating {} ", user);
 			if (user == null || User.ANON_USER.equals(user)) {
 				return reposiotry.login();
 			}

@@ -1,6 +1,7 @@
 package uk.co.tfd.sm.webdav;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.Servlet;
@@ -18,6 +19,8 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.sakaiproject.nakamura.api.lite.Repository;
 
+import com.bradmcevoy.http.AuthenticationHandler;
+import com.bradmcevoy.http.AuthenticationService;
 import com.bradmcevoy.http.Filter;
 import com.bradmcevoy.http.HttpManager;
 import com.bradmcevoy.http.Request;
@@ -29,7 +32,6 @@ import com.bradmcevoy.http.ServletResponse;
 import com.bradmcevoy.http.http11.Http11ResponseHandler;
 import com.bradmcevoy.http.http11.auth.PreAuthenticationFilter;
 import com.bradmcevoy.http.http11.auth.SecurityManagerBasicAuthHandler;
-import com.bradmcevoy.http.http11.auth.SecurityManagerDigestAuthenticationHandler;
 import com.google.common.collect.Lists;
 
 @Component(immediate = true, metatype = true)
@@ -53,17 +55,17 @@ public class MiltonServlet extends HttpServlet {
 			basePath = "/dav";
 		}
 		ResourceFactory resourceFactory = new MiltonContentResourceFactory(basePath);
-		SecurityManager securityManager = new MiltonSecurityManager(repository);
-		httpManager = new HttpManager(resourceFactory);
+		SecurityManager securityManager = new MiltonSecurityManager(repository, basePath);
+		List<AuthenticationHandler> authHandlers = Lists.immutableList(
+				new SecurityManagerBasicAuthHandler(securityManager),
+				new LoggingAuthenticationHander(securityManager));
+		AuthenticationService authenticationService = new AuthenticationService(authHandlers);
+		httpManager = new HttpManager(resourceFactory, authenticationService);
 		Http11ResponseHandler responseHandler = httpManager
 				.getResponseHandler();
 
 		Filter authenticationFilter = new PreAuthenticationFilter(
-				responseHandler, Lists.immutableList(
-						new SecurityManagerBasicAuthHandler(securityManager),
-						new SecurityManagerDigestAuthenticationHandler(
-								securityManager), new AnonAuthHandler(
-								securityManager)));
+				responseHandler, authHandlers);
 		httpManager.addFilter(0, authenticationFilter);
 	}
 
