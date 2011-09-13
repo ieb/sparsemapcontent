@@ -360,7 +360,6 @@ public class InternalContent {
      *         hasProperty(String key) should be checked for an authoratative
      *         answer.
      */
-    // TODO: Unit test
     public Object getProperty(String key) {
         if (updatedContent.containsKey(key)) {
             Object o = updatedContent.get(key);
@@ -374,6 +373,10 @@ public class InternalContent {
             return null;
         }
         return o;
+    }
+    
+    public String getId() {
+        return (String) content.get(Content.getUuidField());
     }
 
     /**
