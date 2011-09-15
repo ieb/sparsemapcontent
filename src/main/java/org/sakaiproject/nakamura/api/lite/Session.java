@@ -66,4 +66,16 @@ public interface Session {
 
     Repository getRepository();
 
+    /**
+     * Perform a commit on any pending operations.
+     */
+    void commit();
+
+    /**
+     * Add a commit handler for a certain key. Will replace any other commit handler of the same key.
+     * @param key
+     * @param commitHandler
+     */
+    void addCommitHandler(String key, CommitHandler commitHandler);
+
 }

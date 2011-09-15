@@ -1,6 +1,7 @@
 package uk.co.tfd.sm.webdav;
 
 import org.sakaiproject.nakamura.api.lite.Repository;
+import org.sakaiproject.nakamura.api.lite.SparseSessionTracker;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
@@ -20,10 +21,12 @@ public class MiltonSecurityManager implements SecurityManager {
 			.getLogger(MiltonSecurityManager.class);
 	private String realm;
 	private Repository reposiotry;
+	private SparseSessionTracker sessionTracker;
 
-	public MiltonSecurityManager(Repository repository, String realm) {
+	public MiltonSecurityManager(Repository repository, SparseSessionTracker sessionTracker, String realm) {
 		this.reposiotry = repository;
 		this.realm = realm;
+		this.sessionTracker = sessionTracker;
 	}
 
 	public Object authenticate(DigestResponse digestRequest) {
@@ -37,9 +40,9 @@ public class MiltonSecurityManager implements SecurityManager {
 		try {
 			LOGGER.debug("Authenticating {} ", user);
 			if (user == null || User.ANON_USER.equals(user)) {
-				return reposiotry.login();
+				return sessionTracker.register(reposiotry.login());
 			}
-			return reposiotry.login(user, password);
+			return sessionTracker.register(reposiotry.login(user, password));
 		} catch (StorageClientException e) {
 			LOGGER.error(e.getMessage(), e);
 		} catch (AccessDeniedException e) {

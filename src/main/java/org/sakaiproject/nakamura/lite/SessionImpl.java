@@ -17,7 +17,10 @@
  */
 package org.sakaiproject.nakamura.lite;
 
+import java.util.Map;
+
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.CommitHandler;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
@@ -34,6 +37,8 @@ import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.content.ContentManagerImpl;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 
+import com.google.common.collect.Maps;
+
 public class SessionImpl implements Session {
 
     private AccessControlManagerImpl accessControlManager;
@@ -45,6 +50,7 @@ public class SessionImpl implements Session {
     private StorageClient client;
     private Authenticator authenticator;
     private StoreListener storeListener;
+    private Map<String, CommitHandler> commitHandlers = Maps.newLinkedHashMap();
 
     public SessionImpl(Repository repository, User currentUser, StorageClient client,
             Configuration configuration, StorageCacheManager storageCacheManager, StoreListener storeListener, PrincipalValidatorResolver principalValidatorResolver)
@@ -117,6 +123,21 @@ public class SessionImpl implements Session {
 
     public StorageClient getClient() {
         return client;
+    }
+    
+    public void addCommitHandler(String key, CommitHandler commitHandler) {
+        synchronized (commitHandlers) {
+            commitHandlers.put(key, commitHandler);            
+        }
+    }
+    
+    public void commit() {
+        synchronized (commitHandlers) {
+            for ( CommitHandler commitHandler : commitHandlers.values() ) {
+                commitHandler.commit();
+            }
+            commitHandlers.clear();
+        }
     }
 
 }

@@ -7,9 +7,13 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.xml.namespace.QName;
+
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.CommitHandler;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -38,12 +42,19 @@ import com.bradmcevoy.http.Resource;
 import com.bradmcevoy.http.exceptions.BadRequestException;
 import com.bradmcevoy.http.exceptions.ConflictException;
 import com.bradmcevoy.http.exceptions.NotAuthorizedException;
+import com.bradmcevoy.http.webdav.PropPatchHandler.Field;
+import com.bradmcevoy.http.webdav.PropPatchHandler.Fields;
+import com.bradmcevoy.http.webdav.PropPatchHandler.SetField;
+import com.bradmcevoy.property.MultiNamespaceCustomPropertyResource;
+import com.bradmcevoy.property.PropertySource.PropertyAccessibility;
+import com.bradmcevoy.property.PropertySource.PropertyMetaData;
+import com.bradmcevoy.property.PropertySource.PropertySetException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
-public class MiltonContentResource implements FileResource, FolderResource {
+public class MiltonContentResource implements FileResource, FolderResource, MultiNamespaceCustomPropertyResource {
 
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(MiltonContentResource.class);
@@ -65,7 +76,8 @@ public class MiltonContentResource implements FileResource, FolderResource {
 		this.path = path;
 		this.content = content;
 		this.session = session;
-		LOGGER.info("Created content with content object of {} {} ", this, this.content);
+		LOGGER.info("Created content with content object of {} {} ", this,
+				this.content);
 	}
 
 	private static Map<Method, Permission> getMethodPermissionMap() {
@@ -107,11 +119,10 @@ public class MiltonContentResource implements FileResource, FolderResource {
 			throws NotAuthorizedException, BadRequestException,
 			ConflictException {
 		try {
-			session.getContentManager().copy(
-					path,
-					StorageClientUtils.newPath(
-							((MiltonContentResource) toCollection).getPath(),
-							name), true);
+			String sourcePath = path;
+			String destPath = StorageClientUtils.newPath(
+					((MiltonContentResource) toCollection).getPath(), name);
+			StorageClientUtils.copyTree(session.getContentManager(), sourcePath, destPath, true);			
 		} catch (StorageClientException e) {
 			LOGGER.error(e.getMessage(), e);
 			throw new ConflictException(this, e.getMessage());
@@ -124,13 +135,14 @@ public class MiltonContentResource implements FileResource, FolderResource {
 		}
 	}
 
+
 	public String getUniqueId() {
-		LOGGER.info("Getting Unique ID from {} ",content);
+		LOGGER.info("Getting Unique ID from {} ", content);
 		return content.getId();
 	}
 
 	public String getName() {
-		LOGGER.info("Getting name from {} ",content);
+		LOGGER.info("Getting name from {} ", content);
 		return name;
 	}
 
@@ -188,11 +200,11 @@ public class MiltonContentResource implements FileResource, FolderResource {
 	public Date getModifiedDate() {
 		LOGGER.info("Get Modifled ");
 		if (content != null) {
-			if ( content.hasProperty(Content.LASTMODIFIED_FIELD)) {
+			if (content.hasProperty(Content.LASTMODIFIED_FIELD)) {
 				return new Date(
 						(Long) content.getProperty(Content.LASTMODIFIED_FIELD));
 			} else {
-				return new Date();				
+				return new Date();
 			}
 		}
 		return new Date(0L);
@@ -234,11 +246,11 @@ public class MiltonContentResource implements FileResource, FolderResource {
 			} catch (IOException e) {
 				throw new BadRequestException(this, e.getMessage());
 			}
-			if ( in == null ) {
+			if (in == null) {
 				return;
 			}
 			byte[] buffer = new byte[10240];
-			if ( range != null ) {
+			if (range != null) {
 				try {
 					in.skip(range.getStart());
 				} catch (IOException e) {
@@ -292,7 +304,7 @@ public class MiltonContentResource implements FileResource, FolderResource {
 		}
 		String contentType = (String) content
 				.getProperty(Content.MIMETYPE_FIELD);
-		if ( contentType == null ) {
+		if (contentType == null) {
 			return null;
 		}
 		return ContentTypeUtils.findAcceptableContentType(contentType, accepts);
@@ -309,12 +321,14 @@ public class MiltonContentResource implements FileResource, FolderResource {
 	public void moveTo(CollectionResource rDest, String name)
 			throws ConflictException, NotAuthorizedException,
 			BadRequestException {
-		LOGGER.info("Move to {} {} ", rDest, name);
 		try {
+			String sourcePath = path;
+			String destPath = StorageClientUtils.newPath(
+					((MiltonContentResource) rDest).getPath(), name);
+			LOGGER.info("====================================== Moving from {} to {} ", sourcePath, destPath);
 			session.getContentManager().moveWithChildren(
-					path,
-					StorageClientUtils.newPath(
-							((MiltonContentResource) rDest).getPath(), name));
+					sourcePath,
+					destPath);
 		} catch (StorageClientException e) {
 			LOGGER.error(e.getMessage(), e);
 			throw new ConflictException(this, e.getMessage());
@@ -337,10 +351,10 @@ public class MiltonContentResource implements FileResource, FolderResource {
 			return null;
 		}
 		Long created = (Long) content.getProperty(Content.CREATED_FIELD);
-		if ( created != null ) {
+		if (created != null) {
 			return new Date(created);
-		} 
-		return new Date(); 
+		}
+		return new Date();
 	}
 
 	public CollectionResource createCollection(String newName)
@@ -394,9 +408,9 @@ public class MiltonContentResource implements FileResource, FolderResource {
 					protected boolean internalHasNext() {
 						while (children.hasNext()) {
 							Content n = children.next();
-							if ( n != null ) {
-								resource = new MiltonContentResource(n.getPath(),
-										session, n);
+							if (n != null) {
+								resource = new MiltonContentResource(n
+										.getPath(), session, n);
 								return true;
 							}
 						}
@@ -436,6 +450,45 @@ public class MiltonContentResource implements FileResource, FolderResource {
 		} catch (AccessDeniedException e) {
 			throw new NotAuthorizedException(this);
 		}
+	}
+
+	public Object getProperty(QName name) {
+		return content.getProperty(name.toString());
+	}
+
+	public void setProperty(QName name, Object value)
+			throws PropertySetException, NotAuthorizedException {
+		content.setProperty(name.toString(), value);
+		session.addCommitHandler(content.getId(), new CommitHandler() {
+			
+			public void commit() {
+				try {
+					session.getContentManager().update(content);
+				} catch (AccessDeniedException e) {
+					LOGGER.error(e.getMessage());
+				} catch (StorageClientException e) {
+					LOGGER.error(e.getMessage(),e);
+				}
+			}
+		});
+	}
+
+	public PropertyMetaData getPropertyMetaData(QName name) {
+		return new PropertyMetaData(PropertyAccessibility.WRITABLE, Object.class);
+	}
+
+	public List<QName> getAllPropertyNames() {
+		List<QName> l = Lists.newArrayList();
+		for ( Entry<String, Object> p : content.getProperties().entrySet()) {
+			String name = p.getKey();
+			if ( name.startsWith("{")) {
+				int i = name.indexOf('}');
+				l.add(new QName(name.substring(1,i-1), name.substring(i+1)));
+			} else {
+				l.add(new QName(name));
+			}
+		}
+		return l;
 	}
 
 }

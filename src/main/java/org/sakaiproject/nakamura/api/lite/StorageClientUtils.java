@@ -32,6 +32,7 @@ import org.sakaiproject.nakamura.lite.types.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.security.MessageDigest;
@@ -673,6 +674,30 @@ public class StorageClientUtils {
 
     public static String getInternalUuid() {
         return getUuid()+"+"; // URL safe base 64 does not use + chars
+    }
+
+    public static void copyTree(ContentManager contentManager, String sourcePath, String destPath,
+            boolean withStreams) throws StorageClientException, AccessDeniedException, IOException {
+        contentManager.copy(sourcePath, destPath, withStreams);
+        LOGGER.info("Copied {} to {} ", sourcePath, destPath );
+        Content content = contentManager.get(sourcePath);
+        if (content != null) {
+            for (String childPath : content.listChildPaths()) {
+                String name = StorageClientUtils.getObjectName(childPath);
+                String childSourcePath = StorageClientUtils.newPath(sourcePath, name);
+                String childDestPath = StorageClientUtils.newPath(destPath, name);
+                copyTree(contentManager, childSourcePath, childDestPath, withStreams);
+            }
+        }
+    }
+
+    public static void dumpTree(Content content) {
+        if ( content != null ) {
+            LOGGER.info("Path {} ",content.getPath());      
+            for ( Content child : content.listChildren() ) {
+                dumpTree(child);
+            }
+        }
     }
 
 }

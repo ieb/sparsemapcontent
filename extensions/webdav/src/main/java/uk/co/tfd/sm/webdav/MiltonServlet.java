@@ -58,7 +58,8 @@ public class MiltonServlet extends HttpServlet {
 			basePath = "/dav";
 		}
 		ResourceFactory resourceFactory = new MiltonContentResourceFactory(basePath);
-		SecurityManager securityManager = new MiltonSecurityManager(repository, basePath);
+		SessionTrackerFilter sessionTrackerFilter = new SessionTrackerFilter();
+		SecurityManager securityManager = new MiltonSecurityManager(repository, sessionTrackerFilter, basePath);
 		List<AuthenticationHandler> authHandlers = Lists.immutableList(
 				(AuthenticationHandler) new SecurityManagerBasicAuthHandler(securityManager));
 		AuthenticationService authenticationService = new AuthenticationService(authHandlers);
@@ -69,6 +70,8 @@ public class MiltonServlet extends HttpServlet {
 		Filter authenticationFilter = new PreAuthenticationFilter(
 				responseHandler, authHandlers);
 		httpManager.addFilter(0, authenticationFilter);
+		httpManager.addFilter(1, sessionTrackerFilter);
+
 	}
 
 	@Deactivate
