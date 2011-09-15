@@ -195,6 +195,9 @@ public class StorageClientUtils {
      *         element in the path.
      */
     public static String getObjectName(String objectPath) {
+        if ( objectPath == null || "".equals(objectPath)) {
+            return "";
+        }
         if ("/".equals(objectPath)) {
             return "/";
         }

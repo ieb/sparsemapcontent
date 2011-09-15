@@ -19,7 +19,7 @@
     <relativePath>../../parent/pom.xml</relativePath>
   </parent>
   <groupId>org.sakaiproject.nakamura</groupId>
-  <artifactId>org.sakaiproject.milton</artifactId>
+  <artifactId>org.sakaiproject.nakamura.milton</artifactId>
   <packaging>bundle</packaging>
   <version>1.6.3-SNAPSHOT</version>
   <name>Sakai Nakamura :: Milton Support</name>

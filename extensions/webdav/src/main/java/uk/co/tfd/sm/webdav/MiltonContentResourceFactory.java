@@ -14,7 +14,7 @@ import com.bradmcevoy.http.ResourceFactory;
 public class MiltonContentResourceFactory implements ResourceFactory {
 
 	private static final Logger LOGGER = LoggerFactory
-			.getLogger(MiltonContentResource.class);
+			.getLogger(MiltonContentResourceFactory.class);
 	private String basePath;
 
 	public MiltonContentResourceFactory(String basePath) {
@@ -24,21 +24,29 @@ public class MiltonContentResourceFactory implements ResourceFactory {
 	public Resource getResource(String host, String path) {
 		Session session = (Session) HttpManager.request().getAuthorization()
 				.getTag();
-		if ( path == null ) {
+		LOGGER.info("Get Resource for [{}] ", path);
+		if ( path == null  ) {
 			path = "/";
 		} else if ( path != null && path.startsWith(basePath) ) {
 			path = path.substring(basePath.length());
+		}
+		if ( path.length() > 1 && path.endsWith("/")) {
+			path = path.substring(0,path.length()-1);
+		}
+		if ( "".equals(path) ) {
+			path = "/";
 		}
 		try {
 			Content content = session.getContentManager().get(path);
 			if (content != null) {
 				return new MiltonContentResource(path, session, content);
 			}
-			LOGGER.info("found {} ", path);
 			if ("/".equals(path) || "".equals(path) || path == null) {
+				LOGGER.info("Root Object [{}] ", path);
 				return new MiltonContentResource(path, session, new Content(
 						"/", null));
 			}
+			LOGGER.info("Not Found {} ", path);
 		} catch (StorageClientException e) {
 			LOGGER.error(e.getMessage(), e);
 		} catch (AccessDeniedException e) {

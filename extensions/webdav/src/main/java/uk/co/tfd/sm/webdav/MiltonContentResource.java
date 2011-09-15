@@ -130,6 +130,7 @@ public class MiltonContentResource implements FileResource, FolderResource {
 	}
 
 	public String getName() {
+		LOGGER.info("Getting name from {} ",content);
 		return name;
 	}
 
@@ -138,6 +139,7 @@ public class MiltonContentResource implements FileResource, FolderResource {
 	}
 
 	public Object authenticate(String user, String password) {
+		LOGGER.info("Authenticating agains the resource ");
 		try {
 			if (user == null || User.ANON_USER.equals(user)) {
 				return repository.login();
@@ -156,29 +158,35 @@ public class MiltonContentResource implements FileResource, FolderResource {
 	public boolean authorise(Request request, Method method, Auth auth) {
 		Session session = (Session) auth.getTag();
 		if (session == null) {
+			LOGGER.info("Not Authorized, session == null ");
 			return false;
 		}
 		Permission permission = METHOD_PERMISSIONS.get(method);
 		if (permission == null) {
+			LOGGER.info("Not Authorized, permissions == null ");
 			return false;
 		}
 		try {
 			session.getAccessControlManager().check(Security.ZONE_CONTENT,
 					path, permission);
+			LOGGER.info("Authorized {} ", permission);
 			return true;
 		} catch (AccessDeniedException e) {
 			LOGGER.error(e.getMessage(), e);
 		} catch (StorageClientException e) {
 			LOGGER.error(e.getMessage(), e);
 		}
+		LOGGER.info("Authorize Failed ");
 		return false;
 	}
 
 	public String getRealm() {
+		LOGGER.info("Get Realm ");
 		return null;
 	}
 
 	public Date getModifiedDate() {
+		LOGGER.info("Get Modifled ");
 		if (content != null) {
 			if ( content.hasProperty(Content.LASTMODIFIED_FIELD)) {
 				return new Date(
@@ -191,6 +199,7 @@ public class MiltonContentResource implements FileResource, FolderResource {
 	}
 
 	public String checkRedirect(Request request) {
+		LOGGER.info("Check Redirect ");
 		if (REDIRECT_METHODS.contains(request.getMethod())) {
 			return path;
 		}
@@ -199,6 +208,7 @@ public class MiltonContentResource implements FileResource, FolderResource {
 
 	public void delete() throws NotAuthorizedException, ConflictException,
 			BadRequestException {
+		LOGGER.info("Delete ");
 		try {
 			Iterable<String> i = content.listChildPaths();
 			if (i.iterator().hasNext()) {
@@ -216,6 +226,7 @@ public class MiltonContentResource implements FileResource, FolderResource {
 	public void sendContent(OutputStream out, Range range,
 			Map<String, String> params, String contentType) throws IOException,
 			NotAuthorizedException, BadRequestException {
+		LOGGER.info("Send Content ");
 		try {
 			InputStream in;
 			try {
@@ -227,10 +238,12 @@ public class MiltonContentResource implements FileResource, FolderResource {
 				return;
 			}
 			byte[] buffer = new byte[10240];
-			try {
-				in.skip(range.getStart());
-			} catch (IOException e) {
-				throw new BadRequestException(this, e.getMessage());
+			if ( range != null ) {
+				try {
+					in.skip(range.getStart());
+				} catch (IOException e) {
+					throw new BadRequestException(this, e.getMessage());
+				}
 			}
 			for (;;) {
 				int nr;
@@ -252,6 +265,7 @@ public class MiltonContentResource implements FileResource, FolderResource {
 	}
 
 	public Long getMaxAgeSeconds(Auth auth) {
+		LOGGER.info("Get Max Age for {} ", auth);
 		Session session = (Session) auth.getTag();
 		if (session == null || User.ANON_USER.equals(session.getUserId())) {
 			return LONG_MAX_AGE;
@@ -272,6 +286,7 @@ public class MiltonContentResource implements FileResource, FolderResource {
 	}
 
 	public String getContentType(String accepts) {
+		LOGGER.info("Get Content type for {} ", content);
 		if (content == null) {
 			return null;
 		}
@@ -284,6 +299,7 @@ public class MiltonContentResource implements FileResource, FolderResource {
 	}
 
 	public Long getContentLength() {
+		LOGGER.info("Get Content length {} ", content);
 		if (content == null) {
 			return null;
 		}
@@ -293,6 +309,7 @@ public class MiltonContentResource implements FileResource, FolderResource {
 	public void moveTo(CollectionResource rDest, String name)
 			throws ConflictException, NotAuthorizedException,
 			BadRequestException {
+		LOGGER.info("Move to {} {} ", rDest, name);
 		try {
 			session.getContentManager().moveWithChildren(
 					path,
@@ -310,6 +327,7 @@ public class MiltonContentResource implements FileResource, FolderResource {
 	public String processForm(Map<String, String> parameters,
 			Map<String, FileItem> files) throws BadRequestException,
 			NotAuthorizedException, ConflictException {
+		LOGGER.info("Process form {} {} ", parameters, files);
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -318,13 +336,17 @@ public class MiltonContentResource implements FileResource, FolderResource {
 		if (content == null) {
 			return null;
 		}
-		long created = (Long) content.getProperty(Content.CREATED_FIELD);
-		return new Date(created);
+		Long created = (Long) content.getProperty(Content.CREATED_FIELD);
+		if ( created != null ) {
+			return new Date(created);
+		} 
+		return new Date(); 
 	}
 
 	public CollectionResource createCollection(String newName)
 			throws NotAuthorizedException, ConflictException,
 			BadRequestException {
+		LOGGER.info("Create Collection ", newName);
 		try {
 			String newPath = StorageClientUtils.newPath(path, newName);
 			ContentManager contentManager = session.getContentManager();
@@ -344,6 +366,7 @@ public class MiltonContentResource implements FileResource, FolderResource {
 	}
 
 	public Resource child(String childName) {
+		LOGGER.info("Get Child ", childName);
 		try {
 			String newPath = StorageClientUtils.newPath(path, childName);
 			Content c = session.getContentManager().get(newPath);
@@ -360,6 +383,7 @@ public class MiltonContentResource implements FileResource, FolderResource {
 
 	public List<? extends Resource> getChildren() {
 		// this needs to be disposed by the system.
+		LOGGER.info("Get Children ");
 		final Iterator<Content> children = content.listChildren().iterator();
 		return Lists
 				.immutableList(new PreemptiveIterator<MiltonContentResource>() {
@@ -391,6 +415,7 @@ public class MiltonContentResource implements FileResource, FolderResource {
 	public Resource createNew(String newName, InputStream inputStream,
 			Long length, String contentType) throws IOException,
 			ConflictException, NotAuthorizedException, BadRequestException {
+		LOGGER.info("Create new {} ", newName);
 		try {
 			String newPath = StorageClientUtils.newPath(path, newName);
 			ContentManager contentManager = session.getContentManager();

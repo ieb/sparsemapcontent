@@ -18,6 +18,8 @@ import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.sakaiproject.nakamura.api.lite.Repository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.bradmcevoy.http.AuthenticationHandler;
 import com.bradmcevoy.http.AuthenticationService;
@@ -43,6 +45,7 @@ public class MiltonServlet extends HttpServlet {
 	 * 
 	 */
 	private static final long serialVersionUID = -7451452381693049651L;
+	private static final Logger LOGGER = LoggerFactory.getLogger(MiltonServlet.class);
 	private HttpManager httpManager;
 
 	@Reference
@@ -57,8 +60,7 @@ public class MiltonServlet extends HttpServlet {
 		ResourceFactory resourceFactory = new MiltonContentResourceFactory(basePath);
 		SecurityManager securityManager = new MiltonSecurityManager(repository, basePath);
 		List<AuthenticationHandler> authHandlers = Lists.immutableList(
-				new SecurityManagerBasicAuthHandler(securityManager),
-				new LoggingAuthenticationHander(securityManager));
+				(AuthenticationHandler) new SecurityManagerBasicAuthHandler(securityManager));
 		AuthenticationService authenticationService = new AuthenticationService(authHandlers);
 		httpManager = new HttpManager(resourceFactory, authenticationService);
 		Http11ResponseHandler responseHandler = httpManager
@@ -77,11 +79,20 @@ public class MiltonServlet extends HttpServlet {
 	protected void service(HttpServletRequest servletRequest,
 			HttpServletResponse servletResponse) throws ServletException,
 			IOException {
+		String litmusTestId = null;
 		try {
 			Request request = new ServletRequest(servletRequest);
 			Response response = new ServletResponse(servletResponse);
+			Map<String,String> headers = request.getHeaders();
+			if ( headers.containsKey("X-Litmus") ) {
+				litmusTestId = headers.get("X-Litmus");
+				LOGGER.info("+++++++++++++Litmus Test Start {} ",litmusTestId);
+			}
 			httpManager.process(request, response);
 		} finally {
+			if ( litmusTestId != null ) {
+				LOGGER.info("-------------Litmus Test End {} ",litmusTestId);
+			}
 			servletResponse.getOutputStream().flush();
 			servletResponse.flushBuffer();
 		}

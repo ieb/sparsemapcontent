@@ -35,7 +35,7 @@ public class MiltonSecurityManager implements SecurityManager {
 
 	public Object authenticate(String user, String password) {
 		try {
-			LOGGER.info("Authenticating {} ", user);
+			LOGGER.debug("Authenticating {} ", user);
 			if (user == null || User.ANON_USER.equals(user)) {
 				return reposiotry.login();
 			}
