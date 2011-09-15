@@ -320,8 +320,13 @@ public class MemoryStorageClient implements StorageClient {
     }
 
     public long allCount(String keySpace, String columnFamily) {
-        // TODO Auto-generated method stub
-        return 0;
+        long count = 0;
+        DisposableIterator<SparseRow> allRows = listAll(keySpace, columnFamily);
+        while (allRows.hasNext()) {
+          allRows.next();
+          count++;
+        }
+        return count;
     }
 
 
