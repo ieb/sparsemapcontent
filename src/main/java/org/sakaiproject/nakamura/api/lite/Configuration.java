@@ -53,6 +53,11 @@ public interface Configuration {
     String getContentColumnFamily();
 
     /**
+     * @return name of the lock column family.
+     */
+    String getLockColumnFamily();
+    
+   /**
      * @return the config, shared by all drivers.
      */
     Map<String, String> getSharedConfig();

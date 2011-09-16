@@ -52,6 +52,8 @@ public class ConfigurationImpl implements Configuration {
     private static final String AUTHORIZABLE_COLUMN_FAMILY = "authorizable-column-family";
     @Property(value = "cn")
     private static final String CONTENT_COLUMN_FAMILY = "content-column-family";
+    @Property(value = "ln")
+    private static final String LOCK_COLUMN_FAMILY = "lock-column-family";
     
     protected static final String DEFAULT_INDEX_COLUMN_NAMES = "au:rep:principalName,au:type,cn:sling:resourceType," +
     		"cn:sakai:pooled-content-manager,cn:sakai:messagestore,cn:sakai:type,cn:sakai:marker,cn:sakai:tag-uuid," +
@@ -83,6 +85,7 @@ public class ConfigurationImpl implements Configuration {
     private String keySpace;
     private String authorizableColumnFamily;
     private String contentColumnFamily;
+    private String lockColumnFamily;
     private String[] indexColumnNames;
     private Map<String, String> sharedProperties;
     private String[] indexColumnTypes;
@@ -94,6 +97,7 @@ public class ConfigurationImpl implements Configuration {
         keySpace = StorageClientUtils.getSetting(properties.get(KEYSPACE), "n");
         authorizableColumnFamily = StorageClientUtils.getSetting(properties.get(AUTHORIZABLE_COLUMN_FAMILY), "au");
         contentColumnFamily = StorageClientUtils.getSetting(properties.get(CONTENT_COLUMN_FAMILY), "cn");
+        lockColumnFamily = StorageClientUtils.getSetting(properties.get(LOCK_COLUMN_FAMILY), "ln");
 
         // load defaults
         // check the classpath
@@ -165,6 +169,10 @@ public class ConfigurationImpl implements Configuration {
 
     public String getContentColumnFamily() {
         return contentColumnFamily;
+    }
+    
+    public String getLockColumnFamily() {
+        return lockColumnFamily;
     }
 
     public String[] getIndexColumnNames() {

@@ -21,6 +21,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessControlManager;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Authenticator;
 import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
+import org.sakaiproject.nakamura.api.lite.lock.LockManager;
 
 /**
  * A lightweight container bound to the user that will maintain state associated
@@ -56,6 +57,9 @@ public interface Session {
      * @throws StorageClientException
      */
     ContentManager getContentManager() throws StorageClientException;
+    
+    
+    LockManager getLockManager() throws StorageClientException;
 
     /**
      * @return the userID that this session is bound to.

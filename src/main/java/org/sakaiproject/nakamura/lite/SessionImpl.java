@@ -19,6 +19,7 @@ package org.sakaiproject.nakamura.lite;
 
 import java.util.Map;
 
+import org.sakaiproject.nakamura.api.lite.BaseColumnFamilyCacheManager;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.CommitHandler;
 import org.sakaiproject.nakamura.api.lite.Configuration;
@@ -35,6 +36,7 @@ import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.content.ContentManagerImpl;
+import org.sakaiproject.nakamura.lite.lock.LockManagerImpl;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 
 import com.google.common.collect.Maps;
@@ -44,6 +46,7 @@ public class SessionImpl implements Session {
     private AccessControlManagerImpl accessControlManager;
     private ContentManagerImpl contentManager;
     private AuthorizableManagerImpl authorizableManager;
+    private LockManagerImpl lockManager;
     private User currentUser;
     private Repository repository;
     private Exception closedAt;
@@ -53,19 +56,31 @@ public class SessionImpl implements Session {
     private Map<String, CommitHandler> commitHandlers = Maps.newLinkedHashMap();
 
     public SessionImpl(Repository repository, User currentUser, StorageClient client,
-            Configuration configuration, StorageCacheManager storageCacheManager, StoreListener storeListener, PrincipalValidatorResolver principalValidatorResolver)
+            Configuration configuration, StorageCacheManager storageCacheManager,
+            StoreListener storeListener, PrincipalValidatorResolver principalValidatorResolver)
             throws ClientPoolException, StorageClientException, AccessDeniedException {
         this.currentUser = currentUser;
         this.repository = repository;
         this.client = client;
         accessControlManager = new AccessControlManagerImpl(client, currentUser, configuration,
-                storageCacheManager.getAccessControlCache(), storeListener, principalValidatorResolver);
+                BaseColumnFamilyCacheManager.getCache(configuration,
+                        configuration.getAclColumnFamily(), storageCacheManager), storeListener,
+                principalValidatorResolver);
         authorizableManager = new AuthorizableManagerImpl(currentUser, this, client, configuration,
-                accessControlManager, storageCacheManager.getAuthorizableCache(), storeListener);
+                accessControlManager, BaseColumnFamilyCacheManager.getCache(configuration,
+                        configuration.getAuthorizableColumnFamily(), storageCacheManager),
+                storeListener);
 
-        contentManager = new ContentManagerImpl(client, accessControlManager, configuration, storageCacheManager.getContentCache(), storeListener);
+        contentManager = new ContentManagerImpl(client, accessControlManager, configuration,
+                BaseColumnFamilyCacheManager.getCache(configuration,
+                        configuration.getContentColumnFamily(), storageCacheManager), storeListener);
+
+        lockManager = new LockManagerImpl(client, configuration, currentUser,
+                BaseColumnFamilyCacheManager.getCache(configuration,
+                        configuration.getLockColumnFamily(), storageCacheManager));
 
         authenticator = new AuthenticatorImpl(client, configuration);
+
         this.storeListener = storeListener;
         storeListener.onLogin(currentUser.getId(), this.toString());
     }
@@ -75,6 +90,7 @@ public class SessionImpl implements Session {
             accessControlManager.close();
             authorizableManager.close();
             contentManager.close();
+            lockManager.close();
             client.close();
             accessControlManager = null;
             authorizableManager = null;
@@ -101,6 +117,11 @@ public class SessionImpl implements Session {
         return contentManager;
     }
 
+    public LockManagerImpl getLockManager() throws StorageClientException {
+        check();
+        return lockManager;
+    }
+
     public Authenticator getAuthenticator() throws StorageClientException {
         check();
         return authenticator;
@@ -124,16 +145,16 @@ public class SessionImpl implements Session {
     public StorageClient getClient() {
         return client;
     }
-    
+
     public void addCommitHandler(String key, CommitHandler commitHandler) {
         synchronized (commitHandlers) {
-            commitHandlers.put(key, commitHandler);            
+            commitHandlers.put(key, commitHandler);
         }
     }
-    
+
     public void commit() {
         synchronized (commitHandlers) {
-            for ( CommitHandler commitHandler : commitHandlers.values() ) {
+            for (CommitHandler commitHandler : commitHandlers.values()) {
                 commitHandler.commit();
             }
             commitHandlers.clear();

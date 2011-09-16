@@ -22,7 +22,6 @@ import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.sakaiproject.nakamura.lite.content.InternalContent;
 import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
 import org.sakaiproject.nakamura.lite.storage.Disposer;
-import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClient.SlowQueryLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

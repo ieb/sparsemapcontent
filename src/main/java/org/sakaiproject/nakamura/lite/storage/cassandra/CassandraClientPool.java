@@ -34,6 +34,7 @@ import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
+import org.sakaiproject.nakamura.api.lite.BaseColumnFamilyCacheManager;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
@@ -214,19 +215,10 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
    
      
       sharedCache = new ConcurrentLRUMap<String, CacheHolder>(10000);
-      defaultStorageManagerCache = new StorageCacheManager() {
-          
-          public Map<String, CacheHolder> getContentCache() {
-              return sharedCache;
-          }
-          
-          public Map<String, CacheHolder> getAuthorizableCache() {
-              return sharedCache;
-          }
-          
-          public Map<String, CacheHolder> getAccessControlCache() {
-              return sharedCache;
-          }
+      defaultStorageManagerCache = new BaseColumnFamilyCacheManager() {        
+        public Map<String, CacheHolder> getCache(String columnFamily) {
+            return sharedCache;
+        }
       };
 
   }

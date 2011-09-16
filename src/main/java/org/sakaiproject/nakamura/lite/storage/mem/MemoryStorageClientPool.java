@@ -17,7 +17,7 @@
  */
 package org.sakaiproject.nakamura.lite.storage.mem;
 
-import com.google.common.collect.Maps;
+import java.util.Map;
 
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.PoolableObjectFactory;
@@ -25,12 +25,14 @@ import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Service;
+import org.sakaiproject.nakamura.api.lite.BaseColumnFamilyCacheManager;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
+import org.sakaiproject.nakamura.api.lite.ColumnFamilyCacheManager;
 import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
 import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 
-import java.util.Map;
+import com.google.common.collect.Maps;
 
 @Component(enabled = false, metatype = true, inherit = true)
 @Service(value = StorageClientPool.class)
@@ -80,22 +82,15 @@ public class MemoryStorageClientPool extends AbstractClientConnectionPool {
 
     private Map<String, Object> store;
     private Map<String, Object> properties;
-    private StorageCacheManager defaultStorageManagerCache;
+    private ColumnFamilyCacheManager defaultStorageManagerCache;
 
     public MemoryStorageClientPool() {
-        defaultStorageManagerCache = new StorageCacheManager() {
+        defaultStorageManagerCache = new BaseColumnFamilyCacheManager() {
             
-            public Map<String, CacheHolder> getContentCache() {
+            public Map<String, CacheHolder> getCache(String columnFamily) {
                 return null;
             }
             
-            public Map<String, CacheHolder> getAuthorizableCache() {
-                return null;
-            }
-            
-            public Map<String, CacheHolder> getAccessControlCache() {
-                return null;
-            }
         };
     }
 

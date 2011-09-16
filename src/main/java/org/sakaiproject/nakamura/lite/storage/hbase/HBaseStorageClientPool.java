@@ -26,6 +26,7 @@ import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTablePool;
+import org.sakaiproject.nakamura.api.lite.BaseColumnFamilyCacheManager;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
@@ -135,19 +136,10 @@ public class HBaseStorageClientPool extends AbstractClientConnectionPool {
     }
 
     sharedCache = new ConcurrentLRUMap<String, CacheHolder>(10000);
-    defaultStorageManagerCache = new StorageCacheManager() {
-
-      public Map<String, CacheHolder> getContentCache() {
-        return sharedCache;
-      }
-
-      public Map<String, CacheHolder> getAuthorizableCache() {
-        return sharedCache;
-      }
-
-      public Map<String, CacheHolder> getAccessControlCache() {
-        return sharedCache;
-      }
+    defaultStorageManagerCache = new BaseColumnFamilyCacheManager() {        
+        public Map<String, CacheHolder> getCache(String columnFamily) {
+            return sharedCache;
+        }
     };
 
   }

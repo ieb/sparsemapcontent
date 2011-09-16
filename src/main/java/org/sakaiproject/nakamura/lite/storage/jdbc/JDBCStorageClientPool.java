@@ -41,8 +41,10 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.felix.scr.annotations.Service;
+import org.sakaiproject.nakamura.api.lite.BaseColumnFamilyCacheManager;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.ColumnFamilyCacheManager;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -134,7 +136,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
 
     private Timer timer;
 
-    private StorageCacheManager defaultStorageManagerCache;
+    private ColumnFamilyCacheManager defaultStorageManagerCache;
 
     private Map<String, CacheHolder> sharedCache;
 
@@ -153,17 +155,9 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
 
         sharedCache = new ConcurrentLRUMap<String, CacheHolder>(10000);
         // this is a default cache used where none has been provided.
-        defaultStorageManagerCache = new StorageCacheManager() {
+        defaultStorageManagerCache = new BaseColumnFamilyCacheManager() {
             
-            public Map<String, CacheHolder> getContentCache() {
-                return sharedCache;
-            }
-            
-            public Map<String, CacheHolder> getAuthorizableCache() {
-                return sharedCache;
-            }
-            
-            public Map<String, CacheHolder> getAccessControlCache() {
+            public Map<String, CacheHolder> getCache(String columnFamily) {
                 return sharedCache;
             }
         };

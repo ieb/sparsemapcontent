@@ -12,6 +12,7 @@ import java.util.Set;
 
 import javax.xml.namespace.QName;
 
+import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.CommitHandler;
 import org.sakaiproject.nakamura.api.lite.Repository;
@@ -35,16 +36,26 @@ import com.bradmcevoy.http.CollectionResource;
 import com.bradmcevoy.http.FileItem;
 import com.bradmcevoy.http.FileResource;
 import com.bradmcevoy.http.FolderResource;
+import com.bradmcevoy.http.LockInfo;
+import com.bradmcevoy.http.LockInfo.LockDepth;
+import com.bradmcevoy.http.LockInfo.LockType;
+import com.bradmcevoy.http.LockResult;
+import com.bradmcevoy.http.LockInfo.LockScope;
+import com.bradmcevoy.http.LockResult.FailureReason;
+import com.bradmcevoy.http.LockTimeout;
+import com.bradmcevoy.http.LockTimeout.DateAndSeconds;
+import com.bradmcevoy.http.LockToken;
+import com.bradmcevoy.http.LockableResource;
+import com.bradmcevoy.http.LockingCollectionResource;
 import com.bradmcevoy.http.Range;
 import com.bradmcevoy.http.Request;
 import com.bradmcevoy.http.Request.Method;
 import com.bradmcevoy.http.Resource;
 import com.bradmcevoy.http.exceptions.BadRequestException;
 import com.bradmcevoy.http.exceptions.ConflictException;
+import com.bradmcevoy.http.exceptions.LockedException;
 import com.bradmcevoy.http.exceptions.NotAuthorizedException;
-import com.bradmcevoy.http.webdav.PropPatchHandler.Field;
-import com.bradmcevoy.http.webdav.PropPatchHandler.Fields;
-import com.bradmcevoy.http.webdav.PropPatchHandler.SetField;
+import com.bradmcevoy.http.exceptions.PreConditionFailedException;
 import com.bradmcevoy.property.MultiNamespaceCustomPropertyResource;
 import com.bradmcevoy.property.PropertySource.PropertyAccessibility;
 import com.bradmcevoy.property.PropertySource.PropertyMetaData;
@@ -54,13 +65,76 @@ import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
-public class MiltonContentResource implements FileResource, FolderResource, MultiNamespaceCustomPropertyResource {
+
+public class MiltonContentResource implements FileResource, FolderResource,
+		MultiNamespaceCustomPropertyResource, LockableResource,
+		LockingCollectionResource {
+
+	public static class LockHolder {
+
+		private String lock;
+		private String lockToken;
+
+		public LockHolder(String lock, String lockToken) {
+			this.lock = lock;
+			this.lockToken = lockToken;
+		}
+		
+		private static LockHolder lockSpecToLockHolder(LockTimeout timeout, LockInfo lockInfo) {
+			Long timeoutSeconds = timeout.getSeconds();
+			if (timeoutSeconds == null) {
+				timeoutSeconds = 3600L;
+			}
+			DateAndSeconds t = timeout.getLockedUntil(3600L, timeoutSeconds);
+			String lock = lockInfo.lockedByUser + ":" + lockInfo.depth + ":"
+					+ lockInfo.scope + ":" + lockInfo.type + ":" + t.date.getTime()
+					+ ":" + timeoutSeconds;
+			String lockToken = StorageClientUtils.insecureHash(lock);
+			lock = lockToken + ":" + lock;
+			return new LockHolder(lock, lockToken);
+
+		}
+
+		private static LockHolder lockToLockHolder(String lock) {
+			String[] parts = StringUtils.split(lock, ":", 2);
+			return new LockHolder(parts[1], parts[0]);
+		}
+
+		private static LockInfo lockToLockInfo(String lock) {
+			String[] parts = StringUtils.split(lock, ':');
+			return new LockInfo(LockScope.valueOf(parts[3]),
+					LockType.valueOf(parts[4]), parts[1],
+					LockDepth.valueOf(parts[2]));
+		}
+
+		private static long lockExpiry(String lock) {
+			return Long.parseLong(StringUtils.split(lock, ':')[5]);
+		}
+
+		private static LockTimeout lockToLockTimeout(String lock, boolean adjustTime) {
+			if (adjustTime) {
+				return new LockTimeout(
+						(System.currentTimeMillis() - lockExpiry(lock)) / 1000);
+			} else {
+				return new LockTimeout(
+						Long.parseLong(StringUtils.split(lock, ':')[6]));
+			}
+		}
+
+
+	}
 
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(MiltonContentResource.class);
 	private static final Map<Method, Permission> METHOD_PERMISSIONS = getMethodPermissionMap();
+	private static final Set<Method> PROPERTY_WRITE_METHODS = ImmutableSet
+			.of(Method.PROPPATCH);
 	private static final Set<Method> REDIRECT_METHODS = ImmutableSet.of(
 			Method.ACL, Method.COPY, Method.DELETE, Method.MKCALENDAR,
+			Method.MKCOL, Method.MOVE, Method.POST, Method.PROPPATCH,
+			Method.PUT);
+	private static final Set<Method> WRITE_METHODS = ImmutableSet.of(
+			Method.COPY, Method.ACL, Method.DELETE, Method.MKCALENDAR,
 			Method.MKCOL, Method.MOVE, Method.POST, Method.PROPPATCH,
 			Method.PUT);
 	private static final long LONG_MAX_AGE = 3600L * 24L * 45L;
@@ -70,13 +144,14 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 	private String path;
 	private Content content;
 	private Session session;
+	private boolean authorizedToWriteProperties;
 
 	public MiltonContentResource(String path, Session session, Content content) {
 		this.name = StorageClientUtils.getObjectName(path);
 		this.path = path;
 		this.content = content;
 		this.session = session;
-		LOGGER.info("Created content with content object of {} {} ", this,
+		LOGGER.debug("Created content with content object of {} {} ", this,
 				this.content);
 	}
 
@@ -122,7 +197,8 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 			String sourcePath = path;
 			String destPath = StorageClientUtils.newPath(
 					((MiltonContentResource) toCollection).getPath(), name);
-			StorageClientUtils.copyTree(session.getContentManager(), sourcePath, destPath, true);			
+			StorageClientUtils.copyTree(session.getContentManager(),
+					sourcePath, destPath, true);
 		} catch (StorageClientException e) {
 			LOGGER.error(e.getMessage(), e);
 			throw new ConflictException(this, e.getMessage());
@@ -135,14 +211,13 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 		}
 	}
 
-
 	public String getUniqueId() {
-		LOGGER.info("Getting Unique ID from {} ", content);
+		LOGGER.debug("Getting Unique ID from {} ", content);
 		return content.getId();
 	}
 
 	public String getName() {
-		LOGGER.info("Getting name from {} ", content);
+		LOGGER.debug("Getting name from {} ", content);
 		return name;
 	}
 
@@ -151,7 +226,7 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 	}
 
 	public Object authenticate(String user, String password) {
-		LOGGER.info("Authenticating agains the resource ");
+		LOGGER.debug("Authenticating agains the resource ");
 		try {
 			if (user == null || User.ANON_USER.equals(user)) {
 				return repository.login();
@@ -170,35 +245,46 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 	public boolean authorise(Request request, Method method, Auth auth) {
 		Session session = (Session) auth.getTag();
 		if (session == null) {
-			LOGGER.info("Not Authorized, session == null ");
+			LOGGER.debug("Not Authorized, session == null ");
 			return false;
 		}
 		Permission permission = METHOD_PERMISSIONS.get(method);
 		if (permission == null) {
-			LOGGER.info("Not Authorized, permissions == null ");
+			LOGGER.debug("Not Authorized, permissions == null ");
 			return false;
 		}
 		try {
 			session.getAccessControlManager().check(Security.ZONE_CONTENT,
 					path, permission);
-			LOGGER.info("Authorized {} ", permission);
+			LOGGER.debug("Authorized {} ", permission);
+			authorizedToWriteProperties = PROPERTY_WRITE_METHODS
+					.contains(method);
+			// check if the item is locked
+			if (WRITE_METHODS.contains(method)) {
+				LockToken lockToken = getCurrentLock();
+				if (lockToken != null
+						&& !lockToken.info.lockedByUser.equals(session
+								.getUserId()) && !lockToken.isExpired()) {
+					return false; // locked by another user
+				}
+			}
 			return true;
 		} catch (AccessDeniedException e) {
 			LOGGER.error(e.getMessage(), e);
 		} catch (StorageClientException e) {
 			LOGGER.error(e.getMessage(), e);
 		}
-		LOGGER.info("Authorize Failed ");
+		LOGGER.debug("Authorize Failed ");
 		return false;
 	}
 
 	public String getRealm() {
-		LOGGER.info("Get Realm ");
+		LOGGER.debug("Get Realm ");
 		return null;
 	}
 
 	public Date getModifiedDate() {
-		LOGGER.info("Get Modifled ");
+		LOGGER.debug("Get Modifled ");
 		if (content != null) {
 			if (content.hasProperty(Content.LASTMODIFIED_FIELD)) {
 				return new Date(
@@ -211,7 +297,7 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 	}
 
 	public String checkRedirect(Request request) {
-		LOGGER.info("Check Redirect ");
+		LOGGER.debug("Check Redirect ");
 		if (REDIRECT_METHODS.contains(request.getMethod())) {
 			return path;
 		}
@@ -220,7 +306,7 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 
 	public void delete() throws NotAuthorizedException, ConflictException,
 			BadRequestException {
-		LOGGER.info("Delete ");
+		LOGGER.debug("Delete ");
 		try {
 			Iterable<String> i = content.listChildPaths();
 			if (i.iterator().hasNext()) {
@@ -238,7 +324,7 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 	public void sendContent(OutputStream out, Range range,
 			Map<String, String> params, String contentType) throws IOException,
 			NotAuthorizedException, BadRequestException {
-		LOGGER.info("Send Content ");
+		LOGGER.debug("Send Content ");
 		try {
 			InputStream in;
 			try {
@@ -277,7 +363,7 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 	}
 
 	public Long getMaxAgeSeconds(Auth auth) {
-		LOGGER.info("Get Max Age for {} ", auth);
+		LOGGER.debug("Get Max Age for {} ", auth);
 		Session session = (Session) auth.getTag();
 		if (session == null || User.ANON_USER.equals(session.getUserId())) {
 			return LONG_MAX_AGE;
@@ -298,7 +384,7 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 	}
 
 	public String getContentType(String accepts) {
-		LOGGER.info("Get Content type for {} ", content);
+		LOGGER.debug("Get Content type for {} ", content);
 		if (content == null) {
 			return null;
 		}
@@ -311,7 +397,7 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 	}
 
 	public Long getContentLength() {
-		LOGGER.info("Get Content length {} ", content);
+		LOGGER.debug("Get Content length {} ", content);
 		if (content == null) {
 			return null;
 		}
@@ -325,10 +411,10 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 			String sourcePath = path;
 			String destPath = StorageClientUtils.newPath(
 					((MiltonContentResource) rDest).getPath(), name);
-			LOGGER.info("====================================== Moving from {} to {} ", sourcePath, destPath);
-			session.getContentManager().moveWithChildren(
-					sourcePath,
-					destPath);
+			LOGGER.debug(
+					"====================================== Moving from {} to {} ",
+					sourcePath, destPath);
+			session.getContentManager().moveWithChildren(sourcePath, destPath);
 		} catch (StorageClientException e) {
 			LOGGER.error(e.getMessage(), e);
 			throw new ConflictException(this, e.getMessage());
@@ -360,7 +446,7 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 	public CollectionResource createCollection(String newName)
 			throws NotAuthorizedException, ConflictException,
 			BadRequestException {
-		LOGGER.info("Create Collection ", newName);
+		LOGGER.debug("Create Collection ", newName);
 		try {
 			String newPath = StorageClientUtils.newPath(path, newName);
 			ContentManager contentManager = session.getContentManager();
@@ -368,7 +454,8 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 			if (newContent != null) {
 				throw new ConflictException(this, "Collection already exists");
 			}
-			newContent = new Content(newPath, null);
+			newContent = new Content(newPath, ImmutableMap.of("collection",
+					(Object) true));
 			contentManager.update(newContent);
 			newContent = contentManager.get(newPath);
 			return new MiltonContentResource(newPath, session, newContent);
@@ -380,7 +467,7 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 	}
 
 	public Resource child(String childName) {
-		LOGGER.info("Get Child ", childName);
+		LOGGER.debug("Get Child ", childName);
 		try {
 			String newPath = StorageClientUtils.newPath(path, childName);
 			Content c = session.getContentManager().get(newPath);
@@ -397,7 +484,7 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 
 	public List<? extends Resource> getChildren() {
 		// this needs to be disposed by the system.
-		LOGGER.info("Get Children ");
+		LOGGER.debug("Get Children ");
 		final Iterator<Content> children = content.listChildren().iterator();
 		return Lists
 				.immutableList(new PreemptiveIterator<MiltonContentResource>() {
@@ -429,7 +516,7 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 	public Resource createNew(String newName, InputStream inputStream,
 			Long length, String contentType) throws IOException,
 			ConflictException, NotAuthorizedException, BadRequestException {
-		LOGGER.info("Create new {} ", newName);
+		LOGGER.debug("Create new {} ", newName);
 		try {
 			String newPath = StorageClientUtils.newPath(path, newName);
 			ContentManager contentManager = session.getContentManager();
@@ -453,42 +540,180 @@ public class MiltonContentResource implements FileResource, FolderResource, Mult
 	}
 
 	public Object getProperty(QName name) {
-		return content.getProperty(name.toString());
+		String n = getFullName(name);
+		Object o = content.getProperty(n);
+		LOGGER.debug("-------------- GETTING {} as {} --------------", n, o);
+		return o;
 	}
 
 	public void setProperty(QName name, Object value)
 			throws PropertySetException, NotAuthorizedException {
-		content.setProperty(name.toString(), value);
+		String n = getFullName(name);
+		if (value == null) {
+			LOGGER.debug("-------------- REMOVING {} --------------", n);
+			content.removeProperty(n);
+		} else {
+			LOGGER.debug("-------------- SETTING {} as {} --------------", n,
+					value);
+			content.setProperty(n, value);
+		}
 		session.addCommitHandler(content.getId(), new CommitHandler() {
-			
+
 			public void commit() {
 				try {
 					session.getContentManager().update(content);
 				} catch (AccessDeniedException e) {
 					LOGGER.error(e.getMessage());
 				} catch (StorageClientException e) {
-					LOGGER.error(e.getMessage(),e);
+					LOGGER.error(e.getMessage(), e);
 				}
 			}
 		});
 	}
 
 	public PropertyMetaData getPropertyMetaData(QName name) {
-		return new PropertyMetaData(PropertyAccessibility.WRITABLE, Object.class);
+		if (authorizedToWriteProperties) {
+			return new PropertyMetaData(PropertyAccessibility.WRITABLE,
+					Object.class);
+		} else if (content.hasProperty(getFullName(name))) {
+			return new PropertyMetaData(PropertyAccessibility.WRITABLE,
+					Object.class);
+		}
+		return null;
+	}
+
+	private String getFullName(QName name) {
+		String nameSpace = name.getNamespaceURI();
+		if (nameSpace == null || nameSpace.length() == 0) {
+			return "{None}" + name.getLocalPart();
+		}
+		return name.toString();
 	}
 
 	public List<QName> getAllPropertyNames() {
 		List<QName> l = Lists.newArrayList();
-		for ( Entry<String, Object> p : content.getProperties().entrySet()) {
+		for (Entry<String, Object> p : content.getProperties().entrySet()) {
 			String name = p.getKey();
-			if ( name.startsWith("{")) {
+			if (name.startsWith("{")) {
 				int i = name.indexOf('}');
-				l.add(new QName(name.substring(1,i-1), name.substring(i+1)));
+				l.add(new QName(name.substring(1, i - 1), name.substring(i + 1)));
 			} else {
 				l.add(new QName(name));
 			}
 		}
 		return l;
+	}
+
+	public LockToken createAndLock(String name, LockTimeout timeout,
+			LockInfo lockInfo) throws NotAuthorizedException {
+		LOGGER.info("Create And Lock {} {} ",timeout,lockInfo);
+
+		try {
+			String newPath = StorageClientUtils.newPath(path, name);
+			ContentManager contentManager = session.getContentManager();
+			Content newContent = contentManager.get(newPath);
+			LockHolder lock = LockHolder.lockSpecToLockHolder(timeout, lockInfo);
+			if (newContent == null) {
+				newContent = new Content(newPath, ImmutableMap.of("lock",
+						(Object) lock.lock));
+			} else {
+				newContent.setProperty("lock", lock.lock);
+			}
+			contentManager.update(newContent);
+			return new LockToken(lock.lockToken, lockInfo, timeout);
+		} catch (StorageClientException e) {
+			throw new NotAuthorizedException(this);
+		} catch (AccessDeniedException e) {
+			throw new NotAuthorizedException(this);
+		}
+	}
+
+
+	public LockResult lock(LockTimeout timeout, LockInfo lockInfo)
+			throws NotAuthorizedException, PreConditionFailedException,
+			LockedException {
+		LOGGER.info("Locking {} {} ",timeout,lockInfo);
+		if (content.hasProperty("lock")) {
+			String currentLock = (String) content.getProperty("lock");
+			LockInfo currentLockInfo = LockHolder.lockToLockInfo(currentLock);
+			long lockExpires = LockHolder.lockExpiry(currentLock);
+			if (System.currentTimeMillis() < lockExpires
+					&& !currentLockInfo.equals(lockInfo.lockedByUser)) {
+				return LockResult.failed(FailureReason.ALREADY_LOCKED);
+			}
+		}
+		LockHolder lock = LockHolder.lockSpecToLockHolder(timeout, lockInfo);
+		content.setProperty("lock", lock.lock);
+		try {
+			session.getContentManager().update(content);
+		} catch (AccessDeniedException e) {
+			throw new NotAuthorizedException(this);
+		} catch (StorageClientException e) {
+			throw new LockedException(this);
+		}
+		return LockResult.success(new LockToken(lock.lockToken, lockInfo,
+				timeout));
+	}
+
+	public LockResult refreshLock(String token) throws NotAuthorizedException,
+			PreConditionFailedException {
+		LOGGER.info("Refresh Lock {}",token);
+		if (content.hasProperty("lock")) {
+			String currentLock = (String) content.getProperty("lock");
+			LockInfo currentLockInfo = LockHolder.lockToLockInfo(currentLock);
+			LockHolder lockHolder = LockHolder.lockToLockHolder(currentLock);
+			if (token.equals(lockHolder.lockToken)
+					&& currentLockInfo.lockedByUser.equals(session.getUserId())) {
+				LOGGER.info("Refresh Lock matches {}",token);
+				LockTimeout lockTimeout = LockHolder.lockToLockTimeout(currentLock, false);
+				try {
+					return lock(lockTimeout, currentLockInfo);
+				} catch (LockedException e) {
+					LOGGER.warn(e.getMessage());
+				}
+			}
+
+		}
+		throw new PreConditionFailedException(this);
+	}
+
+	public void unlock(String tokenId) throws NotAuthorizedException,
+			PreConditionFailedException {
+		LOGGER.info("Un Lock {}",tokenId);
+		if (content.hasProperty("lock")) {
+			String currentLock = (String) content.getProperty("lock");
+			LockHolder lockHolder = LockHolder.lockToLockHolder(currentLock);
+			LockInfo lockInfo = LockHolder.lockToLockInfo(currentLock);
+			if (tokenId.equals(lockHolder.lockToken)
+					&& lockInfo.lockedByUser.equals(session.getUserId())) {
+				LOGGER.info("Un Lock {} matches",tokenId);
+				content.removeProperty("lock");
+				try {
+					session.getContentManager().update(content);
+				} catch (AccessDeniedException e) {
+					throw new NotAuthorizedException(this);
+				} catch (StorageClientException e) {
+					throw new NotAuthorizedException(this);
+				}
+				return;
+			}
+		}
+		throw new PreConditionFailedException(this);
+	}
+
+	public LockToken getCurrentLock() {
+		
+		if (content.hasProperty("lock")) {
+			String currentLock = (String) content.getProperty("lock");
+			LockHolder lockHolder = LockHolder.lockToLockHolder(currentLock);
+			LockInfo lockInfo = LockHolder.lockToLockInfo(currentLock);
+			LockTimeout lockTimeout = LockHolder.lockToLockTimeout(currentLock, true);
+			LOGGER.info("Has Lock {}",lockHolder.lockToken);
+
+			return new LockToken(lockHolder.lockToken, lockInfo, lockTimeout);
+		}
+		LOGGER.info("No Lock");
+		return null;
 	}
 
 }
