@@ -26,6 +26,8 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
+import org.sakaiproject.nakamura.api.lite.lock.AlreadyLockedException;
+import org.sakaiproject.nakamura.api.lite.lock.LockState;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,9 +40,9 @@ import com.bradmcevoy.http.FileResource;
 import com.bradmcevoy.http.FolderResource;
 import com.bradmcevoy.http.LockInfo;
 import com.bradmcevoy.http.LockInfo.LockDepth;
+import com.bradmcevoy.http.LockInfo.LockScope;
 import com.bradmcevoy.http.LockInfo.LockType;
 import com.bradmcevoy.http.LockResult;
-import com.bradmcevoy.http.LockInfo.LockScope;
 import com.bradmcevoy.http.LockResult.FailureReason;
 import com.bradmcevoy.http.LockTimeout;
 import com.bradmcevoy.http.LockTimeout.DateAndSeconds;
@@ -65,60 +67,66 @@ import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
-
 public class MiltonContentResource implements FileResource, FolderResource,
 		MultiNamespaceCustomPropertyResource, LockableResource,
 		LockingCollectionResource {
 
 	public static class LockHolder {
 
-		private String lock;
-		private String lockToken;
+		private LockInfo lockInfo;
+		private long timeoutSeconds;
+		private long expiryTime;
+		private String asString;
+		private LockTimeout lockTimeout;
 
-		public LockHolder(String lock, String lockToken) {
-			this.lock = lock;
-			this.lockToken = lockToken;
-		}
-		
-		private static LockHolder lockSpecToLockHolder(LockTimeout timeout, LockInfo lockInfo) {
+
+		public LockHolder(LockInfo lockInfo, LockTimeout timeout) {
 			Long timeoutSeconds = timeout.getSeconds();
 			if (timeoutSeconds == null) {
 				timeoutSeconds = 3600L;
 			}
 			DateAndSeconds t = timeout.getLockedUntil(3600L, timeoutSeconds);
-			String lock = lockInfo.lockedByUser + ":" + lockInfo.depth + ":"
-					+ lockInfo.scope + ":" + lockInfo.type + ":" + t.date.getTime()
-					+ ":" + timeoutSeconds;
-			String lockToken = StorageClientUtils.insecureHash(lock);
-			lock = lockToken + ":" + lock;
-			return new LockHolder(lock, lockToken);
+			this.lockInfo = lockInfo;
+			this.lockTimeout = timeout;
+			this.timeoutSeconds = timeoutSeconds;
+			this.expiryTime = t.date.getTime();
+			asString = lockInfo.lockedByUser + ":" + lockInfo.depth + ":"
+			+ lockInfo.scope + ":" + lockInfo.type + ":"
+			+ expiryTime + ":" + timeoutSeconds;
 
 		}
 
-		private static LockHolder lockToLockHolder(String lock) {
-			String[] parts = StringUtils.split(lock, ":", 2);
-			return new LockHolder(parts[1], parts[0]);
-		}
-
-		private static LockInfo lockToLockInfo(String lock) {
+		public LockHolder(String lock, boolean adjustTimeout) {
 			String[] parts = StringUtils.split(lock, ':');
-			return new LockInfo(LockScope.valueOf(parts[3]),
-					LockType.valueOf(parts[4]), parts[1],
-					LockDepth.valueOf(parts[2]));
-		}
-
-		private static long lockExpiry(String lock) {
-			return Long.parseLong(StringUtils.split(lock, ':')[5]);
-		}
-
-		private static LockTimeout lockToLockTimeout(String lock, boolean adjustTime) {
-			if (adjustTime) {
-				return new LockTimeout(
-						(System.currentTimeMillis() - lockExpiry(lock)) / 1000);
+			this.lockInfo = new LockInfo(LockScope.valueOf(parts[2]),
+					LockType.valueOf(parts[3]), parts[0],
+					LockDepth.valueOf(parts[1]));
+			this.expiryTime = Long.parseLong(parts[4]);
+			if (adjustTimeout) {
+				timeoutSeconds =
+						((System.currentTimeMillis() - expiryTime) / 1000);
 			} else {
-				return new LockTimeout(
-						Long.parseLong(StringUtils.split(lock, ':')[6]));
+				timeoutSeconds = Long.parseLong(parts[5]);
 			}
+			this.lockTimeout = new LockTimeout(timeoutSeconds);
+
+		}
+
+		@Override
+		public String toString() {
+			return asString;
+		}
+
+		public long getTimeoutInSeconds() {
+			return timeoutSeconds;
+		}
+
+		public LockInfo getLockInfo() {
+			return lockInfo;
+		}
+
+		public LockTimeout getLockTimeout() {
+			return lockTimeout;
 		}
 
 
@@ -539,6 +547,8 @@ public class MiltonContentResource implements FileResource, FolderResource,
 		}
 	}
 
+	// ========= PROPFIND PROPPATCH Support ===============================
+
 	public Object getProperty(QName name) {
 		String n = getFullName(name);
 		Object o = content.getProperty(n);
@@ -604,115 +614,93 @@ public class MiltonContentResource implements FileResource, FolderResource,
 		return l;
 	}
 
+	// ========= LOCK Support ===============================
+
 	public LockToken createAndLock(String name, LockTimeout timeout,
 			LockInfo lockInfo) throws NotAuthorizedException {
-		LOGGER.info("Create And Lock {} {} ",timeout,lockInfo);
+		LOGGER.info("Create And Lock {} {} ", timeout, lockInfo);
 
 		try {
 			String newPath = StorageClientUtils.newPath(path, name);
-			ContentManager contentManager = session.getContentManager();
-			Content newContent = contentManager.get(newPath);
-			LockHolder lock = LockHolder.lockSpecToLockHolder(timeout, lockInfo);
-			if (newContent == null) {
-				newContent = new Content(newPath, ImmutableMap.of("lock",
-						(Object) lock.lock));
-			} else {
-				newContent.setProperty("lock", lock.lock);
-			}
-			contentManager.update(newContent);
-			return new LockToken(lock.lockToken, lockInfo, timeout);
+			LockHolder lockHolder = new LockHolder(lockInfo, timeout);
+			String token = session.getLockManager().lock(newPath,
+					lockHolder.getTimeoutInSeconds(), lockHolder.toString());
+			return new LockToken(token, lockInfo, timeout);
 		} catch (StorageClientException e) {
+			LOGGER.error(e.getMessage(), e);
 			throw new NotAuthorizedException(this);
-		} catch (AccessDeniedException e) {
+		} catch (AlreadyLockedException e) {
+			LOGGER.error(e.getMessage(), e);
 			throw new NotAuthorizedException(this);
 		}
 	}
-
 
 	public LockResult lock(LockTimeout timeout, LockInfo lockInfo)
 			throws NotAuthorizedException, PreConditionFailedException,
 			LockedException {
-		LOGGER.info("Locking {} {} ",timeout,lockInfo);
-		if (content.hasProperty("lock")) {
-			String currentLock = (String) content.getProperty("lock");
-			LockInfo currentLockInfo = LockHolder.lockToLockInfo(currentLock);
-			long lockExpires = LockHolder.lockExpiry(currentLock);
-			if (System.currentTimeMillis() < lockExpires
-					&& !currentLockInfo.equals(lockInfo.lockedByUser)) {
-				return LockResult.failed(FailureReason.ALREADY_LOCKED);
-			}
-		}
-		LockHolder lock = LockHolder.lockSpecToLockHolder(timeout, lockInfo);
-		content.setProperty("lock", lock.lock);
 		try {
-			session.getContentManager().update(content);
-		} catch (AccessDeniedException e) {
-			throw new NotAuthorizedException(this);
+			LockHolder lockHolder = new LockHolder(lockInfo, timeout);
+			String token = session.getLockManager().lock(path,
+					lockHolder.getTimeoutInSeconds(), lockHolder.toString());
+			return LockResult.success(new LockToken(token, lockInfo, timeout));
+		} catch (AlreadyLockedException e) {
+			return LockResult.failed(FailureReason.ALREADY_LOCKED);
 		} catch (StorageClientException e) {
-			throw new LockedException(this);
+			LOGGER.error(e.getMessage(), e);
+			throw new NotAuthorizedException(this);
 		}
-		return LockResult.success(new LockToken(lock.lockToken, lockInfo,
-				timeout));
 	}
 
 	public LockResult refreshLock(String token) throws NotAuthorizedException,
 			PreConditionFailedException {
-		LOGGER.info("Refresh Lock {}",token);
-		if (content.hasProperty("lock")) {
-			String currentLock = (String) content.getProperty("lock");
-			LockInfo currentLockInfo = LockHolder.lockToLockInfo(currentLock);
-			LockHolder lockHolder = LockHolder.lockToLockHolder(currentLock);
-			if (token.equals(lockHolder.lockToken)
-					&& currentLockInfo.lockedByUser.equals(session.getUserId())) {
-				LOGGER.info("Refresh Lock matches {}",token);
-				LockTimeout lockTimeout = LockHolder.lockToLockTimeout(currentLock, false);
-				try {
-					return lock(lockTimeout, currentLockInfo);
-				} catch (LockedException e) {
-					LOGGER.warn(e.getMessage());
-				}
+		try {
+			LockState lockState = session.getLockManager().getLockState(path,
+					token);
+			if (lockState.isOwner() && lockState.hasMatchedToken()
+					&& path.equals(lockState.getLockPath())) {
+				LockHolder lock = new LockHolder(lockState.getExtra(), false);
+				LockInfo lockInfo = lock.getLockInfo();
+				LockTimeout timeout =lock.getLockTimeout();
+				return lock(timeout, lockInfo);
 			}
-
+		} catch (StorageClientException e) {
+			LOGGER.error(e.getMessage(), e);
+			throw new NotAuthorizedException(this);
+		} catch (LockedException e) {
+			LOGGER.debug(e.getMessage(),e);
 		}
 		throw new PreConditionFailedException(this);
 	}
 
 	public void unlock(String tokenId) throws NotAuthorizedException,
 			PreConditionFailedException {
-		LOGGER.info("Un Lock {}",tokenId);
-		if (content.hasProperty("lock")) {
-			String currentLock = (String) content.getProperty("lock");
-			LockHolder lockHolder = LockHolder.lockToLockHolder(currentLock);
-			LockInfo lockInfo = LockHolder.lockToLockInfo(currentLock);
-			if (tokenId.equals(lockHolder.lockToken)
-					&& lockInfo.lockedByUser.equals(session.getUserId())) {
-				LOGGER.info("Un Lock {} matches",tokenId);
-				content.removeProperty("lock");
-				try {
-					session.getContentManager().update(content);
-				} catch (AccessDeniedException e) {
-					throw new NotAuthorizedException(this);
-				} catch (StorageClientException e) {
-					throw new NotAuthorizedException(this);
-				}
+		try {
+			LockState lockState = session.getLockManager().getLockState(path,
+					tokenId);
+			if (lockState.isOwner() && lockState.hasMatchedToken()
+					&& path.equals(lockState.getLockPath())) {
+				session.getLockManager().unlock(path, tokenId);
 				return;
 			}
+		} catch (StorageClientException e) {
+			throw new NotAuthorizedException(this);
 		}
 		throw new PreConditionFailedException(this);
 	}
 
 	public LockToken getCurrentLock() {
-		
-		if (content.hasProperty("lock")) {
-			String currentLock = (String) content.getProperty("lock");
-			LockHolder lockHolder = LockHolder.lockToLockHolder(currentLock);
-			LockInfo lockInfo = LockHolder.lockToLockInfo(currentLock);
-			LockTimeout lockTimeout = LockHolder.lockToLockTimeout(currentLock, true);
-			LOGGER.info("Has Lock {}",lockHolder.lockToken);
-
-			return new LockToken(lockHolder.lockToken, lockInfo, lockTimeout);
+		try {
+			LockState lockState = session.getLockManager().getLockState(path,
+					"unknown");
+			if (lockState.isLocked()) {
+				String extra = lockState.getExtra();
+				String token = lockState.getToken();
+				LockHolder lockHolder = new LockHolder(extra, true);
+				return new LockToken(token, lockHolder.getLockInfo(), lockHolder.getLockTimeout());
+			}
+		} catch (StorageClientException e) {
+			LOGGER.error(e.getMessage(), e);
 		}
-		LOGGER.info("No Lock");
 		return null;
 	}
 

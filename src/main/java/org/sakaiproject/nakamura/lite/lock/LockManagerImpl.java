@@ -101,14 +101,14 @@ public class LockManagerImpl extends CachingManager implements LockManager {
                 if ( lock.isOwner(currentUser) ) {
                     if ( lock.hasToken(token)) {
                         LOGGER.debug("Has Owner locked with token");
-                        return LockState.getOwnerLockedToken(currentPath, token);
+                        return LockState.getOwnerLockedToken(currentPath, currentUser, token, lock.getExtra());
                     } else {
                         LOGGER.debug("Has Owner locked with not token");
-                        return LockState.getOwnerLockedNoToken(currentPath);
+                        return LockState.getOwnerLockedNoToken(currentPath, currentUser, lock.getToken(), lock.getExtra());
                     }
                 } else {
                     LOGGER.debug("Has User locked");
-                    return LockState.getUserLocked(currentPath, lock.getOwner());
+                    return LockState.getUserLocked(currentPath, lock.getOwner(), lock.getToken(), lock.getExtra());
                 }
             } else {
                 LOGGER.debug("Lock is null or has expired {} ",lock);

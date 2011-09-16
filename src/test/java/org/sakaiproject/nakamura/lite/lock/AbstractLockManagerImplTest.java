@@ -127,32 +127,33 @@ public abstract class AbstractLockManagerImplTest {
     private void checkOwnerLockWithToken(LockManagerImpl lockManagerImpl, String path, String testPath, String token) throws StorageClientException {
         Assert.assertTrue(lockManagerImpl.isLocked(testPath));
         LockState lockState = lockManagerImpl.getLockState(testPath, token);
-        Assert.assertTrue(lockState.isOwnerLocked());
+        Assert.assertTrue(lockState.isOwner());
         Assert.assertEquals(path, lockState.getLockPath());
+        Assert.assertTrue(lockState.hasMatchedToken());
         Assert.assertEquals(token, lockState.getToken());
     }
     private void checkOwnerLockWithNoToken(LockManagerImpl lockManagerImpl, String path, String testPath, String token) throws StorageClientException {
         Assert.assertTrue(lockManagerImpl.isLocked(testPath));
         LockState lockState = lockManagerImpl.getLockState(testPath, token);
-        Assert.assertTrue(lockState.isOwnerLocked());
+        Assert.assertTrue(lockState.isOwner());
         Assert.assertEquals(path, lockState.getLockPath());
-        Assert.assertNull(lockState.getToken());
+        Assert.assertFalse(lockState.hasMatchedToken());
     }
 
     private void checkLocked(LockManagerImpl lockManagerImpl, String path, String testPath, String token) throws StorageClientException {
         Assert.assertTrue(lockManagerImpl.isLocked(testPath));
         LockState lockState = lockManagerImpl.getLockState(testPath, token);
-        Assert.assertFalse(lockState.isOwnerLocked());
+        Assert.assertFalse(lockState.isOwner());
         Assert.assertEquals(path, lockState.getLockPath());
-        Assert.assertNull(lockState.getToken());
+        Assert.assertFalse(lockState.hasMatchedToken());
     }
 
     private void checkNotLocked(LockManagerImpl lockManagerImpl,String testPath, String token) throws StorageClientException {
         Assert.assertFalse(lockManagerImpl.isLocked(testPath));
         LockState lockState = lockManagerImpl.getLockState(testPath, token);
-        Assert.assertFalse(lockState.isOwnerLocked());
+        Assert.assertFalse(lockState.isOwner());
         Assert.assertNull(lockState.getLockPath());
-        Assert.assertNull(lockState.getToken());
+        Assert.assertFalse(lockState.hasMatchedToken());
     }
 
     @Test

@@ -17,14 +17,20 @@ public class Lock {
     private static final String TOKEN_FIELD = "t";
     private Map<String, Object> lockMap;
 
-    public Lock(String path, String currentUser, long expires, String extra) {
+    /**
+     * @param path
+     * @param user
+     * @param expires when the lock will expire in seconds from the time its created.
+     * @param extra
+     */
+    public Lock(String path, String user, long expires, String extra) {
         Builder<String, Object> b = ImmutableMap.builder();
         b.put(Lock.PATH_FIELD, path);
-        b.put(Lock.USER_FIELD, currentUser);
+        b.put(Lock.USER_FIELD, user);
         b.put(Lock.EXPIRES_FIELD, expires);
         b.put(Lock.EXPIRES_AT_FIELD, System.currentTimeMillis()+(expires*1000L));
         b.put(Lock.EXTRA_FIELD, extra);
-        b.put(Lock.TOKEN_FIELD, StorageClientUtils.insecureHash(System.currentTimeMillis()+":"+path+":"+currentUser+":"+expires));
+        b.put(Lock.TOKEN_FIELD, StorageClientUtils.insecureHash(System.currentTimeMillis()+":"+path+":"+user+":"+expires));
         
         lockMap = b.build();
     }
@@ -73,6 +79,10 @@ public class Lock {
     @Override
     public int hashCode() {
         return getToken().hashCode();
+    }
+
+    public String getExtra() {
+        return (String) lockMap.get(EXTRA_FIELD);
     }
 
 }

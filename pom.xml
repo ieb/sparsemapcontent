@@ -23,7 +23,7 @@
     <url>http://github.com/ieb/sparsemapcontent/</url>
   </scm>
   <prerequisites>
-    <maven>3.3.0</maven>
+    <maven>3.0.3</maven>
   </prerequisites>
 
   <build>

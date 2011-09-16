@@ -19,7 +19,7 @@ public interface LockManager {
      * @param path
      *            the path to lock
      * @param expires
-     *            ttl for the lock in ms
+     *            ttl for the lock in s from the time it was created.
      * @param extra
      *            any extra information to be stored with the lock.
      * @return the lock token.
