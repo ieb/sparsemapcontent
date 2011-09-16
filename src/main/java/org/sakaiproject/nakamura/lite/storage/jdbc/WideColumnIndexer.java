@@ -95,7 +95,8 @@ public class WideColumnIndexer extends AbstractIndexer {
                 }
             }
             
-            if (!StorageClientUtils.isRoot(key)) {
+            if (!StorageClientUtils.isRoot(key) 
+                    && getColumnName(keySpace, columnFamily, InternalContent.PARENT_HASH_FIELD) != null) {
                 String parent = StorageClientUtils.getParentObjectPath(key);
                 String hash = client.rowHash(keySpace, columnFamily, parent);
                 LOGGER.debug("Hash of {}:{}:{} is {} ", new Object[] { keySpace, columnFamily,
@@ -179,7 +180,7 @@ public class WideColumnIndexer extends AbstractIndexer {
                 }
                 for (String toRemove : removeColumns) {
                     join(setOperations," ,").append(MessageFormat.format(sqlParts[1],
-                            indexColumnsNames.get(columnFamily + ":" + toRemove)));
+                            getColumnName(keySpace, columnFamily, toRemove)));
                 }
                 String finalSql = MessageFormat.format(sqlParts[0], setOperations);
                 LOGGER.debug("Performing {} ",finalSql);

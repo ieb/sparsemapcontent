@@ -32,21 +32,21 @@ public class LockManagerImpl extends CachingManager implements LockManager {
     }
 
     public void close() {
-        // TODO Auto-generated method stub
-        
     }
 
     private Lock get(String path) throws StorageClientException {
         Map<String, Object> lockMap = getCached(keySpace, lockColumnFamily, path);
         if ( lockMap != null && lockMap.size() > 0) {
-            return new Lock(lockMap);
+            Lock nl =  new Lock(lockMap);
+            LOGGER.debug("Got Lock {} {} ",path, nl);
+            return nl;
         }
         return null;
     }
     
     private void clear(String path) throws StorageClientException {
-        removeFromCache(path, lockColumnFamily, path);
-        storageClient.remove(path, lockColumnFamily, path);
+        removeFromCache(keySpace, lockColumnFamily, path);
+        storageClient.remove(keySpace, lockColumnFamily, path);
     }
 
 
@@ -69,6 +69,7 @@ public class LockManagerImpl extends CachingManager implements LockManager {
             currentPath = StorageClientUtils.getParentObjectPath(currentPath);
         }
         Lock newLock = new Lock(path, currentUser, expires, extra);
+        LOGGER.debug("Applying lock {} {} ",path, newLock);
         putCached(keySpace, lockColumnFamily, path, newLock.getProperties() , false);
         return newLock.getToken();
     }
@@ -80,6 +81,7 @@ public class LockManagerImpl extends CachingManager implements LockManager {
             Lock lock = get(currentPath);
             if ( lock != null && !lock.hasExpired() ) {
                 if ( lock.isOwner(currentUser) && lock.hasToken(token)) {
+                    LOGGER.debug("Clearing lock at {} {} ",currentPath, lock);
                     clear(currentPath);
                 }
             }
@@ -90,22 +92,29 @@ public class LockManagerImpl extends CachingManager implements LockManager {
         }
     }
     
-    public LockState holdsLock(String path, String token) throws StorageClientException {
+    public LockState getLockState(String path, String token) throws StorageClientException {
         String currentPath = path;
         for(;;) {
             Lock lock = get(currentPath);
             if ( lock != null && !lock.hasExpired() ) {
+                LOGGER.debug("Lock is  not null and has not expired");
                 if ( lock.isOwner(currentUser) ) {
                     if ( lock.hasToken(token)) {
+                        LOGGER.debug("Has Owner locked with token");
                         return LockState.getOwnerLockedToken(currentPath, token);
                     } else {
+                        LOGGER.debug("Has Owner locked with not token");
                         return LockState.getOwnerLockedNoToken(currentPath);
                     }
                 } else {
+                    LOGGER.debug("Has User locked");
                     return LockState.getUserLocked(currentPath, lock.getOwner());
                 }
+            } else {
+                LOGGER.debug("Lock is null or has expired {} ",lock);
             }
             if ( StorageClientUtils.isRoot(currentPath)) {
+                LOGGER.debug("Has Not locked");
                 return LockState.getNotLocked();
             }
             currentPath = StorageClientUtils.getParentObjectPath(currentPath);
@@ -118,9 +127,11 @@ public class LockManagerImpl extends CachingManager implements LockManager {
         for(;;) {
             Lock lock = get(currentPath);
             if ( lock != null && !lock.hasExpired() ) {
+                LOGGER.debug("Is Locked {} {} {} ",new Object[]{path, currentPath, lock});
                 return true;
             }
             if ( StorageClientUtils.isRoot(currentPath)) {
+                LOGGER.debug("Is Not Locked {} ", path);
                 return false;
             }
             currentPath = StorageClientUtils.getParentObjectPath(currentPath);
