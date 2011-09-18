@@ -1,4 +1,4 @@
-package com.bradmcevoy.http.webdav;
+package ignore.com.bradmcevoy.http.webdav;
 
 
 public class RuntimeBadRequestException extends RuntimeException {

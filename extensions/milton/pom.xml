@@ -21,7 +21,7 @@
   <groupId>org.sakaiproject.nakamura</groupId>
   <artifactId>org.sakaiproject.nakamura.milton</artifactId>
   <packaging>bundle</packaging>
-  <version>1.6.3-SNAPSHOT</version>
+  <version>1.6.4-SNAPSHOT</version>
   <name>Sakai Nakamura :: Milton Support</name>
   <description>Provides Milton Jar  </description>
   <properties>
@@ -66,7 +66,7 @@
     <dependency>
 	  <groupId>com.ettrema</groupId>
 	  <artifactId>milton-api</artifactId>
-	  <version>1.6.3</version>    
+	  <version>1.6.4</version>    
     </dependency>
     <dependency>
 	  <groupId>eu.medsea.mimeutil</groupId>
@@ -86,7 +86,7 @@
     <dependency>
 	  <groupId>com.ettrema</groupId>
 	  <artifactId>milton-servlet</artifactId>
-	  <version>1.6.3</version>
+	  <version>1.6.4</version>
 	  <exclusions>
 	  	<exclusion>
 	  		<artifactId>spring</artifactId>

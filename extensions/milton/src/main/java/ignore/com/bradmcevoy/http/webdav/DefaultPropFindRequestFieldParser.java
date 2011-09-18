@@ -1,13 +1,14 @@
-package com.bradmcevoy.http.webdav;
+package ignore.com.bradmcevoy.http.webdav;
 
-import com.bradmcevoy.io.StreamUtils;
 import java.io.ByteArrayInputStream;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
 import javax.xml.namespace.QName;
+
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
@@ -15,6 +16,10 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
+import com.bradmcevoy.http.webdav.PropFindRequestFieldParser;
+import com.bradmcevoy.http.webdav.PropFindSaxHandler;
+import com.bradmcevoy.io.StreamUtils;
+// This was modified to correct bad xml processing.
 /**
  * Simple implmentation which just parses the request body. If no xml is present
  * it will return an empty set.
@@ -54,7 +59,9 @@ public class DefaultPropFindRequestFieldParser implements PropFindRequestFieldPa
                     // ignore
                 } catch( SAXException e ) {
                     log.warn( "exception parsing request body", e );
-                	throw new RuntimeBadRequestException(e.getMessage(), e);
+// ieb modification start
+                    throw new RuntimeBadRequestException(e.getMessage(), e);
+// ieb modificatoin end
                 }
             }
             return new ParseResult( false, set );

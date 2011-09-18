@@ -1,13 +1,19 @@
-package com.bradmcevoy.http;
+package ignore.com.bradmcevoy.http;
 
-import com.bradmcevoy.http.exceptions.BadRequestException;
+import ignore.com.bradmcevoy.http.webdav.RuntimeBadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.bradmcevoy.http.Filter;
+import com.bradmcevoy.http.FilterChain;
+import com.bradmcevoy.http.Handler;
+import com.bradmcevoy.http.HttpManager;
+import com.bradmcevoy.http.Request;
+import com.bradmcevoy.http.Response;
+import com.bradmcevoy.http.exceptions.BadRequestException;
 import com.bradmcevoy.http.exceptions.ConflictException;
 import com.bradmcevoy.http.exceptions.NotAuthorizedException;
-import com.bradmcevoy.http.webdav.RuntimeBadRequestException;
 
 public class StandardFilter implements Filter {
 
@@ -32,9 +38,11 @@ public class StandardFilter implements Filter {
                 }
                 handler.process( manager, request, response );
             }
+// ieb modification start
         } catch (RuntimeBadRequestException ex ) {
             log.warn( "BadRequestException: " + ex.getReason() );
             manager.getResponseHandler().respondBadRequest( null, response, request );
+// ieb modifiation end
         } catch( BadRequestException ex ) {
             log.warn( "BadRequestException: " + ex.getReason() );
             manager.getResponseHandler().respondBadRequest( ex.getResource(), response, request );

@@ -55,7 +55,7 @@
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
             <artifactId>org.sakaiproject.nakamura.milton</artifactId>
-            <version>1.6.3-SNAPSHOT</version>
+            <version>1.6.4-SNAPSHOT</version>
         </bundle>
 
     </startLevel>
