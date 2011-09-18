@@ -20,27 +20,34 @@ public class Lock {
     /**
      * @param path
      * @param user
-     * @param expires when the lock will expire in seconds from the time its created.
+     * @param expires
+     *            when the lock will expire in seconds from the time its
+     *            created.
      * @param extra
      */
-    public Lock(String path, String user, long expires, String extra) {
-        Builder<String, Object> b = ImmutableMap.builder();
-        b.put(Lock.PATH_FIELD, path);
-        b.put(Lock.USER_FIELD, user);
-        b.put(Lock.EXPIRES_FIELD, expires);
-        b.put(Lock.EXPIRES_AT_FIELD, System.currentTimeMillis()+(expires*1000L));
-        b.put(Lock.EXTRA_FIELD, extra);
-        b.put(Lock.TOKEN_FIELD, StorageClientUtils.insecureHash(System.currentTimeMillis()+":"+path+":"+user+":"+expires));
-        
-        lockMap = b.build();
+    public Lock(String path, String user, long timeoutInSeconds, String extra) {
+        this(path, user, timeoutInSeconds, extra, StorageClientUtils.insecureHash(System
+                .currentTimeMillis() + ":" + path + ":" + user + ":" + timeoutInSeconds));
     }
 
     public Lock(Map<String, Object> lockMap) {
         this.lockMap = ImmutableMap.copyOf(lockMap);
     }
 
+    public Lock(String path, String user, long timeoutInSeconds, String extra, String token) {
+        Builder<String, Object> b = ImmutableMap.builder();
+        b.put(Lock.PATH_FIELD, path);
+        b.put(Lock.USER_FIELD, user);
+        b.put(Lock.EXPIRES_FIELD, timeoutInSeconds);
+        b.put(Lock.EXPIRES_AT_FIELD, System.currentTimeMillis() + (timeoutInSeconds * 1000L));
+        b.put(Lock.EXTRA_FIELD, extra);
+        b.put(Lock.TOKEN_FIELD, token);
+
+        lockMap = b.build();
+    }
+
     public boolean hasExpired() {
-        return System.currentTimeMillis() > (Long)lockMap.get(Lock.EXPIRES_AT_FIELD);
+        return System.currentTimeMillis() > (Long) lockMap.get(Lock.EXPIRES_AT_FIELD);
     }
 
     public boolean isOwner(String currentUser) {
@@ -62,20 +69,20 @@ public class Lock {
     public String getOwner() {
         return (String) lockMap.get(USER_FIELD);
     }
-    
+
     @Override
     public String toString() {
         return String.valueOf(lockMap);
     }
-    
+
     @Override
     public boolean equals(Object obj) {
-        if ( obj instanceof Lock ) {
+        if (obj instanceof Lock) {
             return getToken().equals(((Lock) obj).getToken());
         }
         return false;
     }
-    
+
     @Override
     public int hashCode() {
         return getToken().hashCode();

@@ -70,8 +70,30 @@ public class LockManagerImpl extends CachingManager implements LockManager {
         }
         Lock newLock = new Lock(path, currentUser, expires, extra);
         LOGGER.debug("Applying lock {} {} ",path, newLock);
-        putCached(keySpace, lockColumnFamily, path, newLock.getProperties() , false);
+        putCached(keySpace, lockColumnFamily, path, newLock.getProperties() , true);
         return newLock.getToken();
+    }
+    
+    public String refreshLock(String path, long timeoutInSeconds, String extra, String token) throws StorageClientException {
+        String currentPath = path;
+        for(;;) {
+            Lock lock = get(currentPath);
+            if ( lock != null && !lock.hasExpired() ) {
+                LOGGER.debug("Lock is  not null and has not expired");
+                if ( lock.isOwner(currentUser) ) {
+                    if ( lock.hasToken(token)) {
+                        LOGGER.info("Has Owner locked with token {} {} {} {} {}", new Object[]{path, currentUser, timeoutInSeconds, extra, token});
+                        Lock newLock = new Lock(path, currentUser, timeoutInSeconds, extra, token);
+                        putCached(keySpace, lockColumnFamily, path, newLock.getProperties() , false);
+                        return newLock.getToken();
+                    }
+                }
+            }
+            if ( StorageClientUtils.isRoot(currentPath)) {
+                return null;
+            }
+            currentPath = StorageClientUtils.getParentObjectPath(currentPath);
+        }
     }
     
 

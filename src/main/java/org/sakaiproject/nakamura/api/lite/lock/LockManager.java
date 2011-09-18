@@ -18,7 +18,7 @@ public interface LockManager {
      * 
      * @param path
      *            the path to lock
-     * @param expires
+     * @param timeoutInSeconds
      *            ttl for the lock in s from the time it was created.
      * @param extra
      *            any extra information to be stored with the lock.
@@ -26,7 +26,7 @@ public interface LockManager {
      * @throws StorageClientException
      * @throws AlreadyLockedException
      */
-    String lock(String path, long expires, String extra) throws StorageClientException,
+    String lock(String path, long timeoutInSeconds, String extra) throws StorageClientException,
             AlreadyLockedException;
 
     /**
@@ -63,5 +63,16 @@ public interface LockManager {
      * @throws StorageClientException
      */
     boolean isLocked(String path) throws StorageClientException;
+
+    /**
+     * Refresh the lock keeping the same token.
+     * @param path
+     * @param timeoutInSeconds
+     * @param string
+     * @param token
+     * @return the token, which should be the same.
+     * @throws StorageClientException 
+     */
+    String refreshLock(String path, long timeoutInSeconds, String extra, String token) throws StorageClientException;
 
 }
