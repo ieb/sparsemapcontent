@@ -9,12 +9,18 @@ import java.util.Map;
  * system. If they determine that the map is of the appropriate type and needs
  * modification, they should modify it, and return true. If not they should
  * leave the map untouched. There is no guarantee in what order each migrator
- * might be called. If any PropertyMigrator modifies a set of properties, the
- * map will be resaved under the same key. If no properties are modified by any
- * PropertyMigrators, then the object will be re-indexed with the current index
- * operation. Un filtered access is given to all properties, so anyone
- * implementing this interface must take great care not to break referential
- * integrity of each object or invalidate the internals of the object.
+ * might be called. The lack of ordering avoids the situation where one migrator
+ * has a dependency on another migrator which would require those in production
+ * to ensure that they had all dependent migrators register. If that becomes a
+ * requirement then we will need to build a mechanism where migrators can
+ * express their dependencies and refuse to run if things they depend on are not
+ * present in the stack..... but perhaps thats what OSGi is for?. If any
+ * PropertyMigrator modifies a set of properties, the map will be re-saved under
+ * the same key. If no properties are modified by any PropertyMigrators, then
+ * the object will be re-indexed with the current index operation. Un-filtered
+ * access is given to all properties, so anyone implementing this interface must
+ * take great care not to break referential integrity of each object or
+ * invalidate the internals of the object.
  * 
  * The MigrateContentComponent is not active by default, and should only be made
  * active by an Administrator using the Web UI.
