@@ -2,6 +2,7 @@ package uk.co.tfd.sm.webdav;
 
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.slf4j.Logger;
@@ -43,7 +44,7 @@ public class MiltonContentResourceFactory implements ResourceFactory {
 			}
 			if ("/".equals(path) || "".equals(path) || path == null) {
 				LOGGER.debug("Root Object [{}] ", path);
-				return new MiltonContentResource(path, session, new Content(
+				return new MiltonContentResource(StorageClientUtils.getObjectName(basePath), path, session, new Content(
 						"/", null));
 			}
 			LOGGER.debug("Not Found {} ", path);

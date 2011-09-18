@@ -154,13 +154,18 @@ public class MiltonContentResource implements FileResource, FolderResource,
 	private Session session;
 	private boolean authorizedToWriteProperties;
 
-	public MiltonContentResource(String path, Session session, Content content) {
-		this.name = StorageClientUtils.getObjectName(path);
+	public MiltonContentResource(String name, String path, Session session, Content content) {
+		this.name = name;
 		this.path = path;
 		this.content = content;
 		this.session = session;
 		LOGGER.debug("Created content with content object of {} {} ", this,
 				this.content);
+	}
+
+	public MiltonContentResource(String path, Session session,
+			Content newContent) {
+		this(StorageClientUtils.getObjectName(path), path, session, newContent);
 	}
 
 	private static Map<Method, Permission> getMethodPermissionMap() {
@@ -229,7 +234,7 @@ public class MiltonContentResource implements FileResource, FolderResource,
 		return name;
 	}
 
-	public String getPath() {
+	private String getPath() {
 		return path;
 	}
 
