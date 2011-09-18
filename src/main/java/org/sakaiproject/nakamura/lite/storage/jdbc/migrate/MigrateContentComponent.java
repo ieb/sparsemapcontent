@@ -31,8 +31,30 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
 
-@Component(immediate = true, enabled = false, metatype=true)
-@Service(value=ManualOperationService.class)
+/**
+ * This component performs migration for JDBC only. It goes direct to the JDBC
+ * tables to get a lazy iterator of rowIDs direct from the StorageClient which
+ * it then updates one by one. In general this approach to migration is only
+ * suitable for the JDBC drivers since they are capable of producing a non in
+ * memory list of rowids, a migrator that targets the ColumDBs should probably
+ * use a MapReduce job to perform migration and avoid streaming all data through
+ * a single node over the network.
+ * 
+ * At present, the migrator does not record if an item has been migrated. Which
+ * means if a migration operation is stopped it will have to be restarted from
+ * the beginning and records that have already been migrated will get
+ * re-processed. To put a restart facility in place care will need to taken to
+ * ensure that updates to existing rows and new rows are tracked as well as the
+ * rows that have already been processed. In addition a performant way of
+ * querying all objects to get a dense list of items to be migrated. Its not
+ * impossible but needs some careful thought to make it work on realistic
+ * datasets (think 100M records+, don't think 10K records)
+ * 
+ * @author ieb
+ * 
+ */
+@Component(immediate = true, enabled = false, metatype = true)
+@Service(value = ManualOperationService.class)
 public class MigrateContentComponent implements ManualOperationService {
 
     public interface IdExtractor {
