@@ -79,7 +79,6 @@ public class MiltonContentResource implements FileResource, FolderResource,
 		private String asString;
 		private LockTimeout lockTimeout;
 
-
 		public LockHolder(LockInfo lockInfo, LockTimeout timeout) {
 			Long timeoutSeconds = timeout.getSeconds();
 			if (timeoutSeconds == null) {
@@ -91,8 +90,8 @@ public class MiltonContentResource implements FileResource, FolderResource,
 			this.timeoutSeconds = timeoutSeconds;
 			this.expiryTime = t.date.getTime();
 			asString = lockInfo.lockedByUser + ":" + lockInfo.depth + ":"
-			+ lockInfo.scope + ":" + lockInfo.type + ":"
-			+ expiryTime + ":" + timeoutSeconds;
+					+ lockInfo.scope + ":" + lockInfo.type + ":" + expiryTime
+					+ ":" + timeoutSeconds;
 
 		}
 
@@ -103,12 +102,14 @@ public class MiltonContentResource implements FileResource, FolderResource,
 					LockDepth.valueOf(parts[1]));
 			this.expiryTime = Long.parseLong(parts[4]);
 			if (adjustTimeout) {
-				timeoutSeconds =
-						((System.currentTimeMillis() - expiryTime) / 1000);
+				timeoutSeconds = ((System.currentTimeMillis() - expiryTime) / 1000);
 			} else {
 				timeoutSeconds = Long.parseLong(parts[5]);
 			}
 			this.lockTimeout = new LockTimeout(timeoutSeconds);
+			asString = lockInfo.lockedByUser + ":" + lockInfo.depth + ":"
+					+ lockInfo.scope + ":" + lockInfo.type + ":" + expiryTime
+					+ ":" + timeoutSeconds;
 
 		}
 
@@ -128,7 +129,6 @@ public class MiltonContentResource implements FileResource, FolderResource,
 		public LockTimeout getLockTimeout() {
 			return lockTimeout;
 		}
-
 
 	}
 
@@ -267,15 +267,6 @@ public class MiltonContentResource implements FileResource, FolderResource,
 			LOGGER.debug("Authorized {} ", permission);
 			authorizedToWriteProperties = PROPERTY_WRITE_METHODS
 					.contains(method);
-			// check if the item is locked
-			if (WRITE_METHODS.contains(method)) {
-				LockToken lockToken = getCurrentLock();
-				if (lockToken != null
-						&& !lockToken.info.lockedByUser.equals(session
-								.getUserId()) && !lockToken.isExpired()) {
-					return false; // locked by another user
-				}
-			}
 			return true;
 		} catch (AccessDeniedException e) {
 			LOGGER.error(e.getMessage(), e);
@@ -314,7 +305,7 @@ public class MiltonContentResource implements FileResource, FolderResource,
 
 	public void delete() throws NotAuthorizedException, ConflictException,
 			BadRequestException {
-		LOGGER.debug("Delete ");
+		LOGGER.debug("Delete On {} ", path);
 		try {
 			Iterable<String> i = content.listChildPaths();
 			if (i.iterator().hasNext()) {
@@ -328,6 +319,7 @@ public class MiltonContentResource implements FileResource, FolderResource,
 			throw new BadRequestException(this, e.getMessage());
 		}
 	}
+
 
 	public void sendContent(OutputStream out, Range range,
 			Map<String, String> params, String contentType) throws IOException,
@@ -618,7 +610,7 @@ public class MiltonContentResource implements FileResource, FolderResource,
 
 	public LockToken createAndLock(String name, LockTimeout timeout,
 			LockInfo lockInfo) throws NotAuthorizedException {
-		LOGGER.info("Create And Lock {} {} ", timeout, lockInfo);
+		LOGGER.debug("Create And Lock {} {} ", timeout, lockInfo);
 
 		try {
 			String newPath = StorageClientUtils.newPath(path, name);
@@ -656,18 +648,22 @@ public class MiltonContentResource implements FileResource, FolderResource,
 		try {
 			LockState lockState = session.getLockManager().getLockState(path,
 					token);
+			LOGGER.debug("Refreshing lock with {} gave {} ", token, lockState);
 			if (lockState.isOwner() && lockState.hasMatchedToken()
 					&& path.equals(lockState.getLockPath())) {
+				LOGGER.debug("Refreshing lock ");
 				LockHolder lock = new LockHolder(lockState.getExtra(), false);
+				session.getLockManager().refreshLock(path,
+						lock.getTimeoutInSeconds(), lock.toString(), token);
 				LockInfo lockInfo = lock.getLockInfo();
-				LockTimeout timeout =lock.getLockTimeout();
-				return lock(timeout, lockInfo);
+				LockTimeout timeout = lock.getLockTimeout();
+				return LockResult.success(new LockToken(token, lockInfo,
+						timeout));
 			}
+			LOGGER.debug("Not Refreshing Lock");
 		} catch (StorageClientException e) {
 			LOGGER.error(e.getMessage(), e);
 			throw new NotAuthorizedException(this);
-		} catch (LockedException e) {
-			LOGGER.debug(e.getMessage(),e);
 		}
 		throw new PreConditionFailedException(this);
 	}
@@ -690,18 +686,26 @@ public class MiltonContentResource implements FileResource, FolderResource,
 
 	public LockToken getCurrentLock() {
 		try {
-			LockState lockState = session.getLockManager().getLockState(path,
-					"unknown");
+			// get the lock regardless, the handlers should deal with locking.
+			LockState lockState = session.getLockManager().getLockState(
+					path, "unknown");
 			if (lockState.isLocked()) {
+				LOGGER.debug(" getCurrentLock() Found Lock {} {} ", path,
+						lockState);
 				String extra = lockState.getExtra();
 				String token = lockState.getToken();
 				LockHolder lockHolder = new LockHolder(extra, true);
-				return new LockToken(token, lockHolder.getLockInfo(), lockHolder.getLockTimeout());
+				LockToken lockToken = new LockToken(token, lockHolder.getLockInfo(),
+						lockHolder.getLockTimeout());
+				return new LockToken(token, lockHolder.getLockInfo(),
+						lockHolder.getLockTimeout());
 			}
+			LOGGER.debug("No Lock Present at {} ", path);
 		} catch (StorageClientException e) {
 			LOGGER.error(e.getMessage(), e);
 		}
 		return null;
 	}
+
 
 }
