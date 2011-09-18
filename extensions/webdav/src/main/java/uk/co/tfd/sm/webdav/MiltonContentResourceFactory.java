@@ -24,7 +24,7 @@ public class MiltonContentResourceFactory implements ResourceFactory {
 	public Resource getResource(String host, String path) {
 		Session session = (Session) HttpManager.request().getAuthorization()
 				.getTag();
-		LOGGER.info("Get Resource for [{}] ", path);
+		LOGGER.debug("Get Resource for [{}] ", path);
 		if ( path == null  ) {
 			path = "/";
 		} else if ( path != null && path.startsWith(basePath) ) {
@@ -42,15 +42,15 @@ public class MiltonContentResourceFactory implements ResourceFactory {
 				return new MiltonContentResource(path, session, content);
 			}
 			if ("/".equals(path) || "".equals(path) || path == null) {
-				LOGGER.info("Root Object [{}] ", path);
+				LOGGER.debug("Root Object [{}] ", path);
 				return new MiltonContentResource(path, session, new Content(
 						"/", null));
 			}
-			LOGGER.info("Not Found {} ", path);
+			LOGGER.debug("Not Found {} ", path);
 		} catch (StorageClientException e) {
 			LOGGER.error(e.getMessage(), e);
 		} catch (AccessDeniedException e) {
-			LOGGER.info(e.getMessage());
+			LOGGER.debug(e.getMessage());
 		}
 		return null;
 	}

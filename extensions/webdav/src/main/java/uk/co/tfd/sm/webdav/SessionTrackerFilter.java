@@ -25,14 +25,14 @@ public class SessionTrackerFilter implements Filter, SparseSessionTracker {
 		try {
 			chain.process(request, response);
 			for ( Session s : tracker.get()) {
-				LOGGER.info("Committing {} ", s);
+				LOGGER.debug("Committing {} ", s);
 				s.commit();
 			}
 		} finally {
 			Set<Session> sessions = tracker.get();
 			for ( Session s : sessions) {
 				try {
-					LOGGER.info("Logout {} ", s);
+					LOGGER.debug("Logout {} ", s);
 					s.logout();
 				} catch (ClientPoolException e) {
 					LOGGER.error(e.getMessage(),e);
