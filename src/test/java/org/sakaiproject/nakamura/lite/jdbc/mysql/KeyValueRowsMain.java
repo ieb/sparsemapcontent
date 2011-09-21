@@ -227,7 +227,7 @@ public class KeyValueRowsMain {
         KeyValueRowsMain tmr = new KeyValueRowsMain();
         tmr.open();
         tmr.createTables(30);
-        tmr.populateDictionary(1000);
+        tmr.populateDictionary(20);
         tmr.loadTable(30, 10000);
         tmr.testSelect(1, 0, 30, 5000);
         tmr.testSelect(2, 0, 30, 5000);

@@ -174,7 +174,7 @@ public class MultiRowsMain {
         MultiRowsMain tmr = new MultiRowsMain();
         tmr.open();
         tmr.createTables(25);
-        tmr.populateDictionary(1000);
+        tmr.populateDictionary(20);
         tmr.loadTable(25, 10000);
         tmr.testSelect(1, 0, 25, 5000);
         tmr.testSelect(2, 0, 25, 5000);

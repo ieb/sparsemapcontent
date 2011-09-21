@@ -1,4 +1,4 @@
-package org.sakaiproject.nakamura.lite.jdbc.derby;
+package org.sakaiproject.nakamura.lite.jdbc.postgresql;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -31,19 +31,22 @@ public class MultiRowsMain {
         FileUtils.deleteQuietly(new File(file));
     }
     
-    public void open(String file) throws SQLException {
-        connection = DriverManager.getConnection("jdbc:derby:"+file+"/db;create=true", "sa", "");        
+    public void open() throws SQLException {
+        connection = DriverManager
+        .getConnection("jdbc:postgresql://localhost/nak", "nakamura", "nakamura");
+        connection.setAutoCommit(false);
     }
     
     public void createTables(int columns) throws SQLException {
         Statement s = connection.createStatement();
+        s.execute("DROP table if exists cn_css_index cascade");
         StringBuilder sql = new StringBuilder();
         sql.append("CREATE TABLE cn_css_index (");
         sql.append("rid varchar(32) NOT NULL,");
         for ( int i = 0; i < columns; i++ ) {
             sql.append("v").append(i).append(" varchar(780),");
         }
-        sql.append("primary key(rid))");
+        sql.append("constraint cn_css_index_pk primary key(rid))");
         s.execute(sql.toString());
         for ( int i = 0; i < columns; i++) {
             s.execute("CREATE INDEX cn_css_index_v"+i+" ON cn_css_index (v"+i+")");
@@ -169,13 +172,8 @@ public class MultiRowsMain {
     
     public static void main(String[] argv) throws SQLException, NoSuchAlgorithmException, UnsupportedEncodingException {
         MultiRowsMain tmr = new MultiRowsMain();
-        String db = "target/testwide";
-        tmr.deleteDb(db);
-        boolean exists = new File("target/testwide").exists();
-        tmr.open(db);
-        if ( ! exists ) {
-            tmr.createTables(30);
-        }
+        tmr.open();
+        tmr.createTables(30);
         tmr.populateDictionary(20);
         tmr.loadTable(30, 10000);
         tmr.testSelect(1, 0, 30, 5000);

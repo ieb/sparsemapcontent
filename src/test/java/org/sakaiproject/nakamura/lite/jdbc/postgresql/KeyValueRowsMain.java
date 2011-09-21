@@ -1,4 +1,4 @@
-package org.sakaiproject.nakamura.lite.jdbc.derby;
+package org.sakaiproject.nakamura.lite.jdbc.postgresql;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -29,23 +29,25 @@ public class KeyValueRowsMain {
         FileUtils.deleteQuietly(new File(file));
     }
 
-    public void open(String file) throws SQLException {
-        connection = DriverManager
-                .getConnection("jdbc:derby:" + file + "/db;create=true", "sa", "");
+    public void open() throws SQLException {
+        connection = DriverManager.getConnection("jdbc:postgresql://localhost/nak", "nakamura", "nakamura");
+        connection.setAutoCommit(false);
     }
 
     public void createTables(int columns) throws SQLException {
         Statement s = connection.createStatement();
+        s.execute("DROP TABLE IF EXISTS cn_css_kv cascade");
         StringBuilder sql = new StringBuilder();
         sql.append("CREATE TABLE cn_css_kv (");
-        sql.append("id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1),");
+        sql.append("id serial,");
         sql.append("rid varchar(32) NOT NULL,");
         sql.append("cid varchar(64) NOT NULL,");
-        sql.append("v varchar(740),");
-        sql.append("primary key(id))");
+        sql.append("v varchar(780),");
+        sql.append("constraint cn_css_kv_pk primary key(id)) ");
         s.execute(sql.toString());
-        s.execute("CREATE UNIQUE INDEX cn_css_kv_rc ON cn_css_kv (rid,cid)");
-        s.execute("CREATE INDEX cn_css_kv_cv ON cn_css_kv (cid,v)");
+        s.execute("CREATE INDEX cn_css_kv_rowkey ON cn_css_kv (rid,cid)");
+        s.execute("CREATE INDEX cn_css_kv_locate ON cn_css_kv (v,cid)");
+
         s.close();
     }
 
@@ -225,13 +227,8 @@ public class KeyValueRowsMain {
     public static void main(String[] argv) throws SQLException, NoSuchAlgorithmException,
             UnsupportedEncodingException {
         KeyValueRowsMain tmr = new KeyValueRowsMain();
-        String db = "target/testkv";
-        tmr.deleteDb(db);
-        boolean exists = new File(db).exists();
-        tmr.open(db);
-        if (!exists) {
-            tmr.createTables(30);
-        }
+        tmr.open();
+        tmr.createTables(30);
         tmr.populateDictionary(20);
         tmr.loadTable(30, 10000);
         tmr.testSelect(1, 0, 30, 5000);
