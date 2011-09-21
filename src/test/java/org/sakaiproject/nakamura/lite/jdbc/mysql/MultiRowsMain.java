@@ -1,4 +1,4 @@
-package org.sakaiproject.nakamura.lite.jdbc.derby;
+package org.sakaiproject.nakamura.lite.jdbc.mysql;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -31,19 +31,22 @@ public class MultiRowsMain {
         FileUtils.deleteQuietly(new File(file));
     }
     
-    public void open(String file) throws SQLException {
-        connection = DriverManager.getConnection("jdbc:derby:"+file+"/db;create=true", "sa", "");        
+    public void open() throws SQLException {
+        connection = DriverManager
+        .getConnection("jdbc:mysql://127.0.0.1:3306/sakai22?useUnicode=true&amp;characterEncoding=UTF-8", "sakai22", "sakai22");
+        connection.setAutoCommit(false);
     }
     
     public void createTables(int columns) throws SQLException {
         Statement s = connection.createStatement();
+        s.execute("DROP TABLE IF EXISTS cn_css_index");
         StringBuilder sql = new StringBuilder();
         sql.append("CREATE TABLE cn_css_index (");
         sql.append("rid varchar(32) NOT NULL,");
         for ( int i = 0; i < columns; i++ ) {
             sql.append("v").append(i).append(" varchar(780),");
         }
-        sql.append("primary key(rid))");
+        sql.append("primary key(rid)) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci");
         s.execute(sql.toString());
         for ( int i = 0; i < columns; i++) {
             s.execute("CREATE INDEX cn_css_index_v"+i+" ON cn_css_index (v"+i+")");
@@ -169,29 +172,25 @@ public class MultiRowsMain {
     
     public static void main(String[] argv) throws SQLException, NoSuchAlgorithmException, UnsupportedEncodingException {
         MultiRowsMain tmr = new MultiRowsMain();
-        String db = "target/testwide";
-        boolean exists = new File("target/testwide").exists();
-        tmr.open(db);
-        if ( ! exists ) {
-            tmr.createTables(30);
-        }
+        tmr.open();
+        tmr.createTables(25);
         tmr.populateDictionary(1000);
-        tmr.loadTable(30, 200000);
-        tmr.testSelect(1, 0, 30, 5000);
-        tmr.testSelect(2, 0, 30, 5000);
-        tmr.testSelect(3, 0, 30, 5000);
-        tmr.testSelect(4, 0, 30, 5000);
-        tmr.testSelect(5, 0, 30, 5000);
-        tmr.testSelect(1, 1, 30, 5000);
-        tmr.testSelect(2, 1, 30, 5000);
-        tmr.testSelect(3, 1, 30, 5000);
-        tmr.testSelect(4, 1, 30, 5000);
-        tmr.testSelect(5, 1, 30, 5000);
-        tmr.testSelect(1, 2, 30, 5000);
-        tmr.testSelect(2, 2, 30, 5000);
-        tmr.testSelect(3, 2, 30, 5000);
-        tmr.testSelect(4, 2, 30, 5000);
-        tmr.testSelect(5, 2, 30, 5000);
+        tmr.loadTable(25, 10000);
+        tmr.testSelect(1, 0, 25, 5000);
+        tmr.testSelect(2, 0, 25, 5000);
+        tmr.testSelect(3, 0, 25, 5000);
+        tmr.testSelect(4, 0, 25, 5000);
+        tmr.testSelect(5, 0, 25, 5000);
+        tmr.testSelect(1, 1, 25, 5000);
+        tmr.testSelect(2, 1, 25, 5000);
+        tmr.testSelect(3, 1, 25, 5000);
+        tmr.testSelect(4, 1, 25, 5000);
+        tmr.testSelect(5, 1, 25, 5000);
+        tmr.testSelect(1, 2, 25, 5000);
+        tmr.testSelect(2, 2, 25, 5000);
+        tmr.testSelect(3, 2, 25, 5000);
+        tmr.testSelect(4, 2, 25, 5000);
+        tmr.testSelect(5, 2, 25, 5000);
         tmr.close();
     }
 
