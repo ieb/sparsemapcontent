@@ -59,6 +59,21 @@ CREATE SEQUENCE seq_ac_css_id;
 CREATE INDEX ac_css_rowkey ON ac_css(rid,cid);
 CREATE INDEX ac_css_cid_locate_i ON ac_css(v,cid);
 
+########### DROP TABLE lk_css;
+
+CREATE TABLE  lk_css (
+  id NUMBER NOT NULL,
+  rid varchar2(32) NOT NULL,
+  cid varchar2(64) NOT NULL,
+  v varchar2(780) NOT NULL,
+  PRIMARY KEY  (id))
+;
+
+CREATE SEQUENCE seq_ac_css_id;
+
+CREATE INDEX lk_css_rowkey ON lk_css(rid,cid);
+CREATE INDEX lk_css_cid_locate_i ON lk_css(v,cid);
+
 ########### DROP TABLE css_b;
 
 CREATE TABLE  css_b (
@@ -86,6 +101,15 @@ CREATE TABLE  au_css_b (
 ########### DROP TABLE ac_css_b;
 
 CREATE TABLE  ac_css_b (
+  rid varchar2(32) NOT NULL,
+  b blob,
+  PRIMARY KEY (rid) )
+;
+
+
+########### DROP TABLE lk_css_b;
+
+CREATE TABLE  lk_css_b (
   rid varchar2(32) NOT NULL,
   b blob,
   PRIMARY KEY (rid) )
