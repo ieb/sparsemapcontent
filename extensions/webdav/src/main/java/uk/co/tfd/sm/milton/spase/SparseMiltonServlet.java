@@ -1,4 +1,4 @@
-package uk.co.tfd.sm.webdav;
+package uk.co.tfd.sm.milton.spase;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,6 +21,9 @@ import org.sakaiproject.nakamura.api.lite.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.co.tfd.sm.milton.MiltonSecurityManager;
+import uk.co.tfd.sm.milton.SessionTrackerFilter;
+
 import com.bradmcevoy.http.AuthenticationHandler;
 import com.bradmcevoy.http.AuthenticationService;
 import com.bradmcevoy.http.Filter;
@@ -39,13 +42,13 @@ import com.google.common.collect.Lists;
 @Component(immediate = true, metatype = true)
 @Service(value = Servlet.class)
 @Properties(value = { @Property(name = "alias", value = "/dav") })
-public class MiltonServlet extends HttpServlet {
+public class SparseMiltonServlet extends HttpServlet {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -7451452381693049651L;
-	private static final Logger LOGGER = LoggerFactory.getLogger(MiltonServlet.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(SparseMiltonServlet.class);
 	private HttpManager httpManager;
 
 	@Reference
@@ -57,7 +60,7 @@ public class MiltonServlet extends HttpServlet {
 		if ( basePath == null ) {
 			basePath = "/dav";
 		}
-		ResourceFactory resourceFactory = new MiltonContentResourceFactory(basePath);
+		ResourceFactory resourceFactory = new SparseMiltonContentResourceFactory(basePath);
 		SessionTrackerFilter sessionTrackerFilter = new SessionTrackerFilter();
 		SecurityManager securityManager = new MiltonSecurityManager(repository, sessionTrackerFilter, basePath);
 		List<AuthenticationHandler> authHandlers = Lists.immutableList(

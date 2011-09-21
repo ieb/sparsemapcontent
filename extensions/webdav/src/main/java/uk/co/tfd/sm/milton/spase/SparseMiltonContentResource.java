@@ -1,4 +1,4 @@
-package uk.co.tfd.sm.webdav;
+package uk.co.tfd.sm.milton.spase;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,7 +67,7 @@ import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
-public class MiltonContentResource implements FileResource, FolderResource,
+public class SparseMiltonContentResource implements FileResource, FolderResource,
 		MultiNamespaceCustomPropertyResource, LockableResource,
 		LockingCollectionResource {
 
@@ -133,7 +133,7 @@ public class MiltonContentResource implements FileResource, FolderResource,
 	}
 
 	private static final Logger LOGGER = LoggerFactory
-			.getLogger(MiltonContentResource.class);
+			.getLogger(SparseMiltonContentResource.class);
 	private static final Map<Method, Permission> METHOD_PERMISSIONS = getMethodPermissionMap();
 	private static final Set<Method> PROPERTY_WRITE_METHODS = ImmutableSet
 			.of(Method.PROPPATCH);
@@ -154,7 +154,7 @@ public class MiltonContentResource implements FileResource, FolderResource,
 	private Session session;
 	private boolean authorizedToWriteProperties;
 
-	public MiltonContentResource(String name, String path, Session session, Content content) {
+	public SparseMiltonContentResource(String name, String path, Session session, Content content) {
 		this.name = name;
 		this.path = path;
 		this.content = content;
@@ -163,7 +163,7 @@ public class MiltonContentResource implements FileResource, FolderResource,
 				this.content);
 	}
 
-	public MiltonContentResource(String path, Session session,
+	public SparseMiltonContentResource(String path, Session session,
 			Content newContent) {
 		this(StorageClientUtils.getObjectName(path), path, session, newContent);
 	}
@@ -209,7 +209,7 @@ public class MiltonContentResource implements FileResource, FolderResource,
 		try {
 			String sourcePath = path;
 			String destPath = StorageClientUtils.newPath(
-					((MiltonContentResource) toCollection).getPath(), name);
+					((SparseMiltonContentResource) toCollection).getPath(), name);
 			StorageClientUtils.copyTree(session.getContentManager(),
 					sourcePath, destPath, true);
 		} catch (StorageClientException e) {
@@ -415,7 +415,7 @@ public class MiltonContentResource implements FileResource, FolderResource,
 		try {
 			String sourcePath = path;
 			String destPath = StorageClientUtils.newPath(
-					((MiltonContentResource) rDest).getPath(), name);
+					((SparseMiltonContentResource) rDest).getPath(), name);
 			LOGGER.debug(
 					"====================================== Moving from {} to {} ",
 					sourcePath, destPath);
@@ -463,7 +463,7 @@ public class MiltonContentResource implements FileResource, FolderResource,
 					(Object) true));
 			contentManager.update(newContent);
 			newContent = contentManager.get(newPath);
-			return new MiltonContentResource(newPath, session, newContent);
+			return new SparseMiltonContentResource(newPath, session, newContent);
 		} catch (StorageClientException e) {
 			throw new BadRequestException(this, e.getMessage());
 		} catch (AccessDeniedException e) {
@@ -477,7 +477,7 @@ public class MiltonContentResource implements FileResource, FolderResource,
 			String newPath = StorageClientUtils.newPath(path, childName);
 			Content c = session.getContentManager().get(newPath);
 			if (c != null) {
-				return new MiltonContentResource(newPath, session, c);
+				return new SparseMiltonContentResource(newPath, session, c);
 			}
 		} catch (StorageClientException e) {
 			LOGGER.error(e.getMessage(), e);
@@ -492,16 +492,16 @@ public class MiltonContentResource implements FileResource, FolderResource,
 		LOGGER.debug("Get Children ");
 		final Iterator<Content> children = content.listChildren().iterator();
 		return Lists
-				.immutableList(new PreemptiveIterator<MiltonContentResource>() {
+				.immutableList(new PreemptiveIterator<SparseMiltonContentResource>() {
 
-					private MiltonContentResource resource;
+					private SparseMiltonContentResource resource;
 
 					@Override
 					protected boolean internalHasNext() {
 						while (children.hasNext()) {
 							Content n = children.next();
 							if (n != null) {
-								resource = new MiltonContentResource(n
+								resource = new SparseMiltonContentResource(n
 										.getPath(), session, n);
 								return true;
 							}
@@ -511,7 +511,7 @@ public class MiltonContentResource implements FileResource, FolderResource,
 					}
 
 					@Override
-					protected MiltonContentResource internalNext() {
+					protected SparseMiltonContentResource internalNext() {
 						return resource;
 					}
 
@@ -536,7 +536,7 @@ public class MiltonContentResource implements FileResource, FolderResource,
 			contentManager.update(newContent);
 			contentManager.writeBody(newPath, inputStream);
 			newContent = contentManager.get(newPath);
-			return new MiltonContentResource(newPath, session, newContent);
+			return new SparseMiltonContentResource(newPath, session, newContent);
 		} catch (StorageClientException e) {
 			throw new BadRequestException(this, e.getMessage());
 		} catch (AccessDeniedException e) {

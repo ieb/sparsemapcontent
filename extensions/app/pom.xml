@@ -46,8 +46,8 @@
                             <!-- add in our jetty config -->
                             <jarWebSupport>
                                  <groupId>org.sakaiproject.nakamura</groupId>
-                                 <artifactId>org.sakaiproject.nakamura.jetty-config</artifactId>
-                                 <version>0.11-SNAPSHOT</version>
+                                 <artifactId>uk.co.tfd.sm.jetty</artifactId>
+                                 <version>0.1-SNAPSHOT</version>
                                  <startLevel>5</startLevel>
                            </jarWebSupport>
                         </configuration>

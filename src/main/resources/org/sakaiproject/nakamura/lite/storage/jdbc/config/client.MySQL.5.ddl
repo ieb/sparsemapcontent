@@ -15,7 +15,7 @@ CREATE TABLE  `css` (
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
   PRIMARY KEY  (`id`),
-  KEY `rowkey` USING BTREE (`rid`,`cid`),
+  KEY `rowkey`  (`rid`,`cid`),
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -28,7 +28,7 @@ CREATE TABLE  `au_css` (
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
   PRIMARY KEY  (`id`),
-  KEY `rowkey` USING BTREE (`rid`,`cid`),
+  KEY `rowkey`  (`rid`,`cid`),
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -40,7 +40,7 @@ CREATE TABLE  `cn_css` (
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
   PRIMARY KEY  (`id`),
-  KEY `rowkey` USING BTREE (`rid`,`cid`),
+  KEY `rowkey`  (`rid`,`cid`),
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -53,9 +53,10 @@ CREATE TABLE  `ac_css` (
   `cid` varchar(64) NOT NULL,
   `v` varchar(780) NOT NULL,
   PRIMARY KEY  (`id`),
-  KEY `rowkey` USING BTREE (`rid`,`cid`),
+  KEY `rowkey`  (`rid`,`cid`),
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
 
 CREATE TABLE css_w (
   `rid` varchar(32) NOT NULL,
@@ -86,7 +87,6 @@ CREATE TABLE  css_wr (
   unique key css_r_cid (`cf`,`cid`),
   unique key css_r_cnam (`cf`,`cname`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-  
 
 
 # Body Store. In some cases we want to store the bodies of the objects in a binary serialized lump

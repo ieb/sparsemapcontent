@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metatype:MetaData xmlns:metatype="http://www.osgi.org/xmlns/metatype/v1.0.0" localization="OSGI-INF/metatype/metatype">
+    <OCD id="org.sakaiproject.nakamura.jetty.StaticContentServiceFactory" 
+    name="%org.sakaiproject.nakamura.jetty.StaticContentServiceFactory.name" 
+    description="%org.sakaiproject.nakamura.jetty.StaticContentServiceFactory.description">
+        <AD id="alias" type="String" default="/" name="%alias.name" description="%alias.description"/>
+        <AD id="acceptRanges" type="Boolean" default="true" name="%acceptRanges.name" description="%acceptRanges.description"/>
+        <AD id="dirAllowed" type="Boolean" default="true" name="%dirAllowed.name" description="%dirAllowed.description"/>
+        <AD id="gzip" type="Boolean" default="true" name="%gzip.name" description="%gzip.description"/>
+        <AD id="resourceBase" type="String" default="" name="%resourceBase.name" description="%resourceBase.description"/>
+        <AD id="relativeResourceBase" type="String" default="" name="%relativeResourceBase.name" description="%relativeResourceBase.description"/>
+        <AD id="aliases" type="Boolean" default="false" name="%aliases.name" description="%aliases.description"/>
+        <AD id="maxCacheSize" type="String" default="" name="%maxCacheSize.name" description="%maxCacheSize.description"/>
+        <AD id="maxCachedFileSize" type="String" default="" name="%maxCachedFileSize.name" description="%maxCachedFileSize.description"/>
+        <AD id="relativeResourceBase" type="String" default="" name="%relativeResourceBase.name" description="%relativeResourceBase.description"/>
+        <AD id="relativeResourceBase" type="String" default="" name="%relativeResourceBase.name" description="%relativeResourceBase.description"/>
+    </OCD>
+    <Designate pid="org.sakaiproject.nakamura.jetty.StaticContentServiceFactory">
+        <Object ocdref="org.sakaiproject.nakamura.jetty.StaticContentServiceFactory"/>
+    </Designate>
+</metatype:MetaData>
+
+
+@Property(name="alias", value="/"),
+@Property(name="acceptRanges", boolValue=true),
+@Property(name="dirAllowed", boolValue=true),
+@Property(name="gzip", boolValue=true),
+@Property(name="resourceBase", value=""),
+@Property(name="relativeResourceBase", value=""),
+@Property(name="aliases", boolValue=true),
+@Property(name="maxCacheSize", intValue=""),
+@Property(name="maxCachedFileSize", intValue=""),
+@Property(name="relativeResourceBase", intValue=""),

@@ -77,6 +77,38 @@ GRANT ALL ON TABLE ac_css TO nakrole;
 CREATE INDEX ac_css_cid_locate_i ON ac_css (v, cid);
 CREATE INDEX ac_css_rowkey ON ac_css (rid, cid);
 
+
+CREATE TABLE css_w (
+  rid varchar(32) NOT NULL,
+  constraint css_w_pk primary key(rid)
+);
+
+CREATE TABLE ac_css_w (
+  rid varchar(32) NOT NULL,
+  constraint ac_css_w_pk primary key(rid)
+);
+
+CREATE TABLE au_css_w (
+  rid varchar(32) NOT NULL,
+  constraint au_css_w_pk primary key(rid)
+);
+
+CREATE TABLE cn_css_w (
+  rid varchar(32) NOT NULL,
+  constraint cn_css_w_pk primary key(rid)
+);
+
+ 
+CREATE TABLE  css_wr (
+  id INT NOT NULL AUTO_INCREMENT,
+  cf varchar(32) NOT NULL,
+  cid varchar(64) NOT NULL,
+  cname varchar(64) NOT NULL,
+  constraint cn_css_w_pk primary key(id),
+  constraint css_r_cid unique  (cf,cid),
+  constraint css_r_cnam unique  (cf,cname)
+);
+
 ########### DROP TABLE css_b;
 
 

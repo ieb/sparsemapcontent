@@ -1,4 +1,4 @@
-package uk.co.tfd.sm.webdav;
+package uk.co.tfd.sm.milton;
 
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.SparseSessionTracker;

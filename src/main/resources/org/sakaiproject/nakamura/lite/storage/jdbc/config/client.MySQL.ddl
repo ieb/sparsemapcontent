@@ -62,6 +62,36 @@ CREATE TABLE  `ac_css` (
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+CREATE TABLE css_w (
+  `rid` varchar(32) NOT NULL,
+  primary key(`rid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE ac_css_w (
+  `rid` varchar(32) NOT NULL,
+  primary key(`rid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE au_css_w (
+  `rid` varchar(32) NOT NULL,
+  primary key(`rid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE cn_css_w (
+  `rid` varchar(32) NOT NULL,
+  primary key(`rid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+ 
+CREATE TABLE  css_wr (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `cf` varchar(32) NOT NULL,
+  `cid` varchar(64) NOT NULL,
+  `cname` varchar(64) NOT NULL,
+  primary key(`id`),
+  unique key css_r_cid (`cf`,`cid`),
+  unique key css_r_cnam (`cf`,`cname`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
 
 # Body Store. In some cases we want to store the bodies of the objects in a binary serialized lump
 # This allows us to load and save the sparse map without using multiple records in the above tables and hence is more compact

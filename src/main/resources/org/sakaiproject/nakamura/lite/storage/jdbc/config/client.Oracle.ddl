@@ -5,8 +5,7 @@ CREATE TABLE  css (
   rid varchar2(32) NOT NULL,
   cid varchar2(64) NOT NULL,
   v varchar2(780) NOT NULL,
-  PRIMARY KEY  (id))
-;
+  PRIMARY KEY  (id));
 
 CREATE SEQUENCE seq_css_id;
 
@@ -23,8 +22,7 @@ CREATE TABLE  au_css (
   rid varchar2(32) NOT NULL,
   cid varchar2(64) NOT NULL,
   v varchar2(780) NOT NULL,
-  PRIMARY KEY  (id))
-;
+  PRIMARY KEY  (id));
 
 CREATE SEQUENCE seq_au_css_id;
 

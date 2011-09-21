@@ -1,4 +1,4 @@
-package uk.co.tfd.sm.webdav;
+package uk.co.tfd.sm.milton.spase;
 
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -12,13 +12,13 @@ import com.bradmcevoy.http.HttpManager;
 import com.bradmcevoy.http.Resource;
 import com.bradmcevoy.http.ResourceFactory;
 
-public class MiltonContentResourceFactory implements ResourceFactory {
+public class SparseMiltonContentResourceFactory implements ResourceFactory {
 
 	private static final Logger LOGGER = LoggerFactory
-			.getLogger(MiltonContentResourceFactory.class);
+			.getLogger(SparseMiltonContentResourceFactory.class);
 	private String basePath;
 
-	public MiltonContentResourceFactory(String basePath) {
+	public SparseMiltonContentResourceFactory(String basePath) {
 		this.basePath = basePath;
 	}
 
@@ -40,11 +40,11 @@ public class MiltonContentResourceFactory implements ResourceFactory {
 		try {
 			Content content = session.getContentManager().get(path);
 			if (content != null) {
-				return new MiltonContentResource(path, session, content);
+				return new SparseMiltonContentResource(path, session, content);
 			}
 			if ("/".equals(path) || "".equals(path) || path == null) {
 				LOGGER.debug("Root Object [{}] ", path);
-				return new MiltonContentResource(StorageClientUtils.getObjectName(basePath), path, session, new Content(
+				return new SparseMiltonContentResource(StorageClientUtils.getObjectName(basePath), path, session, new Content(
 						"/", null));
 			}
 			LOGGER.debug("Not Found {} ", path);
