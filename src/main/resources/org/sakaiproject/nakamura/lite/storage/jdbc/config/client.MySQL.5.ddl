@@ -57,6 +57,18 @@ CREATE TABLE  `ac_css` (
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+###### DROP TABLE IF EXISTS `lk_css`;
+
+CREATE TABLE  `lk_css` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `rid` varchar(32) NOT NULL,
+  `cid` varchar(64) NOT NULL,
+  `v` varchar(780) NOT NULL,
+  PRIMARY KEY  (`id`),
+  KEY `rowkey`  (`rid`,`cid`),
+  KEY `cid_locate_i` (`v`(255),`cid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
 
 CREATE TABLE css_w (
   `rid` varchar(32) NOT NULL,
@@ -74,6 +86,11 @@ CREATE TABLE au_css_w (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE cn_css_w (
+  `rid` varchar(32) NOT NULL,
+  primary key(`rid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE lk_css_w (
   `rid` varchar(32) NOT NULL,
   primary key(`rid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -116,6 +133,12 @@ CREATE TABLE  `au_css_b` (
 
 # Central Store for Object bodies, serialized content maps rather than columns
 CREATE TABLE  `ac_css_b` (
+  `rid` varchar(32) NOT NULL,
+  `b` blob,
+  PRIMARY KEY (`rid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE  `lk_css_b` (
   `rid` varchar(32) NOT NULL,
   `b` blob,
   PRIMARY KEY (`rid`)

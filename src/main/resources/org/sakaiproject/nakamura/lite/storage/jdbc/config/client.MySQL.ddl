@@ -62,6 +62,19 @@ CREATE TABLE  `ac_css` (
   KEY `cid_locate_i` (`v`(255),`cid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+####### DROP TABLE IF EXISTS `ac_css`;
+
+# Store just for Access Control
+CREATE TABLE  `lk_css` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `rid` varchar(32) NOT NULL,
+  `cid` varchar(64) NOT NULL,
+  `v` varchar(780) NOT NULL,
+  PRIMARY KEY  (`id`),
+  KEY `rowkey`  (`rid`,`cid`),
+  KEY `cid_locate_i` (`v`(255),`cid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
 CREATE TABLE css_w (
   `rid` varchar(32) NOT NULL,
   primary key(`rid`)
@@ -78,6 +91,11 @@ CREATE TABLE au_css_w (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE cn_css_w (
+  `rid` varchar(32) NOT NULL,
+  primary key(`rid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE lk_css_w (
   `rid` varchar(32) NOT NULL,
   primary key(`rid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -125,5 +143,11 @@ CREATE TABLE  `ac_css_b` (
   primary key  (`rid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+# Central Store for Object bodies, serialized content maps rather than columns
+CREATE TABLE  `lk_css_b` (
+  `rid` varchar(32) NOT NULL,
+  `b` blob,
+  primary key  (`rid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 
