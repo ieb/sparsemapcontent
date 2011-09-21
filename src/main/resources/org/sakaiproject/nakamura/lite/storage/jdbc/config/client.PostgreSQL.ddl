@@ -77,26 +77,68 @@ GRANT ALL ON TABLE ac_css TO nakrole;
 CREATE INDEX ac_css_cid_locate_i ON ac_css (v, cid);
 CREATE INDEX ac_css_rowkey ON ac_css (rid, cid);
 
+########### DROP TABLE lk_css;
+
+
+
+CREATE TABLE lk_css
+(
+  id serial,
+  rid character varying(32) NOT NULL,
+  cid character varying(64) NOT NULL,
+  v character varying(780) NOT NULL,
+  CONSTRAINT lk_css_pk PRIMARY KEY (id)
+);
+
+ALTER TABLE lk_css OWNER TO nakamura;
+GRANT ALL ON TABLE lk_css TO nakrole;
+
+CREATE INDEX lk_css_cid_locate_i ON lk_css (v, cid);
+CREATE INDEX lk_css_rowkey ON lk_css (rid, cid);
+
 
 CREATE TABLE css_w (
   rid varchar(32) NOT NULL,
   constraint css_w_pk primary key(rid)
 );
 
+ALTER TABLE css_w OWNER TO nakamura;
+GRANT ALL ON TABLE css_w TO nakrole;
+
+
 CREATE TABLE ac_css_w (
   rid varchar(32) NOT NULL,
   constraint ac_css_w_pk primary key(rid)
 );
+
+ALTER TABLE ac_css_w OWNER TO nakamura;
+GRANT ALL ON TABLE ac_css_w TO nakrole;
+
 
 CREATE TABLE au_css_w (
   rid varchar(32) NOT NULL,
   constraint au_css_w_pk primary key(rid)
 );
 
+ALTER TABLE au_css_w OWNER TO nakamura;
+GRANT ALL ON TABLE au_css_w TO nakrole;
+
+
 CREATE TABLE cn_css_w (
   rid varchar(32) NOT NULL,
   constraint cn_css_w_pk primary key(rid)
 );
+
+ALTER TABLE cn_css_w OWNER TO nakamura;
+GRANT ALL ON TABLE cn_css_w TO nakrole;
+
+CREATE TABLE lk_css_w (
+  rid varchar(32) NOT NULL,
+  constraint lk_css_w_pk primary key(rid)
+);
+
+ALTER TABLE lk_css_w OWNER TO nakamura;
+GRANT ALL ON TABLE lk_css_w TO nakrole;
 
  
 CREATE TABLE  css_wr (
@@ -109,11 +151,14 @@ CREATE TABLE  css_wr (
   constraint css_r_cnam unique  (cf,cname)
 );
 
+ALTER TABLE css_wr OWNER TO nakamura;
+GRANT ALL ON TABLE css_wr TO nakrole;
+
+
 ########### DROP TABLE css_b;
 
 
-CREATE TABLE css_b
-(
+CREATE TABLE css_b (
   id serial,
   rid character varying(32) NOT NULL,
   b bytea,
@@ -175,5 +220,19 @@ CREATE TABLE ac_css_b
 ALTER TABLE ac_css_b OWNER TO nakamura;
 GRANT ALL ON TABLE ac_css_b TO nakrole;
 
+########### DROP TABLE lk_css_b;
+
+
+CREATE TABLE lk_css_b
+(
+  id serial,
+  rid character varying(32) NOT NULL,
+  b bytea,
+  CONSTRAINT lk_css_b_pk PRIMARY KEY (id),
+  CONSTRAINT lk_css_b_rid_uk UNIQUE (rid)
+);
+
+ALTER TABLE lk_css_b OWNER TO nakamura;
+GRANT ALL ON TABLE lk_css_b TO nakrole;
 
 
