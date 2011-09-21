@@ -40,7 +40,7 @@ public abstract class AbstractLockManagerImplTest {
         properties.put("acl-column-family", "ac");
         properties.put("authorizable-column-family", "au");
         properties.put("content-column-family", "cn");
-        properties.put("lock-column-family", "ln");
+        properties.put("lock-column-family", "lk");
         configuration = new ConfigurationImpl();
         configuration.activate(properties);
         clientPool = getClientPool(configuration);

@@ -52,7 +52,7 @@ public class ConfigurationImpl implements Configuration {
     private static final String AUTHORIZABLE_COLUMN_FAMILY = "authorizable-column-family";
     @Property(value = "cn")
     private static final String CONTENT_COLUMN_FAMILY = "content-column-family";
-    @Property(value = "ln")
+    @Property(value = "lk")
     private static final String LOCK_COLUMN_FAMILY = "lock-column-family";
     
     protected static final String DEFAULT_INDEX_COLUMN_NAMES = "au:rep:principalName,au:type,cn:sling:resourceType," +

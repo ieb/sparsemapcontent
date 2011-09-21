@@ -142,13 +142,13 @@ GRANT ALL ON TABLE lk_css_w TO nakrole;
 
  
 CREATE TABLE  css_wr (
-  id INT NOT NULL AUTO_INCREMENT,
+  id serial,
   cf varchar(32) NOT NULL,
   cid varchar(64) NOT NULL,
   cname varchar(64) NOT NULL,
-  constraint cn_css_w_pk primary key(id),
-  constraint css_r_cid unique  (cf,cid),
-  constraint css_r_cnam unique  (cf,cname)
+  constraint css_wr_pk primary key(id),
+  constraint css_wr_cid unique  (cf,cid),
+  constraint css_wr_cnam unique  (cf,cname)
 );
 
 ALTER TABLE css_wr OWNER TO nakamura;
