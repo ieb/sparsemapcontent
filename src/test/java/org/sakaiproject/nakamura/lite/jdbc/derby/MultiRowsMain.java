@@ -25,6 +25,7 @@ public class MultiRowsMain {
     private String[] dictionary;
 
     public MultiRowsMain() {
+        System.err.println(this.getClass().getName());
     }
     
     public void deleteDb(String file) {
@@ -93,11 +94,13 @@ public class MultiRowsMain {
             }
             p.execute();
             
-            if ( i%100 == 0) {
-                long ct = System.currentTimeMillis();
-                System.err.println("Commit "+i+" "+(ct-cs)+" ms/100");
-                cs = ct;
+            if ( i%500 == 0) {
                 connection.commit();
+                long ct = System.currentTimeMillis();
+                System.err.print(""+i+","+(ct-cs)+",");
+                testSelect(2, 0, columns, 5000, true);
+                cs = System.currentTimeMillis();
+
             }
         }
         long ctt = System.currentTimeMillis();
@@ -108,7 +111,7 @@ public class MultiRowsMain {
         connection.close();
     }
 
-    public void testSelect(int ncols, int sorts, int columns, long timeToLive) throws SQLException {
+    public void testSelect(int ncols, int sorts, int columns, long timeToLive, boolean csv) throws SQLException {
         StringBuilder sb = new StringBuilder();
         sb.append("select rid from cn_css_index where ");
         SecureRandom sr = new SecureRandom();
@@ -140,7 +143,9 @@ public class MultiRowsMain {
             }
             sb.append("v").append(cnums[sorts-1]);
         }
-        System.err.println(sb.toString());
+        if ( !csv) {
+          System.err.println(sb.toString());
+        }
         PreparedStatement p = connection.prepareStatement(sb.toString());
         long atstart = System.currentTimeMillis();
         long endTestTime = atstart+timeToLive;
@@ -162,8 +167,12 @@ public class MultiRowsMain {
         }
         double t = System.currentTimeMillis()-atstart;
         double a = t/nq;
-        System.err.println("Found "+arows+" in "+t+"ms executed "+nq+" queries");
-        System.err.println("Average "+(arows/nq)+" in "+a+"ms");
+        if ( csv ) {
+            System.err.println("" + (arows / nq) + "," + a );
+        } else {
+            System.err.println("Found " + arows + " in " + t + "ms executed " + nq + " queries");
+            System.err.println("Average " + (arows / nq) + " in " + a + "ms");
+        }
         
     }
     
@@ -194,6 +203,10 @@ public class MultiRowsMain {
         tmr.testSelect(4, 2, 30, 5000);
         tmr.testSelect(5, 2, 30, 5000);
         tmr.close();
+    }
+
+    private void testSelect(int i, int j, int k, int l) throws SQLException {
+        testSelect(i, j, k, l, false);
     }
 
     
