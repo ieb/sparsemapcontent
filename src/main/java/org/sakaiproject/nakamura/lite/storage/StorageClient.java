@@ -146,4 +146,6 @@ public interface StorageClient {
      */
     long allCount(String keySpace, String columnFamily) throws StorageClientException;
 
+    void setStorageClientListener(StorageClientListener storageClientListener);
+
 }

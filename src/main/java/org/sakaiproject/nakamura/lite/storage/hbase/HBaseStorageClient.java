@@ -37,6 +37,7 @@ import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
 import org.sakaiproject.nakamura.lite.storage.Disposer;
 import org.sakaiproject.nakamura.lite.storage.SparseRow;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
+import org.sakaiproject.nakamura.lite.storage.StorageClientListener;
 import org.sakaiproject.nakamura.lite.types.Types;
 import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -461,6 +462,11 @@ public DisposableIterator<SparseRow> listAll(String keySpace, String columnFamil
 public long allCount(String keySpace, String columnFamily) {
     // TODO Auto-generated method stub
     return 0;
+}
+
+public void setStorageClientListener(StorageClientListener storageClientListener) {
+    // TODO Auto-generated method stub
+    
 }
 
 }

@@ -159,31 +159,7 @@ public class Types {
             throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
-        dos.writeUTF(key);
-        int size = 0;
-        for (Entry<String, ?> e : m.entrySet()) {
-            Object o = e.getValue();
-            if ( o != null && !(o instanceof RemoveProperty) ) {
-                size++;
-            }
-        }
-
-        dos.writeInt(size);
-        LOGGER.debug("Write {} items",size);
-        for (Entry<String, ?> e : m.entrySet()) {
-            Object o = e.getValue();
-            if ( o != null && !(o instanceof RemoveProperty) ) {
-                String k = e.getKey();
-                LOGGER.debug("Write {} ",k);
-                dos.writeUTF(k);
-                Type<?> t = getTypeOfObject(o);
-                dos.writeInt(t.getTypeId());
-                t.save(dos, o);
-            }
-        }
-        // add the type in
-        dos.writeUTF(type);
-        LOGGER.debug("Finished Writen {} items",size);
+        writeMapToStream(key, m, type, dos);
         dos.flush();
         baos.flush();
         byte[] b = baos.toByteArray();
@@ -192,6 +168,42 @@ public class Types {
         return new ByteArrayInputStream(b);
     }
     
+    
+    // IF you change this function you will have to change it in a way that
+    // either is self healing for all the data out there
+    // or write a migration script. Be warned, there could be billions of
+    // records out there, so be very careful
+    // Appending to record is possible, if you make the loader fail safe when
+    // the data isnt there. See the last writeUTF for an example.
+    public static void writeMapToStream(String key, Map<String, Object> m, String type,
+            DataOutputStream dos) throws IOException {
+        dos.writeUTF(key);
+        int size = 0;
+        for (Entry<String, ?> e : m.entrySet()) {
+            Object o = e.getValue();
+            if (o != null && !(o instanceof RemoveProperty)) {
+                size++;
+            }
+        }
+
+        dos.writeInt(size);
+        LOGGER.debug("Write {} items", size);
+        for (Entry<String, ?> e : m.entrySet()) {
+            Object o = e.getValue();
+            if (o != null && !(o instanceof RemoveProperty)) {
+                String k = e.getKey();
+                LOGGER.debug("Write {} ", k);
+                dos.writeUTF(k);
+                Type<?> t = getTypeOfObject(o);
+                dos.writeInt(t.getTypeId());
+                t.save(dos, o);
+            }
+        }
+        // add the type in
+        dos.writeUTF(type);
+        LOGGER.debug("Finished Writen {} items", size);
+
+    }    
     
     private static Type<?> lookupTypeById(int typeId) {
         Type<?> t = (Type<?>) typeByIdMap.get(typeId);

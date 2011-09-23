@@ -57,6 +57,7 @@ import org.sakaiproject.nakamura.lite.storage.RowHasher;
 import org.sakaiproject.nakamura.lite.storage.SparseMapRow;
 import org.sakaiproject.nakamura.lite.storage.SparseRow;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
+import org.sakaiproject.nakamura.lite.storage.StorageClientListener;
 import org.sakaiproject.nakamura.lite.types.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,6 +127,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     private long slowQueryThreshold;
     private long verySlowQueryThreshold;
     private Object desponseLock = new Object();
+    private StorageClientListener storageClientListener;
 
     public JDBCStorageClient(JDBCStorageClientPool jdbcStorageClientConnectionPool,
             Map<String, Object> properties, Map<String, Object> sqlConfig, Set<String> indexColumns, Set<String> indexColumnTypes, Map<String, String> indexColumnsNames) throws SQLException,
@@ -256,6 +258,9 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             }
 
             Map<String, Object> m = get(keySpace, columnFamily, key);
+            if ( storageClientListener != null ) {
+                storageClientListener.before(keySpace,columnFamily,key,m);
+            }
             for (Entry<String, Object> e : values.entrySet()) {
                 String k = e.getKey();
                 Object o = e.getValue();
@@ -265,6 +270,9 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
                 } else {
                     m.put(k, o);
                 }
+            }
+            if ( storageClientListener != null ) {
+                storageClientListener.after(keySpace,columnFamily,key,m);
             }
             LOGGER.debug("Saving {} {} {} ", new Object[]{key, rid, m});
             if ( probablyNew && !UPDATE_FIRST_SEQUENCE.equals(getSql(SQL_STATEMENT_SEQUENCE))) {
@@ -409,6 +417,9 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
                 Connection connection = jcbcStorageClientConnection.getConnection();
                 connection.rollback();
                 connection.setAutoCommit(autoCommit);
+                if ( storageClientListener != null ) {
+                    storageClientListener.rollback();
+                }
             } catch (SQLException e) {
                 LOGGER.warn(e.getMessage(), e);
             }
@@ -420,6 +431,9 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             Connection connection = jcbcStorageClientConnection.getConnection();
             connection.commit();
             connection.setAutoCommit(autoCommit);
+            if ( storageClientListener != null ) {
+                storageClientListener.commit();
+            }
         }
     }
 
@@ -427,6 +441,9 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
         Connection connection = jcbcStorageClientConnection.getConnection();
         boolean autoCommit = connection.getAutoCommit();
         connection.setAutoCommit(false);
+        if ( storageClientListener != null ) {
+            storageClientListener.begin();
+        }
         return autoCommit;
       }
 
@@ -444,6 +461,9 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
         boolean autoCommit = false;
         try {
             autoCommit = startBlock();
+            if ( storageClientListener != null ) {
+                storageClientListener.delete(keySpace, columnFamily, key);
+            }
             deleteStringRow = getStatement(keySpace, columnFamily, SQL_DELETE_STRING_ROW, rid, null);
             inc("deleteStringRow");
             deleteStringRow.clearWarnings();
@@ -1145,5 +1165,10 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
                 LOGGER.warn(e.getMessage(), e);
             }
         }
+    }
+    
+    
+    public void setStorageClientListener(StorageClientListener storageClientListener) {
+        this.storageClientListener = storageClientListener;
     }
 }

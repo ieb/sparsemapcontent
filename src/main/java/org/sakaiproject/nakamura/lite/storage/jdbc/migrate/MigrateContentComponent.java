@@ -1,5 +1,6 @@
 package org.sakaiproject.nakamura.lite.storage.jdbc.migrate;
 
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Map;
@@ -57,6 +58,17 @@ import com.google.common.collect.Maps;
 @Service(value = ManualOperationService.class)
 public class MigrateContentComponent implements ManualOperationService {
 
+    private static final String DEFAULT_REDOLOG_LOCATION = "migrationlogs";
+
+    @Property(value=DEFAULT_REDOLOG_LOCATION)
+    private static final String PROP_REDOLOG_LOCATION = "redolog-location";
+
+    private static final int DEFAULT_MAX_LOG_SIZE = 1024000;
+    
+    @Property(intValue=DEFAULT_MAX_LOG_SIZE)
+    private static final String PROP_MAX_LOG_SIZE = "max-redo-log-size";
+
+
     public interface IdExtractor {
 
         String getKey(Map<String, Object> properties);
@@ -77,63 +89,74 @@ public class MigrateContentComponent implements ManualOperationService {
     @Property(boolValue = true)
     private static final String PERFORM_MIGRATION = "dryRun";
 
+
+
     @Activate
     public void activate(Map<String, Object> properties) throws StorageClientException,
-            AccessDeniedException {
+            AccessDeniedException, IOException {
         boolean dryRun = StorageClientUtils.getSetting(properties.get(PERFORM_MIGRATION), true);
+        String redoLogLocation = StorageClientUtils.getSetting(properties.get(PROP_REDOLOG_LOCATION), DEFAULT_REDOLOG_LOCATION);
+        int maxLogFileSize = StorageClientUtils.getSetting(properties.get(PROP_MAX_LOG_SIZE), DEFAULT_MAX_LOG_SIZE);
         SessionImpl session = (SessionImpl) repository.loginAdministrative();
         StorageClient client = session.getClient();
-        if (client instanceof JDBCStorageClient) {
-            JDBCStorageClient jdbcClient = (JDBCStorageClient) client;
-            String keySpace = configuration.getKeySpace();
-
-            Indexer indexer = jdbcClient.getIndexer();
-
-            PropertyMigrator[] propertyMigrators = propertyMigratorTracker.getPropertyMigrators();
-            for (PropertyMigrator p : propertyMigrators) {
-                LOGGER.info("DryRun:{} Using Property Migrator {} ", dryRun, p);
+        FileRedoLogger migrateRedoLog = new FileRedoLogger(redoLogLocation, maxLogFileSize);
+        client.setStorageClientListener(migrateRedoLog);
+        try{
+            if (client instanceof JDBCStorageClient) {
+                JDBCStorageClient jdbcClient = (JDBCStorageClient) client;
+                String keySpace = configuration.getKeySpace();
+    
+                Indexer indexer = jdbcClient.getIndexer();
+    
+                PropertyMigrator[] propertyMigrators = propertyMigratorTracker.getPropertyMigrators();
+                for (PropertyMigrator p : propertyMigrators) {
+                    LOGGER.info("DryRun:{} Using Property Migrator {} ", dryRun, p);
+                }
+                reindex(dryRun, jdbcClient, keySpace, configuration.getAuthorizableColumnFamily(),
+                        indexer, propertyMigrators, new IdExtractor() {
+    
+                            public String getKey(Map<String, Object> properties) {
+                                if (properties.containsKey(Authorizable.ID_FIELD)) {
+                                    return (String) properties.get(Authorizable.ID_FIELD);
+                                }
+                                return null;
+                            }
+                        });
+                reindex(dryRun, jdbcClient, keySpace, configuration.getContentColumnFamily(), indexer,
+                        propertyMigrators, new IdExtractor() {
+    
+                            public String getKey(Map<String, Object> properties) {
+                                if (properties.containsKey(BlockSetContentHelper.CONTENT_BLOCK_ID)) {
+                                    // blocks of a bit stream
+                                    return (String) properties
+                                            .get(BlockSetContentHelper.CONTENT_BLOCK_ID);
+                                } else if (properties.containsKey(Content.getUuidField())) {
+                                    // a content item and content block item
+                                    return (String) properties.get(Content.getUuidField());
+                                } else if (properties.containsKey(Content.STRUCTURE_UUID_FIELD)) {
+                                    // a structure item
+                                    return (String) properties.get(Content.PATH_FIELD);
+                                }
+                                return null;
+                            }
+                        });
+    
+                reindex(dryRun, jdbcClient, keySpace, configuration.getAclColumnFamily(), indexer,
+                        propertyMigrators, new IdExtractor() {
+                            public String getKey(Map<String, Object> properties) {
+                                if (properties.containsKey(AccessControlManagerImpl._KEY)) {
+                                    return (String) properties.get(AccessControlManagerImpl._KEY);
+                                }
+                                return null;
+                            }
+                        });
+            } else {
+                LOGGER.warn("This class will only re-index content for the JDBCStorageClients");
             }
-            reindex(dryRun, jdbcClient, keySpace, configuration.getAuthorizableColumnFamily(),
-                    indexer, propertyMigrators, new IdExtractor() {
-
-                        public String getKey(Map<String, Object> properties) {
-                            if (properties.containsKey(Authorizable.ID_FIELD)) {
-                                return (String) properties.get(Authorizable.ID_FIELD);
-                            }
-                            return null;
-                        }
-                    });
-            reindex(dryRun, jdbcClient, keySpace, configuration.getContentColumnFamily(), indexer,
-                    propertyMigrators, new IdExtractor() {
-
-                        public String getKey(Map<String, Object> properties) {
-                            if (properties.containsKey(BlockSetContentHelper.CONTENT_BLOCK_ID)) {
-                                // blocks of a bit stream
-                                return (String) properties
-                                        .get(BlockSetContentHelper.CONTENT_BLOCK_ID);
-                            } else if (properties.containsKey(Content.getUuidField())) {
-                                // a content item and content block item
-                                return (String) properties.get(Content.getUuidField());
-                            } else if (properties.containsKey(Content.STRUCTURE_UUID_FIELD)) {
-                                // a structure item
-                                return (String) properties.get(Content.PATH_FIELD);
-                            }
-                            return null;
-                        }
-                    });
-
-            reindex(dryRun, jdbcClient, keySpace, configuration.getAclColumnFamily(), indexer,
-                    propertyMigrators, new IdExtractor() {
-                        public String getKey(Map<String, Object> properties) {
-                            if (properties.containsKey(AccessControlManagerImpl._KEY)) {
-                                return (String) properties.get(AccessControlManagerImpl._KEY);
-                            }
-                            return null;
-                        }
-                    });
-        } else {
-            LOGGER.warn("This class will only re-index content for the JDBCStorageClients");
+        } finally {
+            migrateRedoLog.close();
         }
+        
     }
 
     private void reindex(boolean dryRun, StorageClient jdbcClient, String keySpace,
