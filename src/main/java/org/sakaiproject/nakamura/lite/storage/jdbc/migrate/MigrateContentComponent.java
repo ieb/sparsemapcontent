@@ -154,6 +154,7 @@ public class MigrateContentComponent implements ManualOperationService {
                 LOGGER.warn("This class will only re-index content for the JDBCStorageClients");
             }
         } finally {
+            client.setStorageClientListener(null);
             migrateRedoLog.close();
         }
         
