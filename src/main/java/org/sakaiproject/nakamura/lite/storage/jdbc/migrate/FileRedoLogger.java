@@ -28,17 +28,21 @@ public class FileRedoLogger implements StorageClientListener {
     private static final String END_MARKER = ">";
     private static final Logger LOGGER = LoggerFactory.getLogger(FileRedoLogger.class);
     private Map<String, Map<String, Object>> logMap = Maps.newLinkedHashMap();
-    private String redoLocation;
+    private File redoLocation;
     private File currentFile;
     private DataOutputStream dos;
     private DateFormat logFileNameFormat;
     private int maxLogFileSize;
+    private Logger feedback;
 
-    public FileRedoLogger(String redoLogLocation, int maxLogFileSize) {
-        this.redoLocation = redoLogLocation;
+    public FileRedoLogger(String redoLogLocation, int maxLogFileSize, Logger feedback) {
         this.maxLogFileSize = maxLogFileSize;
-        logFileNameFormat = new SimpleDateFormat("yyyyMMddHHmmssZ.log");
+        logFileNameFormat = new SimpleDateFormat("yyyyMMddHHmmssZ");
+        this.feedback = feedback;
+        this.redoLocation = new File(redoLogLocation,logFileNameFormat.format(new Date()));
+        
     }
+
 
     public void delete(String keySpace, String columnFamily, String key) {
         logMap.put(getKey(keySpace, columnFamily, key, "d"), EMPTY_MAP);
@@ -102,18 +106,20 @@ public class FileRedoLogger implements StorageClientListener {
         if ( dos == null ) {
             currentFile = getNewLogFile();
             dos = new DataOutputStream(new FileOutputStream(currentFile));
+            feedback.info("Switched Log file to {} ",currentFile.getAbsoluteFile());
         } else if ( dos.size() > maxLogFileSize ) {
             dos.flush();
             dos.close();
             dos = null;
             currentFile = getNewLogFile();
             dos = new DataOutputStream(new FileOutputStream(currentFile));
+            feedback.info("Switched Log file to {} ",currentFile.getAbsoluteFile());
         }
         return dos;
     }
 
     private File getNewLogFile() {
-        return new File(redoLocation, logFileNameFormat.format(new Date()));
+        return new File(redoLocation, logFileNameFormat.format(new Date())+".log");
     }
 
     public void close() throws IOException {

@@ -10,7 +10,9 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Configuration;
+import org.sakaiproject.nakamura.api.lite.MigrateContentService;
 import org.sakaiproject.nakamura.api.lite.PropertyMigrator;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -18,7 +20,6 @@ import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.content.Content;
-import org.sakaiproject.nakamura.lite.ManualOperationService;
 import org.sakaiproject.nakamura.lite.SessionImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.content.BlockSetContentHelper;
@@ -54,9 +55,9 @@ import com.google.common.collect.Maps;
  * @author ieb
  * 
  */
-@Component(immediate = true, enabled = false, metatype = true)
-@Service(value = ManualOperationService.class)
-public class MigrateContentComponent implements ManualOperationService {
+@Component(immediate = true, enabled = true, metatype = true)
+@Service(value = MigrateContentService.class)
+public class MigrateContentComponent implements MigrateContentService {
 
     private static final String DEFAULT_REDOLOG_LOCATION = "migrationlogs";
 
@@ -86,20 +87,25 @@ public class MigrateContentComponent implements ManualOperationService {
     @Reference
     private PropertyMigratorTracker propertyMigratorTracker;
 
-    @Property(boolValue = true)
-    private static final String PERFORM_MIGRATION = "dryRun";
+    private String redoLogLocation;
+
+    private Integer maxLogFileSize;
+
 
 
 
     @Activate
     public void activate(Map<String, Object> properties) throws StorageClientException,
             AccessDeniedException, IOException {
-        boolean dryRun = StorageClientUtils.getSetting(properties.get(PERFORM_MIGRATION), true);
-        String redoLogLocation = StorageClientUtils.getSetting(properties.get(PROP_REDOLOG_LOCATION), DEFAULT_REDOLOG_LOCATION);
-        int maxLogFileSize = StorageClientUtils.getSetting(properties.get(PROP_MAX_LOG_SIZE), DEFAULT_MAX_LOG_SIZE);
+        redoLogLocation = StorageClientUtils.getSetting(properties.get(PROP_REDOLOG_LOCATION), DEFAULT_REDOLOG_LOCATION);
+        maxLogFileSize = StorageClientUtils.getSetting(properties.get(PROP_MAX_LOG_SIZE), DEFAULT_MAX_LOG_SIZE);
+    }
+    
+    
+    public void migrate(boolean dryRun, int limit,  boolean reindexAll, Logger feedback ) throws ClientPoolException, StorageClientException, AccessDeniedException, IOException {
         SessionImpl session = (SessionImpl) repository.loginAdministrative();
         StorageClient client = session.getClient();
-        FileRedoLogger migrateRedoLog = new FileRedoLogger(redoLogLocation, maxLogFileSize);
+        FileRedoLogger migrateRedoLog = new FileRedoLogger(redoLogLocation, maxLogFileSize, feedback);
         client.setStorageClientListener(migrateRedoLog);
         try{
             if (client instanceof JDBCStorageClient) {
@@ -121,7 +127,7 @@ public class MigrateContentComponent implements ManualOperationService {
                                 }
                                 return null;
                             }
-                        });
+                        }, limit, feedback, reindexAll);
                 reindex(dryRun, jdbcClient, keySpace, configuration.getContentColumnFamily(), indexer,
                         propertyMigrators, new IdExtractor() {
     
@@ -139,7 +145,7 @@ public class MigrateContentComponent implements ManualOperationService {
                                 }
                                 return null;
                             }
-                        });
+                        }, limit, feedback, reindexAll);
     
                 reindex(dryRun, jdbcClient, keySpace, configuration.getAclColumnFamily(), indexer,
                         propertyMigrators, new IdExtractor() {
@@ -149,22 +155,25 @@ public class MigrateContentComponent implements ManualOperationService {
                                 }
                                 return null;
                             }
-                        });
+                        }, limit, feedback, reindexAll);
             } else {
                 LOGGER.warn("This class will only re-index content for the JDBCStorageClients");
             }
         } finally {
             client.setStorageClientListener(null);
             migrateRedoLog.close();
+            session.logout();
         }
         
     }
 
     private void reindex(boolean dryRun, StorageClient jdbcClient, String keySpace,
             String columnFamily, Indexer indexer, PropertyMigrator[] propertyMigrators,
-            IdExtractor idExtractor) throws StorageClientException {
+            IdExtractor idExtractor, int limit, Logger feedback, boolean reindexAll) throws StorageClientException {
         long objectCount = jdbcClient.allCount(keySpace, columnFamily);
         LOGGER.info("DryRun:{} Migrating {} objects in {} ", new Object[] { dryRun, objectCount,
+                columnFamily });
+        feedback.info("DryRun:{} Migrating {} objects in {} ", new Object[] { dryRun, objectCount,
                 columnFamily });
         if (objectCount > 0) {
             DisposableIterator<SparseRow> allObjects = jdbcClient.listAll(keySpace, columnFamily);
@@ -177,6 +186,9 @@ public class MigrateContentComponent implements ManualOperationService {
                     if (c % 1000 == 0) {
                         LOGGER.info("DryRun:{} {}% remaining {} ", new Object[] { dryRun,
                                 ((c * 100) / objectCount), objectCount - c });
+                        feedback.info("DryRun:{} {}% remaining {} ", new Object[] { dryRun,
+                                ((c * 100) / objectCount), objectCount - c });
+
                     }
                     try {
                         Map<String, Object> properties = r.getProperties();
@@ -191,24 +203,29 @@ public class MigrateContentComponent implements ManualOperationService {
                                 if (save) {
                                     jdbcClient.insert(keySpace, columnFamily, key, properties,
                                             false);
-                                } else {
+                                } else if ( reindexAll ) {
                                     indexer.index(statementCache, keySpace, columnFamily, key, rid,
                                             properties);
                                 }
                             } else {
-                                if (c > 2000) {
-                                    LOGGER.info("Dry Run Migration Stoped at 2000 Objects ");
+                                if (c > limit) {
+                                    LOGGER.info("Dry Run Migration Stoped at {} Objects ", limit);
+                                    feedback.info("Dry Run Migration Stoped at {} Objects ", limit);
                                     break;
                                 }
                             }
                         } else {
                             LOGGER.info("DryRun:{} Skipped Reindexing, no key in  {}", dryRun,
                                     properties);
+                            feedback.info("DryRun:{} Skipped Reindexing, no key in  {}", dryRun,
+                                    properties);
                         }
                     } catch (SQLException e) {
                         LOGGER.warn(e.getMessage(), e);
+                        feedback.warn(e.getMessage(), e);
                     } catch (StorageClientException e) {
                         LOGGER.warn(e.getMessage(), e);
+                        feedback.warn(e.getMessage(), e);
                     }
                 }
             } finally {
