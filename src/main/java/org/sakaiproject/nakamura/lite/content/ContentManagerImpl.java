@@ -230,7 +230,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         if (structure != null && structure.size() > 0) {
             String contentId = (String)structure.get(STRUCTURE_UUID_FIELD);
             Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
-            if (content != null && content.size() > 0) {
+            if (content != null && content.size() > 0 && !TRUE.equals(content.get(DELETED_FIELD))) {
                 Content contentObject = new Content(path, content);
                 ((InternalContent) contentObject).internalize(this, false);
                 return contentObject;
