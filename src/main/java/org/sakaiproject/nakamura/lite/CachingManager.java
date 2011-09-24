@@ -61,13 +61,14 @@ public abstract class CachingManager {
         Map<String, Object> m = null;
         String cacheKey = getCacheKey(keySpace, columnFamily, key);
 
-
         if (sharedCache != null && sharedCache.containsKey(cacheKey)) {
             CacheHolder cacheHolder = sharedCache.get(cacheKey);
-            if (cacheHolder != null) {
+            if (cacheHolder != null ) {
                 m = cacheHolder.get();
-                LOGGER.debug("Cache Hit {} {} {} ",new Object[]{cacheKey, cacheHolder, m});
-                hit++;
+                if ( m != null ) {
+                    LOGGER.debug("Cache Hit {} {} {} ", new Object[] { cacheKey, cacheHolder, m });
+                    hit++;
+                }
             }
         }
         if (m == null) {
@@ -102,17 +103,19 @@ public abstract class CachingManager {
     }
 
     /**
-     * Remove this object from the cache.
+     * Remove this object from the cache. Note, StorageClient uses the word
+     * remove to mean delete. This method should do the same.
+     * 
      * @param keySpace
      * @param columnFamily
      * @param key
      */
     protected void removeFromCache(String keySpace, String columnFamily, String key) {
         if (sharedCache != null) {
-            sharedCache.remove(getCacheKey(keySpace, columnFamily, key));
+            // insert a replacement. This should cause an invalidation message to propagate in the cluster.
+            sharedCache.put(getCacheKey(keySpace, columnFamily, key), new CacheHolder(null));
         }
     }
-    
 
     /**
      * Put an object in the cache
@@ -126,9 +129,28 @@ public abstract class CachingManager {
     protected void putCached(String keySpace, String columnFamily, String key,
             Map<String, Object> encodedProperties, boolean probablyNew)
             throws StorageClientException {
-        LOGGER.debug("Saving {} {} {} {} ", new Object[] { keySpace, columnFamily, key, encodedProperties});
+        if ( sharedCache != null && !probablyNew ) {
+            CacheHolder ch = sharedCache.get(getCacheKey(keySpace, columnFamily, key));
+            if ( ch != null && ch.get() == null ) {
+                return; // catch the case where another method creates while something is in the cache.
+                // this is a big assumption since if the item is not in the cache it will get updated
+                // there is no difference in sparsemap between create and update, they are all insert operations
+                // what we are really saying here is that inorder to update the item you have to have just got it
+                // and if you failed to get it, your update must have been a create operation. As long as the dwell time
+                // in the cache is longer than the lifetime of an active session then this will be true.
+                // if the lifetime of an active session is longer (like with a long running background operation)
+                // then you should expect to see race conditions at this point since the marker in the cache will have 
+                // gone, and the marker in the database has gone, so the put operation, must be a create operation.
+                // To change this behavior we would need to differentiate more strongly between new and update and change 
+                // probablyNew into certainlyNew, but that would probably break the BASIC assumption of the whole system.
+            }
+        }
+        LOGGER.debug("Saving {} {} {} {} ", new Object[] { keySpace, columnFamily, key,
+                encodedProperties });
         client.insert(keySpace, columnFamily, key, encodedProperties, probablyNew);
-        removeFromCache(keySpace, columnFamily, key);
+        if ( sharedCache != null ) {
+            sharedCache.remove(getCacheKey(keySpace, columnFamily, key));
+        }
     }
 
 }
