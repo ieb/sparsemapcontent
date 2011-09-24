@@ -45,8 +45,7 @@ public class LockManagerImpl extends CachingManager implements LockManager {
     }
     
     private void clear(String path) throws StorageClientException {
-        removeFromCache(keySpace, lockColumnFamily, path);
-        storageClient.remove(keySpace, lockColumnFamily, path);
+        removeCached(keySpace, lockColumnFamily, path);
     }
 
 

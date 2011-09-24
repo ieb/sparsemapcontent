@@ -374,7 +374,7 @@ public class InternalContent {
         }
         return o;
     }
-    
+
     public String getId() {
         return (String) content.get(Content.getUuidField());
     }
@@ -462,16 +462,18 @@ public class InternalContent {
      * @deprecated This method sets the ID field for the whole system. Do not
      *             use. Its been provided to make it possible to configure the
      *             ID field name used by Sparse to allow Berkley to continue
-     *             running without migration. DO NOT USE, IT WILL HAVE NO EFFECT.
+     *             running without migration. DO NOT USE, IT WILL HAVE NO
+     *             EFFECT.
      * @param idFieldName
      */
     public static void setUuidField(String idFieldName) {
-        if ( !idFieldIsSet  ) {
+        if (!idFieldIsSet) {
             idFieldIsSet = true;
-            LOGGER.warn("ID Field is being set to {}, this can only be done once per JVM start ",idFieldName);
+            LOGGER.warn("ID Field is being set to {}, this can only be done once per JVM start ",
+                    idFieldName);
             UUID_FIELD = idFieldName;
         } else {
-            LOGGER.warn("ID Field has already been set to {} and cannot be reset. ",idFieldName);
+            LOGGER.warn("ID Field has already been set to {} and cannot be reset. ", idFieldName);
         }
     }
 
@@ -486,6 +488,19 @@ public class InternalContent {
      */
     public static String getUuidField() {
         return UUID_FIELD;
+    }
+
+    /**
+     * 
+     * @return true if the content item is deleted, the system does not delete
+     *         content items, it marks items as deleted. This will allow the
+     *         storage layers to maintain an update pattern that is close to
+     *         append only allowing compression of the storage to be
+     *         achieved by background task which may then also remove holes in the storage.
+     *         This is not dissimilar from the way most file systems work.
+     */
+    public boolean isDeleted() {
+        return TRUE.equals(content.get(DELETED_FIELD));
     }
 
 }

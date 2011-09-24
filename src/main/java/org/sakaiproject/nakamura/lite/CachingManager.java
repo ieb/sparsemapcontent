@@ -109,12 +109,15 @@ public abstract class CachingManager {
      * @param keySpace
      * @param columnFamily
      * @param key
+     * @throws StorageClientException 
      */
-    protected void removeFromCache(String keySpace, String columnFamily, String key) {
+    protected void removeCached(String keySpace, String columnFamily, String key) throws StorageClientException {
         if (sharedCache != null) {
             // insert a replacement. This should cause an invalidation message to propagate in the cluster.
             sharedCache.put(getCacheKey(keySpace, columnFamily, key), new CacheHolder(null));
         }
+        client.remove(keySpace, columnFamily, key);
+
     }
 
     /**

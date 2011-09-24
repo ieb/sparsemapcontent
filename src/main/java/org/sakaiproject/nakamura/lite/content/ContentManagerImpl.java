@@ -444,8 +444,6 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
             Map<String, Object> content = getCached(keySpace, contentColumnFamily, uuid);
             Map<String, Object> contentBeforeDelete = ImmutableMap.copyOf(content);
             String resourceType = (String) content.get("sling:resourceType");
-            removeFromCache(keySpace, contentColumnFamily, path);
-            client.remove(keySpace, contentColumnFamily, path);
             putCached(keySpace, contentColumnFamily, uuid,
                     ImmutableMap.of(DELETED_FIELD, (Object) TRUE), false);
             if (resourceType != null) {
@@ -639,8 +637,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         putCached(keySpace, contentColumnFamily, to, fromStructure, true);
 
         // remove the old from.
-        removeFromCache(keySpace, contentColumnFamily, from);
-        client.remove(keySpace, contentColumnFamily, from);
+        removeCached(keySpace, contentColumnFamily, from);
         eventListener.onDelete(Security.ZONE_CONTENT, from, accessControlManager.getCurrentUserId(), null, "op:move");
         eventListener.onUpdate(Security.ZONE_CONTENT, to, accessControlManager.getCurrentUserId(), true, null, "op:move");
 
