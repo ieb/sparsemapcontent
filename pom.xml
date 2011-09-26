@@ -38,8 +38,7 @@
             <Bundle-Category>sparsemapcontent</Bundle-Category>
             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
             <Export-Package>
-              org.sakaiproject.nakamura.api.lite.*,
-              org.sakaiproject.nakamura.util.*
+              org.sakaiproject.nakamura.api.lite.*
 			</Export-Package>
 			<DynamicImport-Package>*</DynamicImport-Package>
                
