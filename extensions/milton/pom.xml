@@ -22,7 +22,7 @@
   <artifactId>org.sakaiproject.nakamura.milton</artifactId>
   <packaging>bundle</packaging>
   <version>1.6.4-SNAPSHOT</version>
-  <name>Sakai Nakamura :: Milton Support</name>
+  <name>Sparse Map :: Milton Support</name>
   <description>Provides Milton Jar  </description>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -41,7 +41,7 @@
              </Bundle-DocURL>
              <Bundle-Vendor>Timefields Ltd</Bundle-Vendor>
              <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-            <Bundle-Category>sakai-nakamura,driver</Bundle-Category>
+            <Bundle-Category>sparse-map,driver</Bundle-Category>
             <Export-Package>com.bradmcevoy.*;-split-package:=merge-first,com.ettrema.*</Export-Package>
             <Import-Package>
               !org.springframework.*,
