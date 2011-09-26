@@ -200,6 +200,12 @@
 	  <artifactId>hbase</artifactId>
 	  <version>0.90.3</version>    
           <scope>provided</scope>
+          <exclusions>
+          	<exclusion>
+          		<artifactId>slf4j-log4j12</artifactId>
+          		<groupId>org.slf4j</groupId>
+          	</exclusion>
+          </exclusions>
     </dependency>
 <!--
     To use Oracle, install ojdbc14.jar to your local mvn
