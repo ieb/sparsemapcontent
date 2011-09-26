@@ -114,8 +114,8 @@ public abstract class AbstractLockManagerImplTest {
         checkNotLocked(lockManagerImpl, "/subtest/test123", token);
 
 
-        LOGGER.info("Sleeping for 2001ms to allow lock to expire");
-        Thread.sleep(2001L);
+        LOGGER.info("Sleeping for 2100ms to allow lock to expire");
+        Thread.sleep(2100L);
 
         checkNotLocked(lockManagerImpl, "/sub/expire", token);
         checkNotLocked(lockManagerImpl, "/sub/expire/test23234", token);
@@ -237,8 +237,8 @@ public abstract class AbstractLockManagerImplTest {
         checkLocked(lockManagerImpl2, "/sub/iebrelockexpire", "/sub/iebrelockexpire", token);
         checkLocked(lockManagerImpl2, "/sub/iebrelockexpire", "/sub/iebrelockexpire/sdf/sdf/sdf", token);
 
-        LOGGER.info("Sleeping for 2001ms to allow lock to expire");
-        Thread.sleep(2001L);
+        LOGGER.info("Sleeping for 2100ms to allow lock to expire");
+        Thread.sleep(2100L);
 
         checkNotLocked(lockManagerImpl, "/sub/iebrelockexpire", token);
         checkNotLocked(lockManagerImpl, "/sub/iebrelockexpire/sdf/sdf/sdf", token);

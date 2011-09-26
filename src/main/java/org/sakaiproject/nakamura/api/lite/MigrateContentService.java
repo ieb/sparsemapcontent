@@ -25,8 +25,9 @@ public interface MigrateContentService {
      * @throws StorageClientException
      * @throws AccessDeniedException
      * @throws IOException
+     * @throws PropertyMigrationException thrown if there are unresolved dependencies.
      */
-    void migrate(boolean dryRun, int limit, boolean reindexAll, Logger feedback)
-            throws ClientPoolException, StorageClientException, AccessDeniedException, IOException;
+    void migrate(boolean dryRun, int limit, boolean reindexAll, Feedback feedback)
+            throws ClientPoolException, StorageClientException, AccessDeniedException, IOException, PropertyMigrationException;
 
 }

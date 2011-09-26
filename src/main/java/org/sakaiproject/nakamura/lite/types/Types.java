@@ -116,20 +116,14 @@ public class Types {
         if (!key.equals(ckey)) {
             throw new IOException("Body Key does not match row key, unable to read");
         }
-        int size = dis.readInt();
-        LOGGER.debug("Reading {} items",size);
-        for (int i = 0; i < size; i++) {            
-            String k = dis.readUTF();
-            LOGGER.debug("Read key {} ",k);
-            output.put(k,lookupTypeById(dis.readInt()).load(dis));
-        }
+        readMapFromStream(output, dis);
         String cftype = null;
         try {
             cftype = dis.readUTF();
         } catch (IOException e) {
             LOGGER.debug("No type specified");
         }
-        if ( cftype != null && !cftype.equals(type)) {
+        if (cftype != null && !cftype.equals(type)) {
             throw new IOException(
                     "Object is not of expected column family, unable to read expected [" + type
                             + "] was [" + cftype + "]");
@@ -137,6 +131,16 @@ public class Types {
         LOGGER.debug("Finished Reading");
         dis.close();
         binaryStream.close();
+    }
+
+    public static void readMapFromStream(Map<String, Object> output, DataInputStream dis) throws IOException {
+        int size = dis.readInt();
+        LOGGER.debug("Reading {} items", size);
+        for (int i = 0; i < size; i++) {
+            String k = dis.readUTF();
+            LOGGER.debug("Read key {} ", k);
+            output.put(k, lookupTypeById(dis.readInt()).load(dis));
+        }
     }
 
     /**
@@ -159,7 +163,10 @@ public class Types {
             throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
-        writeMapToStream(key, m, type, dos);
+        dos.writeUTF(key);
+        writeMapToStream(m, dos);
+        // add the type in
+        dos.writeUTF(type);
         dos.flush();
         baos.flush();
         byte[] b = baos.toByteArray();
@@ -175,9 +182,8 @@ public class Types {
     // records out there, so be very careful
     // Appending to record is possible, if you make the loader fail safe when
     // the data isnt there. See the last writeUTF for an example.
-    public static void writeMapToStream(String key, Map<String, Object> m, String type,
+    public static void writeMapToStream(Map<String, Object> m,
             DataOutputStream dos) throws IOException {
-        dos.writeUTF(key);
         int size = 0;
         for (Entry<String, ?> e : m.entrySet()) {
             Object o = e.getValue();
@@ -199,8 +205,6 @@ public class Types {
                 t.save(dos, o);
             }
         }
-        // add the type in
-        dos.writeUTF(type);
         LOGGER.debug("Finished Writen {} items", size);
 
     }    

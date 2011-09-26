@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -12,7 +13,9 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Configuration;
+import org.sakaiproject.nakamura.api.lite.Feedback;
 import org.sakaiproject.nakamura.api.lite.MigrateContentService;
+import org.sakaiproject.nakamura.api.lite.PropertyMigrationException;
 import org.sakaiproject.nakamura.api.lite.PropertyMigrator;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -31,6 +34,8 @@ import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Maps;
 
 /**
@@ -58,6 +63,8 @@ import com.google.common.collect.Maps;
 @Component(immediate = true, enabled = true, metatype = true)
 @Service(value = MigrateContentService.class)
 public class MigrateContentComponent implements MigrateContentService {
+
+    private static final String SYSTEM_MIGRATION_CONTENT_ITEM = "system/migration";
 
     private static final String DEFAULT_REDOLOG_LOCATION = "migrationlogs";
 
@@ -102,7 +109,7 @@ public class MigrateContentComponent implements MigrateContentService {
     }
     
     
-    public void migrate(boolean dryRun, int limit,  boolean reindexAll, Logger feedback ) throws ClientPoolException, StorageClientException, AccessDeniedException, IOException {
+    public synchronized void migrate(boolean dryRun, int limit,  boolean reindexAll, Feedback feedback ) throws ClientPoolException, StorageClientException, AccessDeniedException, IOException, PropertyMigrationException {
         SessionImpl session = (SessionImpl) repository.loginAdministrative();
         StorageClient client = session.getClient();
         FileRedoLogger migrateRedoLog = new FileRedoLogger(redoLogLocation, maxLogFileSize, feedback);
@@ -115,11 +122,28 @@ public class MigrateContentComponent implements MigrateContentService {
                 Indexer indexer = jdbcClient.getIndexer();
     
                 PropertyMigrator[] propertyMigrators = propertyMigratorTracker.getPropertyMigrators();
-                for (PropertyMigrator p : propertyMigrators) {
+                
+                
+                DependencySequence migratorDependencySequence = getMigratorSequence(session, propertyMigrators);
+
+                for (PropertyMigrator p : migratorDependencySequence) {
                     LOGGER.info("DryRun:{} Using Property Migrator {} ", dryRun, p);
+                    feedback.log("DryRun:{0} Using Property Migrator {1} ", dryRun, p);
+                    
+                }
+                for (PropertyMigrator p : migratorDependencySequence.getUnresolved()) {
+                    LOGGER.info("DryRun:{} Unresolved Property Migrator {} ", dryRun, p);
+                    feedback.log("DryRun:{0} Unresolved Property Migrator {1} ", dryRun, p);
+                }
+                for (Entry<String, Object> p : migratorDependencySequence.getAlreadyRun().entrySet()) {
+                    LOGGER.info("DryRun:{} Migrator Last Run {} ", dryRun, p);
+                    feedback.log("DryRun:{0} Migrator Last Run {1} ", dryRun, p);
+                }
+                if ( migratorDependencySequence.hasUnresolved() ) {
+                    throw new PropertyMigrationException("There are unresolved dependencies "+migratorDependencySequence.getUnresolved());
                 }
                 reindex(dryRun, jdbcClient, keySpace, configuration.getAuthorizableColumnFamily(),
-                        indexer, propertyMigrators, new IdExtractor() {
+                        indexer, migratorDependencySequence, new IdExtractor() {
     
                             public String getKey(Map<String, Object> properties) {
                                 if (properties.containsKey(Authorizable.ID_FIELD)) {
@@ -129,7 +153,7 @@ public class MigrateContentComponent implements MigrateContentService {
                             }
                         }, limit, feedback, reindexAll);
                 reindex(dryRun, jdbcClient, keySpace, configuration.getContentColumnFamily(), indexer,
-                        propertyMigrators, new IdExtractor() {
+                        migratorDependencySequence, new IdExtractor() {
     
                             public String getKey(Map<String, Object> properties) {
                                 if (properties.containsKey(BlockSetContentHelper.CONTENT_BLOCK_ID)) {
@@ -148,7 +172,7 @@ public class MigrateContentComponent implements MigrateContentService {
                         }, limit, feedback, reindexAll);
     
                 reindex(dryRun, jdbcClient, keySpace, configuration.getAclColumnFamily(), indexer,
-                        propertyMigrators, new IdExtractor() {
+                        migratorDependencySequence, new IdExtractor() {
                             public String getKey(Map<String, Object> properties) {
                                 if (properties.containsKey(AccessControlManagerImpl._KEY)) {
                                     return (String) properties.get(AccessControlManagerImpl._KEY);
@@ -156,6 +180,9 @@ public class MigrateContentComponent implements MigrateContentService {
                                 return null;
                             }
                         }, limit, feedback, reindexAll);
+                
+                saveMigratorSequence(session, migratorDependencySequence);
+                
             } else {
                 LOGGER.warn("This class will only re-index content for the JDBCStorageClients");
             }
@@ -167,13 +194,45 @@ public class MigrateContentComponent implements MigrateContentService {
         
     }
 
+
+    private void saveMigratorSequence(SessionImpl session,
+            DependencySequence migratorDependencySequence) throws AccessDeniedException,
+            StorageClientException {
+        Content runMigrators = session.getContentManager().get(SYSTEM_MIGRATION_CONTENT_ITEM);
+        String ts = String.valueOf(System.currentTimeMillis());
+        int i = 0;
+        if (runMigrators == null) {
+            Builder<String, Object> b = ImmutableMap.builder();
+            for (PropertyMigrator pm : migratorDependencySequence) {
+                b.put(pm.getName(), ts + ";" + i);
+            }
+            runMigrators = new Content(SYSTEM_MIGRATION_CONTENT_ITEM, b.build());
+        } else {
+            for (PropertyMigrator pm : migratorDependencySequence) {
+                runMigrators.setProperty(pm.getName(), ts + ";" + i);
+            }
+        }
+        session.getContentManager().update(runMigrators);
+    }
+
+    private DependencySequence getMigratorSequence(SessionImpl session,
+            PropertyMigrator[] propertyMigrators) throws StorageClientException,
+            AccessDeniedException {
+        Content runMigrators = session.getContentManager().get(SYSTEM_MIGRATION_CONTENT_ITEM);
+        Map<String, Object> runMigratorRecord = ImmutableMap.of();
+        if (runMigrators != null) {
+            runMigratorRecord = runMigrators.getProperties();
+        }
+        return new DependencySequence(propertyMigrators, runMigratorRecord);
+    }
+
     private void reindex(boolean dryRun, StorageClient jdbcClient, String keySpace,
-            String columnFamily, Indexer indexer, PropertyMigrator[] propertyMigrators,
-            IdExtractor idExtractor, int limit, Logger feedback, boolean reindexAll) throws StorageClientException {
+            String columnFamily, Indexer indexer, DependencySequence propertyMigrators,
+            IdExtractor idExtractor, int limit, Feedback feedback, boolean reindexAll) throws StorageClientException {
         long objectCount = jdbcClient.allCount(keySpace, columnFamily);
         LOGGER.info("DryRun:{} Migrating {} objects in {} ", new Object[] { dryRun, objectCount,
                 columnFamily });
-        feedback.info("DryRun:{} Migrating {} objects in {} ", new Object[] { dryRun, objectCount,
+        feedback.log("DryRun:{0} Migrating {} objects in {1} ", new Object[] { dryRun, objectCount,
                 columnFamily });
         if (objectCount > 0) {
             DisposableIterator<SparseRow> allObjects = jdbcClient.listAll(keySpace, columnFamily);
@@ -186,8 +245,7 @@ public class MigrateContentComponent implements MigrateContentService {
                     if (c % 1000 == 0) {
                         LOGGER.info("DryRun:{} {}% remaining {} ", new Object[] { dryRun,
                                 ((c * 100) / objectCount), objectCount - c });
-                        feedback.info("DryRun:{} {}% remaining {} ", new Object[] { dryRun,
-                                ((c * 100) / objectCount), objectCount - c });
+                        feedback.progress(dryRun, c, objectCount);
 
                     }
                     try {
@@ -210,22 +268,22 @@ public class MigrateContentComponent implements MigrateContentService {
                             } else {
                                 if (c > limit) {
                                     LOGGER.info("Dry Run Migration Stoped at {} Objects ", limit);
-                                    feedback.info("Dry Run Migration Stoped at {} Objects ", limit);
+                                    feedback.log("Dry Run Migration Stoped at {0} Objects ", limit);
                                     break;
                                 }
                             }
                         } else {
                             LOGGER.info("DryRun:{} Skipped Reindexing, no key in  {}", dryRun,
                                     properties);
-                            feedback.info("DryRun:{} Skipped Reindexing, no key in  {}", dryRun,
+                            feedback.log("DryRun:{0} Skipped Reindexing, no key in  {1}", dryRun,
                                     properties);
                         }
                     } catch (SQLException e) {
                         LOGGER.warn(e.getMessage(), e);
-                        feedback.warn(e.getMessage(), e);
+                        feedback.exception(e);
                     } catch (StorageClientException e) {
                         LOGGER.warn(e.getMessage(), e);
-                        feedback.warn(e.getMessage(), e);
+                        feedback.exception(e);
                     }
                 }
             } finally {
