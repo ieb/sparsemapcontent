@@ -29,6 +29,7 @@ import org.apache.felix.scr.annotations.Reference;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
+import org.sakaiproject.nakamura.lite.types.LongString;
 import org.sakaiproject.nakamura.lite.types.StringType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,8 +67,17 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
     private static final String LONG_STRING_SIZE = "long-string-size";
 
     public  static final String DEFAULT_FILE_STORE = "store";
-    @Property(value = "store")
+    @Property(value = DEFAULT_FILE_STORE)
     public static final String FS_STORE_BASE_DIR = "store-base-dir";
+
+    /**
+     * Is ok to store content and long strings in the same location as they are
+     * identified by sha1 hashes and so unique. If a deplorer decides they want different
+     * locations, they can configure.
+     */
+    @Property(value = DEFAULT_FILE_STORE)
+    private static final String LONG_STRING_STORE_BASE = "long-string-base-dir";
+
 
     @Reference
     private Configuration configuration;
@@ -119,6 +129,11 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
         
         // set the maximum size of a string, if this is not 0, strings over this size will become files.
         StringType.setLengthLimit(StorageClientUtils.getSetting(properties.get(LONG_STRING_SIZE),0));
+        // location of the long string store.
+        LongString
+                .setBase(StorageClientUtils.getSetting(properties.get(LONG_STRING_STORE_BASE),
+                        StorageClientUtils.getSetting(properties.get(FS_STORE_BASE_DIR),
+                                DEFAULT_FILE_STORE)));
 
     }
 
