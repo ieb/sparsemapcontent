@@ -65,7 +65,10 @@ public interface PropertyMigrator {
     String[] getDependencies();
 
     /**
-     * @return get the name of this dependency.
+     * @return get the name of this dependency, which is used in
+     *         getDependencies(). It must be globally unique over all
+     *         implementations of PropertyMigrator. ie getClass().getName() is a
+     *         reasonable choice.
      */
     String getName();
 
