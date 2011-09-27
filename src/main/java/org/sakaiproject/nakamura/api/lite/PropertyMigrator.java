@@ -58,7 +58,9 @@ public interface PropertyMigrator {
      * @return get a list of dependencies that this PropertyMigrator is
      *         dependent on. If the named dependencies have not already been run
      *         or are missing from the current set, then the migration will
-     *         refuse to run.
+     *         refuse to run. The value of each element of getDependencies()
+     *         should match the value of getName() of the implementation of this
+     *         interface on which there is a dependency.
      */
     String[] getDependencies();
 
