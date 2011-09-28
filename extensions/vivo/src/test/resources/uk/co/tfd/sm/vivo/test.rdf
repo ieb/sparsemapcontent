@@ -1,0 +1,55 @@
+<rdf:RDF
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:j.0="http://xmlns.com/foaf/0.1/"
+    xmlns:owl="http://www.w3.org/2002/07/owl#"
+    xmlns:j.1="http://vivoweb.org/ontology/core#"
+    xmlns:j.2="http://vitro.mannlib.cornell.edu/ns/vitro/0.7#"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" > 
+  <rdf:Description rdf:about="http://vivo.tfd.co.uk/individual/n3506">
+    <j.2:mostSpecificType rdf:resource="http://vivoweb.org/ontology/core#DateTimeInterval"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+    <rdf:type rdf:resource="http://vivoweb.org/ontology/core#DateTimeInterval"/>
+    <j.1:start rdf:resource="http://vivo.tfd.co.uk/individual/n3491"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://vivoweb.org/ontology/core#yearPrecision">
+    <rdfs:label xml:lang="en-US">yearPrecision</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://vivo.tfd.co.uk/individual/n7934">
+    <j.1:preferredTitle>Dr</j.1:preferredTitle>
+    <j.1:primaryEmail>ieb@tfd.co.uk</j.1:primaryEmail>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+    <j.0:lastName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Boston</j.0:lastName>
+    <j.0:firstName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ian</j.0:firstName>
+    <rdf:type rdf:resource="http://xmlns.com/foaf/0.1/Person"/>
+    <rdf:type rdf:resource="http://xmlns.com/foaf/0.1/Agent"/>
+    <rdfs:label>Boston, Ian</rdfs:label>
+    <j.2:mostSpecificType rdf:resource="http://vivoweb.org/ontology/core#FacultyMember"/>
+    <j.1:hasResearchArea rdf:resource="http://vivo.tfd.co.uk/individual/n2533"/>
+    <rdf:type rdf:resource="http://vivoweb.org/ontology/core#FacultyMember"/>
+    <j.1:personInPosition rdf:resource="http://vivo.tfd.co.uk/individual/n3494"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://vivo.tfd.co.uk/individual/n3491">
+    <j.2:mostSpecificType rdf:resource="http://vivoweb.org/ontology/core#DateTimeValue"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+    <rdf:type rdf:resource="http://vivoweb.org/ontology/core#DateTimeValue"/>
+    <j.1:dateTimePrecision rdf:resource="http://vivoweb.org/ontology/core#yearPrecision"/>
+    <j.1:dateTime rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2001-01-01T00:00:00</j.1:dateTime>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://vivo.tfd.co.uk/individual/n3494">
+    <j.2:mostSpecificType rdf:resource="http://vivoweb.org/ontology/core#PostdocPosition"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+    <rdf:type rdf:resource="http://vivoweb.org/ontology/core#PostdocPosition"/>
+    <rdf:type rdf:resource="http://vivoweb.org/ontology/core#Position"/>
+    <rdf:type rdf:resource="http://vivoweb.org/ontology/core#NonFacultyAcademicPosition"/>
+    <j.1:dateTimeInterval rdf:resource="http://vivo.tfd.co.uk/individual/n3506"/>
+    <j.1:positionForPerson rdf:resource="http://vivo.tfd.co.uk/individual/n7934"/>
+    <j.1:positionInOrganization rdf:resource="http://vivo.tfd.co.uk/individual/n3488"/>
+    <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CTO</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://vivo.tfd.co.uk/individual/n2533">
+    <rdfs:label>Parallel Computing</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://vivo.tfd.co.uk/individual/n3488">
+    <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Caret</rdfs:label>
+  </rdf:Description>
+</rdf:RDF>
