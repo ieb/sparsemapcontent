@@ -70,14 +70,4 @@
     </Call>
     
     
-    <Configure class="org.mortbay.jetty.handler.ContextHandler">
-	   <Set name="contextPath">/test</Set>
-	   <Set name="resourceBase">/Users/ieb/public_html</Set>
-	   <Call name="addHandler">
-	       <Arg>
-	           <New class="org.mortbay.jetty.handler.ResourceHandler"/>
-	       </Arg>
-	   </Call>
-    </Configure>
-
 </Configure>

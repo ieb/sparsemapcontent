@@ -150,8 +150,8 @@ public final class NakamuraJettyService
         configuration.configure(server);
         configStream.close();
         
-        Context staticContext = new Context(this.server, "/test", false, false);
-        staticContext.addServlet(new ServletHolder(staticContentServlet), "/*");
+//        Context staticContext = new Context(this.server, "/test", false, false);
+//        staticContext.addServlet(new ServletHolder(staticContentServlet), "/*");
 
         Context context = new Context(this.server, "/", Context.SESSIONS);
         context.addEventListener(eventDispatcher);
