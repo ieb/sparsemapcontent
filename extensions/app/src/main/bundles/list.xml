@@ -115,7 +115,7 @@
     <bundle>
       <groupId>org.sakaiproject.nakamura</groupId>
       <artifactId>org.sakaiproject.nakamura.google-collections</artifactId>
-      <version>0.8-0.11-SNAPSHOT</version>
+      <version>0.8-0.11</version>
     </bundle>
    </startLevel>
    <startLevel level="12" >
@@ -129,7 +129,7 @@
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
             <artifactId>org.sakaiproject.nakamura.core</artifactId>
-            <version>1.1-SNAPSHOT</version>
+            <version>1.2-SNAPSHOT</version>
         </bundle>
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
