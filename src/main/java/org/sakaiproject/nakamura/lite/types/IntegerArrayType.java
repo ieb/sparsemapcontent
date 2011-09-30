@@ -4,34 +4,44 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class IntegerArrayType implements Type<int[]> {
+public class IntegerArrayType implements Type<Integer[]> {
 
     public int getTypeId() {
         return 1002;
     }
 
     public void save(DataOutputStream dos, Object object) throws IOException {
-        int[] values = (int[]) object;
+        Integer[] values;
+        if ( object instanceof int[] ) {
+            // sadly, autoboxing does not work for primitive types.
+            int[] primitiveArray = (int[]) object;
+            values = new Integer[primitiveArray.length];
+            for ( int i = 0; i < primitiveArray.length; i++ ) {
+                values[i] = primitiveArray[i];
+            }
+        } else {
+            values = (Integer[]) object;
+        }
         dos.writeInt(values.length);
-        for ( int s : values) {
+        for ( Integer s : values) {
             dos.writeInt(s);
         }
     }
 
-    public int[] load(DataInputStream in) throws IOException {
-        int l = in.readInt();
-        int[] values = new int[l];
+    public Integer[] load(DataInputStream in) throws IOException {
+        Integer l = in.readInt();
+        Integer[] values = new Integer[l];
         for ( int i = 0; i < l; i++ ) {
             values[i] = in.readInt();
         }
         return values;
     }
 
-    public Class<int[]> getTypeClass() {
-        return int[].class;
+    public Class<Integer[]> getTypeClass() {
+        return Integer[].class;
     }
 
     public boolean accepts(Object object) {
-        return (object instanceof int[]);
+        return (object instanceof Integer[] || object instanceof int[]);
     }
 }
