@@ -63,7 +63,9 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
     private static final String TEST_WHILE_IDLE = "test-while-idle";
     @Property(value = "grow")
     private static final String WHEN_EHAUSTED = "when-exhausted-action";
-    @Property(intValue = 0)
+
+    private static final int DEFAULT_LONG_STRING_SIZE = 16*1024;
+    @Property(intValue = DEFAULT_LONG_STRING_SIZE)
     private static final String LONG_STRING_SIZE = "long-string-size";
 
     public  static final String DEFAULT_FILE_STORE = "store";
@@ -128,7 +130,7 @@ public abstract class AbstractClientConnectionPool implements StorageClientPool 
                 numTestsPerEvictionRun, minEvictableIdleTimeMillis, testWhileIdle);
         
         // set the maximum size of a string, if this is not 0, strings over this size will become files.
-        StringType.setLengthLimit(StorageClientUtils.getSetting(properties.get(LONG_STRING_SIZE),0));
+        StringType.setLengthLimit(StorageClientUtils.getSetting(properties.get(LONG_STRING_SIZE),DEFAULT_LONG_STRING_SIZE));
         // location of the long string store.
         LongString
                 .setBase(StorageClientUtils.getSetting(properties.get(LONG_STRING_STORE_BASE),
