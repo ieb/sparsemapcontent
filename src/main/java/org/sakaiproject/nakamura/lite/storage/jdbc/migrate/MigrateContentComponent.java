@@ -232,7 +232,7 @@ public class MigrateContentComponent implements MigrateContentService {
         long objectCount = jdbcClient.allCount(keySpace, columnFamily);
         LOGGER.info("DryRun:{} Migrating {} objects in {} ", new Object[] { dryRun, objectCount,
                 columnFamily });
-        feedback.log("DryRun:{0} Migrating {} objects in {1} ", new Object[] { dryRun, objectCount,
+        feedback.log("DryRun:{0} Migrating {1} objects in {2} ", new Object[] { dryRun, objectCount,
                 columnFamily });
         if (objectCount > 0) {
             DisposableIterator<SparseRow> allObjects = jdbcClient.listAll(keySpace, columnFamily);
