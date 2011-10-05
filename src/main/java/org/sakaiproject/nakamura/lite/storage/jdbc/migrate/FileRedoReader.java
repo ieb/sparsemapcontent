@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Ordering;
 
 public class FileRedoReader {
 
@@ -27,12 +28,11 @@ public class FileRedoReader {
     }
 
     public void analyse() throws IOException {
-        List<File> sortedFileList = Lists.sortedCopy(ImmutableList.of(location.listFiles()),
-                new Comparator<File>() {
+        List<File> sortedFileList = Ordering.from(new Comparator<File>() {
                     public int compare(File arg0, File arg1) {
                         return arg0.getAbsolutePath().compareTo(arg1.getAbsolutePath());
                     }
-                });
+                }).sortedCopy(ImmutableList.of(location.listFiles()));
         for (File f : sortedFileList) {
             try {
                 DataInputStream din = new DataInputStream(new FileInputStream(f));
