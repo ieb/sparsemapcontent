@@ -24,6 +24,8 @@ import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 @SuppressWarnings("restriction")
 public class RDFToMap {
@@ -38,14 +40,17 @@ public class RDFToMap {
 			.getLogger(RDFToMap.class);
 	private XMLInputFactory xmlInputFactory;
 	private Map<String, String> nsPrefixMap;
+	private Map<String, Map<String, Object>> tripleMap;
+	private Map<String, Object> resolvedMap;
 
 	public RDFToMap(Map<String, String> nsPrefixMap) {
 		xmlInputFactory = XMLInputFactory.newInstance();
 		xmlInputFactory.setProperty(XMLInputFactory.IS_COALESCING, true);
 		this.nsPrefixMap = nsPrefixMap;
 	}
+	
 
-	public Map<String, Map<String, Object>> toMap(Reader reader)
+	public RDFToMap readMap(Reader reader)
 			throws XMLStreamException {
 
 		XMLEventReader eventReader = xmlInputFactory
@@ -60,7 +65,7 @@ public class RDFToMap {
 					}
 				});
 
-		Map<String, Map<String, Object>> tripleMap = Maps.newHashMap();
+		tripleMap = Maps.newHashMap();
 		Map<String, Object> currentMap = null;
 		String key = null;
 		StringBuilder body = null;
@@ -118,20 +123,28 @@ public class RDFToMap {
 				break;
 			}
 		}
-		return tripleMap;
+		return this;
 	}
 
-	public Map<String, Object> resolveToFullJson(
-			Map<String, Map<String, Object>> map) {
+	public RDFToMap resolveToFullJson() {
 		Set<String> resolving = Sets.newHashSet();
-		Map<String, Object> output = Maps.newHashMap();
-		resolveToFullJson(output, map, map, resolving);
+		resolvedMap = Maps.newHashMap();
+		resolveToFullJson(resolvedMap, tripleMap, tripleMap, resolving);
 		Map<String, String> invertedNsPrefixMap = invertMap(nsPrefixMap);
+		accumulate(resolvedMap, "_namespaces", invertedNsPrefixMap);
+		accumulate(resolvedMap, "_default", invertedNsPrefixMap.get(""));
+		return this;
+	}
 	
-		
-		accumulate(output, "_namespaces", invertedNsPrefixMap);
-		accumulate(output, "_default", invertedNsPrefixMap.get(""));
-		return output;
+	
+	public String toJson(boolean indented) {
+		if (indented ) {
+			Gson gson = new GsonBuilder().setPrettyPrinting().create();
+			return gson.toJson(resolvedMap);
+		} else {
+			Gson gson = new Gson();
+			return gson.toJson(resolvedMap);
+		}
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })

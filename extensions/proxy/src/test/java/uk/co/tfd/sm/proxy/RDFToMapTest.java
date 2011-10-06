@@ -2,7 +2,6 @@ package uk.co.tfd.sm.proxy;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -12,8 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 @SuppressWarnings("restriction")
 public class RDFToMapTest {
@@ -35,9 +32,7 @@ public class RDFToMapTest {
 		b.put("http://www.w3.org/2002/07/owl#", "owl");
 
 		RDFToMap rdfToMap = new RDFToMap(b.build());
-		Map<String, Map<String, Object>> m = rdfToMap.toMap(reader);
-		Gson gson = new GsonBuilder().setPrettyPrinting().create();
-		LOGGER.info("JSON = {} ",gson.toJson(rdfToMap.resolveToFullJson(m)));
+		LOGGER.info("JSON = {} ",rdfToMap.readMap(reader).resolveToFullJson().toJson(true));
 	}
 
 
