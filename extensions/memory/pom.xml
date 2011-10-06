@@ -61,9 +61,9 @@
   </build>
   <dependencies>
     <dependency>
-      <groupId>com.google.collections</groupId>
-      <artifactId>google-collections</artifactId>
-      <version>0.8</version>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>r09</version>
     </dependency>
     <dependency>
       <groupId>net.sf.ehcache</groupId>

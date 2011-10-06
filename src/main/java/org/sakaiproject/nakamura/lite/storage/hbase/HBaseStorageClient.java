@@ -211,7 +211,7 @@ public class HBaseStorageClient implements StorageClient {
       throws StorageClientException {
 
     String properties[] = new ConfigurationImpl().getIndexColumnNames();
-    Set<String> indexColumns = ImmutableSet.of(properties);
+    Set<String> indexColumns = ImmutableSet.copyOf(properties);
 
     if (indexColumns.contains(columnFamily + ":" + columnName)) {
       LOGGER.debug("Should Index {}:{}", columnFamily, columnName);

@@ -69,9 +69,9 @@
     	<scope>compile</scope>
     </dependency>
     <dependency>
-    	<groupId>com.google.collections</groupId>
-    	<artifactId>google-collections</artifactId>
-    	<version>0.8</version>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>r09</version>
     	<type>jar</type>
     	<scope>compile</scope>
     </dependency>
