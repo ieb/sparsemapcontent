@@ -1,0 +1,8 @@
+preprocessor = Default
+postprocessor = Default
+request-proxy-endpoint = http://localhost:8080/test
+request-proxy-method = GET
+proxy-limit-length = 100
+proxy-request-template = a request body template
+request-content-type = text/plain
+proxy-header = X-test-proxy:1,X-test-proxy-2:2

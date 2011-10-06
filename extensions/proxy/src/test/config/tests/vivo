@@ -1,0 +1,6 @@
+preprocessor = Default
+postprocessor = Default
+request-proxy-endpoint = http://localhost:8080/vivo/individual/${id}/${id}.rdf
+request-proxy-method = GET
+# this item is in the public cache with an expiry time of 200s
+request-cache-expiry = 200
