@@ -1,0 +1,8 @@
+request-proxy-endpoint = http://api.flickr.com/services/rest?method=flickr.photos.search&api_key=${config.flickr_api_key}&page=${page}&media=${media}&per_page=${per_page}&tags=${tags}&format=json&nojsoncallback=1
+request-proxy-method = GET
+# flickr- Get pictures by searchterm",
+# parameters
+#    media (Required)Set the kind of media that will be returned
+#    per_page (Required)Set the images that will be returned per page
+#    tags (Required)All the searchterms
+#    page (Required)The requested page

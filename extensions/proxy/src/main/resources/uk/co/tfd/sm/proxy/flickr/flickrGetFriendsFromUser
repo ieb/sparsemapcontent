@@ -1,0 +1,8 @@
+request-proxy-endpoint = http://api.flickr.com/services/rest/?method=flickr.contacts.getPublicList&api_key=${config.flickr_api_key}&user_id=${userid}&page=1&per_page=15&format=json&nojsoncallback=1
+request-proxy-method = GET
+#   flickr- Get the public contacts from a user
+# This proxy will get the public contacts from a user.
+# This template requires an API key. 
+# It can be defined by configuring org.sakaiproject.nakamura.proxy.ProxyClientServiceImpl flickr_api_key=93a86c06dc382a19bff0d4d24872ecab
+# parameters  
+#     userid    (Required) The user id

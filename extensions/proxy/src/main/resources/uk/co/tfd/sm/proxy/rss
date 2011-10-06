@@ -1,0 +1,5 @@
+proxy-limit-length = 102400
+request-proxy-endpoint = ${rss}
+request-proxy-method = GET
+postprocessor = rss
+preprocessor = rss

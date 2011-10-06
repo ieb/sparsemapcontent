@@ -1,0 +1,7 @@
+request-proxy-endpoint = http://api.flickr.com/services/rest/?method=flickr.people.getPublicPhotos&api_key=${config.flickr_api_key}&user_id=${userid}&safe_search=true&per_page=${per_page}&page=${page}&format=json&nojsoncallback=1
+request-proxy-method = GET
+# flickr- Get the public pictures from a user
+# Parameters 
+# userid (Required)The user id
+# page (Required)The page
+# per_page (Required)Images per page

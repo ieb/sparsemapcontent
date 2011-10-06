@@ -1,0 +1,4 @@
+request-proxy-endpoint = http://api.flickr.com/services/rest/?method=flickr.people.findByUsername&api_key=${config.flickr_api_key}&username=${name}&format=json&nojsoncallback=1
+request-proxy-method = GET
+# flickr- Get user-id by name
+# name (Required)The name

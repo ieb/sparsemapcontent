@@ -1,0 +1,9 @@
+request-proxy-endpoint = http://${hostname}:${port}/sakai-hybrid/sites
+request-proxy-method = GET
+preprocessor = trusted-token
+postprocessor = trustedLoginTokenProxyPostProcessor
+# Get the sites from Sakai2 for the current logged in user.
+# Parameters
+#    hostname the Sakai 2 host name
+#    port the Sakai 2 port
+

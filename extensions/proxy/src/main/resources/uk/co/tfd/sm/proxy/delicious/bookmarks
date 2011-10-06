@@ -1,0 +1,8 @@
+request-proxy-endpoint = http://feeds.delicious.com/v2/json/${mode}?count=${count}
+request-proxy-method = GET
+# Get bookmarks from the Delicious JSON feed.
+# parameters
+#    mode The correct mode of which the bookmarks should be obtained. 
+#           This is a part of the proxy endpoint and contains a username whenever needed
+#            (modes: personal, network, subscriptions).
+#    count The number of bookmarks to fetch. This is a part of the proxy endpoint.

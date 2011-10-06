@@ -1,0 +1,3 @@
+request-proxy-endpoint = http://www.addthis.com/services/trends-load/format/json?cat=&cnt=10
+request-proxy-method = GET
+# Get the most popular services from Add This

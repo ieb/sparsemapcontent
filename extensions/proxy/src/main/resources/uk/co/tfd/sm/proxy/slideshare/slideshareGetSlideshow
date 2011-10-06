@@ -1,0 +1,10 @@
+request-proxy-endpoint = http://www.slideshare.net/api/2/get_slideshow?${keyHash}&slideshow_url=${slideshow_url}
+preprocessor = slideshare
+request-proxy-method = GET
+# Get a slide show from Slideshare.",
+# This template requires an API key. It can be defined at 
+# org.sakaiproject.nakamura.proxy.SlideshareProxyPreProcessor
+# slideshare.apiKey=0XXXyyy
+# slideshare.sharedSecret=XXXXyyyX
+# Parameters
+#     slideshow_url The url of the slideshow

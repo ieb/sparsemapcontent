@@ -1,0 +1,9 @@
+request-proxy-endpoint = http://twitter.com/statuses/update.json
+request-proxy-method = POST
+request-content-type = application/x-www-form-urlencoded
+# Proxies Update status to the twitter API as POST http://localhost:8080/var/proxy/twitter/update_status.json 
+# The body of the post must conform to the <a href=\"http://apiwiki.twitter.com/\" >Twitter API</a> for update status, as per 
+# password it should be supplied as in parameters as :basic-user, :basic-password 
+# all other parameters will be proxied through to Twitter
+
+

@@ -1,0 +1,3 @@
+request-proxy-endpoint = http://videolectures.net/${lectureId}/snippet/
+request-proxy-method = GET
+# Get the snippet page for a lecture

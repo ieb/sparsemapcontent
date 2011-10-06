@@ -1,0 +1,3 @@
+request-proxy-endpoint = ${url}
+request-proxy-method = HEAD
+postprocessor = header

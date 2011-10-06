@@ -1,0 +1,4 @@
+request-proxy-endpoint = http://${hostname}:${port}/sakai-hybrid/sites?unread=${unread}
+request-proxy-method = GET
+preprocessor = trusted-token
+postprocessor = trustedLoginTokenProxyPostProcessor

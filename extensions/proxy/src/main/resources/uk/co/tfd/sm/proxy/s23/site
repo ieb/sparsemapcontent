@@ -1,0 +1,9 @@
+request-proxy-endpoint = http://${hostname}:${port}/sakai-hybrid/site?siteId=${siteid}
+request-proxy-method = GET
+preprocessor = trusted-token
+postprocessor = trustedLoginTokenProxyPostProcessor
+# Sakai2: get site information
+# Parameters
+#    hostname the Sakai 2 host name
+#    port the Sakai 2 port
+#    siteid the Site ID
