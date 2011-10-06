@@ -69,11 +69,9 @@
     	<scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>r09</version>
-    	<type>jar</type>
-    	<scope>compile</scope>
+      <groupId>com.googlecode.guava-osgi</groupId>
+      <artifactId>guava-osgi</artifactId>
+      <version>9.0.0</version>
     </dependency>
     <dependency>
     	<groupId>junit</groupId>

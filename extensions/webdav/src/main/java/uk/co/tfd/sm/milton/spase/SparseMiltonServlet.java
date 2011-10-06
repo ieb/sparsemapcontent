@@ -37,7 +37,7 @@ import com.bradmcevoy.http.ServletResponse;
 import com.bradmcevoy.http.http11.Http11ResponseHandler;
 import com.bradmcevoy.http.http11.auth.PreAuthenticationFilter;
 import com.bradmcevoy.http.http11.auth.SecurityManagerBasicAuthHandler;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 
 @Component(immediate = true, metatype = true)
 @Service(value = Servlet.class)
@@ -63,7 +63,7 @@ public class SparseMiltonServlet extends HttpServlet {
 		ResourceFactory resourceFactory = new SparseMiltonContentResourceFactory(basePath);
 		SessionTrackerFilter sessionTrackerFilter = new SessionTrackerFilter();
 		SecurityManager securityManager = new MiltonSecurityManager(repository, sessionTrackerFilter, basePath);
-		List<AuthenticationHandler> authHandlers = Lists.immutableList(
+		List<AuthenticationHandler> authHandlers = ImmutableList.of(
 				(AuthenticationHandler) new SecurityManagerBasicAuthHandler(securityManager));
 		AuthenticationService authenticationService = new AuthenticationService(authHandlers);
 		httpManager = new HttpManager(resourceFactory, authenticationService);

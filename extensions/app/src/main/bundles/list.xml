@@ -113,9 +113,9 @@
 
    <startLevel level="1">
     <bundle>
-      <groupId>org.sakaiproject.nakamura</groupId>
-      <artifactId>org.sakaiproject.nakamura.google-collections</artifactId>
-      <version>0.8-1.1-SNAPSHOT</version>
+		<groupId>com.googlecode.guava-osgi</groupId>
+  		<artifactId>guava-osgi</artifactId>
+  		<version>9.0.0</version>
     </bundle>
    </startLevel>
    <startLevel level="12" >

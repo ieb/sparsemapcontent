@@ -62,6 +62,7 @@ import com.bradmcevoy.property.MultiNamespaceCustomPropertyResource;
 import com.bradmcevoy.property.PropertySource.PropertyAccessibility;
 import com.bradmcevoy.property.PropertySource.PropertyMetaData;
 import com.bradmcevoy.property.PropertySource.PropertySetException;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableSet;
@@ -491,8 +492,7 @@ public class SparseMiltonContentResource implements FileResource, FolderResource
 		// this needs to be disposed by the system.
 		LOGGER.debug("Get Children ");
 		final Iterator<Content> children = content.listChildren().iterator();
-		return Lists
-				.immutableList(new PreemptiveIterator<SparseMiltonContentResource>() {
+		return ImmutableList.copyOf(new PreemptiveIterator<SparseMiltonContentResource>() {
 
 					private SparseMiltonContentResource resource;
 
