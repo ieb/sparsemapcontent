@@ -42,8 +42,6 @@ public class ContentCreateClient extends AbstractScalingClient {
     public void run() {
         try {
             super.setup();
-            String tname = String.valueOf(Thread.currentThread().getId())
-                    + String.valueOf(System.currentTimeMillis());
             AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
             User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
@@ -51,6 +49,7 @@ public class ContentCreateClient extends AbstractScalingClient {
                     client, currentUser, configuration, sharedCache, new LoggingStorageListener(),
                     principalValidatorResolver);
 
+            @SuppressWarnings("unused")
             AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
                     null, client, configuration, accessControlManagerImpl, sharedCache,
                     new LoggingStorageListener());
@@ -108,6 +107,7 @@ public class ContentCreateClient extends AbstractScalingClient {
             s = t;
             int n = 0;
             while(iterator.hasNext()) {
+                @SuppressWarnings("unused")
                 String p = iterator.next();
                 if ( n == 0 ) {
                     t = System.currentTimeMillis();

@@ -2,10 +2,7 @@ package org.sakaiproject.nakamura.api.lite;
 
 import java.io.IOException;
 
-import org.sakaiproject.nakamura.api.lite.ClientPoolException;
-import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
-import org.slf4j.Logger;
 
 public interface MigrateContentService {
 

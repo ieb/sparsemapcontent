@@ -18,14 +18,12 @@ import org.slf4j.LoggerFactory;
 public class LockManagerImpl extends CachingManager implements LockManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LockManagerImpl.class);
-    private StorageClient storageClient;
     private String lockColumnFamily;
     private String keySpace;
     private String currentUser;
 
     public LockManagerImpl(StorageClient storageClient, Configuration config, User currentUser, Map<String, CacheHolder> sharedCache) {
         super(storageClient, sharedCache);
-        this.storageClient = storageClient;
         this.lockColumnFamily = config.getLockColumnFamily();
         this.keySpace = config.getKeySpace();
         this.currentUser = currentUser.getId();

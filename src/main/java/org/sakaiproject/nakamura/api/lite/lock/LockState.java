@@ -1,6 +1,5 @@
 package org.sakaiproject.nakamura.api.lite.lock;
 
-import java.text.MessageFormat;
 
 public class LockState {
 

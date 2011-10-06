@@ -6,8 +6,6 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.sakaiproject.nakamura.api.lite.PropertyMigrator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -135,6 +133,7 @@ public class DependencySequenceTest {
                 .getAlreadyRun().keySet()));
     }
 
+    @SuppressWarnings("unchecked")
     private <T> T[] getArray(Iterable<T> iterator) {
         List<T> l = Lists.newArrayList();
         for (T t : iterator) {
@@ -145,7 +144,7 @@ public class DependencySequenceTest {
 
     private <T> int getSize(Iterable<T> iterable) {
         int i = 0;
-        for (T t : iterable) {
+        for (@SuppressWarnings("unused") T t : iterable) {
             i++;
         }
         return i;

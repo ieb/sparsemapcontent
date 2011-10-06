@@ -40,7 +40,6 @@ public class DependencySequence implements Iterable<PropertyMigrator> {
         for (;;) {
             int resolved = 0;
             for (Entry<String, PropertyMigrator> e : availableMigrators.entrySet()) {
-                String migratorName = e.getKey();
                 PropertyMigrator pm = e.getValue();
                 if (!toRunSequence.contains(pm)) {
                     // migrator has not been run previously and is not in the

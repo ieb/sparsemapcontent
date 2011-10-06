@@ -25,7 +25,6 @@
   <prerequisites>
     <maven>3.0.3</maven>
   </prerequisites>
-
   <build>
     <plugins>
       <plugin>
@@ -87,6 +86,24 @@
          </includes>
        </configuration>
      </plugin>
+     <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <version>2.3.1</version>
+        <executions>
+          <execution>
+            <id>install-parent</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+               <file>parent/pom.xml</file>
+               <pomFile>parent/pom.xml</pomFile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
   <dependencies>

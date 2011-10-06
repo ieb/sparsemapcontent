@@ -797,7 +797,7 @@ public abstract class AbstractContentManagerTest {
       Content obj = contentManager.get("/testCreateContent");
       Assert.assertNotNull(obj);
       while (true) {
-        for (Content child : obj.listChildren()) {
+        for (@SuppressWarnings("unused") Content child : obj.listChildren()) {
         }
       }
   }
