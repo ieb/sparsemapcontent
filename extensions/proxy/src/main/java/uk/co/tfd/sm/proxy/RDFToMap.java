@@ -16,6 +16,7 @@ import javax.xml.stream.events.Characters;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,11 +45,38 @@ public class RDFToMap {
 	private Map<String, Object> resolvedMap;
 
 	public RDFToMap(Map<String, String> nsPrefixMap) {
+		init(nsPrefixMap);
+	}
+	
+
+	public RDFToMap(String namespaceMapConfig) {
+		String[] pairs = StringUtils.split(namespaceMapConfig, ";");
+		Builder<String, String> b = ImmutableMap.builder();
+		if ( pairs != null ) {
+			for (String pair : pairs) {
+				String[] kv = StringUtils.split(pair, "=", 2);
+				
+				if (kv == null || kv.length == 0 ) {
+					throw new RuntimeException(
+							"Names space key value pairs must be of the form ns=nsuri;ns=nsuri failed to parse "
+									+ namespaceMapConfig);
+				} else if ( kv.length == 1) {
+					b.put(kv[0],"");
+				} else {
+					b.put(kv[1], kv[0]);
+				}
+			}
+		}
+		init(b.build());
+	}
+
+
+	private void init(Map<String, String> nsPrefixMap) {
 		xmlInputFactory = XMLInputFactory.newInstance();
 		xmlInputFactory.setProperty(XMLInputFactory.IS_COALESCING, true);
 		this.nsPrefixMap = nsPrefixMap;
 	}
-	
+
 
 	public RDFToMap readMap(Reader reader)
 			throws XMLStreamException {
@@ -237,13 +265,18 @@ public class RDFToMap {
 			if ( keyWithNamespace.startsWith(e.getKey())) {
 				String ns = e.getValue();
 				if ( ns.length() > 0 ) {				
-					return ns+":"+keyWithNamespace.substring(e.getKey().length());
+					return ns+"_"+keyWithNamespace.substring(e.getKey().length());
 				} else {
 					return keyWithNamespace.substring(e.getKey().length());
 				}
 			}
 		}
 		return keyWithNamespace;
+	}
+
+
+	public Map<String, Object> toMap() {
+		return resolvedMap;
 	}
 
 }

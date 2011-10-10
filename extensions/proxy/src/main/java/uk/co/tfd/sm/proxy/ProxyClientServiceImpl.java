@@ -36,10 +36,10 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.collections.ExtendedProperties;
 import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
@@ -62,22 +62,19 @@ import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.ProxySelectorRoutePlanner;
 import org.apache.http.params.HttpParams;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.exception.MethodInvocationException;
 import org.apache.velocity.exception.ParseErrorException;
 import org.apache.velocity.exception.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Maps;
-
 import uk.co.tfd.sm.api.proxy.ProxyClientException;
 import uk.co.tfd.sm.api.proxy.ProxyClientService;
 import uk.co.tfd.sm.api.proxy.ProxyMethod;
 import uk.co.tfd.sm.api.proxy.ProxyPostProcessor;
 import uk.co.tfd.sm.api.proxy.ProxyResponse;
-import uk.co.tfd.sm.proxy.velocity.VelocityLogger;
+
+import com.google.common.collect.Maps;
 
 /**
  *
@@ -98,11 +95,9 @@ public class ProxyClientServiceImpl implements ProxyClientService {
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(ProxyClientServiceImpl.class);
 
-	/**
-	 * The shared velocity engine, which should cache all the templates. (need
-	 * to sort out how to invalidate).
-	 */
-	private VelocityEngine velocityEngine;
+
+	@Reference
+	private ProxyTemplateService templateService;
 
 	private Map<String, Object> configProperties;
 
@@ -111,6 +106,7 @@ public class ProxyClientServiceImpl implements ProxyClientService {
 	private boolean useJreProxy = false;
 
 	private ThreadLocal<Map<String, Object>> boundConfig = new ThreadLocal<Map<String, Object>>();
+
 
 	/**
 	 * Create resources used by this component.
@@ -130,13 +126,6 @@ public class ProxyClientServiceImpl implements ProxyClientService {
 				safeOpenProcessors.add(pp);
 			}
 		}
-		velocityEngine = new VelocityEngine();
-		velocityEngine.setProperty(VelocityEngine.RUNTIME_LOG_LOGSYSTEM,
-				new VelocityLogger(this.getClass()));
-
-		ExtendedProperties configuration = new ExtendedProperties();
-		velocityEngine.setExtendedProperties(configuration);
-		velocityEngine.init();
 
 		// allow communications via a proxy server if command line
 		// java parameters http.proxyHost,http.proxyPort,http.proxyUser,
@@ -241,7 +230,7 @@ public class ProxyClientServiceImpl implements ProxyClientService {
 				
 				LOGGER.info("Valied Endpoint Def");
 
-				VelocityContext context = new VelocityContext(Maps.newHashMap(input));
+				Map<String, Object> context = Maps.newHashMap(input);
 
 				// add in the config properties from the bundle overwriting
 				// everything else.
@@ -357,8 +346,7 @@ public class ProxyClientServiceImpl implements ProxyClientService {
 						} else {
 							// build the request
 							StringWriter body = new StringWriter();
-							velocityEngine
-									.evaluate(context, body, (String) config
+							templateService.evaluate(context, body, (String) config
 											.get("path"), (String) config
 											.get(CONFIG_PROXY_REQUEST_TEMPLATE));
 							byte[] soapBodyContent = body.toString().getBytes(
@@ -436,12 +424,13 @@ public class ProxyClientServiceImpl implements ProxyClientService {
 		return true;
 	}
 
+
 	private String processUrlTemplate(String endpointURL,
-			VelocityContext context) throws ParseErrorException,
+			Map<String, Object> context) throws ParseErrorException,
 			MethodInvocationException, ResourceNotFoundException, IOException {
 		Reader urlTemplateReader = new StringReader(endpointURL);
 		StringWriter urlWriter = new StringWriter();
-		velocityEngine.evaluate(context, urlWriter, "urlprocessing",
+		templateService.evaluate(context, urlWriter, "urlprocessing",
 				urlTemplateReader);
 		return urlWriter.toString();
 	}

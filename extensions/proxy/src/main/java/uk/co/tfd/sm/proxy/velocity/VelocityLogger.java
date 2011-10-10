@@ -27,93 +27,107 @@ import org.slf4j.LoggerFactory;
  */
 public class VelocityLogger implements LogChute {
 
-  private Logger logger;
+	private Logger logger;
+	protected boolean inDebugMode = false;
 
-  /**
-   * @param class1
-   */
-  public VelocityLogger(Class<?> toLogClass) {
-    logger = LoggerFactory.getLogger(toLogClass);
-  }
+	/**
+	 * @param class1
+	 */
+	public VelocityLogger(Class<?> toLogClass) {
+		logger = LoggerFactory.getLogger(toLogClass);
+	}
 
-  /**
-   * {@inheritDoc}
-   * 
-   * @see org.apache.velocity.runtime.log.LogChute#init(org.apache.velocity.runtime.RuntimeServices)
-   */
-  public void init(RuntimeServices arg0) throws Exception {
-  }
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @see org.apache.velocity.runtime.log.LogChute#init(org.apache.velocity.runtime.RuntimeServices)
+	 */
+	public void init(RuntimeServices arg0) throws Exception {
+	}
 
-  /**
-   * {@inheritDoc}
-   * 
-   * @see org.apache.velocity.runtime.log.LogChute#isLevelEnabled(int)
-   */
-  public boolean isLevelEnabled(int level) {
-    switch (level) {
-    case LogChute.DEBUG_ID:
-      return logger.isDebugEnabled();
-    case LogChute.ERROR_ID:
-      return logger.isErrorEnabled();
-    case LogChute.INFO_ID:
-      return logger.isInfoEnabled();
-    case LogChute.TRACE_ID:
-      return logger.isTraceEnabled();
-    case LogChute.WARN_ID:
-      return logger.isWarnEnabled();
-    }
-    return false;
-  }
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @see org.apache.velocity.runtime.log.LogChute#isLevelEnabled(int)
+	 */
+	public boolean isLevelEnabled(int level) {
+		if (inDebugMode) {
+			return true;
+		}
+		switch (level) {
+		case LogChute.DEBUG_ID:
+			return logger.isDebugEnabled();
+		case LogChute.ERROR_ID:
+			return logger.isErrorEnabled();
+		case LogChute.INFO_ID:
+			return logger.isInfoEnabled();
+		case LogChute.TRACE_ID:
+			return logger.isTraceEnabled();
+		case LogChute.WARN_ID:
+			return logger.isWarnEnabled();
+		}
+		return false;
+	}
 
-  /**
-   * {@inheritDoc}
-   * 
-   * @see org.apache.velocity.runtime.log.LogChute#log(int, java.lang.String)
-   */
-  public void log(int level, String msg) {
-    switch (level) {
-    case LogChute.DEBUG_ID:
-      logger.debug(msg);
-      break;
-    case LogChute.ERROR_ID:
-      logger.error(msg);
-      break;
-    case LogChute.INFO_ID:
-      logger.info(msg);
-      break;
-    case LogChute.TRACE_ID:
-      logger.trace(msg);
-      break;
-    case LogChute.WARN_ID:
-      logger.warn(msg);
-      break;
-    }
-  }
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @see org.apache.velocity.runtime.log.LogChute#log(int, java.lang.String)
+	 */
+	public void log(int level, String msg) {
+		if (inDebugMode) {
+			logger.info(msg);
+		}
+		switch (level) {
+		case LogChute.DEBUG_ID:
+			logger.debug(msg);
+			break;
+		case LogChute.ERROR_ID:
+			logger.error(msg);
+			break;
+		case LogChute.INFO_ID:
+			logger.info(msg);
+			break;
+		case LogChute.TRACE_ID:
+			logger.trace(msg);
+			break;
+		case LogChute.WARN_ID:
+			logger.warn(msg);
+			break;
+		}
+	}
 
-  /**
-   * {@inheritDoc}
-   * 
-   * @see org.apache.velocity.runtime.log.LogChute#log(int, java.lang.String,
-   *      java.lang.Throwable)
-   */
-  public void log(int level, String msg, Throwable t) {
-    switch (level) {    
-    case LogChute.DEBUG_ID:
-      logger.debug(msg, t);
-      break;
-    case LogChute.ERROR_ID:
-      logger.error(msg, t);
-      break;
-    case LogChute.INFO_ID:
-      logger.info(msg, t);
-      break;
-    case LogChute.TRACE_ID:
-      logger.trace(msg, t);
-      break;
-    case LogChute.WARN_ID:
-      logger.warn(msg, t);
-      break;
-    }
-  }
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @see org.apache.velocity.runtime.log.LogChute#log(int, java.lang.String,
+	 *      java.lang.Throwable)
+	 */
+	public void log(int level, String msg, Throwable t) {
+		if (inDebugMode) {
+			logger.info(msg, t);
+		}
+		switch (level) {
+		case LogChute.DEBUG_ID:
+			logger.debug(msg, t);
+			break;
+		case LogChute.ERROR_ID:
+			logger.error(msg, t);
+			break;
+		case LogChute.INFO_ID:
+			logger.info(msg, t);
+			break;
+		case LogChute.TRACE_ID:
+			logger.trace(msg, t);
+			break;
+		case LogChute.WARN_ID:
+			logger.warn(msg, t);
+			break;
+		}
+	}
+
+	public void setDebugMode(boolean debug) {
+		this.inDebugMode = debug;
+	}
 
 }
