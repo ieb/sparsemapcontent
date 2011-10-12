@@ -38,8 +38,7 @@ public class ConnectionManager extends TimerTask {
         }
         Thread t = Thread.currentThread();
         ConnectionHolder ch = threadMap.get(t);
-        if (ch != null && ch.get() != null) {
-            ch.ping();
+        if (ch != null) {
             return ch.get();
         }
         return null;
