@@ -34,6 +34,7 @@ public class ConnectionHolder {
 
     public ConnectionHolder(Connection connection) {
         this.lastUsed = System.currentTimeMillis();
+        this.lastValidated = 0L; // force the connection to get validated, even if its new.
         this.connection = connection;
     }
 
@@ -55,9 +56,9 @@ public class ConnectionHolder {
             boolean valid = false;
             try
             {
-                valid = connection.isValid(0);
+                valid = connection.isValid(10000);
             }
-            catch (Exception e)
+            catch (Throwable e)
             {
                 LOGGER.warn("Error running validation query", e);
             }
