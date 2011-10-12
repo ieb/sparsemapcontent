@@ -373,8 +373,9 @@ public interface ContentManager {
      * Only use this in migration. Never use it in runtime production as you will risk breaking the referential integrety
      * of the internal content model. Also, please ensure that your code matches the same content model being used by 
      * the target ContentManagerImpl, before you enable maintanence mode. Failure to do so may destroy your content.
+     * @deprecated please do not use this method. It was introduced to perform migration but is unsafe.
      */
-    void setMaintanenceMode(boolean maintanenceMode);
+    void enableMaintanenceMode(boolean maintanenceMode);
 
     
     /**

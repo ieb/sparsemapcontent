@@ -130,7 +130,15 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
 
     public void updateAuthorizable(Authorizable authorizable) throws AccessDeniedException,
             StorageClientException {
+        updateAuthorizable(authorizable, true);
+    }
+
+    public void updateAuthorizable(Authorizable authorizable, boolean withTouch) throws AccessDeniedException,
+            StorageClientException {
         checkOpen();
+        if ( !withTouch && !thisUser.isAdmin() ) {
+            throw new StorageClientException("Only admin users can update without touching the user");           
+        }
         String id = authorizable.getId();
         if ( authorizable.isImmutable() ) {
             throw new StorageClientException("You cant update an immutable authorizable:"+id);
@@ -267,8 +275,11 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
 
         Map<String, Object> encodedProperties = StorageClientUtils.getFilteredAndEcodedMap(
                 authorizable.getPropertiesForUpdate(), FILTER_ON_UPDATE);
-        encodedProperties.put(Authorizable.LASTMODIFIED_FIELD,System.currentTimeMillis());
-        encodedProperties.put(Authorizable.LASTMODIFIED_BY_FIELD,accessControlManager.getCurrentUserId());
+        if (withTouch) {
+            encodedProperties.put(Authorizable.LASTMODIFIED_FIELD, System.currentTimeMillis());
+            encodedProperties.put(Authorizable.LASTMODIFIED_BY_FIELD,
+                    accessControlManager.getCurrentUserId());
+        }
         encodedProperties.put(Authorizable.ID_FIELD, id); // make certain the ID is always there.
         putCached(keySpace, authorizableColumnFamily, id, encodedProperties, authorizable.isNew());
 

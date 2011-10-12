@@ -197,8 +197,15 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         this.accessControlManager = new AccessControlManagerTokenWrapper(accessControlManager, pathPrincipalResolver);
     }
   
-    public void setMaintanenceMode(boolean maintanenceMode) {
+    public void enableMaintanenceMode(boolean maintanenceMode) {
         if ( User.ADMIN_USER.equals(accessControlManager.getCurrentUserId()) ) {
+            if (this.maintanenceMode != maintanenceMode) {
+                if ( maintanenceMode ) {
+                    LOGGER.warn("{} entering maintainence mode please verifiy this is Ok as data corruption might happen, expecially under user load. ",this);
+                } else {
+                    LOGGER.warn("{} leaving maintainence mode ",this);
+                }
+            }
            this.maintanenceMode = maintanenceMode;
         }
     }

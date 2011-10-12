@@ -50,6 +50,16 @@ public interface AuthorizableManager {
             StorageClientException;
 
     /**
+     * Update an authorizable with the option to not touch the user last modified information.
+     * @param authorizable the authorizable.
+     * @param withTouch if false the last modified information will not be changed, but only admin users can perform this.
+     * @throws AccessDeniedException
+     * @throws StorageClientException
+     */
+    void updateAuthorizable(Authorizable authorizable, boolean withTouch)
+        throws AccessDeniedException, StorageClientException;
+
+    /**
      * Create a group
      * @param authorizableId the group ID
      * @param authorizableName the groupName
