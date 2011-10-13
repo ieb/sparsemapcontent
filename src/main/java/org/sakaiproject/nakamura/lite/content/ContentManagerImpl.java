@@ -786,6 +786,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                     final Map<String, Object> versionHistory = getCached(keySpace,
                             contentColumnFamily, versionHistoryId);
                     LOGGER.debug("Loaded Version History  {} {} ", versionHistoryId, versionHistory);
+                    versionHistory.remove(InternalContent.getUuidField());
                   return Ordering.from(new Comparator<String>() {
                       public int compare(String o1, String o2) {
                         long l1 = (Long) versionHistory.get(o1);
