@@ -97,7 +97,7 @@ public class ProxyClientServiceImpl implements ProxyClientService {
 
 
 	@Reference
-	private ProxyTemplateService templateService;
+	protected ProxyTemplateService templateService;
 
 	private Map<String, Object> configProperties;
 

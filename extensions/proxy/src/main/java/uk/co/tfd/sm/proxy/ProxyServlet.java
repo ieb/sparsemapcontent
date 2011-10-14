@@ -28,6 +28,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -60,11 +61,13 @@ import com.google.common.collect.Maps;
  * 
  */
 @Component(immediate = true, metatype = true)
-@Service(value = HttpServlet.class)
+@Service(value = Servlet.class)
+@org.apache.felix.scr.annotations.Properties(value = { @Property(name = "alias", value = "/proxy") })
 public class ProxyServlet extends HttpServlet {
 
-	protected static final String DEFAULT_TEMPLATE_PATH = "sling/templates";
+	protected static final String DEFAULT_TEMPLATE_PATH = "proxy/config";
 
+	
 	@Property(value=DEFAULT_TEMPLATE_PATH)
 	protected static final String PROP_TEMPLATE_PATH = "templatePath";
 
@@ -268,18 +271,18 @@ public class ProxyServlet extends HttpServlet {
 			InputStream in = this.getClass().getClassLoader()
 					.getResourceAsStream(CLASSPATH_PREFIX + pathInfo);
 			if (in != null) {
-				LOGGER.info("Loading {} ", CLASSPATH_PREFIX+pathInfo);
+				LOGGER.info("Loading Classpath {} ", CLASSPATH_PREFIX+pathInfo);
 				p.load(in);
 				in.close();
 			} else {
-				LOGGER.info("Not Loading {} ", CLASSPATH_PREFIX+pathInfo);
+				LOGGER.info("Not Loading Classpath {} ", CLASSPATH_PREFIX+pathInfo);
 				File configFile = new File(baseFile, pathInfo);
 				if (!configFile.exists() || !configFile.isFile()
 						|| !configFile.canRead()) {
-					LOGGER.info("Not Loading {} ", configFile.getAbsoluteFile());
+					LOGGER.info("Not Loading File {} ", configFile.getAbsoluteFile());
 					return null;
 				}
-				LOGGER.info("Loading {} ", configFile.getAbsoluteFile());
+				LOGGER.info("Loading File {} ", configFile.getAbsoluteFile());
 				FileReader fr = new FileReader(configFile);
 				p.load(fr);
 				fr.close();
