@@ -30,7 +30,7 @@ import com.mongodb.Mongo;
 import com.mongodb.MongoException;
 import com.mongodb.MongoURI;
 
-@Component(immediate = true, metatype = true)
+@Component(enabled=false, immediate = true, metatype = true)
 @Service
 public class MongoClientPool implements StorageClientPool {
 

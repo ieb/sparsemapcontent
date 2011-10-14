@@ -62,7 +62,6 @@ public class GridFSContentHelper implements StreamedContentHelper {
     	this.contentBodies = new GridFS(mongodb, bucket);
     }
     
-    @Override
 	public InputStream readBody(String keySpace, String columnFamily, String contentBlockId, String streamId,
             Map<String, Object> content) throws IOException {
     	// give me whatever is stored in the property _bodyLocation/streamId
@@ -76,7 +75,6 @@ public class GridFSContentHelper implements StreamedContentHelper {
         }
     }
 
-    @Override
 	public Map<String, Object> writeBody(String keySpace, String columnFamily, String contentId,
             String contentBlockId, String streamId, Map<String, Object> content, InputStream in) throws IOException,
             StorageClientException {
@@ -103,7 +101,6 @@ public class GridFSContentHelper implements StreamedContentHelper {
                 + "/" + rowHash.substring(4, 6) + "/" + rowHash;
     }
 
-    @Override
 	public boolean hasStream(Map<String, Object> content, String streamId ) {
         String path = (String) content.get(StorageClientUtils.getAltField(STORE_LOCATION_FIELD, streamId));
         GridFSDBFile file = contentBodies.findOne(path);

@@ -50,6 +50,7 @@
 			   org.apache.thrift;resolution:=optional,
 			   org.apache.thrift.protocol;resolution:=optional,
 			   org.apache.thrift.transport;resolution:=optional,
+			   com.mongodb.*;resolution:=optional,
 			   <!-- Uncomment for Oracle -->
 			   <!--
 			   Please verify that with Dynamic-Import this is not required. I think only packages that are explicity mentioned need this.
