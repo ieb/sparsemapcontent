@@ -57,7 +57,11 @@
             <artifactId>org.sakaiproject.nakamura.milton</artifactId>
             <version>1.6.4-SNAPSHOT</version>
         </bundle>
-
+        <bundle>
+    	    <groupId>com.google.code.gson</groupId>
+    	    <artifactId>gson</artifactId>
+    	    <version>1.7.1</version>
+        </bundle>
     </startLevel>
     <startLevel level="1">
         <bundle>
@@ -124,16 +128,21 @@
       <artifactId>uk.co.tfd.sm.memory</artifactId>
       <version>0.1-SNAPSHOT</version>
     </bundle>
-   </startLevel>
-   <startLevel level="15" >
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
             <artifactId>org.sakaiproject.nakamura.core</artifactId>
             <version>1.2-SNAPSHOT</version>
         </bundle>
+   </startLevel>
+   <startLevel level="15" >
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
             <artifactId>org.sakaiproject.nakamura.webdav</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </bundle>
+        <bundle>
+            <groupId>org.sakaiproject.nakamura</groupId>
+            <artifactId>uk.co.tfd.sm.proxy</artifactId>
             <version>0.1-SNAPSHOT</version>
         </bundle>
    </startLevel>

@@ -48,7 +48,7 @@
                                  <groupId>org.sakaiproject.nakamura</groupId>
                                  <artifactId>uk.co.tfd.sm.jetty</artifactId>
                                  <version>0.1-SNAPSHOT</version>
-                                 <startLevel>5</startLevel>
+                                 <startLevel>30</startLevel>
                            </jarWebSupport>
                         </configuration>
                     </execution>
