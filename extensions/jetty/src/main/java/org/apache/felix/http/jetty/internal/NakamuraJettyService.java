@@ -157,6 +157,8 @@ public final class NakamuraJettyService
         context.addEventListener(eventDispatcher);
         context.getSessionHandler().addEventListener(eventDispatcher);
         
+        SystemLogger.info("Binding Dispatcher "+this.dispatcher+" to /*");
+        
         context.addServlet(new ServletHolder(this.dispatcher), "/*");
         
 
