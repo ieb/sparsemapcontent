@@ -25,12 +25,16 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.Map;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.sakaiproject.nakamura.api.memory.Cache;
 import org.sakaiproject.nakamura.api.memory.CacheScope;
 import org.sakaiproject.nakamura.api.memory.ThreadBound;
+
+import com.google.common.collect.ImmutableMap;
 
 public class TestCache {
 
@@ -40,6 +44,13 @@ public class TestCache {
   public void setUp() throws IOException, InstantiationException, IllegalAccessException,
       ClassNotFoundException {
     cacheManagerService = new CacheManagerServiceImpl();
+    Map<String, Object> properties = ImmutableMap.of("cache-store",(Object)"target/ehcache/store", "bind-address", "127.0.0.1");
+	cacheManagerService.activate(properties);
+  }
+  
+  @After
+  public void tearDown() {
+	  cacheManagerService.deactivate();
   }
 
   private void exerciseCache(String cacheName, CacheScope scope) {

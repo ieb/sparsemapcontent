@@ -17,9 +17,14 @@
  */
 package uk.co.tfd.sm.memory.ehcache;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,12 +33,17 @@ import javax.management.MBeanServer;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.management.ManagementService;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
+import org.apache.felix.scr.annotations.Modified;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.sakaiproject.nakamura.api.memory.Cache;
 import org.sakaiproject.nakamura.api.memory.CacheManagerService;
 import org.sakaiproject.nakamura.api.memory.CacheScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The <code>CacheManagerServiceImpl</code>
@@ -42,30 +52,62 @@ import org.sakaiproject.nakamura.api.memory.CacheScope;
 @Service
 public class CacheManagerServiceImpl implements CacheManagerService {
 
-  @Property(value = "The Sakai Foundation")
+  public static final String DEFAULT_CACHE_CONFIG = "sling/ehcacheConfig.xml";
+
+  @Property( value = DEFAULT_CACHE_CONFIG)
+  public static final String CACHE_CONFIG = "cache-config";
+
+@Property(value = "The Sakai Foundation")
   static final String SERVICE_VENDOR = "service.vendor";
 
   @Property(value = "Cache Manager Service Implementation")
   static final String SERVICE_DESCRIPTION = "service.description";
+  
+  @SuppressWarnings("unused")
+  @Property()
+  public static final String BIND_ADDRESS = "bind-address";
+  
+  @SuppressWarnings("unused")
+  @Property(value="sling/ehcache/data")
+  public static final String CACHE_STORE = "cache-store";
 
   private static final String CONFIG_PATH = "uk/co/tfd/sm/memory/ehcache/ehcacheConfig.xml";
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(CacheManagerServiceImpl.class);
   private CacheManager cacheManager;
   private Map<String, Cache<?>> caches = new HashMap<String, Cache<?>>();
   private ThreadLocalCacheMap requestCacheMapHolder = new ThreadLocalCacheMap();
   private ThreadLocalCacheMap threadCacheMapHolder = new ThreadLocalCacheMap();
 
   public CacheManagerServiceImpl() throws IOException {
-    create();
   }
+  
+  @Modified
+  protected void activate(Map<String, Object> properties) throws FileNotFoundException, IOException {
+	  String config = toString(properties.get(CACHE_CONFIG), DEFAULT_CACHE_CONFIG);
+	  File configFile = new File(config);
+	  if ( configFile.exists() ) {
+		  LOGGER.info("Configuring Cache from {} ",configFile.getAbsolutePath());
+		  InputStream in = null;
+		  try {
+			  in = processConfig(new FileInputStream(configFile), properties);
+			  cacheManager = new CacheManager(in);
+		  } finally {
+			  if ( in != null ) {
+				  in.close();
+			  }
+		  }
+	  } else {
+		    LOGGER.info("Configuring Cache from Classpath Default {} ", CONFIG_PATH);
+		    InputStream in = processConfig(this.getClass().getClassLoader().getResourceAsStream(CONFIG_PATH), properties);
+		    if ( in == null ) {
+		    	throw new IOException("Unable to open config at classpath location "+CONFIG_PATH);
+		    }
+		    cacheManager = new CacheManager(in);
+		    in.close();		  
+	  }
 
-  private void create() throws IOException {
-    InputStream in = this.getClass().getClassLoader().getResourceAsStream(CONFIG_PATH);
-    if ( in == null ) {
-    	throw new IOException("Unable to open config at classpath location "+CONFIG_PATH);
-    }
-    cacheManager = new CacheManager(in);
-    in.close();
-
+	  final WeakReference<CacheManagerServiceImpl> ref = new WeakReference<CacheManagerServiceImpl>(this);
     /*
      * Add in a shutdown hook, for safety
      */
@@ -78,11 +120,12 @@ public class CacheManagerServiceImpl implements CacheManagerService {
       @Override
       public void run() {
         try {
-          CacheManagerServiceImpl.this.stop();
+        	CacheManagerServiceImpl cm = ref.get();
+        	if ( cm != null ) {
+        		cm.deactivate();
+        	}
         } catch (Throwable t) {
-
-          // I really do want to swallow this, and make the shutdown clean for
-          // others
+        	LOGGER.debug(t.getMessage(),t);
         }
       }
     });
@@ -94,12 +137,55 @@ public class CacheManagerServiceImpl implements CacheManagerService {
 
   }
 
-  /**
+  private String toString(Object object, String defaultValue) {
+	  if ( object == null ) {
+		  return defaultValue;
+	  }
+	return String.valueOf(object);
+  }
+
+  private InputStream processConfig(InputStream in,
+		Map<String, Object> properties) throws IOException {
+	  if ( in == null ) {
+		  return null;
+	  }
+	  StringBuilder config = new StringBuilder(IOUtils.toString(in, "UTF-8"));
+	  in.close();
+	  int pos = 0;
+	  for(;;) {
+		  int start = config.indexOf("${",pos);
+		  if ( start < 0 ) {
+			  break;
+		  }
+		  int end = config.indexOf("}", start);
+		  if ( end < 0 ) {
+				throw new IllegalArgumentException(
+						"Config file malformed, unterminated variable "
+								+ config.substring(start,
+										Math.min(start + 10, config.length())));
+		  }
+		  String key = config.substring(start+2, end);
+		  if ( properties.containsKey(key)) {
+			  String replacement = (String) properties.get(key);
+			  config.replace(start, end+1, replacement);
+			  pos = start + replacement.length();
+		  } else {
+			  throw new IllegalArgumentException("Missing replacement property "+key);
+		  }
+	  }
+	  return new ByteArrayInputStream(config.toString().getBytes("UTF-8"));
+	  
+  }
+
+/**
    * perform a shutdown
    */
-  public void stop() {
-    cacheManager.shutdown();
-    // we really want to notify all threads that have maps
+  @Deactivate
+  public void deactivate() {
+	  if ( cacheManager != null ) {
+		  cacheManager.shutdown();
+		  cacheManager = null;
+	  }
   }
 
   /**
