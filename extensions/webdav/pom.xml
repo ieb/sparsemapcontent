@@ -22,7 +22,7 @@
   <artifactId>org.sakaiproject.nakamura.webdav</artifactId>
   <packaging>bundle</packaging>
   <version>0.1-SNAPSHOT</version>
-  <name>Sparse Map Content :: WebDav Support</name>
+  <name>Sparse Map :: WebDav Support</name>
   <description>Provides PostgreSQL driver for Sparse, optional bundle </description>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -42,7 +42,6 @@
              <Bundle-Vendor>Ian Boston</Bundle-Vendor>
              <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
             <Bundle-Category>sakai-nakamura,driver</Bundle-Category>
-            <Export-Package>uk.co.tfd.sm.api.webdav.*</Export-Package>
             <Private-Package>uk.co.tfd.sm.milton.*</Private-Package>
             <Import-Package>
                *
