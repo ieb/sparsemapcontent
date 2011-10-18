@@ -47,7 +47,7 @@ public class CacheConfigTest {
 		Map<String, Object> properties = ImmutableMap.of(CacheManagerServiceImpl.CACHE_STORE,
 				(Object) "target/ehcache/store", 
 				CacheManagerServiceImpl.BIND_ADDRESS, "127.0.0.1",
-				CacheManagerServiceImpl.CACHE_CONFIG, "src/test/resources/testconfig/ehcacheConfig.xml"
+				CacheManagerServiceImpl.CACHE_CONFIG, "src/test/resources/testconfig/simple-ehcacheConfig.xml"
 				);
 		cacheManagerService.activate(properties);
 	}
