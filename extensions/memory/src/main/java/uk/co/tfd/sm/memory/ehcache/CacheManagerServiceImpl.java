@@ -83,7 +83,7 @@ public class CacheManagerServiceImpl implements CacheManagerService {
   }
   
   @Activate
-  protected void activate(Map<String, Object> properties) throws FileNotFoundException, IOException {
+  public void activate(Map<String, Object> properties) throws FileNotFoundException, IOException {
 	  String config = toString(properties.get(CACHE_CONFIG), DEFAULT_CACHE_CONFIG);
 	  File configFile = new File(config);
 	  if ( configFile.exists() ) {

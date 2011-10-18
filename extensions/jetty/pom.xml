@@ -44,7 +44,7 @@
             <Private-Package>
 	            org.apache.felix.http.jetty.internal;-split-package:=merge-first,
 	            org.mortbay.management;-split-package:=merge-first,
-	            org.sakaiproject.nakamura.jetty
+	            uk.co.tfd.sm.jetty
             </Private-Package>
             <Import-Package>
 				 javax.management,
@@ -69,7 +69,6 @@
             </Import-Package>
             <Embed-Dependency>
             	org.apache.felix.http.jetty,
-            	jetty-util,
             	jetty-management
             </Embed-Dependency>
           </instructions>
@@ -120,6 +119,13 @@
     	<groupId>commons-lang</groupId>
     	<artifactId>commons-lang</artifactId>
     	<version>2.4</version>
+    	<type>jar</type>
+    	<scope>compile</scope>
+    </dependency>
+    <dependency>
+    	<groupId>commons-io</groupId>
+    	<artifactId>commons-io</artifactId>
+    	<version>1.4</version>
     	<type>jar</type>
     	<scope>compile</scope>
     </dependency>

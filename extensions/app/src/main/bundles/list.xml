@@ -147,7 +147,7 @@
         </bundle>
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
-            <artifactId>uk.co.tfd.sm.batch</artifactId>
+            <artifactId>uk.co.tfd.sm.http</artifactId>
             <version>0.1-SNAPSHOT</version>
         </bundle>
         <bundle>

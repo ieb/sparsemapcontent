@@ -153,9 +153,9 @@ public final class NakamuraJettyService
 //        Context staticContext = new Context(this.server, "/test", false, false);
 //        staticContext.addServlet(new ServletHolder(staticContentServlet), "/*");
 
-        Context context = new Context(this.server, "/", Context.SESSIONS);
+        Context context = new Context(this.server, "/", Context.NO_SESSIONS | Context.NO_SECURITY);
         context.addEventListener(eventDispatcher);
-        context.getSessionHandler().addEventListener(eventDispatcher);
+//        context.getSessionHandler().addEventListener(eventDispatcher);
         
         SystemLogger.info("Binding Dispatcher "+this.dispatcher+" to /*");
         

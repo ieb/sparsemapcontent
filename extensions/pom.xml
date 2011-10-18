@@ -31,7 +31,7 @@
   <name>Sparse Map :: Extensions Builder</name>
   <description>Reactor to build extensions.</description>
   <modules>
-    <module>batch</module>
+    <module>http</module>
     <module>jetty</module>
     <module>memory</module>
     <module>milton</module>
