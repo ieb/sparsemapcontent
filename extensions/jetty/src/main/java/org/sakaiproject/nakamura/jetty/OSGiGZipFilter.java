@@ -35,7 +35,8 @@ public class OSGiGZipFilter extends GzipFilter {
 
   private static final String DEFAULT_USER_AGENT = "(?:Mozilla[^\\(]*\\(compatible;\\s*+([^;]*);.*)|(?:.*?([^\\s]+/[^\\s]+).*)";
 	
-  @Property(value=DEFAULT_USER_AGENT)
+  @SuppressWarnings("unused")
+@Property(value=DEFAULT_USER_AGENT)
   private static final String PROP_USER_AGENT = "userAgent";
 	
   @Reference

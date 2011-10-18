@@ -40,7 +40,7 @@ public interface ProxyPreProcessor {
    *          of the entries in this map will end up als headers on the outgoing request
    *          to the remote resource.
    * @param templateParams
-   *          A map of template parameters that will be passed to velocity to render the
+   *          A map of template parameters that will be passed to the template engine to render the
    *          url.
    */
   void preProcessRequest(HttpServletRequest request, Map<String, Object> headers,

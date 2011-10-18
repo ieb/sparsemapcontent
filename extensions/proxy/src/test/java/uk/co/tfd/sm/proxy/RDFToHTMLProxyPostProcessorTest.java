@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.co.tfd.sm.api.proxy.ProxyResponse;
+import uk.co.tfd.sm.template.TemplateServiceImpl;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -42,7 +43,7 @@ public class RDFToHTMLProxyPostProcessorTest {
 		StringWriter outputWriter = new StringWriter();
 		Mockito.when(response.getWriter()).thenReturn(new PrintWriter(outputWriter));
 		RDFToHTMLProxyPostProcessor rp = new RDFToHTMLProxyPostProcessor();
-		ProxyTemplateServiceImpl templateServiceImpl = new ProxyTemplateServiceImpl();
+		TemplateServiceImpl templateServiceImpl = new TemplateServiceImpl();
 		templateServiceImpl.activate(null);
 		rp.templateService = templateServiceImpl;
 		StringBuilder ns = new StringBuilder();

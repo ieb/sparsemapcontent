@@ -27,7 +27,6 @@ import java.util.Map;
 
 import junit.framework.Assert;
 
-import org.apache.velocity.Template;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -39,6 +38,7 @@ import uk.co.tfd.sm.api.proxy.ProxyClientService;
 import uk.co.tfd.sm.api.proxy.ProxyResponse;
 import uk.co.tfd.sm.proxy.http.CapturedRequest;
 import uk.co.tfd.sm.proxy.http.DummyServer;
+import uk.co.tfd.sm.template.TemplateServiceImpl;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
@@ -87,7 +87,7 @@ public class ProxyClientServiceImplTest {
     proxyClientServiceImpl = new ProxyClientServiceImpl();
     Map<String, Object> props = ImmutableMap.of();
     proxyClientServiceImpl.activate(props);
-    ProxyTemplateServiceImpl templateService = new ProxyTemplateServiceImpl();
+    TemplateServiceImpl templateService = new TemplateServiceImpl();
     templateService.activate(props);
 	proxyClientServiceImpl.templateService = templateService;
   }

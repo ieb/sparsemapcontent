@@ -1,10 +1,10 @@
-package uk.co.tfd.sm.proxy;
+package uk.co.tfd.sm.api.template;
 
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Map;
 
-public interface ProxyTemplateService {
+public interface TemplateService {
 
 	boolean evaluate(Map<String, Object> context, Writer writer,
 			String logTag, String templateAsString);

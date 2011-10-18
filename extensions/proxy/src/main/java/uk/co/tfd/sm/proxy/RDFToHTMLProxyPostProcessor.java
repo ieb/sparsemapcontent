@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import uk.co.tfd.sm.api.proxy.ProxyPostProcessor;
 import uk.co.tfd.sm.api.proxy.ProxyResponse;
+import uk.co.tfd.sm.api.template.TemplateService;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -34,7 +35,7 @@ public class RDFToHTMLProxyPostProcessor implements ProxyPostProcessor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(RDFToHTMLProxyPostProcessor.class);
 
 	@Reference
-	protected ProxyTemplateService templateService;
+	protected TemplateService templateService;
 
 	@SuppressWarnings("unchecked")
 	public void process(Map<String, Object> templateParams,

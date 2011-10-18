@@ -1,4 +1,4 @@
-package uk.co.tfd.sm.proxy;
+package uk.co.tfd.sm.template;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,12 +16,12 @@ import org.apache.felix.scr.annotations.Service;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 
-import uk.co.tfd.sm.proxy.velocity.VelocityLogger;
+import uk.co.tfd.sm.api.template.TemplateService;
 
 
 @Component(immediate=true, metatype=true)
-@Service(value=ProxyTemplateService.class)
-public class ProxyTemplateServiceImpl implements ProxyTemplateService {
+@Service(value=TemplateService.class)
+public class TemplateServiceImpl implements TemplateService {
 
 	/**
 	 * The shared velocity engine, which should cache all the templates. (need
@@ -30,7 +30,7 @@ public class ProxyTemplateServiceImpl implements ProxyTemplateService {
 	private VelocityEngine velocityEngine;
 
 	@SuppressWarnings("unused")
-	@Property(value = "proxy/templates")
+	@Property(value = "templates")
 	private static final String PROP_RESOURCE_LOADER_PATH = "file.resource.loader.path";
 	
 	@Activate

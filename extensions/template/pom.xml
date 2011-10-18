@@ -25,11 +25,11 @@
     <version>2-SNAPSHOT</version>
     <relativePath>../../parent/pom.xml</relativePath>
   </parent>
-  <artifactId>uk.co.tfd.sm.proxy</artifactId>
+  <artifactId>uk.co.tfd.sm.template</artifactId>
   <packaging>bundle</packaging>
   <version>0.1-SNAPSHOT</version>
-  <name>Sparse Map :: Proxy Processor Bundle</name>
-  <description>Provides Proxy support.</description>
+  <name>Sparse Map :: Template Engine</name>
+  <description>Provides Templating support.</description>
   <build>
     <plugins>
       <plugin>
@@ -43,13 +43,17 @@
         <configuration>
           <instructions>
             <Bundle-Category> sparse-map </Bundle-Category>
-            <Export-Package> uk.co.tfd.sm.api.proxy </Export-Package>
-            <Private-Package>uk.co.tfd.sm.proxy.*</Private-Package>
+            <Export-Package> uk.co.tfd.sm.api.template </Export-Package>
+            <Private-Package>uk.co.tfd.sm.template.*</Private-Package>
             <Import-Package>
+            !org.apache.log.*,
+            !com.werken.*,
             !org.apache.commons.logging.*,
+            org.apache.tools.ant.*;resolution:=optional,
+            !org.jdom.*,
             *</Import-Package>
             <Embed-Transitive>true</Embed-Transitive>
-            <Embed-Dependency>httpclient,httpmime,httpcore</Embed-Dependency>
+            <Embed-Dependency>velocity,oro</Embed-Dependency>
           </instructions>
         </configuration>
       </plugin>
@@ -67,11 +71,6 @@
       <version>1.5.0</version>
     </dependency>
     <dependency>
-      <groupId>com.googlecode.guava-osgi</groupId>
-      <artifactId>guava-osgi</artifactId>
-      <version>9.0.0</version>
-    </dependency>
-    <dependency>
     	<groupId>junit</groupId>
     	<artifactId>junit</artifactId>
     	<version>4.4</version>
@@ -79,30 +78,9 @@
     	<scope>compile</scope>
     </dependency>
     <dependency>
-    	<groupId>javax.servlet</groupId>
-    	<artifactId>servlet-api</artifactId>
-    	<version>2.4</version>
-    	<type>jar</type>
-    	<scope>compile</scope>
-    </dependency>
-    <dependency>
-    	<groupId>commons-io</groupId>
-    	<artifactId>commons-io</artifactId>
-    	<version>1.4</version>
-    	<type>jar</type>
-    	<scope>compile</scope>
-    </dependency>
-    <dependency>
-    	<groupId>org.apache.httpcomponents</groupId>
-    	<artifactId>httpclient</artifactId>
-    	<version>4.1.2</version>
-    	<type>jar</type>
-    	<scope>compile</scope>
-    </dependency>
-    <dependency>
-    	<groupId>org.apache.httpcomponents</groupId>
-    	<artifactId>httpmime</artifactId>
-    	<version>4.1.2</version>
+    	<groupId>org.apache.velocity</groupId>
+    	<artifactId>velocity</artifactId>
+    	<version>1.7</version>
     	<type>jar</type>
     	<scope>compile</scope>
     </dependency>
@@ -114,23 +92,9 @@
     	<scope>test</scope>
     </dependency>
     <dependency>
-    	<groupId>org.mortbay.jetty</groupId>
-    	<artifactId>jetty</artifactId>
-    	<version>6.1.15</version>
-    	<type>jar</type>
-    	<scope>test</scope>
-    </dependency>
-    <dependency>
-    	<groupId>com.google.code.gson</groupId>
-    	<artifactId>gson</artifactId>
-    	<version>1.7.1</version>
-    	<type>jar</type>
-    	<scope>compile</scope>
-    </dependency>
-    <dependency>
-        <groupId>org.sakaiproject.nakamura</groupId>
-        <artifactId>uk.co.tfd.sm.template</artifactId>
-        <version>0.1-SNAPSHOT</version>
+        <groupId>oro</groupId>
+        <artifactId>oro</artifactId>
+        <version>2.0.8</version>
     </dependency>
   </dependencies>
 </project>

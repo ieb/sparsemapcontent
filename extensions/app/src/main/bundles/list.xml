@@ -142,6 +142,16 @@
         </bundle>
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
+            <artifactId>uk.co.tfd.sm.template</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </bundle>
+        <bundle>
+            <groupId>org.sakaiproject.nakamura</groupId>
+            <artifactId>uk.co.tfd.sm.batch</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </bundle>
+        <bundle>
+            <groupId>org.sakaiproject.nakamura</groupId>
             <artifactId>uk.co.tfd.sm.proxy</artifactId>
             <version>0.1-SNAPSHOT</version>
         </bundle>

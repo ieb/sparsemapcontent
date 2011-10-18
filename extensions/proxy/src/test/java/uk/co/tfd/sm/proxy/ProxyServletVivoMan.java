@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import uk.co.tfd.sm.api.proxy.ProxyPostProcessor;
 import uk.co.tfd.sm.api.proxy.ProxyPreProcessor;
+import uk.co.tfd.sm.template.TemplateServiceImpl;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -92,7 +93,7 @@ public class ProxyServletVivoMan {
 
 		
 		proxyClientService = new ProxyClientServiceImpl();
-		ProxyTemplateServiceImpl templateService = new ProxyTemplateServiceImpl();
+		TemplateServiceImpl templateService = new TemplateServiceImpl();
 		templateService.activate(ImmutableMap.of("x", (Object)"y"));
 		proxyClientService.templateService = templateService;
 		proxyClientService.activate(ImmutableMap.of("x",(Object)"y"));

@@ -62,9 +62,6 @@ import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.ProxySelectorRoutePlanner;
 import org.apache.http.params.HttpParams;
-import org.apache.velocity.exception.MethodInvocationException;
-import org.apache.velocity.exception.ParseErrorException;
-import org.apache.velocity.exception.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,6 +70,7 @@ import uk.co.tfd.sm.api.proxy.ProxyClientService;
 import uk.co.tfd.sm.api.proxy.ProxyMethod;
 import uk.co.tfd.sm.api.proxy.ProxyPostProcessor;
 import uk.co.tfd.sm.api.proxy.ProxyResponse;
+import uk.co.tfd.sm.api.template.TemplateService;
 
 import com.google.common.collect.Maps;
 
@@ -97,7 +95,7 @@ public class ProxyClientServiceImpl implements ProxyClientService {
 
 
 	@Reference
-	protected ProxyTemplateService templateService;
+	protected TemplateService templateService;
 
 	private Map<String, Object> configProperties;
 
@@ -426,8 +424,7 @@ public class ProxyClientServiceImpl implements ProxyClientService {
 
 
 	private String processUrlTemplate(String endpointURL,
-			Map<String, Object> context) throws ParseErrorException,
-			MethodInvocationException, ResourceNotFoundException, IOException {
+			Map<String, Object> context) throws IOException {
 		Reader urlTemplateReader = new StringReader(endpointURL);
 		StringWriter urlWriter = new StringWriter();
 		templateService.evaluate(context, urlWriter, "urlprocessing",

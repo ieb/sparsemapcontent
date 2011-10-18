@@ -11,7 +11,7 @@
   <artifactId>uk.co.tfd.sm.jetty</artifactId>
   <packaging>bundle</packaging>
   <version>0.1-SNAPSHOT</version>
-  <name>Sakai Nakamura2 :: Jetty Configuration</name>
+  <name>Sparse Map :: Jetty Configuration</name>
   <description>Adds configuration and setup of default servlets for Jetty.</description>    
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
