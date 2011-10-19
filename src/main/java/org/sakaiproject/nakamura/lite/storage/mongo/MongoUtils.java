@@ -109,7 +109,7 @@ public class MongoUtils {
 				cal.setTime((Date)val);
 				String tzKey = MONGO_TIMEZONE_FIELD_PREFIX + key;
 				// Was this date stored as a Calendar? 
-				// If so we'll have a secondary field _:field:timezone that holds
+				// If so we'll have a secondary field _:mongo:tz:key that holds
 				// the timezone id.
 				if (dbo.keySet().contains(tzKey)){
 					toRemove.add(tzKey);
