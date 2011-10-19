@@ -29,14 +29,12 @@ import com.google.common.collect.Maps;
 @Component(immediate = true, metatype = true)
 public class StaticContentServiceFactory {
 
-	private static final boolean DEFAULT_CACHING = false;
-
-	@Property(boolValue = DEFAULT_CACHING)
-	private static final String CACHING = "caching";
 
 	private static final String[] DEFAULT_MAPPINGS = new String[] {
-			"/devwidgets/ = static/ui/devwidgets/", "/dev/ = static/ui/dev/",
-			"/403 = static/ui/dev/403.html", "/404 = static/ui/dev/404.html",
+			"/devwidgets = static/ui/devwidgets", 
+			"/dev = static/ui/dev",
+			"/403 = static/ui/dev/403.html", 
+			"/404 = static/ui/dev/404.html",
 			"/500 = static/ui/dev/500.html",
 			"/acknowledgements = static/ui/dev/acknowledgements.html",
 			"/categories = static/ui/dev/allcategories.html",
@@ -49,17 +47,22 @@ public class StaticContentServiceFactory {
 			"/index.html = static/ui/dev/index.html",
 			"/index = static/ui/dev/index.html",
 			"/logout = static/ui/dev/logout.html",
-			"/me.html = static/ui/dev/me.html", "/me = static/ui/dev/me.html",
+			"/me.html = static/ui/dev/me.html", 
+			"/me = static/ui/dev/me.html",
 			"/search = static/ui/dev/search.html",
 			"/search/sakai2 = static/ui/dev/search_sakai2.html",
-			"/var/ = static/var", "/system/me = static/me.json",
-			"/tags/ = static/tags"
+			"/var = static/var", 
+			"/system/me = static/me.json",
+			"/tags = static/tags"
 
 	};
 
-	@Property(value = { "/devwidgets/ = static/ui/devwidgets",
-			"/dev/ = static/ui/dev", "/403 = static/ui/dev/403.html",
-			"/404 = static/ui/dev/404.html", "/500 = static/ui/dev/500.html",
+	@Property(value = { 
+			"/devwidgets = static/ui/devwidgets", 
+			"/dev = static/ui/dev",
+			"/403 = static/ui/dev/403.html", 
+			"/404 = static/ui/dev/404.html",
+			"/500 = static/ui/dev/500.html",
 			"/acknowledgements = static/ui/dev/acknowledgements.html",
 			"/categories = static/ui/dev/allcategories.html",
 			"/category = static/ui/dev/category.html",
@@ -71,11 +74,14 @@ public class StaticContentServiceFactory {
 			"/index.html = static/ui/dev/index.html",
 			"/index = static/ui/dev/index.html",
 			"/logout = static/ui/dev/logout.html",
-			"/me.html = static/ui/dev/me.html", "/me = static/ui/dev/me.html",
+			"/me.html = static/ui/dev/me.html", 
+			"/me = static/ui/dev/me.html",
 			"/search = static/ui/dev/search.html",
 			"/search/sakai2 = static/ui/dev/search_sakai2.html",
-			"/var/ = static/var", "/system/me = static/me.json",
-			"/tags/ = static/tags" })
+			"/var = static/var", 
+			"/system/me = static/me.json",
+			"/tags = static/tags"
+			})
 	private static final String MAPPINGS = "mappings";
 
 	private static final Logger LOGGER = LoggerFactory
@@ -94,8 +100,6 @@ public class StaticContentServiceFactory {
 				.getProperties();
 		String[] mappings = (String[]) toStringArray(properties.get(MAPPINGS),
 				DEFAULT_MAPPINGS);
-		boolean withCaching = toBoolean(properties.get(CACHING),
-				DEFAULT_CACHING);
 		Map<String, String> mt = Maps.newHashMap();
 		loadMimeTypes(mt, "mime.types");
 		loadMimeTypes(mt, "core_mime.types");
@@ -109,7 +113,7 @@ public class StaticContentServiceFactory {
 				String alias = mapping[0].trim();
 				String path = mapping[1].trim();
 				StaticContentServlet contentServlet = new StaticContentServlet(
-						alias, path, mimeTypes, withCaching);
+						alias, path, mimeTypes);
 
 				Dictionary<String, String> props = new Hashtable<String, String>();
 				props.put("alias", alias);
@@ -165,11 +169,5 @@ public class StaticContentServiceFactory {
 		return StringUtils.split(String.valueOf(object), ",");
 	}
 
-	private boolean toBoolean(Object object, boolean defaultValue) {
-		if (object == null) {
-			return defaultValue;
-		}
-		return Boolean.parseBoolean(String.valueOf(object));
-	}
 
 }
