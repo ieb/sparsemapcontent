@@ -55,15 +55,14 @@ public class RDFToMap {
 		if ( pairs != null ) {
 			for (String pair : pairs) {
 				String[] kv = StringUtils.split(pair, "=", 2);
-				
 				if (kv == null || kv.length == 0 ) {
 					throw new RuntimeException(
 							"Names space key value pairs must be of the form ns=nsuri;ns=nsuri failed to parse "
 									+ namespaceMapConfig);
 				} else if ( kv.length == 1) {
-					b.put(kv[0],"");
+					b.put(kv[0].trim(),"");
 				} else {
-					b.put(kv[1], kv[0]);
+					b.put(kv[1].trim(), kv[0].trim());
 				}
 			}
 		}

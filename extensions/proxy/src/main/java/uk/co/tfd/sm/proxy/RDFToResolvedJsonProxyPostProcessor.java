@@ -24,7 +24,7 @@ public class RDFToResolvedJsonProxyPostProcessor implements ProxyPostProcessor {
 
 	public static final String CONFIG_NAMESPACEMAP = "namespacemap";
 
-	public void process(Map<String, Object> templateParams,
+	public void process(Map<String, Object> config, Map<String, Object> templateParams,
 			HttpServletResponse response, ProxyResponse proxyResponse)
 			throws IOException {
 		String namespaceMapConfig = (String) templateParams.get(CONFIG_NAMESPACEMAP);

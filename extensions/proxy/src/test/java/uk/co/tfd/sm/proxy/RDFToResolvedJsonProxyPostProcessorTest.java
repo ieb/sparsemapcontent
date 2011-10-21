@@ -51,8 +51,9 @@ public class RDFToResolvedJsonProxyPostProcessorTest {
 		ns.append("foaf=http://xmlns.com/foaf/0.1/;");
 		ns.append("owl=http://www.w3.org/2002/07/owl#;");
 
-		Map<String, Object> templateParams = ImmutableMap.of(RDFToResolvedJsonProxyPostProcessor.CONFIG_NAMESPACEMAP, (Object)ns.toString());
-		rp.process(templateParams, response, proxyResponse);
+		Map<String, Object> config = ImmutableMap.of(RDFToResolvedJsonProxyPostProcessor.CONFIG_NAMESPACEMAP, (Object)ns.toString());
+		Map<String, Object> templateParams = ImmutableMap.of();
+		rp.process(config, templateParams, response, proxyResponse);
 		String op = outputWriter.toString();
 		LOGGER.info("Output {} ", op);
 		

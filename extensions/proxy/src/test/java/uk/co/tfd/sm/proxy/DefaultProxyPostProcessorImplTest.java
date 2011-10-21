@@ -88,7 +88,7 @@ public class DefaultProxyPostProcessorImplTest {
     slingResponseCanReturnOutputStream();
 
     //when
-    proxyPostProcessor.process(null, response, proxyResponse);
+    proxyPostProcessor.process(null, null, response, proxyResponse);
 
     //then
     for (Entry<String, String[]> proxyResponseHeader : proxyResponse.getResponseHeaders().entrySet()) {

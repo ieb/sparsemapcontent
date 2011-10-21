@@ -36,13 +36,14 @@ public interface ProxyPostProcessor {
    * @param templateParams
    *          The parameters used to fill out the template. These are supplied as request
    *          parameters.
+   * @param config The proxy config.
    * @param response
    *          The response that will be sent to the user.
    * @param proxyResponse
    *          The response as it came back from the remote resource.
    * @throws IOException
    */
-  void process(Map<String, Object> templateParams, HttpServletResponse response,
+  void process(Map<String, Object> config, Map<String, Object> templateParams,  HttpServletResponse response,
       ProxyResponse proxyResponse) throws IOException;
 
   /**

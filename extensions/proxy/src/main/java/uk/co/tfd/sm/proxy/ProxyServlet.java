@@ -65,6 +65,13 @@ import com.google.common.collect.Maps;
 @org.apache.felix.scr.annotations.Properties(value = { @Property(name = "alias", value = "/proxy") })
 public class ProxyServlet extends HttpServlet {
 
+
+	private static final boolean DEFAULT_CACHE_CONFIG = false;
+
+	@Property(boolValue=DEFAULT_CACHE_CONFIG)
+	private static final String CACHE_CONFIG = "cache-config";
+
+
 	protected static final String DEFAULT_TEMPLATE_PATH = "proxy/config";
 
 	
@@ -118,6 +125,7 @@ public class ProxyServlet extends HttpServlet {
 
 	private static final String CLASSPATH_PREFIX = "uk/co/tfd/sm/proxy";
 
+
 	private String baseFile;
 
 	/**
@@ -127,10 +135,14 @@ public class ProxyServlet extends HttpServlet {
 	private Map<String, Map<String, Object>> configCache = Maps
 			.newConcurrentMap();
 
+
+	private boolean cacheConfig;
+
 	@Activate
 	protected void activate(Map<String, Object> properties) {
 		baseFile = toString(properties.get(PROP_TEMPLATE_PATH),
 				DEFAULT_TEMPLATE_PATH);
+		cacheConfig = toBoolean(properties.get(CACHE_CONFIG),DEFAULT_CACHE_CONFIG);
 	}
 
 	private String toString(Object configValue, String defaultValue) {
@@ -138,6 +150,13 @@ public class ProxyServlet extends HttpServlet {
 			return defaultValue;
 		}
 		return String.valueOf(configValue);
+	}
+
+	private boolean toBoolean(Object configValue, boolean defaultValue) {
+		if (configValue == null) {
+			return defaultValue;
+		}
+		return Boolean.parseBoolean(String.valueOf(configValue));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -238,7 +257,7 @@ public class ProxyServlet extends HttpServlet {
 			ProxyResponse proxyResponse = proxyClientService.executeCall(
 					config, headers, templateParams, null, -1, null);
 			try {
-				postProcessor.process(templateParams, response, proxyResponse);
+				postProcessor.process(config, templateParams, response, proxyResponse);
 			} finally {
 				proxyResponse.close();
 			}
@@ -264,7 +283,7 @@ public class ProxyServlet extends HttpServlet {
 			return null;
 		}
 
-		if (configCache.containsKey(pathInfo)) {
+		if (cacheConfig && configCache.containsKey(pathInfo)) {
 			return configCache.get(pathInfo);
 		} else {
 			Properties p = new Properties();

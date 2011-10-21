@@ -55,12 +55,12 @@ public class RDFToHTMLProxyPostProcessorTest {
 		ns.append("foaf=http://xmlns.com/foaf/0.1/;");
 		ns.append("owl=http://www.w3.org/2002/07/owl#;");
 
-		Map<String, Object> templateParams = ImmutableMap.of(
+		Map<String, Object> config = ImmutableMap.of(
 				RDFToHTMLProxyPostProcessor.CONFIG_NAMESPACEMAP, (Object)ns.toString(),
 				RDFToHTMLProxyPostProcessor.CONFIG_FINALTEMPLATE, "vivoprofile.vm",
-				"id", "n7934",
 				RDFToHTMLProxyPostProcessor.CONFIG_RESULT_KEY, "id");
-		rp.process(templateParams, response, proxyResponse);
+		Map<String, Object> templateParams = ImmutableMap.of("id", (Object)"n7934");
+		rp.process(config, templateParams, response, proxyResponse);
 		String op = outputWriter.toString();
 		LOGGER.info("Output {} ", op);
 		

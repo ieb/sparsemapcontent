@@ -39,7 +39,7 @@ public class DefaultProxyPostProcessorImpl implements ProxyPostProcessor {
    * @throws IOException
    * @see uk.co.tfd.sm.api.proxy.ProxyPostProcessor#process(org.apache.sling.api.SlingHttpServletResponse, uk.co.tfd.sm.api.proxy.ProxyResponse)
    */
-  public void process(Map<String, Object> templateParams,
+  public void process(Map<String, Object> config, Map<String, Object> templateParams, 
       HttpServletResponse response, ProxyResponse proxyResponse) throws IOException {
     for (Entry<String, String[]> h : proxyResponse.getResponseHeaders().entrySet()) {
       for (String v : h.getValue()) {

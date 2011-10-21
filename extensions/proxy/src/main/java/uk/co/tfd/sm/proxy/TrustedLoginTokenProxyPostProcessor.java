@@ -75,7 +75,7 @@ public class TrustedLoginTokenProxyPostProcessor implements ProxyPostProcessor {
    *      org.apache.sling.api.SlingHttpServletResponse,
    *      uk.co.tfd.sm.api.proxy.ProxyResponse)
    */
-  public void process(Map<String, Object> templateParams,
+  public void process(Map<String, Object> config, Map<String, Object> templateParams,
       HttpServletResponse response, ProxyResponse proxyResponse) throws IOException {
     LOG.debug(
         "process(Map<String, Object> {}, SlingHttpServletResponse response, ProxyResponse proxyResponse)",
@@ -86,7 +86,7 @@ public class TrustedLoginTokenProxyPostProcessor implements ProxyPostProcessor {
       return;
     }
     // just use DefaultProxyPostProcessorImpl behavior
-    dpppi.process(templateParams, response, proxyResponse);
+    dpppi.process(config, templateParams, response, proxyResponse);
     return;
   }
 

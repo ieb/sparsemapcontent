@@ -386,31 +386,16 @@ public class ProxyClientServiceImpl implements ProxyClientService {
 
 	private void addPart(MultipartEntity multipart, String key, Object value)
 			throws UnsupportedEncodingException {
-		if (value instanceof InputStreamHolder) {
-			InputStreamHolder holder = (InputStreamHolder) value;
-			multipart.addPart(key, new InputStreamBody(holder.getStream(),
-					holder.getMimeType(), holder.getFileName()));
-		} else if (value instanceof FileHolder) {
-			FileHolder holder = (FileHolder) value;
-			multipart.addPart(
-					key,
-					new FileBody(holder.getFile(), holder.getMimeType(), holder
-							.getCharset()));
-		} else if (value instanceof ByteArrayHolder) {
-			ByteArrayHolder holder = (ByteArrayHolder) value;
-			multipart.addPart(key,
-					new ByteArrayBody(holder.getData(), holder.getMimeType(),
-							holder.getFileName()));
-		} else if (value instanceof StringHolder) {
-			StringHolder holder = (StringHolder) value;
-			multipart.addPart(key,
-					new StringBody(holder.getString(), holder.getMimeType(),
-							holder.getCharset()));
+		if (value instanceof String[]) {
+			String[] v = (String[]) value;
+			for ( String s : v) {
+				multipart.addPart(key,
+						new StringBody(s, Charset.forName("UTF-8")));
+			}
 		} else {
 			multipart.addPart(key,
 					new StringBody((String) value, Charset.forName("UTF-8")));
 		}
-
 	}
 
 	private boolean isUnsafeProxyDefinition(Map<String, Object> config) {

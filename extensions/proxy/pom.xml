@@ -45,9 +45,7 @@
             <Bundle-Category> sparse-map </Bundle-Category>
             <Export-Package> uk.co.tfd.sm.api.proxy </Export-Package>
             <Private-Package>uk.co.tfd.sm.proxy.*</Private-Package>
-            <Import-Package>
-            !org.apache.commons.logging.*,
-            *</Import-Package>
+            <Import-Package>*</Import-Package>
             <Embed-Transitive>true</Embed-Transitive>
             <Embed-Dependency>httpclient,httpmime,httpcore</Embed-Dependency>
           </instructions>
