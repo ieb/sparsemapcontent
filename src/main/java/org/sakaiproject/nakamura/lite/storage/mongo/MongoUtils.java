@@ -1,9 +1,14 @@
 package org.sakaiproject.nakamura.lite.storage.mongo;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 
 import org.sakaiproject.nakamura.api.lite.RemoveProperty;
@@ -27,6 +32,13 @@ public class MongoUtils {
 	public static final String MONGO_FIELD_DOT_REPLACEMENT = "\u00B6";
 	public static final String MONGO_FIELD_DOLLAR_REPLACEMENT = "\u00A7";
 
+	// _:mongo:
+	public static final String MONGO_INTERNAL_FIELD_PREFIX = InternalContent.INTERNAL_FIELD_PREFIX + "mongo:";
+	// _:mongo:bd:
+	public static final String MONGO_BIGDECIMAL_FIELD_PREFIX = MONGO_INTERNAL_FIELD_PREFIX + "bd:";
+	// _:mongo:tz:
+	public static final String MONGO_TIMEZONE_FIELD_PREFIX = MONGO_INTERNAL_FIELD_PREFIX + "tz:";
+
 	/**
 	 * Take the properties as given by sparsemap and modify them for insertion into mongo.
 	 * @param props the properties of this content
@@ -47,11 +59,16 @@ public class MongoUtils {
 			}
 			else if (value instanceof Calendar || value instanceof GregorianCalendar){
 				 updatedFields.put(key, ((Calendar)value).getTime());
+				 updatedFields.put(MONGO_TIMEZONE_FIELD_PREFIX + key, ((Calendar)value).getTimeZone().getID());
+			}
+			else if (value instanceof BigDecimal){
+				 updatedFields.put(MONGO_BIGDECIMAL_FIELD_PREFIX + key, ((BigDecimal)value).toString());
 			}
 			else if (value != null) {
 				updatedFields.put(key, value);
 			}
 		}
+		// Remove the _smcid field so we dont change it.
 		if (updatedFields.containsField(MongoClient.MONGO_INTERNAL_ID_FIELD)){
 			updatedFields.removeField(MongoClient.MONGO_INTERNAL_ID_FIELD);
 		}
@@ -74,6 +91,7 @@ public class MongoUtils {
 		if (dbo == null){
 			return null;
 		}
+		List<String> toRemove = new ArrayList<String>();
 		Map<String,Object> map = new HashMap<String,Object>();
 		for (String key: dbo.keySet()){
 			Object val = dbo.get(key);
@@ -86,9 +104,33 @@ public class MongoUtils {
 				// but it makes more tests pass in the ContentManagerFinderImplMan case.
 				map.put(key, dbl.toArray(new String[0]));
 			}
+			else if (val instanceof Date){
+				Calendar cal = new GregorianCalendar();
+				cal.setTime((Date)val);
+				String tzKey = MONGO_TIMEZONE_FIELD_PREFIX + key;
+				// Was this date stored as a Calendar? 
+				// If so we'll have a secondary field _:mongo:tz:key that holds
+				// the timezone id.
+				if (dbo.keySet().contains(tzKey)){
+					toRemove.add(tzKey);
+					cal.setTimeZone(TimeZone.getTimeZone((String)dbo.get(tzKey)));
+				}
+				map.put(key, cal);
+			}
+			// Convert serialized BigDecimal values back to BigDecimal
+			else if (key.startsWith(MONGO_BIGDECIMAL_FIELD_PREFIX)){
+				String[] spl = key.split(":");
+				String bdKey = spl[spl.length - 1];
+				map.put(bdKey, new BigDecimal((String)val));
+				toRemove.add(key);
+			}
 			else {
 				map.put(key, val);
 			}
+		}
+		// Remove keys
+		for (String key: toRemove){
+			map.remove(key);
 		}
 
 		// Delete the Mongo-supplied internal _id

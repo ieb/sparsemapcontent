@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
@@ -101,17 +102,18 @@ public class MongoClient implements StorageClient, RowHasher {
 		this.mongodb = mongodb;
 		this.props = props;
 
-		String user = StorageClientUtils.getSetting(props.get(MongoClientPool.PROP_MONGO_USER),  null);
-		String password = StorageClientUtils.getSetting(props.get(MongoClientPool.PROP_MONGO_USER), null);
+		String user = StorageClientUtils.getSetting(props.get(MongoClientPool.PROP_MONGO_USER),  "");
+		String password = StorageClientUtils.getSetting(props.get(MongoClientPool.PROP_MONGO_USER), "");
 
-		if (!this.mongodb.isAuthenticated() && user != null && password != null){
-			if (this.mongodb.authenticate(user, password.toCharArray())){
-				this.mongodb.requestStart();
+		if (StringUtils.trimToNull(user) != null && StringUtils.trimToNull(password) != null){
+			if (!this.mongodb.isAuthenticated()){
+				this.mongodb.authenticate(user, password.toCharArray());
 			}
 			else {
 				throw new MongoException("Unable to authenticate");
 			}
 		}
+
 		this.alternateKeys = (Map<String,String>)props.get(MongoClientPool.PROP_ALT_KEYS);
 		this.streamedContentHelper = new GridFSContentHelper(mongodb, this, props);
 		this.mongodb.requestStart();
