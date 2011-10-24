@@ -164,6 +164,8 @@ public class RDFToMap {
 	}
 	
 	
+
+
 	public String toJson(boolean indented) {
 		if (indented ) {
 			Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -197,37 +199,76 @@ public class RDFToMap {
 		return b.build();
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void resolveToFullJson(Map<String, Object> output,
 			Map<String, Map<String, Object>> baseMap, Map<String, ?> m, Set<String> resolving) {
 		for (Entry<String, ?> e : m.entrySet()) {
-			Object o = e.getValue();
-			if (o instanceof Map) {
-				Map<String, Object> nobj = Maps.newHashMap();
-				accumulate(output, e.getKey(), nobj);
-				accumulate(nobj, processNamespaceURI(FQ_ABOUT), e.getKey());
-				resolveToFullJson(nobj, baseMap, (Map<String, ?>) o, resolving);
-			} else if (o instanceof Set) {
-				for (Object ov : (Set) o) {
-					accumulate(output, e.getKey(), ov);
-				}
-			} else if ( o instanceof String && ((String) o).startsWith("rdf:resource:")) {
-				String key = ((String) o).substring("rdf:resource:".length());
-				if (!resolving.contains(key) && baseMap.containsKey(key) && baseMap.get(key) instanceof Map  ) {
-					Map<String, Object> nobj = Maps.newHashMap();
-					accumulate(output, e.getKey(), nobj);
-					accumulate(nobj, processNamespaceURI(FQ_ABOUT), key);
+			resolveValueToFullJson(e.getKey(), e.getValue(), output, baseMap, m, resolving);
+		}		
+	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void resolveValueToFullJson(String k, Object v,
+			Map<String, Object> output,
+			Map<String, Map<String, Object>> baseMap, Map<String, ?> m,
+			Set<String> resolving) {
+		String resourceRef = getResourceRef(v);
+		if (v instanceof Map) {
+//			LOGGER.info("Did not resolve {} adding Map ", k);
+			Map<String, Object> nobj = Maps.newHashMap();
+			accumulate(output, k, nobj);
+			accumulate(nobj, processNamespaceURI(FQ_ABOUT), k);
+			resolveToFullJson(nobj, baseMap, (Map<String, ?>) v, resolving);
+		} else if (v instanceof Set) {
+//			LOGGER.info("Did not resolve {} adding Set ", k);
+			List<String> resolvedInSet = Lists.newArrayList();
+			int i = 0;
+			for (Object ov : (Set) v) {
+				String key = getResourceRef(ov);
+				if (key != null && !resolving.contains(key)) {
+					resolvedInSet.add(i, key);
 					resolving.add(key);
-					resolveToFullJson(nobj, baseMap, baseMap.get(key), resolving);
-					resolving.remove(key);
 				} else {
-					accumulate(output, e.getKey(), e.getValue());
+					resolvedInSet.add(i, null);
 				}
-			} else {
-				accumulate(output, e.getKey(), e.getValue());
+				i++;
 			}
+			i = 0;
+			for (Object ov : (Set) v) {
+				if (resolvedInSet.get(i) != null) {
+					resolving.remove(resolvedInSet.get(i));
+				}
+				resolveValueToFullJson(k, ov, output, baseMap, m, resolving);
+				i++;
+			}
+		} else if (resourceRef != null) {
+			if (!resolving.contains(resourceRef)
+					&& baseMap.containsKey(resourceRef)
+					&& baseMap.get(resourceRef) instanceof Map) {
+//				LOGGER.info("Resolved and Accumunated {} ", resourceRef);
+				Map<String, Object> nobj = Maps.newHashMap();
+				accumulate(output, k, nobj);
+				accumulate(nobj, processNamespaceURI(FQ_ABOUT), resourceRef);
+				resolving.add(resourceRef);
+				resolveToFullJson(nobj, baseMap, baseMap.get(resourceRef),
+						resolving);
+				resolving.remove(resourceRef);
+			} else {
+//				LOGGER.info("Did not resolve {} adding String {} ", k, v);
+				accumulate(output, k, v);
+			}
+		} else {
+//			LOGGER.info("Did not resolve {} adding Object ", k);
+			accumulate(output, k, v);
 		}
 	}
+
+	private String getResourceRef(Object ov) {
+		if ( ov instanceof String && ((String) ov).startsWith("rdf:resource:")) {
+			return ((String) ov).substring("rdf:resource:".length());
+		}
+		return null;
+	}
+
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void putMap(Map<String, Object> map, String keyWithNamespace, String value) {
