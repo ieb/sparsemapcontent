@@ -130,5 +130,10 @@
         <artifactId>uk.co.tfd.sm.template</artifactId>
         <version>0.1-SNAPSHOT</version>
     </dependency>
+    <dependency>
+        <groupId>org.sakaiproject.nakamura</groupId>
+        <artifactId>uk.co.tfd.sm.memory</artifactId>
+        <version>0.1-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 </project>

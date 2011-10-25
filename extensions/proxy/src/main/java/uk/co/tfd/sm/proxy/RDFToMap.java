@@ -43,13 +43,16 @@ public class RDFToMap {
 	private Map<String, String> nsPrefixMap;
 	private Map<String, Map<String, Object>> tripleMap;
 	private Map<String, Object> resolvedMap;
+	private Resolver resolver;
+	private Map<String, Object> resolverConfig;
 
-	public RDFToMap(Map<String, String> nsPrefixMap) {
+	public RDFToMap(Map<String, String> nsPrefixMap, Resolver resolver) {
 		init(nsPrefixMap);
+		this.resolver = resolver;
 	}
 	
 
-	public RDFToMap(String namespaceMapConfig) {
+	public RDFToMap(String namespaceMapConfig, Resolver resolver, Map<String, Object> resolverConfig) {
 		String[] pairs = StringUtils.split(namespaceMapConfig, ";");
 		Builder<String, String> b = ImmutableMap.builder();
 		if ( pairs != null ) {
@@ -67,6 +70,8 @@ public class RDFToMap {
 			}
 		}
 		init(b.build());
+		this.resolver = resolver;
+		this.resolverConfig = resolverConfig;
 	}
 
 
@@ -113,8 +118,13 @@ public class RDFToMap {
 							.getAttributeByName(RDF_RESOURCE);
 					key = name.getNamespaceURI() + name.getLocalPart();
 					if (resource != null) {
-						putMap(currentMap, key,
-								"rdf:resource:" + processNamespaceURI(resource.getValue()));
+						String value = resource.getValue();
+						if ( isDefaultNamespaceURI(value)) {
+							putMap(currentMap, key, new ResolvableResource(processNamespaceURI(value), resolver, resolverConfig));
+						} else {
+							putMap(currentMap, key,
+								new NonResolvableResource(processNamespaceURI(value)));
+						}
 						state = 4;
 					} else {
 						body = new StringBuilder();
@@ -271,14 +281,14 @@ public class RDFToMap {
 
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void putMap(Map<String, Object> map, String keyWithNamespace, String value) {
+	private void putMap(Map<String, Object> map, String keyWithNamespace, Object value) {
 		String key = processNamespaceURI(keyWithNamespace);
 		if (map.containsKey(key)) {
 			Object o = map.get(key);
 			if (o instanceof Set) {
 				((Set) o).add(value);
 			} else {
-				map.put(key, Sets.newHashSet((String) o, value));
+				map.put(key, Sets.newHashSet(o, value));
 			}
 		} else {
 			map.put(key, value);
@@ -290,7 +300,7 @@ public class RDFToMap {
 			Map<String, Map<String, Object>> tripleMap) {
 		String key = processNamespaceURI(keyWithNamespace);
 		if (tripleMap.containsKey(key)) {
-			LOGGER.info("Map for {} already exists ", key);
+//			LOGGER.info("Map for {} already exists ", key);
 			return tripleMap.get(key);
 
 		} else {
@@ -298,6 +308,20 @@ public class RDFToMap {
 			tripleMap.put(key, m);
 			return m;
 		}
+	}
+
+	private boolean isDefaultNamespaceURI(String keyWithNamespace) {
+		for ( Entry<String, String> e : nsPrefixMap.entrySet() ) {
+			if ( keyWithNamespace.startsWith(e.getKey())) {
+				String ns = e.getValue();
+				if ( ns.length() > 0 ) {				
+					return false;
+				} else {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	private String processNamespaceURI(String keyWithNamespace) {
