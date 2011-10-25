@@ -1,0 +1,16 @@
+#parse("cornell.html.macros.vm")
+#parse("cornell.html.header.vm")
+#if ($result.vivocore_start) 
+	<div class="label" >Start</div><div  class="value">
+	#outputReference(${result.vivocore_start}) 
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result.vivocore_end) 
+	<div class="label" >End</div><div  class="value">
+	#outputReference(${result.vivocore_end}) 
+	</div>
+	<div class="wrap"></div>
+#end
+<div class="label" >Template</div><div class="value">vivocore_DateTimeInterval</div><div class="wrap"></div>
+#parse("cornell.html.footer.vm")

@@ -1,0 +1,28 @@
+#parse("cornell.html.macros.vm")
+#parse("cornell.html.header.vm")
+<div class="label" >Role</div>
+<div class="value subject"> 
+#if ($result.vivocore_principalInvestigatorRoleOf)
+Principal Investigator 
+#elseif ($result.vivocore_InvestigatorRole) 
+Invstigator
+#elseif ($result.vivocore_ResearcherRole)
+Researcher 
+#else
+Member
+#end
+</div>
+<div class="wrap"></div>
+<div class="label" >Formats</div><div class="value">
+<a href="cornell.json?vid=${result.rdf_about}" >json</a> 
+<a href="http://vivo.cornell.edu/individual/${result.rdf_about}/${result.rdf_about}.rdf" >RDF</a>
+</div>
+<div class="wrap"></div>
+#if ($result.vivocore_roleIn) 
+	<div class="label" >In</div><div  class="value">
+	#outputReference(${result.vivocore_roleIn}) 
+	</div>
+	<div class="wrap"></div>
+#end
+<div class="label" >Template</div><div class="value">vivocore_Role</div><div class="wrap"></div>
+#parse("cornell.html.footer.vm")

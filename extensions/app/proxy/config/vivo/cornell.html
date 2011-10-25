@@ -16,7 +16,10 @@ namespacemap  = rdf=http://www.w3.org/1999/02/22-rdf-syntax-ns#; \
    vitro=http://vitro.mannlib.cornell.edu/ns/vitro/0.7#; \
    foaf=http://xmlns.com/foaf/0.1/; \
    owl=http://www.w3.org/2002/07/owl#
-#finaltemplate = vivoprofile.vm
-#content-type = text/html
-#content-encoding = UTF-8
-#result-key = vid
+finaltemplate = cornell.html.vm
+finaltemplatepattern = cornell{0}.html.vm
+finaltemplateselectorproperty = rdf_type
+templatepriorities = foaf_Organization:1,Organization:10,ResearchUnit:20
+content-type = text/html
+content-encoding = UTF-8
+result-key = vid

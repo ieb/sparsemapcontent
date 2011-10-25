@@ -1,0 +1,62 @@
+#parse("cornell.html.macros.vm")
+#parse("cornell.html.header.vm")
+<div class="label" >Individual</div><div class="value subject"> $!{result.vivocore_preferredTitle} ${result.rdfs_label}</div>
+<div class="wrap"></div>
+#if ($result.vivocore_personInPosition) 
+	<div class="label" >Position</div><div  class="value">
+	#outputReference(${result.vivocore_personInPosition}) 
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result.vivocore_researchOverview) 
+	<div class="label" >Overview</div><div  class="value">${result.vivocore_researchOverview}</div>
+	<div class="wrap"></div>
+#end
+#if ($result.vivocore_hasResearchArea) 
+	<div class="label" >Research Area</div><div class="value">#outputReference(${result.vivocore_hasResearchArea})</div>
+	<div class="wrap"></div>
+#end
+#if ($result.vivocore_hasPrincipalInvestigatorRole) 
+	<div class="label" >PI on Grants</div><div class="value">
+	<ul>
+	#foreach( $role in $result.vivocore_hasPrincipalInvestigatorRole )
+	   <li>#outputReference(${role})</li>
+	#end 
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result.vivocore_hasCo-PrincipalInvestigatorRole) 
+
+	<div class="label" >Co PI on Grants</div><div class="value">
+	<ul>
+	#foreach( $role in $result.vivocore_hasCo-PrincipalInvestigatorRole )
+	   <li>#outputReference(${role})</li>
+	#end 
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result.vivocore_hasTeacherRole) 
+	<div class="label">Teaching</div><div class="value">
+	<ul>
+	#foreach( $role in $result.vivocore_hasTeacherRole )
+	   #set( $roleSubject = $role.vivocore_roleIn.substring(13))
+	   #if ($roleSubject.startsWith("http"))
+	      <li><a href="${roleSubject}">${roleSubject}</a></li>
+	   #else
+	      <li><a href="?vid=${roleSubject}">${roleSubject}</a></li>
+	   #end
+	#end 
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result["http://vivo.library.cornell.edu/ns/0.1#professionalBackground"]) 
+	<div class="label" >Professional Background</div><div class="value"> ${result["http://vivo.library.cornell.edu/ns/0.1#professionalBackground"]}</div>
+	
+	<div class="wrap"></div>
+#end
+<div class="label" >Template</div><div class="value">Default</div><div class="wrap"></div>
+#parse("cornell.html.footer.vm")
+

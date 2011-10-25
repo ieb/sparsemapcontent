@@ -1,0 +1,32 @@
+#parse("cornell.html.macros.vm")
+#parse("cornell.html.header.vm")
+
+<div class="label" >Organization</div><div class="value subject">${result.rdfs_label}</div>
+<div class="wrap"></div>
+#if ($result.vivocore_subcontractsGrant) 
+	<div class="label" >Subcontract Grants</div><div  class="value">
+	<ul>
+	   #listArray($result.vivocore_subcontractsGrant)
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result.vivocore_awardsGrant) 
+	<div class="label" >Award Grants</div><div  class="value">
+	<ul>
+	   #listArray($result.vivocore_awardsGrant)
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result.vivocore_subOrganizationWithin) 
+	<div class="label" >Parent Organizations</div><div  class="value">
+	<ul>
+	   #listArray($result.vivocore_subOrganizationWithin)
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+<div class="label" >Template</div><div class="value">foaf_Organization</div><div class="wrap"></div>
+#parse("cornell.html.footer.vm")
+

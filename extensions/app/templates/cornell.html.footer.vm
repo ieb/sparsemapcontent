@@ -1,0 +1,15 @@
+<div class="label" >Formats</div><div class="value">
+<a href="cornell.json?vid=${result.rdf_about}" >json</a> 
+<a href="http://vivo.cornell.edu/individual/${result.rdf_about}/${result.rdf_about}.rdf" >RDF</a>
+</div>
+<div class="wrap"></div>
+#if ( $result["http://vivoweb.org/ontology/cu-vivo-osp#harvestedBy"] )
+<div class="label" >Harvested By</div><div class="value">${result["http://vivoweb.org/ontology/cu-vivo-osp#harvestedBy"]}</div>
+<div class="wrap"></div>
+#end
+#if ( $result["http://vivoweb.org/ontology/cu-vivo-osp#dateHarvested"] )
+<div class="label" >Harvested Date</div><div class="value">${result["http://vivoweb.org/ontology/cu-vivo-osp#dateHarvested"]}</div>
+<div class="wrap"></div>
+#end
+</body>
+</html>

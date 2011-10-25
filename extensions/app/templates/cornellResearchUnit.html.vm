@@ -1,0 +1,65 @@
+#parse("cornell.html.macros.vm")
+#parse("cornell.html.header.vm")
+
+<div class="label" >Research Unit</div><div class="value subject">${result.rdfs_label}</div>
+<div class="wrap"></div>
+<div class="label" >Department Name</div><div class="value subject">${result["http://vivoweb.org/ontology/cu-vivo-osp#deptName"]}</div>
+<div class="wrap"></div>
+#if ($result["http://vivo.library.cornell.edu/ns/0.1#OrganizedEndeavorAddressesResearchArea"]) 
+	<div class="label" >Research Areas</div><div  class="value">
+	<ul>
+	   #listArray($result["http://vivo.library.cornell.edu/ns/0.1#OrganizedEndeavorAddressesResearchArea"])
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result["http://vivo.library.cornell.edu/ns/0.1#cornellOrganizedEndeavorHasLeadParticipantPerson"]) 
+	<div class="label" >Leader</div><div  class="value">
+	<ul>
+	   #outputReference($result["http://vivo.library.cornell.edu/ns/0.1#cornellOrganizedEndeavorHasLeadParticipantPerson"])
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result.vivocore_administers) 
+	<div class="label" >Administers Grants</div><div  class="value">
+	<ul>
+	   #listArray($result.vivocore_administers)
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+
+#if ($result.vivocore_organizationForPosition) 
+	<div class="label" >Associated Members</div><div  class="value">
+	<ul>
+	   #listArray($result.vivocore_organizationForPosition)
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result["http://vivo.library.cornell.edu/ns/0.1#hasAffiliatedCornellFacultyMember"]) 
+	<div class="label" >Cornell Faculty Members</div><div  class="value">
+	<ul>
+	   #listArray($result["http://vivo.library.cornell.edu/ns/0.1#hasAffiliatedCornellFacultyMember"])
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result["http://vivo.library.cornell.edu/ns/0.1#hasAffiliatedAcademicStaffMember"]) 
+	<div class="label" >Academic Staff Members</div><div  class="value">
+	<ul>
+	   #listArray($result["http://vivo.library.cornell.edu/ns/0.1#hasAffiliatedCornellFacultyMember"])
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result.vivocore_freetextKeyword) 
+	<div class="label" >Keywords</div><div  class="value">
+	${result.vivocore_freetextKeyword}
+	</div>
+	<div class="wrap"></div>
+#end
+<div class="label" >Template</div><div class="value">ResearchUnit</div><div class="wrap"></div>
+#parse("cornell.html.footer.vm")
+

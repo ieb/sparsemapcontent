@@ -1,0 +1,64 @@
+#parse("cornell.html.macros.vm")
+#parse("cornell.html.header.vm")
+
+<div class="label" >Organization</div><div class="value subject">${result.rdfs_label}</div>
+<div class="wrap"></div>
+#if ($result["http://vivoweb.org/ontology/cu-vivo-osp#deptName"]) 
+  <div class="label" >Department Name</div><div class="value">
+	<ul>
+	   #listArray($result["http://vivoweb.org/ontology/cu-vivo-osp#deptName"])
+	</ul>
+  </div>
+  <div class="wrap"></div>
+#end
+#if ($result.vivocore_subcontractsGrant) 
+	<div class="label" >Subcontract Grants</div><div  class="value">
+	<ul>
+	   #listArray($result.vivocore_subcontractsGrant)
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result.vivocore_awardsGrant) 
+	<div class="label" >Award Grants</div><div  class="value">
+	<ul>
+	   #listArray($result.vivocore_awardsGrant)
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result["http://vivo.library.cornell.edu/ns/0.1#OrganizedEndeavorAddressesResearchArea"]) 
+	<div class="label" >Research Areas</div><div  class="value">
+	<ul>
+	   #listArray($result["http://vivo.library.cornell.edu/ns/0.1#OrganizedEndeavorAddressesResearchArea"])
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result["http://vivo.library.cornell.edu/ns/0.1#cornellOrganizedEndeavorHasLeadParticipantPerson"]) 
+	<div class="label" >Leader</div><div  class="value">
+	<ul>
+	   #outputReference($result["http://vivo.library.cornell.edu/ns/0.1#cornellOrganizedEndeavorHasLeadParticipantPerson"])
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result.vivocore_administers) 
+	<div class="label" >Administers Grants</div><div  class="value">
+	<ul>
+	   #listArray($result.vivocore_administers)
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result.vivocore_organizationForPosition) 
+	<div class="label" >Associated Members</div><div  class="value">
+	<ul>
+	   #listArray($result.vivocore_organizationForPosition)
+	</ul>
+	</div>
+	<div class="wrap"></div>
+#end
+<div class="label" >Template</div><div class="value">Organization</div><div class="wrap"></div>
+#parse("cornell.html.footer.vm")
+

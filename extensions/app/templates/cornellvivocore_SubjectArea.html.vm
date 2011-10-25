@@ -1,0 +1,30 @@
+#parse("cornell.html.macros.vm")
+#parse("cornell.html.header.vm")
+
+<div class="label" >Subject Area</div><div class="value subject">${result.rdfs_label}</div>
+<div class="wrap"></div>
+#if ($result["http://vivo.library.cornell.edu/ns/0.1#ResearchAreaSubResearchAreaOfResearchArea"]) 
+  <div class="label" >Sub Research Areas</div><div class="value">
+	<ul>
+	   #listArray($result["http://vivo.library.cornell.edu/ns/0.1#ResearchAreaSubResearchAreaOfResearchArea"])
+	</ul>
+  </div>
+  <div class="wrap"></div>
+#end
+#if ($result["http://vivo.library.cornell.edu/ns/0.1#ResearchAreaAddressedByOrganizedEndeavor"]) 
+  <div class="label" >Research Areas Addressed</div><div class="value">
+	<ul>
+	   #listArray($result["http://vivo.library.cornell.edu/ns/0.1#ResearchAreaAddressedByOrganizedEndeavor"])
+	</ul>
+  </div>
+  <div class="wrap"></div>
+#end
+#if ($result.vivocore_partOf) 
+	<div class="label" >Part Of</div><div  class="value">
+	   #outputReference($result.vivocore_partOf)
+	</div>
+	<div class="wrap"></div>
+#end
+<div class="label" >Template</div><div class="value">vivocore_SubjectArea</div><div class="wrap"></div>
+#parse("cornell.html.footer.vm")
+

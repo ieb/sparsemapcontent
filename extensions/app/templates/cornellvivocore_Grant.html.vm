@@ -1,0 +1,44 @@
+#parse("cornell.html.macros.vm")
+#parse("cornell.html.header.vm")
+<div class="label" >Grant Title</div><div class="value subject">${result.rdfs_label}</div>
+<div class="wrap"></div>
+#if ($result.vivocore_grantAwardedBy) 
+	<div class="label" >Awarded By</div><div  class="value">
+	#outputReference(${result.vivocore_grantAwardedBy}) 
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result.vivocore_administeredBy) 
+	<div class="label" >Administered By</div><div  class="value">
+	#outputReference(${result.vivocore_administeredBy}) 
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result["http://vivoweb.org/ontology/cu-vivo-osp#sponsorLevelOne"]) 
+	<div class="label" >Sponsor Level One</div><div  class="value">
+	${result["http://vivoweb.org/ontology/cu-vivo-osp#sponsorLevelOne"]}
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result["http://vivoweb.org/ontology/cu-vivo-osp#sponsorLevelTwo"]) 
+	<div class="label" >Sponsor Level Two</div><div  class="value">
+	${result["http://vivoweb.org/ontology/cu-vivo-osp#sponsorLevelTwo"]}
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result["http://vivoweb.org/ontology/cu-vivo-osp#sponsorLevelThree"]) 
+	<div class="label" >Sponsor Level Three</div><div  class="value">	
+	${result["http://vivoweb.org/ontology/cu-vivo-osp#sponsorLevelThree"]} 
+	</div>
+	<div class="wrap"></div>
+#end
+#if ($result.vivocore_dateTimeInterval) 
+	<div class="label" >Date Period</div><div  class="value">
+	#outputReference(${result.vivocore_dateTimeInterval}) 
+	</div>
+	<div class="wrap"></div>
+#end
+<div class="label" >Template</div><div class="value">vivocore_Grant</div><div class="wrap"></div>
+#parse("cornell.html.footer.vm")
+
+
