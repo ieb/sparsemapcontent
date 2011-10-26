@@ -1,6 +1,6 @@
 package uk.co.tfd.sm.proxy;
 
-public class NonResolvableResource {
+public class NonResolvableResource implements Resource {
 
 	private String value;
 	public NonResolvableResource(String value) {

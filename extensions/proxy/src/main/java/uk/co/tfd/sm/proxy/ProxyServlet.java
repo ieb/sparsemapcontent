@@ -253,6 +253,12 @@ public class ProxyServlet extends HttpServlet {
 					postProcessor = defaultPostProcessor;
 				}
 			}
+			if ( postProcessor instanceof CachingProxyProcessor) {
+				CachingProxyProcessor cachingPostProcessor = (CachingProxyProcessor) postProcessor;
+				if ( cachingPostProcessor.sendCached(config, templateParams, response)) {
+					return;
+				}
+			}
 
 			ProxyResponse proxyResponse = proxyClientService.executeCall(
 					config, headers, templateParams, null, -1, null);

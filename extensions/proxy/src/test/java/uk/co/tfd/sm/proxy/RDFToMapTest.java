@@ -31,7 +31,7 @@ public class RDFToMapTest {
 		b.put("http://xmlns.com/foaf/0.1/","foaf");
 		b.put("http://www.w3.org/2002/07/owl#", "owl");
 
-		RDFToMap rdfToMap = new RDFToMap(b.build(),null);
+		RDFToMap rdfToMap = new RDFToMap(b.build());
 		LOGGER.info("JSON = {} ",rdfToMap.readMap(reader).resolveToFullJson().toJson(true));
 	}
 

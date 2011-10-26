@@ -41,12 +41,7 @@
 	<div class="label">Teaching</div><div class="value">
 	<ul>
 	#foreach( $role in $result.vivocore_hasTeacherRole )
-	   #set( $roleSubject = $role.vivocore_roleIn)
-	   #if ($roleSubject.startsWith("http"))
-	      <li><a href="${roleSubject}">${roleSubject}</a></li>
-	   #else
-	      <li><a href="?vid=${roleSubject}">${roleSubject}</a></li>
-	   #end
+	   <li>#outputReference(${role})</li>
 	#end 
 	</ul>
 	</div>

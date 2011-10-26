@@ -17,8 +17,7 @@ import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.sakaiproject.nakamura.api.memory.Cache;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
@@ -37,22 +36,19 @@ public class RDFToMap {
 	private static final QName RDF_ABOUT = new QName(RDF_NS, "about");
 	private static final QName RDF_DESCRIPTION = new QName(RDF_NS,
 			"Description");
-	private static final Logger LOGGER = LoggerFactory
-			.getLogger(RDFToMap.class);
+	private static final Map<String, Map<String, Object>> EMPTY_MAP = ImmutableMap.of();
 	private XMLInputFactory xmlInputFactory;
 	private Map<String, String> nsPrefixMap;
 	private Map<String, Map<String, Object>> tripleMap;
 	private Map<String, Object> resolvedMap;
-	private Resolver resolver;
 	private Map<String, Object> resolverConfig;
 
-	public RDFToMap(Map<String, String> nsPrefixMap, Resolver resolver) {
+	public RDFToMap(Map<String, String> nsPrefixMap) {
 		init(nsPrefixMap);
-		this.resolver = resolver;
 	}
 	
 
-	public RDFToMap(String namespaceMapConfig, Resolver resolver, Map<String, Object> resolverConfig) {
+	public RDFToMap(String namespaceMapConfig,  Map<String, Object> resolverConfig) {
 		String[] pairs = StringUtils.split(namespaceMapConfig, ";");
 		Builder<String, String> b = ImmutableMap.builder();
 		if ( pairs != null ) {
@@ -70,7 +66,6 @@ public class RDFToMap {
 			}
 		}
 		init(b.build());
-		this.resolver = resolver;
 		this.resolverConfig = resolverConfig;
 	}
 
@@ -120,7 +115,7 @@ public class RDFToMap {
 					if (resource != null) {
 						String value = resource.getValue();
 						if ( isDefaultNamespaceURI(value)) {
-							putMap(currentMap, key, new ResolvableResource(processNamespaceURI(value), resolver, resolverConfig));
+							putMap(currentMap, key, new ResolvableResource(processNamespaceURI(value), resolverConfig));
 						} else {
 							putMap(currentMap, key,
 								new NonResolvableResource(processNamespaceURI(value)));
@@ -166,7 +161,7 @@ public class RDFToMap {
 	public RDFToMap resolveToFullJson() {
 		Set<String> resolving = Sets.newHashSet();
 		resolvedMap = Maps.newHashMap();
-		resolveToFullJson(resolvedMap, tripleMap, tripleMap, resolving);
+		resolveToFullJson(resolvedMap, EMPTY_MAP, tripleMap, resolving);
 		Map<String, String> invertedNsPrefixMap = invertMap(nsPrefixMap);
 		accumulate(resolvedMap, "_namespaces", invertedNsPrefixMap);
 		accumulate(resolvedMap, "_default", invertedNsPrefixMap.get(""));
@@ -178,10 +173,10 @@ public class RDFToMap {
 
 	public String toJson(boolean indented) {
 		if (indented ) {
-			Gson gson = new GsonBuilder().setPrettyPrinting().create();
+			Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeHierarchyAdapter(Resource.class, new ResourceSerializer()).create();
 			return gson.toJson(resolvedMap);
 		} else {
-			Gson gson = new Gson();
+			Gson gson = new GsonBuilder().registerTypeHierarchyAdapter(Resource.class, new ResourceSerializer()).create();
 			return gson.toJson(resolvedMap);
 		}
 	}
@@ -341,6 +336,16 @@ public class RDFToMap {
 
 	public Map<String, Object> toMap() {
 		return resolvedMap;
+	}
+
+
+	public void saveCache(Cache<Map<String, Object>> cache) {
+		for ( Entry<String, Map<String, Object>> e : tripleMap.entrySet()) {
+			Object o = e.getValue();
+			if ( o instanceof Map) {
+				cache.put(e.getKey(), e.getValue());
+			}
+		}
 	}
 
 }

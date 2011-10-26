@@ -20,3 +20,4 @@ namespacemap  = rdf=http://www.w3.org/1999/02/22-rdf-syntax-ns#; \
 #content-type = text/html
 #content-encoding = UTF-8
 result-key = vid
+cachekey = vid
