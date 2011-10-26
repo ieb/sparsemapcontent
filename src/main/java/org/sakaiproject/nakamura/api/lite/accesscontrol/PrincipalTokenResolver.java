@@ -16,8 +16,8 @@ public interface PrincipalTokenResolver {
      *
      * @param principal
      * @return the tokens associated with the proxyPrincipal, could be more than
-     *         one.
+     *         one. 
      */
-    void resolveTokens(String principal, List<Content> tokens);
+    List<Content> resolveTokens(String principal);
 
 }

@@ -29,8 +29,18 @@ import java.util.Map;
  */
 public interface AccessControlManager {
 
+    /**
+     * Dynamic ACEs keys start with this value. Everything after the _tp_ is
+     * interpreted by the PrincipalTokenResolver to load a Content item
+     * containing the principal data. The content item must validate against the
+     * ACL item to be used.
+     */
     public static final String DYNAMIC_PRINCIPAL_STEM = "_tp_";
 
+    /**
+     * Property ACEs start with this value. Property ACEs have the form
+     * _pp_<principal>@<property>@<g|d>
+     */
     public static final String PROPERTY_PRINCIPAL_STEM = "_pp_";
 
     /**
@@ -163,15 +173,25 @@ public interface AccessControlManager {
      *
      * @param token
      *            the token to be signed
-     * @param contentPath
+     * @param objectType
+     *            the type of the ACL path.
+     * @param objectPath
      *            the ACL path to use for signing
      * @throws StorageClientException
      * @throws AccessDeniedException
      */
-    void signContentToken(Content token, String objectPath) throws StorageClientException,
+    void signContentToken(Content token, String objectType, String objectPath) throws StorageClientException,
             AccessDeniedException;
 
 
+    /**
+     * Get the property ACL applicable to the current user on the specified path.
+     * @param objectType the type of the object
+     * @param objectPath the path to the object
+     * @return
+     * @throws AccessDeniedException
+     * @throws StorageClientException
+     */
     PropertyAcl getPropertyAcl(String objectType, String objectPath) throws AccessDeniedException, StorageClientException;
 
 

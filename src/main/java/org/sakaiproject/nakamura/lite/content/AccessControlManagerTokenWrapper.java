@@ -105,11 +105,11 @@ public class AccessControlManagerTokenWrapper implements AccessControlManager {
         }
     }
 
-    public void signContentToken(Content token, String objectPath) throws StorageClientException,
+    public void signContentToken(Content token, String objectType, String objectPath) throws StorageClientException,
             AccessDeniedException {
         try {
             delegate.setRequestPrincipalResolver(principalTokenResovler);
-            delegate.signContentToken(token, objectPath);
+            delegate.signContentToken(token, objectType, objectPath);
         } finally {
             delegate.clearRequestPrincipalResolver();
         }

@@ -9,6 +9,8 @@ import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Lists;
+
 import java.util.List;
 
 public class PathPrincipalTokenResolver implements PrincipalTokenResolver,
@@ -24,7 +26,8 @@ public class PathPrincipalTokenResolver implements PrincipalTokenResolver,
         this.tokenPath = tokenPath;
     }
 
-    public void resolveTokens(String principal, List<Content> tokens) {
+    public List<Content> resolveTokens(String principal) {
+        List<Content> tokens = Lists.newArrayList();
         try {
             Content token = contentManager.get(StorageClientUtils.newPath(tokenPath, principal));
             if (token != null) {
@@ -36,8 +39,9 @@ public class PathPrincipalTokenResolver implements PrincipalTokenResolver,
             LOGGER.warn("Unable to get token for user " + e.getMessage(), e);
         }
         if (nextTokenResolver != null) {
-            nextTokenResolver.resolveTokens(principal, tokens);
+            tokens.addAll(nextTokenResolver.resolveTokens(principal));
         }
+        return tokens;
     }
 
     public void setNextTokenResovler(PrincipalTokenResolver nextTokenResolver) {
