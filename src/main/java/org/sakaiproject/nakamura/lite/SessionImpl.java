@@ -20,6 +20,7 @@ package org.sakaiproject.nakamura.lite;
 import java.util.Map;
 
 import org.sakaiproject.nakamura.api.lite.BaseColumnFamilyCacheManager;
+import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.CommitHandler;
 import org.sakaiproject.nakamura.api.lite.Configuration;
@@ -54,6 +55,8 @@ public class SessionImpl implements Session {
     private Authenticator authenticator;
     private StoreListener storeListener;
     private Map<String, CommitHandler> commitHandlers = Maps.newLinkedHashMap();
+    private StorageCacheManager storageCacheManager;
+    private Configuration configuration;
 
     public SessionImpl(Repository repository, User currentUser, StorageClient client,
             Configuration configuration, StorageCacheManager storageCacheManager,
@@ -82,6 +85,8 @@ public class SessionImpl implements Session {
         authenticator = new AuthenticatorImpl(client, configuration);
 
         this.storeListener = storeListener;
+        this.storageCacheManager = storageCacheManager;
+        this.configuration = configuration;
         storeListener.onLogin(currentUser.getId(), this.toString());
     }
 
@@ -159,6 +164,11 @@ public class SessionImpl implements Session {
             }
             commitHandlers.clear();
         }
+    }
+    
+    
+    public Map<String, CacheHolder> getCache(String columnFamily) {
+        return BaseColumnFamilyCacheManager.getCache(configuration, columnFamily, storageCacheManager);
     }
 
 }

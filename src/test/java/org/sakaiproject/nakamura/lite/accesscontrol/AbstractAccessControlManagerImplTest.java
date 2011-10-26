@@ -19,6 +19,7 @@ package org.sakaiproject.nakamura.lite.accesscontrol;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
@@ -440,12 +441,14 @@ public abstract class AbstractAccessControlManagerImplTest {
                                 Permissions.CAN_READ.getPermission(), Operation.OP_REPLACE) });
         // the tokens should not be setup,
         final Content tokentContent = new Content("testtoken/" + tokenPrincipal, null);
-        accessControlManagerImpl.signContentToken(tokentContent, targetContentPath);
+        accessControlManagerImpl.signContentToken(tokentContent, Security.ZONE_CONTENT, targetContentPath);
         LOGGER.info("Checking Token {} ", tokentContent);
         accessControlManagerImpl.setRequestPrincipalResolver(new PrincipalTokenResolver() {
-            public void resolveTokens(String principal, List<Content> tokens) {
+            public List<Content> resolveTokens(String principal) {
+                List<Content> tokens = Lists.newArrayList();
                 tokens.add(tokentContent);
                 LOGGER.info("Principal {} checked tokens {}", principal, tokens);
+                return tokens;
             }
         });
         Assert.assertTrue(accessControlManagerImpl.can(user3Auth, Security.ZONE_CONTENT,
@@ -508,12 +511,14 @@ public abstract class AbstractAccessControlManagerImplTest {
         final Content tokentContent = new Content("testtokenwithPlugin/" + tokenPrincipal,
                 ImmutableMap.of(PrincipalTokenValidator.VALIDATORPLUGIN, (Object) "testvalidator",
                         "protectedfield", "protected"));
-        accessControlManagerImpl.signContentToken(tokentContent, targetContentPath);
+        accessControlManagerImpl.signContentToken(tokentContent, Security.ZONE_CONTENT, targetContentPath);
         LOGGER.info("Checking Token {} ", tokentContent);
         accessControlManagerImpl.setRequestPrincipalResolver(new PrincipalTokenResolver() {
-            public void resolveTokens(String principal, List<Content> tokens) {
+            public List<Content> resolveTokens(String principal) {
+                List<Content> tokens = Lists.newArrayList();
                 tokens.add(tokentContent);
                 LOGGER.info("Principal {} checked tokens {}", principal, tokens);
+                return tokens;
             }
         });
         Assert.assertTrue(accessControlManagerImpl.can(user3Auth, Security.ZONE_CONTENT,

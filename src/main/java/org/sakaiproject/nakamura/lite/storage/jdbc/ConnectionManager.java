@@ -26,6 +26,12 @@ public class ConnectionManager extends TimerTask {
 
     private Map<Thread, ConnectionHolder> threadMap = new ConcurrentHashMap<Thread, ConnectionHolder>();
     private boolean closing = false;
+    private JDBCStorageClientPool jdbcStorageClientPool;
+    
+
+    public ConnectionManager(JDBCStorageClientPool jdbcStorageClientPool) {
+        this.jdbcStorageClientPool = jdbcStorageClientPool;
+    }
 
     @Override
     public void run() {
@@ -55,7 +61,7 @@ public class ConnectionManager extends TimerTask {
             c.close();
             threadMap.remove(t);
         }
-        ConnectionHolder ch = new ConnectionHolder(connection);
+        ConnectionHolder ch = new ConnectionHolder(connection, jdbcStorageClientPool);
         threadMap.put(t, ch);
     }
 

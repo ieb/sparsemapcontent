@@ -142,7 +142,8 @@ public class MigrateContentComponent implements MigrateContentService {
                 if ( migratorDependencySequence.hasUnresolved() ) {
                     throw new PropertyMigrationException("There are unresolved dependencies "+migratorDependencySequence.getUnresolved());
                 }
-                reindex(dryRun, jdbcClient, keySpace, configuration.getAuthorizableColumnFamily(),
+                CacheAwareMigrationManager cacheAwareMigrationManager = new CacheAwareMigrationManager(jdbcClient, session.getCache(configuration.getAuthorizableColumnFamily()));
+                reindex(dryRun, jdbcClient, cacheAwareMigrationManager, keySpace, configuration.getAuthorizableColumnFamily(),
                         indexer, migratorDependencySequence, new IdExtractor() {
     
                             public String getKey(Map<String, Object> properties) {
@@ -152,7 +153,9 @@ public class MigrateContentComponent implements MigrateContentService {
                                 return null;
                             }
                         }, limit, feedback, reindexAll);
-                reindex(dryRun, jdbcClient, keySpace, configuration.getContentColumnFamily(), indexer,
+            
+                cacheAwareMigrationManager = new CacheAwareMigrationManager(jdbcClient, session.getCache(configuration.getContentColumnFamily()));
+                reindex(dryRun, jdbcClient, cacheAwareMigrationManager, keySpace, configuration.getContentColumnFamily(), indexer,
                         migratorDependencySequence, new IdExtractor() {
     
                             public String getKey(Map<String, Object> properties) {
@@ -171,7 +174,8 @@ public class MigrateContentComponent implements MigrateContentService {
                             }
                         }, limit, feedback, reindexAll);
     
-                reindex(dryRun, jdbcClient, keySpace, configuration.getAclColumnFamily(), indexer,
+                cacheAwareMigrationManager = new CacheAwareMigrationManager(jdbcClient, session.getCache(configuration.getAclColumnFamily()));
+                reindex(dryRun, jdbcClient, cacheAwareMigrationManager, keySpace, configuration.getAclColumnFamily(), indexer,
                         migratorDependencySequence, new IdExtractor() {
                             public String getKey(Map<String, Object> properties) {
                                 if (properties.containsKey(AccessControlManagerImpl._KEY)) {
@@ -225,8 +229,10 @@ public class MigrateContentComponent implements MigrateContentService {
         }
         return new DependencySequence(propertyMigrators, runMigratorRecord);
     }
+    
 
-    private void reindex(boolean dryRun, StorageClient jdbcClient, String keySpace,
+
+    private void reindex(boolean dryRun, StorageClient jdbcClient, CacheAwareMigrationManager migrationManager, String keySpace,
             String columnFamily, Indexer indexer, DependencySequence propertyMigrators,
             IdExtractor idExtractor, int limit, Feedback feedback, boolean reindexAll) throws StorageClientException {
         long objectCount = jdbcClient.allCount(keySpace, columnFamily);
@@ -259,7 +265,7 @@ public class MigrateContentComponent implements MigrateContentService {
                         if (key != null) {
                             if (!dryRun) {
                                 if (save) {
-                                    jdbcClient.insert(keySpace, columnFamily, key, properties,
+                                    migrationManager.insert(keySpace, columnFamily, key, properties,
                                             false);
                                 } else if ( reindexAll ) {
                                     indexer.index(statementCache, keySpace, columnFamily, key, rid,
