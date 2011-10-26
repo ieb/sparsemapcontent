@@ -5,7 +5,7 @@
 ##
 #macro( outputReference  $ref )
   #if ( $ref.hasLabelAndKey() )
-	  <a href="?vid=${ref.key}" >${ref.label}</a>
+	  <a href="?vid=${ref.key}" >${ref.label}</a> 
   #else
      ${ref}
   #end
@@ -23,37 +23,9 @@
 ##
 ## Dump an array
 ##
-#macro( listArray $array  )
+#macro( listArray $array )
 	#foreach( $e in $array ) 
 	    <li> 
-	       #if ( $e.isReference()  ) 
-	          #outputReference($e) 
-	       #elseif ( $e.entrySet() && $e.entrySet().size() && $e.entrySet().size() > 0 )
-	           
-	          <ul>
-	             #listRdfKeys($e)
-	          </ul> 
-	           
-	       #elseif ( $e.size() && $e.size() > 0 )
-	           
-	          <ul>
-	             #listArray($e)
-	          </ul> 
-	           
-	       #else
-	          ${e}
-	       #end
-	    </li>
-	#end
-#end
-#macro( listArrayDeref $array $fieldtarget  )
-	#foreach( $e in $array ) 
-	    #if ( $e.getTarget() ) 
-	       #set ($l = $e.getLabel())
-	       #set( $e = $e.getTarget()[$fieldtarget] )
-	    #end
-	    <li> 
-	       $!{l}	       
 	       #if ( $e.isReference()  ) 
 	          #outputReference($e) 
 	       #elseif ( $e.entrySet() && $e.entrySet().size() && $e.entrySet().size() > 0 )

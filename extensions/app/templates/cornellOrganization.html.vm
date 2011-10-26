@@ -54,7 +54,7 @@
 #if ($result.vivocore_organizationForPosition) 
 	<div class="label" >Associated Members</div><div  class="value">
 	<ul>
-	   #listArrayDeref($result.vivocore_organizationForPosition, "vivocore_positionForPerson")
+	   #listArray($result.vivocore_organizationForPosition)
 	</ul>
 	</div>
 	<div class="wrap"></div>

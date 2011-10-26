@@ -20,4 +20,3 @@ finaltemplate = vivoprofile.vm
 content-type = text/html
 content-encoding = UTF-8
 result-key = vid
-cachekey = vid
