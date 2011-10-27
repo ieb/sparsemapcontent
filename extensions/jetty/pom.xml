@@ -5,8 +5,8 @@
   <parent>
     <groupId>org.sakaiproject.nakamura</groupId>
     <artifactId>core-base</artifactId>
-    <version>2-SNAPSHOT</version>
-    <relativePath>../../parent/pom.xml</relativePath>
+    <version>2</version>
+    <!-- <relativePath>../../parent/pom.xml</relativePath> -->
   </parent>
   <artifactId>uk.co.tfd.sm.jetty</artifactId>
   <packaging>bundle</packaging>
