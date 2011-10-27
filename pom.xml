@@ -4,13 +4,13 @@
  <parent>
     <groupId>org.sakaiproject.nakamura</groupId>
     <artifactId>core-base</artifactId>
-    <version>2-SNAPSHOT</version>
+    <version>2</version>
     <relativePath>parent/pom.xml</relativePath>
   </parent>
   <groupId>org.sakaiproject.nakamura</groupId>
   <artifactId>org.sakaiproject.nakamura.core</artifactId>
   <packaging>bundle</packaging>
-  <version>1.2-SNAPSHOT</version>
+  <version>1.2</version>
   <name>Sakai Nakamura :: Sparse Map Content Storage bundle.</name>
   <description>Server that uses a sparse map to represent content mapping closely to a colum database like Cassandra.</description>
   <properties>
