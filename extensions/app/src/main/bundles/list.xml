@@ -155,5 +155,15 @@
             <artifactId>uk.co.tfd.sm.proxy</artifactId>
             <version>0.1-SNAPSHOT</version>
         </bundle>
+        <bundle>
+            <groupId>org.sakaiproject.nakamura</groupId>
+            <artifactId>uk.co.tfd.sm.jaxrs</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </bundle>
+        <bundle>
+            <groupId>org.sakaiproject.nakamura</groupId>
+            <artifactId>uk.co.tfd.sm.resource</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </bundle>
    </startLevel>
 </bundles>
