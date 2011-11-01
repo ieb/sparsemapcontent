@@ -44,7 +44,7 @@ import com.google.common.collect.Sets;
 
 @Component(immediate = true, metatype = true)
 @Service(value = Servlet.class)
-@Properties(value = { @Property(name = "alias", value = "/s") })
+@Properties(value = { @Property(name = "alias", value = "/") })
 @References(value = { @Reference(name = "services", referenceInterface=JaxRestService.class, cardinality = ReferenceCardinality.OPTIONAL_MULTIPLE, policy = ReferencePolicy.DYNAMIC, strategy = ReferenceStrategy.EVENT, bind = "bindService", unbind = "unbindService") })
 public class ResteasyServlet extends HttpServlet implements HttpRequestFactory,
 		HttpResponseFactory {
