@@ -17,10 +17,11 @@
  */
 package org.sakaiproject.nakamura.lite.content;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.RemoveProperty;
@@ -28,15 +29,13 @@ import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.content.Content;
-import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 /**
  * Internal Content Object for holding sparse Content objects. Has a protected
@@ -50,7 +49,7 @@ public class InternalContent {
     /**
      * The ID of a content item
      */
-    private static String UUID_FIELD = ConfigurationImpl.DEFAULT_UUID_FIELD;
+    public static String UUID_FIELD = Repository.SYSTEM_PROP_PREFIX+ "id";
 
     static boolean idFieldIsSet = false;
     /**
@@ -376,7 +375,7 @@ public class InternalContent {
     }
 
     public String getId() {
-        return (String) content.get(Content.getUuidField());
+        return (String) content.get(UUID_FIELD);
     }
 
     /**
@@ -477,18 +476,6 @@ public class InternalContent {
         }
     }
 
-    /**
-     * @deprecated this is a transitional measure that will be removed once
-     *             Berkley have migrated. It allows them (and anyone else with
-     *             content containing _sparseId) in their data to configure
-     *             their system to use that field name. Eventually this method
-     *             will be replaced throughout the code base with a static
-     *             final.
-     * @return
-     */
-    public static String getUuidField() {
-        return UUID_FIELD;
-    }
 
     /**
      * 

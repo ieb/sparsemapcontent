@@ -63,11 +63,9 @@ public class CacheManagerServiceImpl implements CacheManagerService {
   @Property(value = "Cache Manager Service Implementation")
   static final String SERVICE_DESCRIPTION = "service.description";
   
-  @SuppressWarnings("unused")
   @Property()
   public static final String BIND_ADDRESS = "bind-address";
   
-  @SuppressWarnings("unused")
   @Property(value="sling/ehcache/data")
   public static final String CACHE_STORE = "cache-store";
 

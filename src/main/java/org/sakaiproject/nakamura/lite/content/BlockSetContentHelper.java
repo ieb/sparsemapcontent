@@ -17,8 +17,9 @@
  */
 package org.sakaiproject.nakamura.lite.content;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
 
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -29,9 +30,8 @@ import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 public class BlockSetContentHelper implements BlockContentHelper {
 
@@ -97,7 +97,7 @@ public class BlockSetContentHelper implements BlockContentHelper {
             int bufferLength = saveBuffer.length;
             length = length + bufferLength;
             lastBlockWrite = i;
-            client.insert(keySpace, contentColumnFamily, key, ImmutableMap.of(Content.getUuidField(),
+            client.insert(keySpace, contentColumnFamily, key, ImmutableMap.of(Content.UUID_FIELD,
                     (Object)contentId, 
                     CONTENT_BLOCK_ID, key,
                     NUMBLOCKS_FIELD,

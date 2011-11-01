@@ -39,6 +39,7 @@ import static org.sakaiproject.nakamura.lite.content.InternalContent.PREVIOUS_VE
 import static org.sakaiproject.nakamura.lite.content.InternalContent.READONLY_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.STRUCTURE_UUID_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.TRUE;
+import static org.sakaiproject.nakamura.lite.content.InternalContent.UUID_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.VERSION_HISTORY_ID_FIELD;
 import static org.sakaiproject.nakamura.lite.content.InternalContent.VERSION_NUMBER_FIELD;
 
@@ -150,7 +151,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
 
     private static final Set<String> PROTECTED_FIELDS = ImmutableSet.of(LASTMODIFIED_FIELD,
                                                                         LASTMODIFIED_BY_FIELD,
-                                                                        Content.getUuidField(),
+                                                                        UUID_FIELD,
                                                                         PATH_FIELD);
 
 
@@ -369,7 +370,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
             toSave =  Maps.newHashMap(content.getPropertiesForUpdate());
             id = StorageClientUtils.getInternalUuid();
             // if the user is admin we allow overwriting of protected fields. This should allow content migration.
-            toSave.put(Content.getUuidField(), id);
+            toSave.put(UUID_FIELD, id);
             toSave.put(PATH_FIELD, path);
             toSave.put(CREATED_FIELD, System.currentTimeMillis());
             toSave.put(CREATED_BY_FIELD, accessControlManager.getCurrentUserId());
@@ -386,7 +387,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                 toSave.put(field, originalProperties.get(field));
             }
 
-            id = (String)toSave.get(Content.getUuidField());
+            id = (String)toSave.get(UUID_FIELD);
             toSave.put(LASTMODIFIED_FIELD, System.currentTimeMillis());
             toSave.put(LASTMODIFIED_BY_FIELD,
                     accessControlManager.getCurrentUserId());
@@ -530,9 +531,9 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         if (f == null) {
             throw new StorageClientException(" Source content " + from + " does not exist");
         }
-        if ( f.getProperty(Content.getUuidField()) == null ) {
+        if ( f.getProperty(UUID_FIELD) == null ) {
             LOGGER.warn("Bad Content item with no ID cant be copied {} ",f);
-            throw new StorageClientException(" Source content " + from + "  Has no "+Content.getUuidField());      
+            throw new StorageClientException(" Source content " + from + "  Has no "+UUID_FIELD);      
         }
         Content t = get(to);
         if (t != null) {
@@ -557,7 +558,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
             copyProperties.putAll(f.getProperties());
         }
         copyProperties.put(COPIED_FROM_PATH_FIELD, from);
-        copyProperties.put(COPIED_FROM_ID_FIELD, f.getProperty(Content.getUuidField()));
+        copyProperties.put(COPIED_FROM_ID_FIELD, f.getProperty(UUID_FIELD));
         copyProperties.put(COPIED_DEEP_FIELD, withStreams);
         t = new Content(to, copyProperties);
         update(t);
@@ -699,7 +700,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
 
         // versionHistoryId is the UUID of the version history for this node.
 
-        String saveVersionId = (String)saveVersion.get(Content.getUuidField());
+        String saveVersionId = (String)saveVersion.get(UUID_FIELD);
         
         String versionHistoryId = (String)saveVersion.get(VERSION_HISTORY_ID_FIELD);
 
@@ -718,7 +719,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
 
         String saveBlockId = (String)saveVersion.get(BLOCKID_FIELD);
 
-        newVersion.put(Content.getUuidField(), newVersionId);
+        newVersion.put(UUID_FIELD, newVersionId);
         newVersion.put(PREVIOUS_VERSION_UUID_FIELD, saveVersionId);
         if (saveBlockId != null) {
             newVersion.put(PREVIOUS_BLOCKID_FIELD, saveBlockId);
@@ -760,7 +761,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                     final Map<String, Object> versionHistory = getCached(keySpace,
                             contentColumnFamily, versionHistoryId);
                     LOGGER.debug("Loaded Version History  {} {} ", versionHistoryId, versionHistory);
-                    versionHistory.remove(InternalContent.getUuidField());
+                    versionHistory.remove(UUID_FIELD);
                   return Ordering.from(new Comparator<String>() {
                       public int compare(String o1, String o2) {
                         long l1 = (Long) versionHistory.get(o1);

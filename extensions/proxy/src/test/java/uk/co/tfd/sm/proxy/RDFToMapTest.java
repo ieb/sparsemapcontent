@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
-@SuppressWarnings("restriction")
 public class RDFToMapTest {
 
 	private static final Logger LOGGER = LoggerFactory

@@ -163,9 +163,9 @@ public class MigrateContentComponent implements MigrateContentService {
                                     // blocks of a bit stream
                                     return (String) properties
                                             .get(BlockSetContentHelper.CONTENT_BLOCK_ID);
-                                } else if (properties.containsKey(Content.getUuidField())) {
+                                } else if (properties.containsKey(Content.UUID_FIELD)) {
                                     // a content item and content block item
-                                    return (String) properties.get(Content.getUuidField());
+                                    return (String) properties.get(Content.UUID_FIELD);
                                 } else if (properties.containsKey(Content.STRUCTURE_UUID_FIELD)) {
                                     // a structure item
                                     return (String) properties.get(Content.PATH_FIELD);

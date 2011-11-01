@@ -12,6 +12,7 @@ import java.util.TimeZone;
 import java.util.regex.Matcher;
 
 import org.sakaiproject.nakamura.api.lite.RemoveProperty;
+import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.lite.content.InternalContent;
 
 import com.mongodb.BasicDBList;
@@ -86,7 +87,6 @@ public class MongoUtils {
 	 * @param dbo the object fetched from the DB.
 	 * @return the dbo as a Map.
 	 */
-	@SuppressWarnings("deprecation")
 	public static Map<String,Object> convertDBObjectToMap(DBObject dbo){
 		if (dbo == null){
 			return null;
@@ -140,7 +140,7 @@ public class MongoUtils {
 		// Rename the sparse id property to InternalContent.getUuidField() so the rest of sparse can use that field name.
 		// _smcid -> _id
 		if (map.containsKey(MongoClient.MONGO_INTERNAL_SPARSE_UUID_FIELD)){
-			map.put(InternalContent.getUuidField(), map.get(MongoClient.MONGO_INTERNAL_SPARSE_UUID_FIELD));
+			map.put(Content.UUID_FIELD, map.get(MongoClient.MONGO_INTERNAL_SPARSE_UUID_FIELD));
 			map.remove(MongoClient.MONGO_INTERNAL_SPARSE_UUID_FIELD);
 		}
 		return map;

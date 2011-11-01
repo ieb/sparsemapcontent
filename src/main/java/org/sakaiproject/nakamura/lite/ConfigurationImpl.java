@@ -17,21 +17,6 @@
  */
 package org.sakaiproject.nakamura.lite;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Service;
-import org.sakaiproject.nakamura.api.lite.Configuration;
-import org.sakaiproject.nakamura.api.lite.Repository;
-import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
-import org.sakaiproject.nakamura.lite.content.InternalContent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -40,20 +25,33 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Service;
+import org.sakaiproject.nakamura.api.lite.Configuration;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+
 @Component(immediate = true, metatype = true)
 @Service(value = Configuration.class)
 public class ConfigurationImpl implements Configuration {
 
     @Property(value = "ac")
-    private static final String ACL_COLUMN_FAMILY = "acl-column-family";
+    protected static final String ACL_COLUMN_FAMILY = "acl-column-family";
     @Property(value = "n")
-    private static final String KEYSPACE = "keyspace";
+    protected static final String KEYSPACE = "keyspace";
     @Property(value = "au")
-    private static final String AUTHORIZABLE_COLUMN_FAMILY = "authorizable-column-family";
+    protected static final String AUTHORIZABLE_COLUMN_FAMILY = "authorizable-column-family";
     @Property(value = "cn")
-    private static final String CONTENT_COLUMN_FAMILY = "content-column-family";
+    protected static final String CONTENT_COLUMN_FAMILY = "content-column-family";
     @Property(value = "lk")
-    private static final String LOCK_COLUMN_FAMILY = "lock-column-family";
+    protected static final String LOCK_COLUMN_FAMILY = "lock-column-family";
     
     protected static final String DEFAULT_INDEX_COLUMN_NAMES = "au:rep:principalName,au:type,cn:sling:resourceType," +
     		"cn:sakai:pooled-content-manager,cn:sakai:messagestore,cn:sakai:type,cn:sakai:marker,cn:sakai:tag-uuid," +
@@ -66,19 +64,13 @@ public class ConfigurationImpl implements Configuration {
     private static final String DEFAULT_INDEX_COLUMN_TYPES = "cn:sakai:pooled-content-manager=String[],cn:sakai:category=String[]";
 
     @Property(value=DEFAULT_INDEX_COLUMN_TYPES)
-    private static final String INDEX_COLUMN_TYPES = "index-column-types";
+    protected static final String INDEX_COLUMN_TYPES = "index-column-types";
 
 
     private static final String SHAREDCONFIGPATH = "org/sakaiproject/nakamura/lite/shared.properties";
 
     protected static final String SHAREDCONFIGPROPERTY = "sparseconfig";
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationImpl.class);
-    public static final String DEFAULT_UUID_FIELD = Repository.SYSTEM_PROP_PREFIX+ "id";
-    /**
-     * 
-     */
-    @Property
-    protected static final String UUID_FIELD_NAME = "uuid-field-name";
     
 
     private String aclColumnFamily;
@@ -130,10 +122,7 @@ public class ConfigurationImpl implements Configuration {
         LOGGER.info("Using Configuration for Index Column Names as              {}", Arrays.toString(indexColumnNames));
         indexColumnTypes = StringUtils.split(getProperty(INDEX_COLUMN_TYPES,DEFAULT_INDEX_COLUMN_TYPES, sharedProperties, properties),',');
 
-        
-        String uuidFieldName = getProperty(UUID_FIELD_NAME,DEFAULT_UUID_FIELD, sharedProperties, properties);
-        InternalContent.setUuidField(uuidFieldName);
-        
+                
 
 
     }

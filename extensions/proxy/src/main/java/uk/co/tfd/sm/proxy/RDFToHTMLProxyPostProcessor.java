@@ -29,7 +29,6 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-@SuppressWarnings("restriction")
 @Component(immediate = true, metatype = true)
 @Service(value = ProxyPostProcessor.class)
 public class RDFToHTMLProxyPostProcessor implements ProxyPostProcessor,
@@ -105,6 +104,7 @@ public class RDFToHTMLProxyPostProcessor implements ProxyPostProcessor,
 
 	}
 
+	@SuppressWarnings("unchecked")
 	private void sendResult(String key, Map<String, Object> config,
 			Map<String, Object> fullMap, HttpServletResponse response)
 			throws IOException {

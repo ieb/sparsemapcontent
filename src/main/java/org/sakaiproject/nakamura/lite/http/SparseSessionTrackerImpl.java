@@ -70,6 +70,7 @@ public class SparseSessionTrackerImpl implements Filter, SparseSessionTracker {
     }
 
 
+    @SuppressWarnings("unchecked")
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain)
             throws IOException, ServletException {
             Session[] sessionArray = null;

@@ -38,8 +38,6 @@ import org.sakaiproject.nakamura.api.memory.CacheManagerService;
 import org.sakaiproject.nakamura.api.memory.CacheScope;
 
 import uk.co.tfd.sm.api.template.TemplateService;
-import uk.co.tfd.sm.memory.ehcache.CacheManagerServiceImpl;
-import uk.co.tfd.sm.template.TemplateServiceImpl;
 
 @Component(immediate = true, metatype = true)
 @Service(value = Servlet.class)

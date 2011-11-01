@@ -27,7 +27,6 @@ import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-@SuppressWarnings("restriction")
 public class RDFToMap {
 
 	private static final String FQ_ABOUT = "http://www.w3.org/1999/02/22-rdf-syntax-ns#about";

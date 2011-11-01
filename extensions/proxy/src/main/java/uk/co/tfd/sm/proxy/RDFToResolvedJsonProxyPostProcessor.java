@@ -22,7 +22,6 @@ import uk.co.tfd.sm.api.proxy.ProxyResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-@SuppressWarnings("restriction")
 @Component(immediate = true, metatype = true)
 @Service(value = ProxyPostProcessor.class)
 public class RDFToResolvedJsonProxyPostProcessor implements ProxyPostProcessor {
