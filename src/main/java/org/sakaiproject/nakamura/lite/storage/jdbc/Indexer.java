@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.Map;
 
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.lite.CachingManager;
 import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
 
 public interface Indexer {
@@ -14,6 +15,6 @@ public interface Indexer {
             throws StorageClientException, SQLException;
 
     DisposableIterator<Map<String, Object>> find(String keySpace, String columnFamily,
-            Map<String, Object> properties) throws StorageClientException;
+            Map<String, Object> properties, CachingManager cachingManager) throws StorageClientException;
 
 }

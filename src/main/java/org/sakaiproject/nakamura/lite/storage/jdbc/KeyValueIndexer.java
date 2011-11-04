@@ -9,22 +9,23 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageConstants;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
+import org.sakaiproject.nakamura.lite.CachingManager;
 import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
 import org.sakaiproject.nakamura.lite.storage.Disposer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.ImmutableMap.Builder;
 
 public abstract class KeyValueIndexer extends AbstractIndexer {
 
@@ -44,7 +45,7 @@ public abstract class KeyValueIndexer extends AbstractIndexer {
     }
 
     public DisposableIterator<Map<String, Object>> find(final String keySpace, final String columnFamily,
-            Map<String, Object> properties) throws StorageClientException {
+            Map<String, Object> properties, final CachingManager cacheManager) throws StorageClientException {
         String[] keys = null;
         if ( properties != null  && properties.containsKey(StorageConstants.CUSTOM_STATEMENT_SET)) {
             String customStatement = (String) properties.get(StorageConstants.CUSTOM_STATEMENT_SET);
@@ -256,7 +257,7 @@ public abstract class KeyValueIndexer extends AbstractIndexer {
                                 nextValue = b.build();
                             } else {
                                String id = rs.getString(1);
-                               nextValue = client.internalGet(keySpace, columnFamily, id);
+                               nextValue = client.internalGet(keySpace, columnFamily, id, cacheManager);
                                LOGGER.debug("Got Row ID {} {} ", id, nextValue);
                             }
                             return true;

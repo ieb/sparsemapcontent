@@ -452,7 +452,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
             builder.put(Authorizable.AUTHORIZABLE_TYPE_FIELD, Authorizable.GROUP_VALUE);
         }
         final DisposableIterator<Map<String, Object>> authMaps = client.find(keySpace,
-                authorizableColumnFamily, builder.build());
+                authorizableColumnFamily, builder.build(), this);
 
         return new PreemptiveIterator<Authorizable>() {
 

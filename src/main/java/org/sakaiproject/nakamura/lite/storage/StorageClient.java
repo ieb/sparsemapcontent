@@ -23,6 +23,7 @@ import java.util.Map;
 
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.lite.CachingManager;
 
 public interface StorageClient {
 
@@ -95,14 +96,21 @@ public interface StorageClient {
 
     /**
      * Search for a piece of content.
-     * @param keySpace the keyspace to search
-     * @param authorizableColumnFamily the id of the column family
-     * @param properties column and values to search
+     * 
+     * @param keySpace
+     *            the keyspace to search
+     * @param authorizableColumnFamily
+     *            the id of the column family
+     * @param properties
+     *            column and values to search
+     * @param cachingManager
+     *            if set to a CachingManager that implements DirectCacheAccess,
+     *            the cache will be consulted before accessing the storage.
      * @return an iterator of results
      * @throws StorageClientException
      */
     DisposableIterator<Map<String, Object>> find(String keySpace, String authorizableColumnFamily,
-            Map<String, Object> properties) throws StorageClientException;
+            Map<String, Object> properties, CachingManager cachingManager) throws StorageClientException;
 
     /**
      * Close this client.
@@ -118,7 +126,7 @@ public interface StorageClient {
      * @throws StorageClientException
      */
     DisposableIterator<Map<String, Object>> listChildren(String keySpace, String columnFamily,
-            String key) throws StorageClientException;
+            String key, CachingManager cachingManager) throws StorageClientException;
 
     /**
      * Does this content item have a stream body by this id?

@@ -19,6 +19,7 @@ import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.StorageConstants;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
+import org.sakaiproject.nakamura.lite.CachingManager;
 import org.sakaiproject.nakamura.lite.content.InternalContent;
 import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
 import org.sakaiproject.nakamura.lite.storage.Disposer;
@@ -274,7 +275,7 @@ public class WideColumnIndexer extends AbstractIndexer {
     }
 
     public DisposableIterator<Map<String, Object>> find(final String keySpace, final String columnFamily,
-            Map<String, Object> properties) throws StorageClientException {
+            Map<String, Object> properties, final CachingManager cachingManager) throws StorageClientException {
         String[] keys = null;
         if ( properties != null  && properties.containsKey(StorageConstants.CUSTOM_STATEMENT_SET)) {
             String customStatement = (String) properties.get(StorageConstants.CUSTOM_STATEMENT_SET);
@@ -496,7 +497,7 @@ public class WideColumnIndexer extends AbstractIndexer {
                                 nextValue = b.build();
                             } else {
                                String id = rs.getString(1);
-                               nextValue = client.internalGet(keySpace, columnFamily, id);
+                               nextValue = client.internalGet(keySpace, columnFamily, id, cachingManager);
                                LOGGER.debug("Got Row ID {} {} ", id, nextValue);
                             }
                             return true;
