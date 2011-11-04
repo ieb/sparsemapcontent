@@ -21,6 +21,8 @@
     <module>proxy</module>
     <module>template</module>
     <module>webdav</module>
+    <module>jaxrs</module>
+    <module>resource</module>
     <module>app</module>
   </modules>
 </project>
