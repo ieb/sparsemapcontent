@@ -234,7 +234,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
 
     public Iterator<Content> listChildren(String path) throws StorageClientException {
         final DisposableIterator<Map<String, Object>> childContent = client.listChildren(keySpace,
-                contentColumnFamily, path);
+                contentColumnFamily, path, this);
         return new PreemptiveIterator<Content>() {
 
             private Content content;
@@ -274,7 +274,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
 
     public Iterator<String> listChildPaths(final String path) throws StorageClientException {
         final Iterator<Map<String, Object>> childContent = client.listChildren(keySpace,
-                contentColumnFamily, path);
+                contentColumnFamily, path, this);
         return new PreemptiveIterator<String>() {
 
             private String childPath;
@@ -863,7 +863,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         public Iterator<Content> iterator() {
             Iterator<Content> contentResultsIterator = null;
             try {
-              final DisposableIterator<Map<String,Object>> clientSearchKeysIterator = client.find(keySpace, contentColumnFamily, finalSearchProperties);
+              final DisposableIterator<Map<String,Object>> clientSearchKeysIterator = client.find(keySpace, contentColumnFamily, finalSearchProperties, ContentManagerImpl.this);
               contentResultsIterator = new PreemptiveIterator<Content>() {
                   Content contentResult;
 
@@ -913,7 +913,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         b.putAll(countSearch);
         b.put(StorageConstants.CUSTOM_STATEMENT_SET, "countestimate");
         b.put(StorageConstants.RAWRESULTS, true);
-        DisposableIterator<Map<String,Object>> counts = client.find(keySpace, contentColumnFamily, b.build());
+        DisposableIterator<Map<String,Object>> counts = client.find(keySpace, contentColumnFamily, b.build(), ContentManagerImpl.this);
         try {
             Map<String, Object> count = counts.next();
             return Integer.parseInt(String.valueOf(count.get("1")));

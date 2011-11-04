@@ -29,6 +29,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import org.sakaiproject.nakamura.lite.CachingManager;
 import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
 import org.sakaiproject.nakamura.lite.content.BlockSetContentHelper;
@@ -258,7 +259,7 @@ public class HBaseStorageClient implements StorageClient {
   }
 
   public DisposableIterator<Map<String, Object>> find(String keySpace,
-      String authorizableColumnFamily, Map<String, Object> properties)
+      String authorizableColumnFamily, Map<String, Object> properties, CachingManager cachingManager)
       throws StorageClientException {
     final String fKeyspace = keySpace;
     final String fAuthorizableColumnFamily = authorizableColumnFamily;
@@ -415,7 +416,7 @@ public class HBaseStorageClient implements StorageClient {
   }
 
   public DisposableIterator<Map<String, Object>> listChildren(String keySpace,
-      String columnFamily, String key) throws StorageClientException {
+      String columnFamily, String key, CachingManager cachingManager) throws StorageClientException {
     throw new UnsupportedOperationException();
   }
 

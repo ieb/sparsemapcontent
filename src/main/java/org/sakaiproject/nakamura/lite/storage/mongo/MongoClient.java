@@ -17,6 +17,7 @@ import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.StorageConstants;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.lite.CachingManager;
 import org.sakaiproject.nakamura.lite.content.InternalContent;
 import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
 import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
@@ -273,7 +274,7 @@ public class MongoClient implements StorageClient, RowHasher {
 
 	@SuppressWarnings("unchecked")
 	public DisposableIterator<Map<String, Object>> find(String keySpace,
-			String columnFamily, Map<String, Object> properties)
+			String columnFamily, Map<String, Object> properties, CachingManager cachingManager)
 			throws StorageClientException {
 
 		columnFamily = columnFamily.toLowerCase();
@@ -383,14 +384,14 @@ public class MongoClient implements StorageClient, RowHasher {
 	}
 
 	public DisposableIterator<Map<String, Object>> listChildren(
-			String keySpace, String columnFamily, String key)
+			String keySpace, String columnFamily, String key, CachingManager cachingManager)
 			throws StorageClientException {
 		columnFamily = columnFamily.toLowerCase();
 		// Hash the object we're considering
 		String hash = rowHash(keySpace, columnFamily, key);
 		log.debug("Finding {}:{}:{} as {} ", new Object[]{keySpace,columnFamily, key, hash});
 		// Issue a query for anyone who lists that hash as their parent.
-		return find(keySpace, columnFamily, ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash));
+		return find(keySpace, columnFamily, ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash), cachingManager);
 	}
 
 	public boolean hasBody(Map<String, Object> content, String streamId) {

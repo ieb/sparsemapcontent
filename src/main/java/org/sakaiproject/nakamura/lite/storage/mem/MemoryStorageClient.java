@@ -30,6 +30,7 @@ import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
+import org.sakaiproject.nakamura.lite.CachingManager;
 import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
 import org.sakaiproject.nakamura.lite.content.BlockSetContentHelper;
 import org.sakaiproject.nakamura.lite.content.InternalContent;
@@ -213,7 +214,7 @@ public class MemoryStorageClient implements StorageClient {
     }
 
     public DisposableIterator<Map<String, Object>> find(String keySpace,
-            String columnFamily, Map<String, Object> properties) {
+            String columnFamily, Map<String, Object> properties, CachingManager cachingManager) {
         List<Set<String>> matchingSets = Lists.newArrayList();
         for (Entry<String, Object> e : properties.entrySet()) {
             Object v = e.getValue();
@@ -283,10 +284,10 @@ public class MemoryStorageClient implements StorageClient {
     }
 
     public DisposableIterator<Map<String, Object>> listChildren(String keySpace,
-            String columnFamily, String key) throws StorageClientException {
+            String columnFamily, String key, CachingManager cachingManager) throws StorageClientException {
         String hash = rowHash(keySpace, columnFamily, key);
         LOGGER.debug("Finding {}:{}:{} as {} ",new Object[]{keySpace,columnFamily, key, hash});
-        return find(keySpace, columnFamily, ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash));
+        return find(keySpace, columnFamily, ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash), cachingManager);
     }
 
     public DisposableIterator<SparseRow> listAll(String keySpace, String columnFamily) {
