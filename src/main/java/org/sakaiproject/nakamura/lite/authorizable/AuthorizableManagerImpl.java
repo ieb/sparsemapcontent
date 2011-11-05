@@ -286,18 +286,20 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         authorizable.reset(getCached(keySpace, authorizableColumnFamily, id));
 
         String[] attrs = attributes.toArray(new String[attributes.size()]);
-        storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, accessControlManager.getCurrentUserId(), wasNew, beforeUpdateProperties, attrs);
+        storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, type, accessControlManager.getCurrentUserId(), wasNew, beforeUpdateProperties, attrs);
 
         // for each added or removed member, send an UPDATE event so indexing can properly
-        // record the groups each member is a member of.
+        // record the groups each member is a member of.\
+       
+        // when we add members we dont emit an event with resource type in it.
         if (membersAdded != null) {
             for (String added : membersAdded) {
-                storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, added, accessControlManager.getCurrentUserId(), false, null);
+                storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, added, accessControlManager.getCurrentUserId(), null, false, null);
             }
         }
         if (membersRemoved != null) {
             for (String removed : membersRemoved) {
-                storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, removed, accessControlManager.getCurrentUserId(), false, null);
+                storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, removed, accessControlManager.getCurrentUserId(), null, false, null);
             }
         }
     }
@@ -393,9 +395,35 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         Authorizable authorizable = findAuthorizable(authorizableId);
         if (authorizable != null){
             removeCached(keySpace, authorizableColumnFamily, authorizableId);
-            storeListener.onDelete(Security.ZONE_AUTHORIZABLES, authorizableId, accessControlManager.getCurrentUserId(), authorizable.getOriginalProperties());
+            storeListener.onDelete(Security.ZONE_AUTHORIZABLES, authorizableId, accessControlManager.getCurrentUserId(), getType(authorizable), authorizable.getOriginalProperties());
         }
     }
+
+    private String getType(Authorizable authorizable) {
+        if ( authorizable != null ) {
+            if ( authorizable.hasProperty(Authorizable.AUTHORIZABLE_TYPE_FIELD)) {
+                return (String) authorizable.getProperty(Authorizable.AUTHORIZABLE_TYPE_FIELD);
+            } else if ( authorizable instanceof Group) {
+                return Authorizable.GROUP_VALUE;
+            } else if ( authorizable instanceof User) {
+                // this was an object.
+                return String.valueOf(Authorizable.USER_VALUE);
+            }
+            
+        }
+        return null;
+    }
+
+    private String getType(Map<String, Object> props) {
+        if ( props != null ) {
+            if ( props.containsKey(Authorizable.AUTHORIZABLE_TYPE_FIELD)) {
+                return (String) props.get(Authorizable.AUTHORIZABLE_TYPE_FIELD);
+            }
+        }
+        return null;
+    }
+
+    
 
     public void close() {
         closed = true;
@@ -430,7 +458,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                     Authorizable.PASSWORD_FIELD,
                     StorageClientUtils.secureHash(password)), false);
 
-            storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, currentUserId, false, null, "op:change-password");
+            storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, currentUserId, getType(authorizable), false, null, "op:change-password");
 
         } else {
             throw new AccessDeniedException(Security.ZONE_ADMIN, id,
@@ -552,7 +580,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                     Authorizable.PASSWORD_FIELD,
                     DISABLED_PASSWORD_HASH), false);
 
-            storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, currentUserId, false, null, "op:disable-password");
+            storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id, currentUserId, getType(authorizable), false, null, "op:disable-password");
 
         } else {
             throw new AccessDeniedException(Security.ZONE_ADMIN, id,
@@ -565,9 +593,10 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
     public void triggerRefresh(String id) throws StorageClientException, AccessDeniedException {
         Authorizable c = findAuthorizable(id);
         if ( c != null ) {
+            String type = getType(c);
             storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id,
-                    accessControlManager.getCurrentUserId(), false, c.getOriginalProperties(),
-                    new String[] { (c instanceof Group) ? "type:group" : "type:user" });
+                    accessControlManager.getCurrentUserId(),  type, false, c.getOriginalProperties(),
+                    new String[] { type });
         }
     }
     
@@ -578,7 +607,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
                 while(all.hasNext()) {
                     Map<String, Object> c = all.next().getProperties();
                     if ( c.containsKey(Authorizable.ID_FIELD) ) {
-                        storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, (String)c.get(Authorizable.ID_FIELD), User.ADMIN_USER, false, ImmutableMap.copyOf(c), (String[]) null);                    
+                        storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, (String)c.get(Authorizable.ID_FIELD), User.ADMIN_USER, getType(c), false, ImmutableMap.copyOf(c), (String[]) null);                    
                     }
                 }
             } finally {

@@ -35,6 +35,7 @@ public interface StoreListener {
             TOPIC_BASE + "content/"+UPDATED_TOPIC };
     public static final String USERID_PROPERTY = "userid";
     public static final String PATH_PROPERTY = "path";
+    public static final String RESOURCE_TYPE_PROPERTY = "resourceType";
     public static final String BEFORE_EVENT_PROPERTY = "_beforeEvent";
 
     /**
@@ -42,20 +43,22 @@ public interface StoreListener {
      * @param zone an identifier for the type of object being acted upon
      * @param path the path to the object
      * @param user the user logged in causing this action
+     * @param resourceType the resource type of the item, if known.
      * @param beforeEvent the properties of the object before it was deleted
      * @param attributes properties of the event itself
      */
-    void onDelete(String zone, String path, String user, Map<String, Object> beforeEvent, String... attributes);
+    void onDelete(String zone, String path, String user, String resourceType, Map<String, Object> beforeEvent, String... attributes);
 
     /**
      * onUpdate is called after an object has been updated.
      * @param zone an identifier for the type of object being acted upon
      * @param path the path to the object
      * @param user the user logged in causing this action
+     * @param resourceType the resource type of the item, if known.
      * @param beforeEvent the properties of the object before it was updated
      * @param attributes properties of the event itself
      */
-    void onUpdate(String zone, String path, String user, boolean isNew,  Map<String, Object> beforeEvent, String... attributes);
+    void onUpdate(String zone, String path, String user, String resourceType, boolean isNew,  Map<String, Object> beforeEvent, String... attributes);
 
     /**
      * onLogin is called when a user logs in and creates a new {@link Session}

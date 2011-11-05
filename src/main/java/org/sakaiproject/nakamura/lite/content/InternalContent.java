@@ -184,6 +184,16 @@ public class InternalContent {
     public static final String MIMETYPE_FIELD = Repository.SYSTEM_PROP_PREFIX + "mimeType";
 
     /**
+     * The sling resource type field.
+     */
+    public static final String SLING_RESOURCE_TYPE_FIELD = "sling:resourceType";
+    
+    /**
+     * Alternative resource type field.
+     */
+    public static final String RESOURCE_TYPE_FIELD = "resourceType";
+
+    /**
      * Charset encoding if char based.
      */
     public static final String ENCODING_FIELD = Repository.SYSTEM_PROP_PREFIX + "encoding";

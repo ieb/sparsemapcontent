@@ -20,18 +20,18 @@ public class LoggingStorageListener implements StoreListener {
         this.quiet = false;
     }
 
-    public void onDelete(String zone, String path, String user, Map<String, Object> beforeEvent,
+    public void onDelete(String zone, String path, String user, String resourceType, Map<String, Object> beforeEvent,
             String... attributes) {
         if (!quiet) {
-            LOGGER.info("Delete {} {} {} {} ",
-                    new Object[] { zone, path, user, Arrays.toString(attributes) });
+            LOGGER.info("Delete {} {} {} {} {} ",
+                    new Object[] { zone, path, user, resourceType, Arrays.toString(attributes) });
         }
     }
 
-    public void onUpdate(String zone, String path, String user, boolean isNew,
+    public void onUpdate(String zone, String path, String user, String resourceType, boolean isNew,
             Map<String, Object> beforeEvent, String... attributes) {
         if (!quiet) {
-            LOGGER.info("Update {} {} {} new:{} {} ", new Object[] { zone, path, user, isNew,
+            LOGGER.info("Update {} {} {} {} new:{} {} ", new Object[] { zone, path, user, resourceType, isNew,
                     Arrays.toString(attributes) });
         }
     }

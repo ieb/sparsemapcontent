@@ -317,10 +317,38 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
     public void triggerRefresh(String path) throws StorageClientException, AccessDeniedException {
         Content c = get(path);
         if ( c != null ) {
-            eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), false, c.getOriginalProperties(), "op:update");
+            eventListener.onUpdate(Security.ZONE_CONTENT, path,  accessControlManager.getCurrentUserId(), getResourceType(c), false, c.getOriginalProperties(), "op:update");
         }
     }
     
+    private String getResourceType(InternalContent c) {
+        String resourceType = null;
+        if ( c != null ) {
+            if ( c.hasProperty(Content.SLING_RESOURCE_TYPE_FIELD)) {
+                resourceType = (String) c.getProperty(Content.SLING_RESOURCE_TYPE_FIELD);
+            } else if ( c.hasProperty(Content.RESOURCE_TYPE_FIELD)) {
+                resourceType = (String) c.getProperty(Content.RESOURCE_TYPE_FIELD);
+            } else if ( c.hasProperty(Content.MIMETYPE_FIELD)) {
+                resourceType = (String) c.getProperty(Content.MIMETYPE_FIELD);
+            }
+        }
+        return resourceType;
+    }
+    private String getResourceType(Map<String, Object> c) {
+        String resourceType = null;
+        if ( c != null ) {
+            if ( c.containsKey(Content.SLING_RESOURCE_TYPE_FIELD)) {
+                resourceType = (String) c.get(Content.SLING_RESOURCE_TYPE_FIELD);
+            } else if ( c.containsKey(Content.RESOURCE_TYPE_FIELD)) {
+                resourceType = (String) c.get(Content.RESOURCE_TYPE_FIELD);
+            } else if ( c.containsKey(Content.MIMETYPE_FIELD)) {
+                resourceType = (String) c.get(Content.MIMETYPE_FIELD);
+            }
+        }
+        return resourceType;
+    }
+
+
     public void triggerRefreshAll() throws StorageClientException {
         if (User.ADMIN_USER.equals(accessControlManager.getCurrentUserId()) ) {
             DisposableIterator<SparseRow> all = client.listAll(keySpace, contentColumnFamily);
@@ -328,7 +356,8 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                 while(all.hasNext()) {
                     Map<String, Object> c = all.next().getProperties();
                     if ( c.containsKey(PATH_FIELD) && !c.containsKey(STRUCTURE_UUID_FIELD)) {
-                        eventListener.onUpdate(Security.ZONE_CONTENT, (String)c.get(PATH_FIELD), User.ADMIN_USER, false, ImmutableMap.copyOf(c), "op:update");                    
+                        
+                        eventListener.onUpdate(Security.ZONE_CONTENT, (String)c.get(PATH_FIELD), User.ADMIN_USER, getResourceType(c), false, ImmutableMap.copyOf(c), "op:update");                    
                     }
                 }
             } finally {
@@ -414,7 +443,8 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         LOGGER.debug("Saved {} at {} as {} ", new Object[] { path, id, toSave });
         // reset state to unmodified to take further modifications.
         content.reset(getCached(keySpace, contentColumnFamily, id));
-        eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), isnew, originalProperties, "op:update");
+        
+        eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), getResourceType(content),  isnew, originalProperties, "op:update");
     }
     
 
@@ -429,11 +459,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
             String resourceType = (String) content.get("sling:resourceType");
             putCached(keySpace, contentColumnFamily, uuid,
                     ImmutableMap.of(DELETED_FIELD, (Object) TRUE), false);
-            if (resourceType != null) {
-              eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), contentBeforeDelete, "resourceType:" + resourceType);
-            } else {
-              eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), contentBeforeDelete);
-            }
+            eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), resourceType, contentBeforeDelete);
         }
     }
 
@@ -479,7 +505,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
         if (metadata.containsKey(lengthFieldName)) {
           length = (Long) metadata.get(lengthFieldName);
         }
-        eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), false, null, "stream", streamId);
+        eventListener.onUpdate(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), getResourceType(content), false, null, "stream", streamId);
         return length;
 
     }
@@ -573,7 +599,7 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
             writeBody(to, fromStream);
             fromStream.close();
         }
-        eventListener.onUpdate(Security.ZONE_CONTENT, to, accessControlManager.getCurrentUserId(), true, null, "op:copy");
+        eventListener.onUpdate(Security.ZONE_CONTENT, to, accessControlManager.getCurrentUserId(), getResourceType(f), true, null, "op:copy");
 
     }
 
@@ -621,8 +647,9 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
 
         // remove the old from.
         removeCached(keySpace, contentColumnFamily, from);
-        eventListener.onDelete(Security.ZONE_CONTENT, from, accessControlManager.getCurrentUserId(), null, "op:move");
-        eventListener.onUpdate(Security.ZONE_CONTENT, to, accessControlManager.getCurrentUserId(), true, null, "op:move");
+        // move does not add resourceTypes to events.
+        eventListener.onDelete(Security.ZONE_CONTENT, from, accessControlManager.getCurrentUserId(), null, null, "op:move");
+        eventListener.onUpdate(Security.ZONE_CONTENT, to, accessControlManager.getCurrentUserId(), null, true, null, "op:move");
 
     }
 
