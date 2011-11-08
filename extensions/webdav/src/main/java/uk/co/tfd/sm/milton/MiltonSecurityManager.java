@@ -1,7 +1,6 @@
 package uk.co.tfd.sm.milton;
 
 import org.sakaiproject.nakamura.api.lite.Repository;
-import org.sakaiproject.nakamura.api.lite.SparseSessionTracker;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
@@ -21,9 +20,9 @@ public class MiltonSecurityManager implements SecurityManager {
 			.getLogger(MiltonSecurityManager.class);
 	private String realm;
 	private Repository reposiotry;
-	private SparseSessionTracker sessionTracker;
+	private ThreadedSessionTracker sessionTracker;
 
-	public MiltonSecurityManager(Repository repository, SparseSessionTracker sessionTracker, String realm) {
+	public MiltonSecurityManager(Repository repository, ThreadedSessionTracker sessionTracker, String realm) {
 		this.reposiotry = repository;
 		this.realm = realm;
 		this.sessionTracker = sessionTracker;

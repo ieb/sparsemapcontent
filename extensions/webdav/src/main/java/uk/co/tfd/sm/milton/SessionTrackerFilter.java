@@ -4,7 +4,6 @@ import java.util.Set;
 
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Session;
-import org.sakaiproject.nakamura.api.lite.SparseSessionTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +13,7 @@ import com.bradmcevoy.http.Request;
 import com.bradmcevoy.http.Response;
 import com.google.common.collect.Sets;
 
-public class SessionTrackerFilter implements Filter, SparseSessionTracker {
+public class SessionTrackerFilter implements Filter, ThreadedSessionTracker {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(SessionTrackerFilter.class);
 	private ThreadLocal<Set<Session>> tracker = new ThreadLocal<Set<Session>>() {
