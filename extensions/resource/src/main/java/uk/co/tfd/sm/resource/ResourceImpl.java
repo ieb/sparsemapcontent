@@ -3,9 +3,12 @@ package uk.co.tfd.sm.resource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.Session;
@@ -14,7 +17,6 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 
 import uk.co.tfd.sm.api.resource.Adaptable;
-import uk.co.tfd.sm.api.resource.ContentType;
 import uk.co.tfd.sm.api.resource.Resource;
 import uk.co.tfd.sm.api.resource.ResourceErrorException;
 import uk.co.tfd.sm.api.resource.ResourceForbiddenException;
@@ -26,7 +28,7 @@ import com.google.common.collect.Lists;
 public class ResourceImpl implements Resource {
 
 	private static final String RESOURCE_TYPE_FIELD = "resourceType";
-	private static final String DEFAULT_RESOURCE_TYPE = "default";
+	private static final String DEFAULT_RESOURCE_TYPE = MediaType.APPLICATION_OCTET_STREAM;
 	private HttpServletRequest request;
 	private Session session;
 	private Content content;
@@ -39,12 +41,16 @@ public class ResourceImpl implements Resource {
 	private Adaptable resourceHandler;
 	private ResponseBindingList responseBindingList;
 	private String resourceType;
+	private HttpServletResponse response;
+	private Date lastModified;
+	private MediaType mediaType;
 
 	public ResourceImpl(Adaptable resourceHandler, HttpServletRequest request,
-			Session session, Content content, String resolvedPath,
+			HttpServletResponse response, Session session, Content content, String resolvedPath,
 			String requestPath) {
 		this.resourceHandler = resourceHandler;
 		this.request = request;
+		this.response = response;
 		this.session = session;
 		this.content = content;
 		this.resolvedPath = resolvedPath;
@@ -59,23 +65,49 @@ public class ResourceImpl implements Resource {
 			setParts(pathInfo);
 		}
 		List<RuntimeResponseBinding> bindingList = Lists.newArrayList();
-		resourceType = getType(content);
+		resourceType = getType();
+		mediaType = MediaType.valueOf(resourceType);
+		lastModified = getLastModified();
 		String method = request.getMethod();
-		for (String selector : requestSelectors) {
+		String bindingExt = checkAny(requestExt);
+		for (String selector : checkAny(requestSelectors)) {
 			bindingList.add(new RuntimeResponseBinding(method, resourceType,
-					selector, requestExt));
+					selector, bindingExt));
 		}
 		responseBindingList = new ResponseBindingList(
 				bindingList.toArray(new RuntimeResponseBinding[bindingList
 						.size()]));
 	}
 
-	private String getType(Content content) {
-		if (content.hasProperty(RESOURCE_TYPE_FIELD)) {
-			return (String) content.getProperty(RESOURCE_TYPE_FIELD);
+	private Date getLastModified() {
+		if ( content != null && content.hasProperty(Content.LASTMODIFIED_FIELD)) {
+			return new Date((Long) content.getProperty(Content.LASTMODIFIED_FIELD));
 		}
-		if (content.hasProperty(Content.MIMETYPE_FIELD)) {
-			return (String) content.getProperty(Content.MIMETYPE_FIELD);
+		return new Date(0);
+	}
+
+	private String[] checkAny(String[] spec) {
+		if ( spec == null || spec.length == 0 ) {
+			return new String[]{BindingSearchKey.ANY};
+		}
+		return spec;
+	}
+
+	private String checkAny(String spec) {
+		if ( spec == null  ) {
+			return BindingSearchKey.ANY;
+		}
+		return spec;
+	}
+
+	private String getType() {
+		if ( content != null ) {
+			if (content.hasProperty(RESOURCE_TYPE_FIELD)) {
+				return (String) content.getProperty(RESOURCE_TYPE_FIELD);
+			}
+			if (content.hasProperty(Content.MIMETYPE_FIELD)) {
+				return (String) content.getProperty(Content.MIMETYPE_FIELD);
+			}
 		}
 		return DEFAULT_RESOURCE_TYPE;
 	}
@@ -85,24 +117,24 @@ public class ResourceImpl implements Resource {
 		switch (parts.length) {
 		case 0:
 			this.requestName = "";
-			this.requestSelectors = new String[] { RuntimeResponseBinding.ANY };
-			this.requestExt = RuntimeResponseBinding.ANY;
+			this.requestSelectors = new String[0];
+			this.requestExt = "";
 			break;
 		case 1:
 			this.requestName = parts[0];
-			this.requestSelectors = new String[] { RuntimeResponseBinding.ANY };
-			this.requestExt = RuntimeResponseBinding.ANY;
+			this.requestSelectors = new String[0];
+			this.requestExt = "";
 			break;
 		case 2:
 			this.requestName = parts[0];
-			this.requestSelectors = new String[] { RuntimeResponseBinding.ANY };
+			this.requestSelectors = new String[0];
 			this.requestExt = parts[1];
 			break;
 		default:
 			this.requestName = parts[0];
-			this.requestSelectors = Arrays.copyOfRange(parts, 2,
+			this.requestSelectors = Arrays.copyOfRange(parts, 1,
 					parts.length - 1);
-			this.requestExt = parts[1];
+			this.requestExt = parts[parts.length - 1];
 			break;
 		}
 	}
@@ -114,11 +146,12 @@ public class ResourceImpl implements Resource {
 				return (T) this;
 			} else if (ResponseBindingList.class.equals(type)) {
 				return (T) responseBindingList;
+			} else if ( MediaType.class.equals(type)) {
+				return (T) mediaType;
+			} else if ( Date.class.equals(type)) {
+				return (T) lastModified;
 			} else if (Session.class.equals(type)) {
 				return (T) session;
-			} else if (ContentType.class.equals(type)) {
-
-				return (T) new ContentType(content);
 			} else if (InputStream.class.equals(type)) {
 				if (content == null) {
 					return null;
@@ -129,6 +162,8 @@ public class ResourceImpl implements Resource {
 				return (T) content;
 			} else if (HttpServletRequest.class.equals(type)) {
 				return (T) request;
+			} else if (HttpServletResponse.class.equals(type)) {
+				return (T) response;
 			} else {
 				return (T) resourceHandler.adaptTo(type);
 			}

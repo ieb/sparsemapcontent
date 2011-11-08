@@ -6,6 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.annotation.Inherited;
 
+import uk.co.tfd.sm.resource.BindingSearchKey;
+
 
 /**
  * Annotation to define how a Response is bound.
@@ -17,7 +19,7 @@ import java.lang.annotation.Inherited;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ResponseBinding {
 	
-	String ANY = RuntimeResponseBinding.ANY;
+	String ANY = BindingSearchKey.ANY;
 	
 	/**
 	 * @return array of methods that the binding is bound to, if missing bound to ANY methods

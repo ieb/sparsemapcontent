@@ -1,5 +1,6 @@
 package uk.co.tfd.sm.resource;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -11,6 +12,8 @@ import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.felix.scr.annotations.ReferenceStrategy;
 import org.apache.felix.scr.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.co.tfd.sm.api.resource.Adaptable;
 import uk.co.tfd.sm.api.resource.ResponseFactory;
@@ -31,8 +34,8 @@ import com.google.common.collect.Sets;
 @Reference(name = "responseFactory", referenceInterface = ResponseFactory.class, cardinality = ReferenceCardinality.OPTIONAL_MULTIPLE, policy = ReferencePolicy.DYNAMIC, strategy = ReferenceStrategy.EVENT, unbind = "unbind", bind = "bind")
 public class ResponseFactoryManagerImpl implements ResponseFactoryManager {
 
-	private static final String[] ANY_ARRAY = { RuntimeResponseBinding.ANY };
-	private static final String[] EMPTY_ARRAY = { RuntimeResponseBinding.NONE };
+	private static final String[] ANY_ARRAY = { BindingSearchKey.ANY };
+	private static final String[] EMPTY_ARRAY = { BindingSearchKey.NONE };
 	private Map<String, Set<ResponseFactory>> responseFactoryBindingsStore = Maps
 			.newHashMap();
 	private Map<String, Set<ResponseFactory>> responseFactoryBindings = ImmutableMap
@@ -41,17 +44,24 @@ public class ResponseFactoryManagerImpl implements ResponseFactoryManager {
 	public Adaptable createResponse(Adaptable resource) {
 		ResponseBindingList responseBinding = resource
 				.adaptTo(ResponseBindingList.class);
+		
+		Set<BindingSearchKey> searchKeySet = Sets.newHashSet();
+		for ( RuntimeResponseBinding rm : responseBinding ) {
+			searchKeySet.addAll(rm.getRequestBindingKeys());
+		}
 		Set<ResponseFactory> responseFactoryCandidates = Sets.newHashSet();
-		for (RuntimeResponseBinding rm : responseBinding) {
+		BindingSearchKey[] searchKeys = searchKeySet.toArray(new BindingSearchKey[searchKeySet.size()]);
+		Arrays.sort(searchKeys);
+		for ( BindingSearchKey rm : searchKeys ) {
 			String bindingKey = rm.getBindingKey();
 			Set<ResponseFactory> bindingSet = responseFactoryBindings
 					.get(bindingKey);
-			if (bindingSet == null) {
+			if (bindingSet != null) {
 				responseFactoryCandidates.addAll(bindingSet);
 			}
 		}
 		if (responseFactoryCandidates.size() == 0) {
-			return new DefaultResponse(resource);
+			return new DefaultGetResponse(resource);
 		} else {
 			return Collections.max(responseFactoryCandidates).getResponse(
 					resource);
@@ -62,17 +72,19 @@ public class ResponseFactoryManagerImpl implements ResponseFactoryManager {
 		synchronized (responseFactoryBindingsStore) {
 			ResponseBindings responseBindings = responseFactory.getClass()
 					.getAnnotation(ResponseBindings.class);
-			for (ResponseBinding rb : responseBindings.value()) {
-				String[] methods = checkAny(rb.method());
-				String[] types = checkAny(rb.type());
-				String[] selectors = checkEmpty(rb.selectors());
-				String[] extensions = checkEmpty(rb.extension());
-				for (String m : methods) {
-					for (String t : types) {
-						for (String s : selectors) {
-							for (String e : extensions) {
-								addBinding(new RuntimeResponseBinding(m, t, s,
-										e), responseFactory);
+			if (responseBindings != null) {
+				for (ResponseBinding rb : responseBindings.value()) {
+					String[] methods = checkAny(rb.method());
+					String[] types = checkAny(rb.type());
+					String[] selectors = checkEmpty(rb.selectors());
+					String[] extensions = checkEmpty(rb.extension());
+					for (String m : methods) {
+						for (String t : types) {
+							for (String s : selectors) {
+								for (String e : extensions) {
+									addBinding(new RuntimeResponseBinding(m, t,
+											s, e), responseFactory);
+								}
 							}
 						}
 					}
@@ -80,8 +92,10 @@ public class ResponseFactoryManagerImpl implements ResponseFactoryManager {
 			}
 
 			ResponseBindingList bindings = responseFactory.getBindings();
-			for (RuntimeResponseBinding rm : bindings) {
-				addBinding(rm, responseFactory);
+			if (bindings != null) {
+				for (RuntimeResponseBinding rm : bindings) {
+					addBinding(rm, responseFactory);
+				}
 			}
 			save();
 		}
@@ -91,27 +105,30 @@ public class ResponseFactoryManagerImpl implements ResponseFactoryManager {
 		synchronized (responseFactoryBindingsStore) {
 			ResponseBindings responseBindings = responseFactory.getClass()
 					.getAnnotation(ResponseBindings.class);
-			for (ResponseBinding rb : responseBindings.value()) {
-				String[] methods = checkAny(rb.method());
-				String[] types = checkAny(rb.type());
-				String[] selectors = checkEmpty(rb.selectors());
-				String[] extensions = checkEmpty(rb.extension());
-				for (String m : methods) {
-					for (String t : types) {
-						for (String s : selectors) {
-							for (String e : extensions) {
-								removeBinding(new RuntimeResponseBinding(m, t,
-										s, e), responseFactory);
+			if (responseBindings != null) {
+				for (ResponseBinding rb : responseBindings.value()) {
+					String[] methods = checkAny(rb.method());
+					String[] types = checkAny(rb.type());
+					String[] selectors = checkEmpty(rb.selectors());
+					String[] extensions = checkEmpty(rb.extension());
+					for (String m : methods) {
+						for (String t : types) {
+							for (String s : selectors) {
+								for (String e : extensions) {
+									removeBinding(new RuntimeResponseBinding(m,
+											t, s, e), responseFactory);
+								}
 							}
 						}
 					}
 				}
-
 			}
 
 			ResponseBindingList bindings = responseFactory.getBindings();
-			for (RuntimeResponseBinding rm : bindings) {
-				removeBinding(rm, responseFactory);
+			if (bindings != null) {
+				for (RuntimeResponseBinding rm : bindings) {
+					removeBinding(rm, responseFactory);
+				}
 			}
 			save();
 		}

@@ -1,6 +1,7 @@
 package uk.co.tfd.sm.resource;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
@@ -41,7 +42,7 @@ public class DefaultResourceHandler implements JaxRestService, Adaptable {
 	protected ResponseFactoryManager resourceFactory;
 
 	@Path("/{resource}")
-	public Adaptable getResource(@Context HttpServletRequest request,
+	public Adaptable getResource(@Context HttpServletRequest request, @Context HttpServletResponse response,
 			@PathParam("resource") String path) throws StorageClientException,
 			AccessDeniedException {
 		Session session = sessionTracker.get(request);
@@ -52,7 +53,7 @@ public class DefaultResourceHandler implements JaxRestService, Adaptable {
 		// start with the full path, and shorten it, first by . then by /
 		Content content = contentManager.get(path);
 		if (content != null) {
-			return getResponse(request, session, content, path, path);
+			return getResponse(request, response, session, content, path, path);
 		}
 		char[] pathChars = path.toCharArray();
 		boolean inname = true;
@@ -64,8 +65,8 @@ public class DefaultResourceHandler implements JaxRestService, Adaptable {
 					String testpath = path.substring(0, i);
 					content = contentManager.get(testpath);
 					if (content != null) {
-						return getResponse(request, session, content, path,
-								testpath);
+						LOGGER.info("Getting response for {} {} ",path, testpath);
+						return getResponse(request, response, session, content, testpath, path);
 					}
 				}
 				break;
@@ -74,24 +75,24 @@ public class DefaultResourceHandler implements JaxRestService, Adaptable {
 				String testpath = path.substring(0, i);
 				content = contentManager.get(testpath);
 				if (content != null) {
-					return getResponse(request, session, content, path,
-							testpath);
+					return getResponse(request, response, session, content, testpath,
+							path);
 				}
 				break;
 			}
 		}
-		return getResponse(request, session, null, path, path);
+		return getResponse(request, response, session, null, path, path);
 	}
 
-	private Adaptable getResponse(HttpServletRequest request, Session session,
+	private Adaptable getResponse(HttpServletRequest request, HttpServletResponse response, Session session,
 			Content content, String resolvedPath, String requestPath) {
-		Resource resource = new ResourceImpl(this,request, session, content, resolvedPath, requestPath);
-		Adaptable response = resourceFactory.createResponse(resource);
+		Resource resource = new ResourceImpl(this,request, response, session, content, resolvedPath, requestPath);
+		Adaptable aresponse = resourceFactory.createResponse(resource);
 		if ( response instanceof SafeMethodResponse && 
 				!SafeMethodResponse.COMPATABLE_METHODS.contains(request.getMethod()) ) {
 			LOGGER.warn(" Response {} is not suitable for {} methods ", response, request.getMethod());
 		}
-		return response;
+		return aresponse;
 	}
 
 	@SuppressWarnings("unchecked")

@@ -1,5 +1,15 @@
 package uk.co.tfd.sm.api.resource.binding;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableList.Builder;
+
+import uk.co.tfd.sm.resource.BindingSearchKey;
+
 /**
  * A response binding.
  * @author ieb
@@ -7,17 +17,10 @@ package uk.co.tfd.sm.api.resource.binding;
  */
 public class RuntimeResponseBinding {
 
-	/**
-	 * Matches any combination of the type.
-	 */
-	public static final String ANY = "ANY";
-
-	/**
-	 * Requires that there are none of the type to match the binding.
-	 */
-	public static final String NONE = "NONE";
 	
-	private String bindingKey;
+	private BindingSearchKey bindingKey;
+
+	private Set<BindingSearchKey> bindingSet = Sets.newHashSet();
 	/**
 	 * Create a response binding, defaulting any null values to match all values.
 	 * @param method
@@ -26,16 +29,27 @@ public class RuntimeResponseBinding {
 	 * @param extension
 	 */
 	public RuntimeResponseBinding(String method, String type, String selector, String extension ) {
-		bindingKey = checkAny(method)+";"+checkAny(type)+";"+checkAny(selector)+";"+checkAny(extension);
-	}
-	private String checkAny(String v) {
-		if ( v == null || v.trim().length() == 0 ) {
-			return ANY;
-		}
-		return v;
+		bindingKey = new BindingSearchKey(method, type, selector, extension);
+		bindingSet.add(bindingKey.anyExtention());
+		bindingSet.add(bindingKey.anySelector());
+		bindingSet.add(bindingKey.anySelector().anyExtention());
+		bindingSet.add(bindingKey.anyType());
+		bindingSet.add(bindingKey.anyType().anyExtention());
+		bindingSet.add(bindingKey.anyType().anySelector());
+		bindingSet.add(bindingKey.anyType().anySelector().anyExtention());
+		bindingSet.add(bindingKey.anyMethod());
+		bindingSet.add(bindingKey.anyMethod().anyType());
+		bindingSet.add(bindingKey.anyMethod().anyType().anyExtention());
+		bindingSet.add(bindingKey.anyMethod().anyType().anySelector());
+		bindingSet.add(bindingKey.anyMethod().anyType().anySelector().anyExtention());
+		
 	}
 	public String getBindingKey() {
-		return bindingKey;
+		return bindingKey.getBindingKey();
+	}
+	
+	public Set<BindingSearchKey> getRequestBindingKeys() {
+		return bindingSet;
 	}
 
 }
