@@ -290,6 +290,14 @@ public class MigrateContentComponent implements MigrateContentService {
                     } catch (StorageClientException e) {
                         LOGGER.warn(e.getMessage(), e);
                         feedback.exception(e);
+                    } finally {
+                      for(PreparedStatement statement : statementCache.values()) {
+                        try {
+                          statement.close();
+                        } catch (SQLException e) {
+                          LOGGER.warn("Failed to close all prepared statements. Could result in a leak of database cursors.");
+                        }
+                      }
                     }
                 }
             } finally {
