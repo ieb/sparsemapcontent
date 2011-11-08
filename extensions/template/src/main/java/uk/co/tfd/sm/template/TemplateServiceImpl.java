@@ -53,7 +53,7 @@ public class TemplateServiceImpl implements TemplateService {
 		velocityEngine = new VelocityEngine(p);
 		VelocityLogger vl = new VelocityLogger(this.getClass());
 		if ( properties != null ) {
-			vl.setDebugMode(Boolean.parseBoolean((String) properties.get("debug")));
+			vl.setDebugMode(Boolean.parseBoolean(String.valueOf(properties.get("debug"))));
 		}
 		velocityEngine.setProperty(VelocityEngine.RUNTIME_LOG_LOGSYSTEM,
 				vl);
