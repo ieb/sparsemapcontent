@@ -126,11 +126,13 @@ public class DefaultResourceHandler implements JaxRestService, Adaptable {
 	private Adaptable getResponse(HttpServletRequest request, HttpServletResponse response, Session session,
 			Content content, String resolvedPath, String requestPath) {
 		Resource resource = new ResourceImpl(this,request, response, session, content, resolvedPath, requestPath);
+		LOGGER.debug("Processing Resource {} ",resource);
 		Adaptable aresponse = resourceFactory.createResponse(resource);
 		if ( response instanceof SafeMethodResponse && 
 				!SafeMethodResponse.COMPATABLE_METHODS.contains(request.getMethod()) ) {
 			LOGGER.warn(" Response {} is not suitable for {} methods ", response, request.getMethod());
 		}
+		LOGGER.debug("Mapped to Response {} ",aresponse);
 		return aresponse;
 	}
 

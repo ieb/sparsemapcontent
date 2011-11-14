@@ -1,14 +1,10 @@
 package uk.co.tfd.sm.api.resource.binding;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
-import com.google.common.collect.ImmutableList.Builder;
-
 import uk.co.tfd.sm.resource.BindingSearchKey;
+
+import com.google.common.collect.Sets;
 
 /**
  * A response binding.
