@@ -21,4 +21,6 @@ public interface Resource extends Adaptable {
 
 	String getResourceType();
 
+	String getToCreatePath();
+
 }

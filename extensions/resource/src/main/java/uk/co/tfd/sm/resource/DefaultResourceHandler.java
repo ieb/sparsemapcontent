@@ -92,23 +92,24 @@ public class DefaultResourceHandler implements JaxRestService, Adaptable {
 		Content content = contentManager.get(path);
 		if (content != null) {
 			LOGGER.debug("Got {} at [{}] ",content,path);
-			return getResponse(request, response, session, content, path, path);
+			return getResponse(request, response, session, content, path, path, path);
 		}
 		LOGGER.debug("Nothing at [{}] ",path);
 		char[] pathChars = path.toCharArray();
+		String toCreatePath = path;
 		boolean inname = true;
 		for (int i = pathChars.length - 1; i >= 0; i--) {
 			char c = pathChars[i];
 			switch (c) {
 			case '.':
 				if (inname) {
-					String testpath = path.substring(0, i);
-					content = contentManager.get(testpath);
+					toCreatePath = path.substring(0, i);
+					content = contentManager.get(toCreatePath);
 					if (content != null) {
-						LOGGER.debug("Getting response for {} {} ",path, testpath);
-						return getResponse(request, response, session, content, testpath, path);
+						LOGGER.debug("Getting response for {} {} ",path, toCreatePath);
+						return getResponse(request, response, session, content, toCreatePath, path, toCreatePath);
 					}
-					LOGGER.debug("Nothing at [{}] ",testpath);
+					LOGGER.debug("Nothing at [{}] ",toCreatePath);
 				}
 				break;
 			case '/':
@@ -117,19 +118,19 @@ public class DefaultResourceHandler implements JaxRestService, Adaptable {
 				content = contentManager.get(testpath);
 				if (content != null) {
 					return getResponse(request, response, session, content, testpath,
-							path);
+							path, toCreatePath);
 				}
 				LOGGER.debug("Nothing at [{}] ",testpath);
 				break;
 			}
 		}
 		LOGGER.debug("Not Found [{}] ",path);
-		return getResponse(request, response, session, null, path, path);
+		return getResponse(request, response, session, null, path, path, toCreatePath);
 	}
 
 	private Adaptable getResponse(HttpServletRequest request, HttpServletResponse response, Session session,
-			Content content, String resolvedPath, String requestPath) {
-		Resource resource = new ResourceImpl(this,request, response, session, content, resolvedPath, requestPath);
+			Content content, String resolvedPath, String requestPath, String toCreatePath) {
+		Resource resource = new ResourceImpl(this,request, response, session, content, resolvedPath, requestPath, toCreatePath);
 		LOGGER.debug("Processing Resource {} ",resource);
 		Adaptable aresponse = resourceFactory.createResponse(resource);
 		if ( response instanceof SafeMethodResponse && 

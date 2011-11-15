@@ -118,9 +118,13 @@ public class DefaultGetResponse implements Adaptable {
 		Session session = adaptTo(Session.class);
 		try {
 			ContentManager contentManager = session.getContentManager();
-			Content content = adaptable.adaptTo(Content.class);
+			String contentPath = resource.getToCreatePath();
+			Content content = contentManager.get(contentPath);
 			if (content == null) {
-				content = new Content(resource.getResolvedPath(), null);
+				LOGGER.info("Created New Content {} ",contentPath);
+				content = new Content(contentPath, null);
+			} else {
+				LOGGER.info("Content Existed at {} ",content);
 			}
 			Set<String> toRemove = Sets.newHashSet();
 			Map<String, Object> toAdd = Maps.newHashMap();

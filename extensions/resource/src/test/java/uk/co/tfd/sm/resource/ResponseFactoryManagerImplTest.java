@@ -123,6 +123,7 @@ public class ResponseFactoryManagerImplTest {
 			int ie = r.nextInt(extensions.length-1)+1;
 			Mockito.when(resource.adaptTo(ResponseBindingList.class)).thenReturn(
 					new ResponseBindingList(new RuntimeResponseBinding(methods[im], types[it], selectors[is], extensions[ie])));
+			@SuppressWarnings("unused")
 			Adaptable response = rm.createResponse(resource);
 		}
 		e = System.currentTimeMillis();

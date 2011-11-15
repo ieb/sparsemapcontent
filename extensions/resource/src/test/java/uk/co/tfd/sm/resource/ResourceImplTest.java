@@ -22,31 +22,31 @@ public class ResourceImplTest {
 		HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
 		Adaptable parent = Mockito.mock(Adaptable.class);
 		// simple cases
-		ResourceImpl resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/4/5/6.xxx.yyy.z");
+		ResourceImpl resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/4/5/6.xxx.yyy.z", "/test/1/2/3/4/5/6");
 		check(resourceImpl,"/4/5/6.xxx.yyy.z","z","6","/test/1/2/3/4/5/6.xxx.yyy.z",new String[]{"xxx","yyy"},"/test/1/2/3",MediaType.APPLICATION_OCTET_STREAM);
-		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/4/5/6.xxx.z");
+		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/4/5/6.xxx.z", "/test/1/2/3/4/5/6");
 		check(resourceImpl,"/4/5/6.xxx.z","z","6","/test/1/2/3/4/5/6.xxx.z",new String[]{"xxx"},"/test/1/2/3",MediaType.APPLICATION_OCTET_STREAM);
-		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/4/5/6.z");
+		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/4/5/6.z", "/test/1/2/3/4/5/6");
 		check(resourceImpl,"/4/5/6.z","z","6","/test/1/2/3/4/5/6.z",new String[]{},"/test/1/2/3",MediaType.APPLICATION_OCTET_STREAM);
-		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/4/5/6");
+		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/4/5/6", "/test/1/2/3/4/5/6");
 		check(resourceImpl,"/4/5/6","","6","/test/1/2/3/4/5/6",new String[]{},"/test/1/2/3",MediaType.APPLICATION_OCTET_STREAM);
 		// harder cases
-		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/4/5/6.xxx.yyy..z");
+		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/4/5/6.xxx.yyy..z", "/test/1/2/3/4/5/6");
 		check(resourceImpl,"/4/5/6.xxx.yyy..z","z","6","/test/1/2/3/4/5/6.xxx.yyy..z",new String[]{"xxx","yyy"},"/test/1/2/3",MediaType.APPLICATION_OCTET_STREAM);
 		content.setProperty(Content.LASTMODIFIED_FIELD, System.currentTimeMillis());
 		content.setProperty(Content.MIMETYPE_FIELD,"text/html");
-		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/4/5/6...xxx.z");
+		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/4/5/6...xxx.z", "/test/1/2/3/4/5/6");
 		check(resourceImpl,"/4/5/6...xxx.z","z","6","/test/1/2/3/4/5/6...xxx.z",new String[]{"xxx"},"/test/1/2/3","text/html");
-		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/4/5/6.z.");
+		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/4/5/6.z.", "/test/1/2/3/4/5/6");
 		check(resourceImpl,"/4/5/6.z.","z","6","/test/1/2/3/4/5/6.z.",new String[]{},"/test/1/2/3","text/html");
-		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/4/5/6");
+		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/4/5/6", "/test/1/2/3/4/5/6");
 		check(resourceImpl,"/4/5/6","","6","/test/1/2/3/4/5/6",new String[]{},"/test/1/2/3","text/html");
 
 		content.setProperty(Content.RESOURCE_TYPE_FIELD,"sparse/content");
 
-		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/");
+		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3", "/test/1/2/3/", "/test/1/2/3/4/5/6");
 		check(resourceImpl,"/","","","/test/1/2/3/",new String[]{},"/test/1/2/3","sparse/content");
-		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3/", "/test/1/2/3/abc");
+		resourceImpl = new ResourceImpl(parent, request, response, session, content, "/test/1/2/3/", "/test/1/2/3/abc", "/test/1/2/3/4/5/6");
 		check(resourceImpl,"abc","","abc","/test/1/2/3/abc",new String[]{},"/test/1/2/3/","sparse/content");
 
 		

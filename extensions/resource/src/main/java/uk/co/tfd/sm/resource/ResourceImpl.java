@@ -45,10 +45,15 @@ public class ResourceImpl implements Resource {
 	private HttpServletResponse response;
 	private Date lastModified;
 	private MediaType mediaType;
+	/**
+	 * The last name path is the longest path before a / in the request URL. 
+	 * It indicates the resource that should be created if one would be created.
+	 */
+	private String toCreatePath;
 
 	public ResourceImpl(Adaptable resourceHandler, HttpServletRequest request,
 			HttpServletResponse response, Session session, Content content, String resolvedPath,
-			String requestPath) {
+			String requestPath, String lastNamePath) {
 		this.resourceHandler = resourceHandler;
 		this.request = request;
 		this.response = response;
@@ -57,6 +62,7 @@ public class ResourceImpl implements Resource {
 		this.resolvedPath = resolvedPath;
 		this.requestPath = requestPath;
 		this.pathInfo = requestPath.substring(resolvedPath.length());
+		this.toCreatePath = lastNamePath;
 		int lastSlash = pathInfo.lastIndexOf('/');
 		if (lastSlash == pathInfo.length() - 1) {
 			this.requestName = "";
@@ -203,12 +209,16 @@ public class ResourceImpl implements Resource {
 		return resourceType;
 	}
 	
+	public String getToCreatePath() {
+		return toCreatePath;
+	}
+	
 	@Override
 	public String toString() {
 		return MessageFormat.format(
-				"requestPath=[{0}] resource path=[{1}], resourceType=[{2}], selectors={3}, ext=[{4}]",
+				"requestPath=[{0}] resource path=[{1}], resourceType=[{2}], selectors={3}, ext=[{4}], toCreatePath=[{5}]",
 			    requestPath, resolvedPath, resourceType, Arrays.toString(requestSelectors),
-				requestExt);
+				requestExt, toCreatePath);
 	}
 
 }
