@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -30,6 +31,7 @@ public class NakamuraMain {
 
   private static void checkLaunchDate(String[] args) throws IOException {
     // Find the last modified of this jar
+	  try {
     String resource = NakamuraMain.class.getName().replace('.','/')+".class";
     URL u = NakamuraMain.class.getClassLoader().getResource(resource);
     String jarFilePath = u.getFile();
@@ -87,6 +89,9 @@ public class NakamuraMain {
     } else {
       info("Runtime image, newer than launcher, using runtime image ",null);
     }
+	  } catch (MalformedURLException e) {
+		  info("Not launching from a jar ",null);
+	  }
 
   }
 
