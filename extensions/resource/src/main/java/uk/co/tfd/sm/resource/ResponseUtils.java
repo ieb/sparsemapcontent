@@ -3,6 +3,7 @@ package uk.co.tfd.sm.resource;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status.Family;
@@ -54,7 +55,11 @@ public class ResponseUtils {
 		if ( contains(selectors, "-1", "infinity")) {
 			recursion = Integer.MAX_VALUE;
 		} else if ( selectors != null && selectors.length > 0 ) {
-			recursion = Integer.parseInt(selectors[selectors.length-1]);
+			try {
+				recursion = Integer.parseInt(selectors[selectors.length-1]);
+			} catch ( NumberFormatException e ) {
+				recursion = 0;
+			}
 		}
 		gb.registerTypeHierarchyAdapter(Content.class, new ContentTypeAdapter(recursion));
 		Gson gson = gb.create();
@@ -73,6 +78,10 @@ public class ResponseUtils {
 			}
 		}
 		return false;
+	}
+
+	public static void writeFeedback(List<String> feedback, OutputStream output) throws UnsupportedEncodingException, IOException {
+		output.write(new GsonBuilder().setPrettyPrinting().create().toJson(feedback).getBytes("UTF-8"));
 	}
 
 

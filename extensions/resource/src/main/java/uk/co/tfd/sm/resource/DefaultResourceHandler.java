@@ -15,7 +15,6 @@ import org.apache.felix.scr.annotations.Modified;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
-import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.SparseSessionTracker;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -25,6 +24,7 @@ import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.co.tfd.sm.api.authn.AuthenticationService;
 import uk.co.tfd.sm.api.jaxrs.JaxRestService;
 import uk.co.tfd.sm.api.resource.Adaptable;
 import uk.co.tfd.sm.api.resource.Resource;
@@ -46,13 +46,15 @@ public class DefaultResourceHandler implements JaxRestService, Adaptable {
 	@Reference
 	protected SparseSessionTracker sessionTracker;
 
-	@Reference
-	protected Repository repository;
 
 	@Reference
 	protected ResponseFactoryManager resourceFactory;
 
+	@Reference
+	protected AuthenticationService authenticationService;
+
 	private String basePath = "";
+
 	
 	@Activate
 	public void activate(Map<String, Object> properties) {
@@ -73,14 +75,16 @@ public class DefaultResourceHandler implements JaxRestService, Adaptable {
 	}
 
 	
-	@Path("/{resource}")
+	@Path("/{resource:.*}")
 	public Adaptable getResource(@Context HttpServletRequest request, @Context HttpServletResponse response,
 			@PathParam("resource") String path) throws StorageClientException,
 			AccessDeniedException {
-		path = basePath +path;
+		LOGGER.debug("Got Request at {} ",request.getRequestURI());
+		path = basePath + path;
 		Session session = sessionTracker.get(request);
 		if (session == null) {
-			session = sessionTracker.register(repository.login(), request);
+			
+			session = sessionTracker.register(authenticationService.authenticate(request), request);
 		}
 		ContentManager contentManager = session.getContentManager();
 		
@@ -135,7 +139,7 @@ public class DefaultResourceHandler implements JaxRestService, Adaptable {
 		LOGGER.debug("Mapped to Response {} ",aresponse);
 		return aresponse;
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	public <T> T adaptTo(Class<T> type) {
 		if (ResponseFactoryManager.class.equals(type)) {

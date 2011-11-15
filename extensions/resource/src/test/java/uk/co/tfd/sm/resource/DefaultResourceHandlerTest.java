@@ -17,6 +17,8 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 
+import uk.co.tfd.sm.authn.AuthenticationServiceImpl;
+
 public class DefaultResourceHandlerTest {
 
 	@Mock
@@ -40,10 +42,9 @@ public class DefaultResourceHandlerTest {
 	@Before
 	public void setup() {
 		defaultResourceHandler = new DefaultResourceHandler();
-		defaultResourceHandler.repository = repository;
+		defaultResourceHandler.authenticationService = new AuthenticationServiceImpl(repository);
 		defaultResourceHandler.resourceFactory = new ResponseFactoryManagerImpl();
-		defaultResourceHandler.sessionTracker = sparseSessionTracker;
-		
+		defaultResourceHandler.sessionTracker = sparseSessionTracker;		
 	}
 
 	@Test
