@@ -59,7 +59,7 @@ public class ResponseFactoryManagerImpl implements ResponseFactoryManager {
 			}
 		}
 		if (responseFactoryCandidates.size() == 0) {
-			return new DefaultGetResponse(resource);
+			return new DefaultResponse(resource);
 		} else {
 			return Collections.max(responseFactoryCandidates).getResponse(
 					resource);
