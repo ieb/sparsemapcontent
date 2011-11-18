@@ -113,34 +113,34 @@ CREATE TABLE  css_wr (
 
 CREATE TABLE  `css_b` (
   `rid` varchar(32) NOT NULL,
-  `b` blob,
+  `b` mediumblob,
   PRIMARY KEY (`rid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 # Central Store for Object bodies, serialized content maps rather than columns
 CREATE TABLE  `cn_css_b` (
   `rid` varchar(32) NOT NULL,
-  `b` blob,
+  `b` mediumblob,
   PRIMARY KEY (`rid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 # Central Store for Object bodies, serialized content maps rather than columns
 CREATE TABLE  `au_css_b` (
   `rid` varchar(32) NOT NULL,
-  `b` blob,
+  `b` mediumblob,
   PRIMARY KEY (`rid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 # Central Store for Object bodies, serialized content maps rather than columns
 CREATE TABLE  `ac_css_b` (
   `rid` varchar(32) NOT NULL,
-  `b` blob,
+  `b` mediumblob,
   PRIMARY KEY (`rid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE  `lk_css_b` (
   `rid` varchar(32) NOT NULL,
-  `b` blob,
+  `b` mediumblob,
   PRIMARY KEY (`rid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
