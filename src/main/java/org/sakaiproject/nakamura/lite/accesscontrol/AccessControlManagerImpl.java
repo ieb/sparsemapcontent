@@ -264,6 +264,16 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         LOGGER.debug("Updating ACL {} {} ", key, modifications);
         putCached(keySpace, aclColumnFamily, key, modifications, (currentAcl == null || currentAcl.size() == 0));
         storeListener.onUpdate(objectType, objectPath,  getCurrentUserId(), "type:acl", false, null, "op:acl");
+        // clear the compiled cache for this session.
+        List<String> keys = Lists.newArrayList();
+        for ( Entry<String,int[]> e : cache.entrySet()) {
+            if (e.getKey().startsWith(key)) {
+                keys.add(e.getKey());
+            }
+        }
+        for ( String k : keys ) {
+            cache.remove(k);
+        }
     }
     
     private boolean containsKey(String name, Map<String, Object> map1,
