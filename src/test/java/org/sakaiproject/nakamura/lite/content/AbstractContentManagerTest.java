@@ -745,6 +745,24 @@ public abstract class AbstractContentManagerTest {
   }
 
   @Test
+  public void iCanReuseAContentPath() throws Exception {
+      AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+      User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+      AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+          currentUser, configuration, sharedCache, new LoggingStorageListener(), principalValidatorResolver);
+
+      ContentManagerImpl contentManager = new ContentManagerImpl(client,
+          accessControlManager, configuration, sharedCache, new LoggingStorageListener());
+      contentManager.update(new Content("/pathToReuse", ImmutableMap.of("prop1", (Object) "value1")));
+      contentManager.delete("/pathToReuse");
+      contentManager.update(new Content("/pathToReuse", ImmutableMap.of("prop1", (Object) "value2")));
+      Content content = contentManager.get("/pathToReuse");
+      Assert.assertNotNull(content);
+      Assert.assertEquals("This property should have been updated.", content.getProperty("prop1"), "value2");
+  }
+
+  @Test
   public void testListChildren() throws StorageClientException, AccessDeniedException {
 	  AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
 	    User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
