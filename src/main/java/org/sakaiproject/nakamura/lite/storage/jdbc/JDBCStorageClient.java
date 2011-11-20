@@ -74,6 +74,10 @@ import com.google.common.collect.Sets;
 
 public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
 
+
+
+
+
     public class SlowQueryLogger {
         // only used to define the logger.
     }
@@ -83,6 +87,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     static final Logger SQL_LOGGER = LoggerFactory.getLogger(SlowQueryLogger.class);
     private static final String SQL_VALIDATE = "validate";
     private static final String SQL_CHECKSCHEMA = "check-schema";
+    private static final String SQL_NAME_PADDING = "sql-name-padding";
+    private static final String SQL_MAX_NAME_LENGTH = "sql-max-name-length";
     private static final String SQL_COMMENT = "#";
     private static final String SQL_EOL = ";";
     public static final String SQL_INDEX_COLUMN_NAME_SELECT = "index-column-name-select";
@@ -131,6 +137,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     private long verySlowQueryThreshold;
     private Object desponseLock = new Object();
     private StorageClientListener storageClientListener;
+    private boolean sqlNamePadding;
+    private int maxNameLength;
 
     public JDBCStorageClient(JDBCStorageClientPool jdbcStorageClientConnectionPool,
             Map<String, Object> properties, Map<String, Object> sqlConfig, Set<String> indexColumns, Set<String> indexColumnTypes, Map<String, String> indexColumnsNames) throws SQLException,
@@ -156,6 +164,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
         if (rowidHash == null) {
             rowidHash = "MD5";
         }
+        this.sqlNamePadding = Boolean.parseBoolean(StorageClientUtils.getSetting(getSql(SQL_NAME_PADDING),"false"));
+        this.maxNameLength = Integer.parseInt(StorageClientUtils.getSetting(getSql(SQL_MAX_NAME_LENGTH),"50"));
         active = true;
         if ( indexColumnsNames != null ) {
             indexer = new WideColumnIndexer(this,indexColumnsNames, indexColumnTypes, sqlConfig);
@@ -1010,11 +1020,10 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             }
             // maxCols contiains the max col number for each cf.
             // cnames contains a map of column Families each containing a map of columns with numbers.
-            
             for (String k : Sets.union(indexColumns, AUTO_INDEX_COLUMNS)) {
                 String[] cf = StringUtils.split(k,":",2);
                 if ( !cnames.containsKey(k) ) {
-                    String cv = makeNameSafeSQL(cf[1]);
+                    String cv = makeNameSafeSQL(cf[1], sqlNamePadding, maxNameLength);
                     if ( usedColumns.contains(cf[0]+":"+cv)) {
                         LOGGER.info(
                                 "Column already exists, please provide explicit mapping indexing {}  already used column {} ",
@@ -1096,20 +1105,33 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
         }
     }
 
-    private String makeNameSafeSQL(String name) {
+    private String makeNameSafeSQL(String name, boolean padding, int maxLength) {
         if ( COLUMN_NAME_MAPPING.containsKey(name)) {
             return COLUMN_NAME_MAPPING.get(name);
         }
         char[] c = name.toCharArray();
-        for(int i = 0; i < c.length; i++) {
+        char[] cout = new char[c.length];
+        int e = 0;
+        int start = 0;
+        if ( c[0] == '_') {
+            if ( padding ) {
+                cout[e] = 'X';
+                e++;
+            }
+            start = 1;
+        } 
+        for(int i = start; i < c.length; i++) {
             if ( !Character.isLetterOrDigit(c[i]) ) {
-                c[i] = '_';
+                if ( !padding ) {
+                    cout[e] = '_';
+                    e++;
+                }
+            } else {
+                cout[e] = c[i];
+                e++;
             }
         }
-        if ( c[0] == '_') {
-            c[0] = 'X';
-        }
-        return new String(c);
+        return new String(cout,0,Math.min(e, maxLength));
     }
 
     public long getSlowQueryThreshold() {
