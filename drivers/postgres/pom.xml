@@ -12,6 +12,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.sakaiproject.nakamura</groupId>
+    <artifactId>core-base</artifactId>
+    <version>2</version>
+    <!-- <relativePath>parent/pom.xml</relativePath> -->
+  </parent>
   <groupId>org.sakaiproject.nakamura</groupId>
   <artifactId>org.postgres</artifactId>
   <packaging>bundle</packaging>
@@ -30,11 +36,6 @@
         <extensions>true</extensions>
         <configuration>
           <instructions>
-             <Bundle-DocURL>
-                http://groups.google.com/group/sakai-nakamura
-             </Bundle-DocURL>
-             <Bundle-Vendor>The Sakai Foundation</Bundle-Vendor>
-             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
             <Bundle-Category>sakai-nakamura,driver</Bundle-Category>
             <Export-Package>org.postgresql;version=9.0</Export-Package>
             <Private-Package>org.postgresql.*</Private-Package>
@@ -68,29 +69,6 @@
       </plugin>
     </plugins>
   </build>
-  <profiles>     
-   <profile>
-      <id>redeploy</id>
-      <build>
-       <plugins>
-         <plugin>
-          <groupId>org.apache.sling</groupId>
-          <artifactId>maven-sling-plugin</artifactId>
-          <version>2.0.5-SNAPSHOT</version>
-          <executions>
-            <execution>
-              <id>install-bundle</id>
-              <goals>
-                <goal>install</goal>
-              </goals>
-            </execution>
-          </executions>
-         </plugin>
-       </plugins>
-      </build>
-    </profile>
-  </profiles>
-
   <dependencies>
 <!-- OSGi Libraries -->
   <dependency>
