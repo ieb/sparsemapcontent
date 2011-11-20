@@ -1162,8 +1162,8 @@ public abstract class AbstractContentManagerFinderTest {
   @Test
   public void testFindAfterChangingPropertyValue() throws Exception {
 
-    String oldValue = "testFindAfterChangingPropertyValue-val1";
-    String newValue = "testFindAfterChangingPropertyValue-newval";
+    String oldValue = "testFindAfterChangingPropertyValue-val1-"+System.currentTimeMillis();
+    String newValue = "testFindAfterChangingPropertyValue-newval-"+System.currentTimeMillis();
 
     AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
     User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
@@ -1198,7 +1198,7 @@ public abstract class AbstractContentManagerFinderTest {
     Content foundAfterUpdate = findOfNewVal.iterator().next();
     Assert.assertEquals(newValue, foundAfterUpdate.getProperty("sakai:marker"));
 
-    // strangely, find on val1 still finds the record with its OLD value
+    // find on the old val should return an empty iterator
     Iterable<Content> findOfOldval = contentManager.find(ImmutableMap.of("sakai:marker", (Object) oldValue));
     // if find() is correct this line should pass
     Assert.assertFalse(findOfOldval.iterator().hasNext());
