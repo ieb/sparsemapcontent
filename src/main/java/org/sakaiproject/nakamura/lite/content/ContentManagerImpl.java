@@ -613,17 +613,25 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                 Permissions.CAN_READ.combine(Permissions.CAN_WRITE));
         Map<String, Object> fromStructure = Maps.newHashMap(getCached(keySpace, contentColumnFamily, from));
         if (fromStructure == null || fromStructure.size() == 0) {
-            throw new StorageClientException("The source content to move from " + from
+            String contentId = (String)fromStructure.get(STRUCTURE_UUID_FIELD);
+            Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
+            if (content == null || content.size() == 0 && TRUE.equals(content.get(DELETED_FIELD))) {
+                throw new StorageClientException("The source content to move from " + from
                     + " does not exist, move operation failed");
+            }
         }
         Map<String, Object> toStructure = getCached(keySpace, contentColumnFamily, to);
         if (toStructure != null && toStructure.size() > 0) {
-            throw new StorageClientException("The destination content to move to " + to
+            String contentId = (String)toStructure.get(STRUCTURE_UUID_FIELD);
+            Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
+            if (content != null && content.size() > 0 && !TRUE.equals(content.get(DELETED_FIELD))) {
+                throw new StorageClientException("The destination content to move to " + to
                     + "  exists, move operation failed");
+            }
         }
         String idStore = (String) fromStructure.get(STRUCTURE_UUID_FIELD);
 
-        // move the conent to the new location, then delete the old.
+        // move the content to the new location, then delete the old.
         if (!StorageClientUtils.isRoot(to)) {
             // if not a root, modify the new parent location, creating the
             // structured if necessary
