@@ -112,10 +112,15 @@ use-batch-inserts = 1
 # e.g. the driver for Oracle 10g does not support JDBC methods introduced in JRE 1.6
 jdbc-support-level = 1.5
 
+# Oracle (well Larry) decided that Oracle names would never need to be > 30 chars, so we need to make the index names short.
+# This may cause clashes which will need further work.
+sql-name-padding = false
+sql-max-name-length = 25
+
 index-column-name-select = select cf, cid, cname from css_wr
-index-column-name-insert = insert into css_wr ( cf, cid, cname ) values ( ? , ? , ? )
+index-column-name-insert = insert into css_wr ( id, cf, cid, cname ) values ( seq_css_wr_id.NEXTVAL, ? , ? , ? )
 alter-widestring-table = ALTER TABLE {0}_css_w ADD {1} varchar(780)
-index-widestring-table = CREATE INDEX {0}_css_w_{1} ON {0}_css_w ({1})
+index-widestring-table = CREATE INDEX {0}wr{1} ON {0}_css_w ({1})
 
 exists-widestring-row = select rid from css_w where rid = ?
 exists-widestring-row.n.cn = select rid from cn_css_w where rid = ?
@@ -141,24 +146,25 @@ insert-widestring-row.n.cn = insert into cn_css_w ( rid {0} ) values ( ? {1} )
 insert-widestring-row.n.ac = insert into ac_css_w ( rid {0} ) values ( ? {1} )
 insert-widestring-row.n.au = insert into au_css_w ( rid {0} ) values ( ? {1} )
 insert-widestring-row.n.lk = insert into lk_css_w ( rid {0} ) values ( ? {1} )
-  
-wide-block-find = select TR.rid from ( select s.rid, ROWNUM rnum from (select a.rid from css_w a where {0} {1} ) s where ROWNUM <= {3,number,#}+{4,number,#}) TR where rnum  >= {4,number,#};a.{0} = ?;a.rid in ( select {0}.rid from css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
-wide-block-find.n.cn = select TR.rid from ( select s.rid, ROWNUM rnum from (select a.rid from cn_css_w a where {0} {1} ) s where ROWNUM <= {3,number,#}+{4,number,#}) TR where rnum  >= {4,number,#} ;a.{0} = ?;a.rid in ( select {0}.rid from cn_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
-wide-block-find.n.ac = select TR.rid from ( select s.rid, ROWNUM rnum from (select a.rid from ac_css_w a where {0} {1} ) s where ROWNUM <= {3,number,#}+{4,number,#}) TR where rnum  >= {4,number,#} ;a.{0} = ?;a.rid in ( select {0}.rid from ac_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
-wide-block-find.n.au = select TR.rid from ( select s.rid, ROWNUM rnum from (select a.rid from au_css_w a where {0} {1} ) s where ROWNUM <= {3,number,#}+{4,number,#}) TR where rnum  >= {4,number,#} ;a.{0} = ?;a.rid in ( select {0}.rid from au_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
-wide-block-find.n.lk = select TR.rid from ( select s.rid, ROWNUM rnum from (select a.rid from lk_css_w a where {0} {1} ) s where ROWNUM <= {3,number,#}+{4,number,#}) TR where rnum  >= {4,number,#} ;a.{0} = ?;a.rid in ( select {0}.rid from lk_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
 
-wide-listchildren = select TR.rid from ( select s.rid, ROWNUM rnum from (select a.rid from css_w a where {0} {1} ) s where ROWNUM <= {3,number,#}+{4,number,#}) TR where rnum  >= {4,number,#} ;a.{0} = ?;a.rid in ( select {0}.rid from css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
-wide-listchildren.n.cn = select TR.rid from ( select s.rid, ROWNUM rnum from (select a.rid from cn_css_w a where {0} {1} ) s where ROWNUM <= {3,number,#}+{4,number,#}) TR where rnum  >= {4,number,#} ;a.{0} = ?;a.rid in ( select {0}.rid from cn_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
-wide-listchildren.n.ac = select TR.rid from ( select s.rid, ROWNUM rnum from (select a.rid from ac_css_w a where {0} {1} ) s where ROWNUM <= {3,number,#}+{4,number,#}) TR where rnum  >= {4,number,#} ;a.{0} = ?;a.rid in ( select {0}.rid from ac_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
-wide-listchildren.n.au = select TR.rid from ( select s.rid, ROWNUM rnum from (select a.rid from au_css_w a where {0} {1} ) s where ROWNUM <= {3,number,#}+{4,number,#}) TR where rnum  >= {4,number,#} ;a.{0} = ?;a.rid in ( select {0}.rid from au_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
-wide-listchildren.n.lk = select TR.rid from ( select s.rid, ROWNUM rnum from (select a.rid from lk_css_w a where {0} {1} ) s where ROWNUM <= {3,number,#}+{4,number,#}) TR where rnum  >= {4,number,#} ;a.{0} = ?;a.rid in ( select {0}.rid from lk_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
 
-wide-countestimate = select TR.rid from ( select s.rid, ROWNUM rnum from (select count(*) from css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from css {0} where {1} ) s where ROWNUM <= {3,number,#}+{4,number,#}) TR where rnum  >= {4,number,#});{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
-wide-countestimate.n.cn = select TR.rid from ( select s.rid, ROWNUM rnum from (select count(*) from cn_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from cn_css {0} where {1} ) s where ROWNUM <= {3,number,#}+{4,number,#}) TR where rnum  >= {4,number,#});{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
-wide-countestimate.n.ac = select TR.rid from ( select s.rid, ROWNUM rnum from (select count(*) from ac_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from ac_css {0} where {1} ) s where ROWNUM <= {3,number,#}+{4,number,#}) TR where rnum  >= {4,number,#});{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
-wide-countestimate.n.au = select TR.rid from ( select s.rid, ROWNUM rnum from (select count(*) from au_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from au_css {0} where {1} ) s where ROWNUM <= {3,number,#}+{4,number,#}) TR where rnum  >= {4,number,#});{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
-wide-countestimate.n.lk = select TR.rid from ( select s.rid, ROWNUM rnum from (select count(*) from lk_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from lk_css {0} where {1} ) s where ROWNUM <= {3,number,#}+{4,number,#}) TR where rnum  >= {4,number,#});{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
+wide-block-find = select TR.rid from ( select s.rid, ROWNUM rnum from (select a.rid from css_w a where {0} {1} ) s where ROWNUM <= {2,number,#}+{3,number,#}) TR where rnum  >= {3,number,#};a.{0} = ?;a.rid in ( select {0}.rid from css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
+wide-block-find.n.cn = select TR.rid from ( select s.rid, ROWNUM rnum from (select a.rid from cn_css_w a where {0} {1} ) s where ROWNUM <= {2,number,#}+{3,number,#}) TR where rnum  >= {3,number,#} ;a.{0} = ?;a.rid in ( select {0}.rid from cn_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
+wide-block-find.n.ac = select TR.rid from ( select s.rid, ROWNUM rnum from (select a.rid from ac_css_w a where {0} {1} ) s where ROWNUM <= {2,number,#}+{3,number,#}) TR where rnum  >= {3,number,#} ;a.{0} = ?;a.rid in ( select {0}.rid from ac_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
+wide-block-find.n.au = select TR.rid from ( select s.rid, ROWNUM rnum from (select a.rid from au_css_w a where {0} {1} ) s where ROWNUM <= {2,number,#}+{3,number,#}) TR where rnum  >= {3,number,#} ;a.{0} = ?;a.rid in ( select {0}.rid from au_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
+wide-block-find.n.lk = select TR.rid from ( select s.rid, ROWNUM rnum from (select a.rid from lk_css_w a where {0} {1} ) s where ROWNUM <= {2,number,#}+{3,number,#}) TR where rnum  >= {3,number,#} ;a.{0} = ?;a.rid in ( select {0}.rid from lk_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
+
+wide-listchildren = select a.rid from css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
+wide-listchildren.n.cn = select a.rid from cn_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from cn_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
+wide-listchildren.n.ac = select a.rid from ac_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from ac_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
+wide-listchildren.n.au = select a.rid from au_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from au_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
+wide-listchildren.n.lk = select a.rid from lk_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from lk_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
+
+wide-countestimate = select count(*) from css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
+wide-countestimate.n.cn = select count(*) from cn_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from cn_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
+wide-countestimate.n.ac = select count(*) from ac_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from ac_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
+wide-countestimate.n.au = select count(*) from au_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from au_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
+wide-countestimate.n.lk = select count(*) from lk_css_w a where {0} {1} ;a.{0} = ?;a.rid in ( select {0}.rid from lk_css {0} where {1} );{0}.cid = ? and {0}.v = ?;order by {0};{0} {1}
 
 
 

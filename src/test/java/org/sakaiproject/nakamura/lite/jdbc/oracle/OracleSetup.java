@@ -31,7 +31,7 @@ public class OracleSetup {
         try {
             JDBCStorageClientPool connectionPool = new JDBCStorageClientPool();
             Builder<String, Object> b = ImmutableMap.builder();
-            b.put(JDBCStorageClientPool.CONNECTION_URL,"jdbc:oracle:thin:@127.0.0.1:1521:XE");
+            b.put(JDBCStorageClientPool.CONNECTION_URL,"jdbc:oracle:thin:@172.16.41.128:1521:XE");
             b.put(JDBCStorageClientPool.JDBC_DRIVER, "oracle.jdbc.driver.OracleDriver");
             b.put("username", "sakai22");
             b.put("password", "sakai22");
