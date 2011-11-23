@@ -64,9 +64,9 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
 
     private static final String DISABLED_PASSWORD_HASH = "--disabled--";
     private static final Set<String> FILTER_ON_UPDATE = ImmutableSet.of(Authorizable.ID_FIELD,
-            Authorizable.PASSWORD_FIELD);
+            Authorizable.PASSWORD_FIELD, Authorizable.LOGIN_ENABLED_PERIOD_FIELD);
     private static final Set<String> FILTER_ON_CREATE = ImmutableSet.of(Authorizable.ID_FIELD,
-            Authorizable.PASSWORD_FIELD);
+            Authorizable.PASSWORD_FIELD, Authorizable.LOGIN_ENABLED_PERIOD_FIELD);
     private static final Set<String> ADMIN_FILTER_ON_UPDATE = ImmutableSet.of(Authorizable.ID_FIELD,
             Authorizable.PASSWORD_FIELD);
     private static final Set<String> ADMIN_FILTER_ON_CREATE = ImmutableSet.of(Authorizable.ID_FIELD,
@@ -317,6 +317,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         }
     }
 
+
     public boolean createAuthorizable(String authorizableId, String authorizableName,
             String password, Map<String, Object> properties) throws AccessDeniedException,
             StorageClientException {
@@ -359,6 +360,7 @@ public class AuthorizableManagerImpl extends CachingManager implements Authoriza
         putCached(keySpace, authorizableColumnFamily, authorizableId, encodedProperties, true);
         return true;
     }
+
 
     private void checkId(String authorizableId) throws StorageClientException {
         if ( authorizableId.charAt(0) == '_') {

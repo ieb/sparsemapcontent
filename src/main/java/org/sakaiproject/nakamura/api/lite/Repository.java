@@ -22,6 +22,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 /**
  * Repository container that provides a mechanism to login to the sparse content
  * store.
+ * @since 1.0
  */
 public interface Repository {
 
@@ -46,6 +47,7 @@ public interface Repository {
      *             If there was a problem with the storage pool.
      * @throws AccessDeniedException
      *             If the user was denied access.
+     * @since 1.0
      */
     Session login(String username, String password) throws ClientPoolException,
             StorageClientException, AccessDeniedException;
@@ -60,6 +62,7 @@ public interface Repository {
      *             If there was a problem with the storage pool.
      * @throws AccessDeniedException
      *             If the anon was denied access.
+     * @since 1.0
      */
     Session login() throws ClientPoolException, StorageClientException, AccessDeniedException;
 
@@ -73,6 +76,7 @@ public interface Repository {
      *             If there was a problem with the storage pool.
      * @throws AccessDeniedException
      *             If admin was denied access.
+     * @since 1.0
      */
     Session loginAdministrative() throws ClientPoolException, StorageClientException,
             AccessDeniedException;
@@ -89,8 +93,24 @@ public interface Repository {
      *             If there was a problem with the storage pool.
      * @throws AccessDeniedException
      *             If the user was denied access.
+     * @since 1.0
      */
     Session loginAdministrative(String username) throws ClientPoolException,
             StorageClientException, AccessDeniedException;
+
+    /**
+     * Perform an administrative login bypassing login enabled checks. Only
+     * internal system operations should use this. Anything related to a login
+     * should never use use.
+     * 
+     * @param username
+     * @return
+     * @throws StorageClientException
+     * @throws ClientPoolException
+     * @throws AccessDeniedException
+     * @since 1.4
+     */
+    Session loginAdministrativeBypassEnable(String username) throws StorageClientException,
+            ClientPoolException, AccessDeniedException;
 
 }

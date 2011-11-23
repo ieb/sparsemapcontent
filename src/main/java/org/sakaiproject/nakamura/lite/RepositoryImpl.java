@@ -51,13 +51,12 @@ public class RepositoryImpl implements Repository {
 
     @Reference
     protected StorageClientPool clientPool;
-    
-    @Reference 
+
+    @Reference
     protected StoreListener storeListener;
 
     @Reference
     protected PrincipalValidatorResolver principalValidatorResolver;
-
 
     public RepositoryImpl() {
     }
@@ -79,8 +78,8 @@ public class RepositoryImpl implements Repository {
                     configuration);
             authorizableActivator.setup();
         } finally {
-            if ( client != null ) {
-              client.close();
+            if (client != null) {
+                client.close();
             } else {
                 LOGGER.error("Failed to actvate repository, probably failed to create default users");
             }
@@ -111,6 +110,11 @@ public class RepositoryImpl implements Repository {
         return openSession(username);
     }
 
+    public Session loginAdministrativeBypassEnable(String username) throws StorageClientException,
+            ClientPoolException, AccessDeniedException {
+        return openSessionBypassEnable(username);
+    }
+
     private Session openSession(String username, String password) throws StorageClientException,
             AccessDeniedException {
         StorageClient client = null;
@@ -121,7 +125,8 @@ public class RepositoryImpl implements Repository {
             if (currentUser == null) {
                 throw new StorageClientException("User " + username + " cant login with password");
             }
-            return new SessionImpl(this, currentUser, client, configuration, clientPool.getStorageCacheManager(), storeListener, principalValidatorResolver);
+            return new SessionImpl(this, currentUser, client, configuration,
+                    clientPool.getStorageCacheManager(), storeListener, principalValidatorResolver);
         } catch (ClientPoolException e) {
             clientPool.getClient();
             throw e;
@@ -148,7 +153,36 @@ public class RepositoryImpl implements Repository {
                 throw new StorageClientException("User " + username
                         + " does not exist, cant login administratively as this user");
             }
-            return new SessionImpl(this, currentUser, client, configuration,  clientPool.getStorageCacheManager(), storeListener, principalValidatorResolver);
+            return new SessionImpl(this, currentUser, client, configuration,
+                    clientPool.getStorageCacheManager(), storeListener, principalValidatorResolver);
+        } catch (ClientPoolException e) {
+            clientPool.getClient();
+            throw e;
+        } catch (StorageClientException e) {
+            clientPool.getClient();
+            throw e;
+        } catch (AccessDeniedException e) {
+            clientPool.getClient();
+            throw e;
+        } catch (Throwable e) {
+            clientPool.getClient();
+            throw new StorageClientException(e.getMessage(), e);
+        }
+    }
+
+    private Session openSessionBypassEnable(String username) throws StorageClientException,
+            AccessDeniedException {
+        StorageClient client = null;
+        try {
+            client = clientPool.getClient();
+            AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration);
+            User currentUser = authenticatorImpl.systemAuthenticateBypassEnable(username);
+            if (currentUser == null) {
+                throw new StorageClientException("User " + username
+                        + " does not exist, cant login administratively as this user");
+            }
+            return new SessionImpl(this, currentUser, client, configuration,
+                    clientPool.getStorageCacheManager(), storeListener, principalValidatorResolver);
         } catch (ClientPoolException e) {
             clientPool.getClient();
             throw e;
@@ -174,7 +208,7 @@ public class RepositoryImpl implements Repository {
 
     public void setStorageListener(StoreListener storeListener) {
         this.storeListener = storeListener;
-        
+
     }
 
 }
