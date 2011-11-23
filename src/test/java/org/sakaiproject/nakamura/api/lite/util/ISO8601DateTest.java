@@ -1,7 +1,8 @@
-package uk.co.tfd.sm.resource.types;
+package org.sakaiproject.nakamura.api.lite.util;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.sakaiproject.nakamura.api.lite.util.ISO8601Date;
 
 import java.util.Calendar;
 import java.util.SimpleTimeZone;
@@ -78,5 +79,18 @@ public class ISO8601DateTest {
     g.set(2010, 11, 24);
     g.setDate(true);
     Assert.assertEquals("2010-12-24", g.toString());
+  }
+  
+  @Test
+  public void testBefore() {
+      ISO8601Date g = new ISO8601Date();
+      g.set(2011,11,23);
+      Calendar c = Calendar.getInstance();
+      c.set(2011, 11, 20);
+      Assert.assertTrue(g.compareTo(c)>0);
+      g.setDate(true);
+      Assert.assertTrue(g.compareTo(c)>0);
+      
+      
   }
 }
