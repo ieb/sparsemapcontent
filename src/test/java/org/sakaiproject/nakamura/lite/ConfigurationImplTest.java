@@ -15,7 +15,7 @@ public class ConfigurationImplTest {
     public void testProperties() throws IOException {
         InternalContentAccess.resetInternalContent();
         ConfigurationImpl configurationImpl = new ConfigurationImpl();
-        Map<String,Object> properties = ImmutableMap.of();
+        Map<String,Object> properties = ImmutableMap.of(ConfigurationImpl.INDEX_COLUMN_NAMES, (Object)ConfigurationImpl.DEFAULT_INDEX_COLUMN_NAMES);
         configurationImpl.activate(properties);
         Assert.assertEquals("n",configurationImpl.getKeySpace());
     }
@@ -32,7 +32,7 @@ public class ConfigurationImplTest {
         InternalContentAccess.resetInternalContent();
         ConfigurationImpl configurationImpl = new ConfigurationImpl();
         System.setProperty(ConfigurationImpl.SHAREDCONFIGPROPERTY, "src/test/resources/testsharedoverride.properties");
-        Map<String,Object> properties = ImmutableMap.of();
+        Map<String,Object> properties = ImmutableMap.of(ConfigurationImpl.INDEX_COLUMN_NAMES, (Object)ConfigurationImpl.DEFAULT_INDEX_COLUMN_NAMES);
         configurationImpl.activate(properties);
         System.clearProperty(ConfigurationImpl.SHAREDCONFIGPROPERTY);
         Assert.assertArrayEquals(new String[]{"somethingElseFromProperties"}, configurationImpl.getIndexColumnNames());

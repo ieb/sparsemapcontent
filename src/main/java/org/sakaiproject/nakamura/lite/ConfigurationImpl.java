@@ -134,7 +134,7 @@ public class ConfigurationImpl implements Configuration {
         for ( Map<String, ?> p : properties ) {
             if ( p.containsKey(name) ) {
                 Object v  = p.get(name);
-                if ( v != null ) {
+                if ( v != null && !defaultValue.equals(v)) {
                     value = String.valueOf(v);
                     LOGGER.debug("{} is configured as {}", value);
                 }
