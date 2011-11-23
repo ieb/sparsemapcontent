@@ -99,6 +99,7 @@ public class User extends Authorizable {
 
     /**
      * @return returns true if login is enabled for this user.
+     * @since 1.4
      */
     public boolean isLoginEnabled() {
         return EnabledPeriod.isInEnabledPeriod((String) getProperty(LOGIN_ENABLED_PERIOD_FIELD));
@@ -118,6 +119,7 @@ public class User extends Authorizable {
      * @param timeZone
      *            the timezone which both these times should be interpreted in
      *            (relevant for a day setting).
+     * @since 1.4
      */
     public void setLoginEnabled(long from, long to, boolean day, TimeZone timeZone) {
         String enabledSetting = EnabledPeriod.getEnableValue(from, to, day, timeZone);
@@ -132,6 +134,7 @@ public class User extends Authorizable {
      * @return an array length 2 of the times when the user is enabled in order
      *         from to. null indicates no time specified for either from or to
      *         times. This user will be allowed to login between those times.
+     * @since 1.4
      */
     public Calendar[] getLoginEnabledPeriod() {
         return EnabledPeriod.getEnabledPeriod((String) getProperty(LOGIN_ENABLED_PERIOD_FIELD));
