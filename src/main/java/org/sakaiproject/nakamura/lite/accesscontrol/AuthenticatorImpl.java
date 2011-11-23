@@ -17,18 +17,24 @@
  */
 package org.sakaiproject.nakamura.lite.accesscontrol;
 
+import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Authenticator;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
+import org.sakaiproject.nakamura.api.lite.util.EnabledPeriod;
+import org.sakaiproject.nakamura.api.lite.util.ISO8601Date;
 import org.sakaiproject.nakamura.lite.authorizable.UserInternal;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
+import java.util.TimeZone;
 
 public class AuthenticatorImpl implements Authenticator {
 
@@ -56,7 +62,9 @@ public class AuthenticatorImpl implements Authenticator {
             String storedPassword = (String) userAuthMap
                     .get(User.PASSWORD_FIELD);
             if (passwordHash.equals(storedPassword)) {
-                return new UserInternal(userAuthMap, null, false);
+                if ( EnabledPeriod.isInEnabledPeriod((String) userAuthMap.get(User.LOGIN_ENABLED_PERIOD_FIELD)) ) {
+                    return new UserInternal(userAuthMap, null, false);
+                }
             }
             LOGGER.debug("Failed to authentication, passwords did not match");
         } catch (StorageClientException e) {
@@ -67,8 +75,14 @@ public class AuthenticatorImpl implements Authenticator {
         return null;
 
     }
-
     public User systemAuthenticate(String userid) {
+        return internalSystemAuthenticate(userid, false);
+    }
+    public User systemAuthenticateBypassEnable(String userid) {
+        return internalSystemAuthenticate(userid, true);
+    }
+
+    private User internalSystemAuthenticate(String userid, boolean forceEnableLogin) {
         try {
             Map<String, Object> userAuthMap = client
                     .get(keySpace, authorizableColumnFamily, userid);
@@ -76,7 +90,9 @@ public class AuthenticatorImpl implements Authenticator {
                 LOGGER.debug("User was not found {}", userid);
                 return null;
             }
-            return new UserInternal(userAuthMap, null, false);
+            if ( forceEnableLogin || EnabledPeriod.isInEnabledPeriod((String) userAuthMap.get(User.LOGIN_ENABLED_PERIOD_FIELD)) ) {
+                return new UserInternal(userAuthMap, null, false);
+            }
         } catch (StorageClientException e) {
             LOGGER.debug("Failed To system authenticate user " + e.getMessage(), e);
         } catch (AccessDeniedException e) {
@@ -84,5 +100,6 @@ public class AuthenticatorImpl implements Authenticator {
         }
         return null;
     }
+
 
 }

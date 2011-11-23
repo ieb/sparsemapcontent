@@ -21,6 +21,7 @@ import org.sakaiproject.nakamura.api.lite.authorizable.User;
 
 /**
  * Authenticates a user
+ * @since 1.0
  */
 public interface Authenticator {
 
@@ -33,6 +34,7 @@ public interface Authenticator {
      *            password for the user
      * @return the user object for the user or null if the authentication
      *         attempt is not valid.
+     * @since 1.0
      */
     User authenticate(String userid, String password);
 
@@ -40,7 +42,16 @@ public interface Authenticator {
      * perform a system authentication, trusting the userId.
      * @param userid
      * @return the User object if the userID exists.
+     * @since 1.0
      */
     User systemAuthenticate(String userid);
+
+    /**
+     * perform a system authentication bypassing enable login checks
+     * @param userid
+     * @return
+     * @since 1.4
+     */
+    User systemAuthenticateBypassEnable(String userid);
 
 }
