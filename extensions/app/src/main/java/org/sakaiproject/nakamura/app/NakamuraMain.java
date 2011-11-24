@@ -19,10 +19,14 @@ import java.util.Map;
 
 public class NakamuraMain {
 
+	private static final String[] BUNDLE_SOURCE_LOCATIONS = new String[] { "SLING-INF/static",
+								"SLING-INF/home" };
+	private static final String[] FS_DEST_LOCATIONS = new String[] { "sling/static", null };
 	// The name of the environment variable to consult to find out
 	// about sling.home
 	private static final String ENV_SLING_HOME = "SLING_HOME";
 	private static String slingHome;
+	private static Map<String, String> parsedArgs;
 
 	public static void main(String[] args) throws IOException {
 		if (checkLaunchDate(args)) {
@@ -37,10 +41,27 @@ public class NakamuraMain {
 						}
 
 					});
+			// allow the command line to add mappings using --mappings source:dest,source:dest
+			String[] destLocations = FS_DEST_LOCATIONS;
+			String[] sourceLocations = BUNDLE_SOURCE_LOCATIONS;
+			destLocations[1] = slingHome;
+			String staticContentMappings = parsedArgs.get("mappings");
+			if ( staticContentMappings != null ) {
+				String[]  parts = staticContentMappings.split(",");
+				String[] tmpDestLocations = new String[destLocations.length+parts.length];
+				String[] tmpSourceLocations = new String[sourceLocations.length+parts.length];
+				System.arraycopy(destLocations, 0, tmpDestLocations, 0, destLocations.length);
+				System.arraycopy(sourceLocations, 0, tmpSourceLocations, 0, sourceLocations.length);
+				for ( int i = 0; i < parts.length; i++) {
+					String[] m = parts[i].split(":");
+					tmpSourceLocations[i+sourceLocations.length] = m[0];
+					tmpDestLocations[i+destLocations.length] = m[1];
+				}
+				sourceLocations = tmpSourceLocations;
+				destLocations = tmpDestLocations;
+			}
 			unBundleStaticContent.extract(unBundleStaticContent.getClass(),
-					"resources/bundles/", new String[] { "SLING-INF/static",
-							"SLING-INF/home" }, new String[] { "sling/static",
-							slingHome });
+					"resources/bundles/", sourceLocations, destLocations);
 		}
 		System.setSecurityManager(null);
 		Main.main(args);
@@ -48,7 +69,7 @@ public class NakamuraMain {
 
 	private static boolean checkLaunchDate(String[] args) throws IOException {
 		// Find the last modified of this jar
-		Map<String, String> parsedArgs = parseCommandLine(args);
+		parsedArgs = parseCommandLine(args);
 		// Find the last modified when the jar was loaded.
 		slingHome = getSlingHome(parsedArgs);
 		try {
