@@ -113,7 +113,7 @@ public class DefaultResponseFactoryTest {
 		Mockito.when(content.getProperties()).thenReturn(ImmutableMap.of("key", (Object)"value"));
 		Response response = dg.doGet();
 		Object o = response.getEntity();
-		Assert.assertEquals("application/json",response.getMetadata().get("Content-Type").get(0).toString());
+		Assert.assertEquals("application/json; charset=utf-8",response.getMetadata().get("Content-Type").get(0).toString());
 		int status = response.getStatus();
 		Assert.assertEquals(200, status);
 		StreamingOutput out = (StreamingOutput) o;
@@ -139,7 +139,7 @@ public class DefaultResponseFactoryTest {
 		Mockito.when(session.getContentManager()).thenReturn(contentManager);
 		Mockito.when(content.getProperties()).thenReturn(ImmutableMap.of("key", (Object)"value"));
 		Response response = dg.doGet();
-		Assert.assertEquals("application/xml",response.getMetadata().get("Content-Type").get(0).toString());
+		Assert.assertEquals("application/xml; charset=utf-8",response.getMetadata().get("Content-Type").get(0).toString());
 		int status = response.getStatus();
 		Assert.assertEquals(200, status);
 	}

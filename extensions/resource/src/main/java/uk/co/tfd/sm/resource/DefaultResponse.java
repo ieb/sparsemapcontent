@@ -43,10 +43,13 @@ import uk.co.tfd.sm.api.resource.Resource;
 
 public class DefaultResponse implements Adaptable {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultResponse.class);
+	private static final Logger LOGGER = LoggerFactory
+			.getLogger(DefaultResponse.class);
 	private Adaptable adaptable;
+	private boolean debug;
 
 	public DefaultResponse(Adaptable adaptable) {
+		debug = LOGGER.isDebugEnabled();
 		this.adaptable = adaptable;
 	}
 
@@ -61,12 +64,17 @@ public class DefaultResponse implements Adaptable {
 				return ResponseUtils.getResponse(
 						HttpServletResponse.SC_NOT_FOUND, "Not Found");
 			}
-			if ( !content.getPath().equals(resource.getToCreatePath()) ) {
+			if (!content.getPath().equals(resource.getToCreatePath())) {
 				// ie the Content item does not exist.
 				return ResponseUtils.getResponse(
-						HttpServletResponse.SC_NOT_FOUND, "Not Found "+content.getPath()+" is not "+resource.getToCreatePath());				
+						HttpServletResponse.SC_NOT_FOUND,
+						"Not Found " + content.getPath() + " is not "
+								+ resource.getToCreatePath());
 			}
-			LOGGER.info("Get found Resource:[{}] Content:[{}]",resource,content);
+			if (debug) {
+				LOGGER.debug("Get found Resource:[{}] Content:[{}]", resource,
+						content);
+			}
 			if (requestExt == null || requestExt.isEmpty()) {
 				Session session = adaptTo(Session.class);
 				final ContentManager contentManager = session
@@ -95,11 +103,15 @@ public class DefaultResponse implements Adaptable {
 								ResponseUtils.writeTree(content, selectors,
 										output);
 							}
-						}).type(MediaType.APPLICATION_JSON_TYPE)
+						})
+						.type(MediaType.APPLICATION_JSON_TYPE.toString()
+								+ "; charset=utf-8")
 						.lastModified(adaptTo(Date.class)).build();
 			} else if ("xml".equals(requestExt)) {
-				return Response.ok(content.getProperties())
-						.type(MediaType.APPLICATION_XML_TYPE)
+				return Response
+						.ok(content.getProperties())
+						.type(MediaType.APPLICATION_XML_TYPE.toString()
+								+ "; charset=utf-8")
 						.lastModified(adaptTo(Date.class)).build();
 			}
 			return ResponseUtils.getResponse(
@@ -118,7 +130,9 @@ public class DefaultResponse implements Adaptable {
 
 	@POST
 	public Response doPost() throws IOException {
-		LOGGER.debug("Executing POST ");
+		if (debug) {
+			LOGGER.debug("Executing POST ");
+		}
 		Resource resource = adaptable.adaptTo(Resource.class);
 		HttpServletRequest request = adaptable
 				.adaptTo(HttpServletRequest.class);
@@ -127,12 +141,15 @@ public class DefaultResponse implements Adaptable {
 			ContentManager contentManager = session.getContentManager();
 			String contentPath = resource.getToCreatePath();
 			Map<String, Content> toSave = Maps.newHashMap();
-			Content content = getOrCreateContent(contentManager, contentPath, toSave);
+			Content content = getOrCreateContent(contentManager, contentPath,
+					toSave);
 			Set<String> toRemove = Sets.newHashSet();
 			Map<String, Object> toAdd = Maps.newHashMap();
 			final List<String> feedback = Lists.newArrayList();
 			if (ServletFileUpload.isMultipartContent(request)) {
-				LOGGER.info("Multipart POST ");
+				if (debug) {
+					LOGGER.debug("Multipart POST ");
+				}
 				feedback.add("Multipart Upload");
 				ServletFileUpload upload = new ServletFileUpload();
 				FileItemIterator iterator = upload.getItemIterator(request);
@@ -158,12 +175,14 @@ public class DefaultResponse implements Adaptable {
 								.getStreamName(name);
 						String fileName = RequestUtils.getFileName(name);
 						String path = content.getPath();
-						if ( fileName != null ) {
+						if (fileName != null) {
 							path = StorageClientUtils.newPath(path, fileName);
-							Content childContent = getOrCreateContent(contentManager, path, toSave);
+							Content childContent = getOrCreateContent(
+									contentManager, path, toSave);
 							applyProperties(childContent, toRemove, toAdd);
 						} else {
-							// all properties to this point in a stream get saved to the upload object.
+							// all properties to this point in a stream get
+							// saved to the upload object.
 							applyProperties(content, toRemove, toAdd);
 						}
 						if (alternativeStreamName == null) {
@@ -178,13 +197,12 @@ public class DefaultResponse implements Adaptable {
 				}
 
 			} else {
-				LOGGER.info("Traditional POST ");
-
 				// use traditional unstreamed operations.
 				@SuppressWarnings("unchecked")
-				Map<String, String[]> parameters = request
-				.getParameterMap();
-				LOGGER.info("Traditional POST {} ",parameters);
+				Map<String, String[]> parameters = request.getParameterMap();
+				if (debug) {
+					LOGGER.debug("Traditional POST {} ", parameters);
+				}
 				Set<Entry<String, String[]>> entries = parameters.entrySet();
 
 				for (Entry<String, String[]> param : entries) {
@@ -204,9 +222,11 @@ public class DefaultResponse implements Adaptable {
 
 			applyProperties(content, toRemove, toAdd);
 
-			for ( Content c : toSave.values()) {
+			for (Content c : toSave.values()) {
 				contentManager.update(c);
-				LOGGER.info("Updated {} ",c);
+				if (debug) {
+					LOGGER.debug("Updated {} ", c);
+				}
 			}
 			return Response
 					.ok(new StreamingOutput() {
@@ -215,21 +235,28 @@ public class DefaultResponse implements Adaptable {
 								throws IOException, WebApplicationException {
 							ResponseUtils.writeFeedback(feedback, output);
 						}
-					}).type(MediaType.APPLICATION_JSON_TYPE)
+					})
+					.type(MediaType.APPLICATION_JSON_TYPE.toString()
+							+ "; charset=utf-8")
 					.lastModified(adaptTo(Date.class)).build();
 		} catch (StorageClientException e) {
-			LOGGER.debug(e.getMessage(),e);
+			if (debug) {
+				LOGGER.debug(e.getMessage(), e);
+			}
 			return ResponseUtils.getResponse(
 					HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
 					e.getMessage());
 
 		} catch (AccessDeniedException e) {
-			LOGGER.info("Denied "+e.getMessage());
-			LOGGER.debug(e.getMessage(),e);
+			if (debug) {
+				LOGGER.debug(e.getMessage(), e);
+			}
 			return ResponseUtils.getResponse(HttpServletResponse.SC_FORBIDDEN,
 					e.getMessage());
 		} catch (FileUploadException e) {
-			LOGGER.debug(e.getMessage(),e);
+			if (debug) {
+				LOGGER.debug(e.getMessage(), e);
+			}
 			throw new IOException(e);
 		}
 
@@ -246,19 +273,23 @@ public class DefaultResponse implements Adaptable {
 		}
 		toRemove.clear();
 		toAdd.clear();
-		
+
 	}
 
 	private Content getOrCreateContent(ContentManager contentManager,
-			String contentPath, Map<String, Content> toSave) throws StorageClientException, AccessDeniedException {
+			String contentPath, Map<String, Content> toSave)
+			throws StorageClientException, AccessDeniedException {
 		Content content = toSave.get(contentPath);
-		if ( content == null ) {
+		if (content == null) {
 			content = contentManager.get(contentPath);
 			if (content == null) {
-				LOGGER.info("Created A New Unsaved Content object {} ",contentPath);
+				if (debug) {
+					LOGGER.debug("Created A New Unsaved Content object {} ",
+							contentPath);
+				}
 				content = new Content(contentPath, null);
-			} else {
-				LOGGER.info("Content Existed at {} ",content);
+			} else if (debug) {
+				LOGGER.debug("Content Existed at {} ", content);
 			}
 			toSave.put(contentPath, content);
 		}
@@ -267,33 +298,41 @@ public class DefaultResponse implements Adaptable {
 
 	private void accumulate(Map<String, Object> toAdd, String propertyName,
 			Object value) {
+
 		Object o = toAdd.get(propertyName);
-		if ( o == null ) {
+		if (o == null) {
 			toAdd.put(propertyName, value);
-			LOGGER.info("Saved {} {}",propertyName,value);
+			if (debug) {
+				LOGGER.debug("Saved {} {}", propertyName, value);
+			}
 		} else {
 			int sl = 1;
-			try { 
+			try {
 				sl = Array.getLength(o);
-			} catch ( IllegalArgumentException e) {
+			} catch (IllegalArgumentException e) {
 				Object[] newO = (Object[]) Array.newInstance(o.getClass(), 1);
 				newO[0] = o;
 				o = newO;
 			}
 			int vl = 1;
-			try { 
+			try {
 				vl = Array.getLength(value);
-			} catch ( IllegalArgumentException e) {
-				Object[] newO = (Object[]) Array.newInstance(value.getClass(), 1);
+			} catch (IllegalArgumentException e) {
+				Object[] newO = (Object[]) Array.newInstance(value.getClass(),
+						1);
 				newO[0] = value;
 				value = newO;
 			}
 			Object type = Array.get(o, 0);
-			Object[] newArray = (Object[]) Array.newInstance(type.getClass(), sl+vl);
+			Object[] newArray = (Object[]) Array.newInstance(type.getClass(),
+					sl + vl);
 			System.arraycopy(o, 0, newArray, 0, sl);
 			System.arraycopy(value, 0, newArray, sl, vl);
 			toAdd.put(propertyName, newArray);
-			LOGGER.info("Appended {} {} {}",new Object[]{propertyName, value, newArray});
+			if (debug) {
+				LOGGER.debug("Appended {} {} {}", new Object[] { propertyName,
+						value, newArray });
+			}
 		}
 	}
 

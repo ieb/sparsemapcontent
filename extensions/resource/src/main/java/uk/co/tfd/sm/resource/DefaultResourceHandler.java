@@ -38,14 +38,14 @@ public class DefaultResourceHandler implements JaxRestService, Adaptable {
 
 	private static final String DEFAULT_MAPPED_ROOT_PATH = "/";
 
-	@Property(value=DEFAULT_MAPPED_ROOT_PATH)
+	@Property(value = DEFAULT_MAPPED_ROOT_PATH)
 	protected static final String MAPPED_ROOT_PATH = "mapped-root-path";
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultResourceHandler.class);
+	private static final Logger LOGGER = LoggerFactory
+			.getLogger(DefaultResourceHandler.class);
 
 	@Reference
 	protected SparseSessionTracker sessionTracker;
-
 
 	@Reference
 	protected ResponseFactoryManager resourceFactory;
@@ -55,46 +55,54 @@ public class DefaultResourceHandler implements JaxRestService, Adaptable {
 
 	private String basePath = "";
 
-	
 	@Activate
 	public void activate(Map<String, Object> properties) {
 		modified(properties);
 	}
-	
+
 	@Deactivate
 	public void deactivate(Map<String, Object> properties) {
-		
+
 	}
-	
+
 	@Modified
 	public void modified(Map<String, Object> properties) {
 		basePath = (String) properties.get(MAPPED_ROOT_PATH);
-		if ( basePath == null ) {
+		if (basePath == null) {
 			basePath = DEFAULT_MAPPED_ROOT_PATH;
 		}
 	}
 
-	
 	@Path("/{resource:.*}")
-	public Adaptable getResource(@Context HttpServletRequest request, @Context HttpServletResponse response,
+	public Adaptable getResource(@Context HttpServletRequest request,
+			@Context HttpServletResponse response,
 			@PathParam("resource") String path) throws StorageClientException,
 			AccessDeniedException {
-		LOGGER.debug("Got Request at {} ",request.getRequestURI());
+		boolean debug = LOGGER.isDebugEnabled();
+		if (debug) {
+			LOGGER.debug("Got Request at {} ", request.getRequestURI());
+		}
 		path = basePath + path;
 		Session session = sessionTracker.get(request);
 		if (session == null) {
-			
-			session = sessionTracker.register(authenticationService.authenticate(request), request);
+
+			session = sessionTracker.register(
+					authenticationService.authenticate(request), request);
 		}
 		ContentManager contentManager = session.getContentManager();
-		
+
 		// start with the full path, and shorten it, first by . then by /
 		Content content = contentManager.get(path);
 		if (content != null) {
-			LOGGER.debug("Got {} at [{}] ",content,path);
-			return getResponse(request, response, session, content, path, path, path);
+			if (debug) {
+				LOGGER.debug("Got {} at [{}] ", content, path);
+			}
+			return getResponse(request, response, session, content, path, path,
+					path);
 		}
-		LOGGER.debug("Nothing at [{}] ",path);
+		if (debug) {
+			LOGGER.debug("Nothing at [{}] ", path);
+		}
 		char[] pathChars = path.toCharArray();
 		String toCreatePath = path;
 		boolean inname = true;
@@ -106,10 +114,16 @@ public class DefaultResourceHandler implements JaxRestService, Adaptable {
 					toCreatePath = path.substring(0, i);
 					content = contentManager.get(toCreatePath);
 					if (content != null) {
-						LOGGER.debug("Getting response for {} {} ",path, toCreatePath);
-						return getResponse(request, response, session, content, toCreatePath, path, toCreatePath);
+						if (debug) {
+							LOGGER.debug("Getting response for {} {} ", path,
+									toCreatePath);
+						}
+						return getResponse(request, response, session, content,
+								toCreatePath, path, toCreatePath);
 					}
-					LOGGER.debug("Nothing at [{}] ",toCreatePath);
+					if (debug) {
+						LOGGER.debug("Nothing at [{}] ", toCreatePath);
+					}
 				}
 				break;
 			case '/':
@@ -117,30 +131,44 @@ public class DefaultResourceHandler implements JaxRestService, Adaptable {
 				String testpath = path.substring(0, i);
 				content = contentManager.get(testpath);
 				if (content != null) {
-					return getResponse(request, response, session, content, testpath,
-							path, toCreatePath);
+					return getResponse(request, response, session, content,
+							testpath, path, toCreatePath);
 				}
-				LOGGER.debug("Nothing at [{}] ",testpath);
+				if (debug) {
+					LOGGER.debug("Nothing at [{}] ", testpath);
+				}
 				break;
 			}
 		}
-		LOGGER.debug("Not Found [{}] ",path);
-		return getResponse(request, response, session, null, path, path, toCreatePath);
+		if (debug) {
+			LOGGER.debug("Not Found [{}] ", path);
+		}
+		return getResponse(request, response, session, null, path, path,
+				toCreatePath);
 	}
 
-	private Adaptable getResponse(HttpServletRequest request, HttpServletResponse response, Session session,
-			Content content, String resolvedPath, String requestPath, String toCreatePath) {
-		Resource resource = new ResourceImpl(this,request, response, session, content, resolvedPath, requestPath, toCreatePath);
-		LOGGER.debug("Processing Resource {} ",resource);
-		Adaptable aresponse = resourceFactory.createResponse(resource);
-		if ( response instanceof SafeMethodResponse && 
-				!SafeMethodResponse.COMPATABLE_METHODS.contains(request.getMethod()) ) {
-			LOGGER.warn(" Response {} is not suitable for {} methods ", response, request.getMethod());
+	private Adaptable getResponse(HttpServletRequest request,
+			HttpServletResponse response, Session session, Content content,
+			String resolvedPath, String requestPath, String toCreatePath) {
+		Resource resource = new ResourceImpl(this, request, response, session,
+				content, resolvedPath, requestPath, toCreatePath);
+		boolean debug = LOGGER.isDebugEnabled();
+		if (debug) {
+			LOGGER.debug("Processing Resource {} ", resource);
 		}
-		LOGGER.debug("Mapped to Response {} ",aresponse);
+		Adaptable aresponse = resourceFactory.createResponse(resource);
+		if (response instanceof SafeMethodResponse
+				&& !SafeMethodResponse.COMPATABLE_METHODS.contains(request
+						.getMethod())) {
+			LOGGER.warn(" Response {} is not suitable for {} methods ",
+					response, request.getMethod());
+		}
+		if (debug) {
+			LOGGER.debug("Mapped to Response {} ", aresponse);
+		}
 		return aresponse;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public <T> T adaptTo(Class<T> type) {
 		if (ResponseFactoryManager.class.equals(type)) {
