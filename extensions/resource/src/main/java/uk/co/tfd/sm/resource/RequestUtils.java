@@ -135,4 +135,16 @@ public class RequestUtils {
 		return null;
 	}
 
+	/**
+	 * @param name the property name
+	 * @return the name of the file taking into account any alternative name
+	 */
+	public static String getFileName(String name) {
+		String[] parts = StringUtils.split(name, "@", 2);
+		if (parts != null && parts.length > 1) {
+			return parts[0];
+		}
+		return name;
+	}
+
 }

@@ -3,6 +3,7 @@ package uk.co.tfd.sm.resource;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Calendar;
 import java.util.List;
 
 import javax.ws.rs.core.Response;
@@ -62,6 +63,7 @@ public class ResponseUtils {
 			}
 		}
 		gb.registerTypeHierarchyAdapter(Content.class, new ContentTypeAdapter(recursion));
+		gb.registerTypeHierarchyAdapter(Calendar.class, new CalenderTypeAdapter());
 		Gson gson = gb.create();
 		output.write(gson.toJson(content).getBytes("UTF-8"));
 	}

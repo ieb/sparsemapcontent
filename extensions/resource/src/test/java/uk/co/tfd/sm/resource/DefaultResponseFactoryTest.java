@@ -74,6 +74,8 @@ public class DefaultResponseFactoryTest {
 		Mockito.when(adaptable.adaptTo(Resource.class)).thenReturn(resource);
 		Mockito.when(adaptable.adaptTo(Session.class)).thenReturn(session);
 		Mockito.when(adaptable.adaptTo(Content.class)).thenReturn(content);
+		Mockito.when(content.getPath()).thenReturn("/test/path");
+		Mockito.when(resource.getToCreatePath()).thenReturn("/test/path");
 		Mockito.when(adaptable.adaptTo(Date.class)).thenReturn(new Date());
 		Mockito.when(resource.getRequestExt()).thenReturn(null);
 		Mockito.when(session.getContentManager()).thenReturn(contentManager);
@@ -103,6 +105,8 @@ public class DefaultResponseFactoryTest {
 		Mockito.when(adaptable.adaptTo(Resource.class)).thenReturn(resource);
 		Mockito.when(adaptable.adaptTo(Session.class)).thenReturn(session);
 		Mockito.when(adaptable.adaptTo(Content.class)).thenReturn(content);
+		Mockito.when(content.getPath()).thenReturn("/test/path");
+		Mockito.when(resource.getToCreatePath()).thenReturn("/test/path");
 		Mockito.when(adaptable.adaptTo(Date.class)).thenReturn(new Date());
 		Mockito.when(resource.getRequestExt()).thenReturn("json");
 		Mockito.when(session.getContentManager()).thenReturn(contentManager);
@@ -127,6 +131,9 @@ public class DefaultResponseFactoryTest {
 		Mockito.when(adaptable.adaptTo(Resource.class)).thenReturn(resource);
 		Mockito.when(adaptable.adaptTo(Session.class)).thenReturn(session);
 		Mockito.when(adaptable.adaptTo(Content.class)).thenReturn(content);
+		Mockito.when(content.getPath()).thenReturn("/test/path");
+		Mockito.when(resource.getToCreatePath()).thenReturn("/test/path");
+
 		Mockito.when(adaptable.adaptTo(Date.class)).thenReturn(new Date());
 		Mockito.when(resource.getRequestExt()).thenReturn("xml");
 		Mockito.when(session.getContentManager()).thenReturn(contentManager);
@@ -146,6 +153,8 @@ public class DefaultResponseFactoryTest {
 		Mockito.when(adaptable.adaptTo(Resource.class)).thenReturn(resource);
 		Mockito.when(adaptable.adaptTo(Session.class)).thenReturn(session);
 		Mockito.when(adaptable.adaptTo(Content.class)).thenReturn(content);
+		Mockito.when(content.getPath()).thenReturn("/test/path");
+		Mockito.when(resource.getToCreatePath()).thenReturn("/test/path");
 		Mockito.when(adaptable.adaptTo(Date.class)).thenReturn(new Date());
 		Mockito.when(resource.getRequestExt()).thenReturn("invalid");
 		Mockito.when(session.getContentManager()).thenReturn(contentManager);
@@ -164,6 +173,8 @@ public class DefaultResponseFactoryTest {
 		Mockito.when(adaptable.adaptTo(Resource.class)).thenReturn(resource);
 		Mockito.when(adaptable.adaptTo(Session.class)).thenReturn(session);
 		Mockito.when(adaptable.adaptTo(Content.class)).thenReturn(content);
+		Mockito.when(content.getPath()).thenReturn("/test/path");
+		Mockito.when(resource.getToCreatePath()).thenReturn("/test/path");
 		Mockito.when(adaptable.adaptTo(Date.class)).thenReturn(new Date());
 		Mockito.when(resource.getRequestExt()).thenReturn(null);
 		Mockito.when(session.getContentManager()).thenReturn(contentManager);
@@ -183,6 +194,8 @@ public class DefaultResponseFactoryTest {
 		Mockito.when(adaptable.adaptTo(Resource.class)).thenReturn(resource);
 		Mockito.when(adaptable.adaptTo(Session.class)).thenReturn(session);
 		Mockito.when(adaptable.adaptTo(Content.class)).thenReturn(content);
+		Mockito.when(content.getPath()).thenReturn("/test/path");
+		Mockito.when(resource.getToCreatePath()).thenReturn("/test/path");
 		Mockito.when(adaptable.adaptTo(Date.class)).thenReturn(new Date());
 		Mockito.when(resource.getRequestExt()).thenReturn(null);
 		Mockito.when(session.getContentManager()).thenReturn(contentManager);

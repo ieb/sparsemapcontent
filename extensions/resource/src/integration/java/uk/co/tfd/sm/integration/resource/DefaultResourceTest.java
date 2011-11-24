@@ -1,8 +1,9 @@
 package uk.co.tfd.sm.integration.resource;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
+import java.nio.charset.Charset;
+import java.util.Random;
+import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -10,38 +11,40 @@ import org.apache.http.auth.AuthenticationException;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.ByteArrayBody;
+import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import uk.co.tfd.sm.integration.HttpTestUtils;
 import uk.co.tfd.sm.integration.IntegrationServer;
+import uk.co.tfd.sm.integration.JsonTestUtils;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 public class DefaultResourceTest {
 
-	private static final Logger LOGGER = LoggerFactory
-			.getLogger(DefaultResourceTest.class);
-	private DefaultHttpClient defaultHttpClient;
+	private static final String ADMIN_USER = "admin";
+	private static final String ADMIN_PASSWORD = "admin";
+	private static final String APPLICATION_JSON = "application/json";
+	private static final Charset UTF8 = Charset.forName("UTF-8");
+	private Random random;
+	private HttpTestUtils httpTestUtils = new HttpTestUtils();
+
+	public DefaultResourceTest() throws IOException {
+		IntegrationServer.start();
+	}
 
 	@Before
 	public void before() throws IOException {
-		IntegrationServer.start();
-		defaultHttpClient = new DefaultHttpClient();
-
+		random = new Random(0xDEADBEEF);
 	}
 
 	@Test
@@ -55,14 +58,12 @@ public class DefaultResourceTest {
 				Lists.newArrayList(new BasicNameValuePair("testproperty",
 						"testvalue")));
 		post.setEntity(form);
-		HttpResponse response = defaultHttpClient.execute(post);
-		String jsonBody = IOUtils.toString(response.getEntity().getContent());
-		LOGGER.info("Got {} ", jsonBody);
-		Assert.assertEquals(403, response.getStatusLine().getStatusCode());
+
+		httpTestUtils.execute(post, 403, null);
 
 		post = new HttpPost(resourceUrl);
 		UsernamePasswordCredentials creds = new UsernamePasswordCredentials(
-				"admin", "admin");
+				ADMIN_USER, ADMIN_USER);
 		post.addHeader(new BasicScheme().authenticate(creds, post));
 		form = new UrlEncodedFormEntity(Lists.newArrayList(
 				new BasicNameValuePair("testproperty", "testvalue1"),
@@ -70,45 +71,153 @@ public class DefaultResourceTest {
 				new BasicNameValuePair("testproperty", "testvalue3"),
 				new BasicNameValuePair("testproperty", "testvalue4"),
 				new BasicNameValuePair("testproperty", "testvalue5"),
-				new BasicNameValuePair("testint[]@Integer", "1001")
-				));
+				new BasicNameValuePair("testint[]@Integer", "1001")));
 		post.setEntity(form);
-		response = defaultHttpClient.execute(post);
-		jsonBody = IOUtils.toString(response.getEntity().getContent());
-		LOGGER.info("Got {} ", jsonBody);
-		Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-		HttpGet get = new HttpGet(resourceUrl + ".pp.json");
-		response = defaultHttpClient.execute(get);
-		Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-		Assert.assertEquals("application/json",
-				response.getHeaders("Content-Type")[0].getValue());
-		jsonBody = IOUtils.toString(response.getEntity().getContent());
-		LOGGER.info("Got {} ", jsonBody);
-		JsonParser parser = new JsonParser();
-		JsonObject json = parser.parse(jsonBody).getAsJsonObject();
-		JsonElement testProp = json.get("testproperty");
-		Assert.assertNotNull(testProp);
-		JsonArray properties = testProp.getAsJsonArray();
-		List<String> l = Lists.newArrayList();
-		for ( Iterator<JsonElement> ie = properties.iterator(); ie.hasNext(); ) {
-			l.add(ie.next().getAsString());
-		}
-		Assert.assertArrayEquals(new String[] { "testvalue1", "testvalue2",
-				"testvalue3", "testvalue4", "testvalue5" },
-				l.toArray(new String[l.size()]));
-		
-		testProp = json.get("testint");
-		Assert.assertNotNull(testProp);
-		Assert.assertTrue(testProp.isJsonArray());
-		properties = testProp.getAsJsonArray();
-		Assert.assertEquals(1, properties.size());
-		Assert.assertEquals(1001, properties.get(0).getAsInt());
-		
+		httpTestUtils.execute(post, 200, APPLICATION_JSON);
 
-		testProp = json.get("_path");
-		Assert.assertNotNull(testProp);
-		Assert.assertEquals(resource, testProp.getAsString());
+		JsonObject json = JsonTestUtils.toJsonObject(httpTestUtils.get(
+				resourceUrl + ".pp.json", 200, APPLICATION_JSON));
+
+		JsonTestUtils.checkProperty(json, "testproperty", new String[] {
+				"testvalue1", "testvalue2", "testvalue3", "testvalue4",
+				"testvalue5" });
+
+		JsonTestUtils.checkProperty(json, "testint", new int[] { 1001 });
+
+		JsonTestUtils.checkProperty(json, "_path", resource);
+	}
+
+	@Test
+	public void testBooleanType() throws AuthenticationException, ClientProtocolException, IOException {
+		String resource = "/" + this.getClass().getName() + "/testBooleanType"
+		+ System.currentTimeMillis();
+		String resourceUrl = IntegrationServer.BASEURL + resource;
+		HttpPost post = new HttpPost(resourceUrl);
+		UsernamePasswordCredentials creds = new UsernamePasswordCredentials(
+				ADMIN_USER, ADMIN_USER);
+		post.addHeader(new BasicScheme().authenticate(creds, post));
+		UrlEncodedFormEntity form = new UrlEncodedFormEntity(Lists.newArrayList(
+				new BasicNameValuePair("testsingle@Boolean", "true"),
+				new BasicNameValuePair("testproperty@Boolean", "true"),
+				new BasicNameValuePair("testproperty@Boolean", "false"),
+				new BasicNameValuePair("testproperty@Boolean", "true"),
+				new BasicNameValuePair("testproperty@Boolean", "true"),
+				new BasicNameValuePair("testarray[]@Boolean", "true")));
+		post.setEntity(form);
+
+		httpTestUtils.execute(post, 200, APPLICATION_JSON);
+
+		JsonObject json = JsonTestUtils.toJsonObject(httpTestUtils.get(
+				resourceUrl + ".pp.json", 200, APPLICATION_JSON));
+
+		JsonTestUtils.checkProperty(json, "testproperty", new Boolean[] {
+				true, false, true,
+				true });
+
+		JsonTestUtils.checkProperty(json, "testarray", new Boolean[] { true });
+
+		JsonTestUtils.checkProperty(json, "testsingle", true );
+
+		JsonTestUtils.checkProperty(json, "_path", resource);		
+	}
+
+	@Test
+	public void testCalendarType() throws AuthenticationException, ClientProtocolException, IOException {
+		String resource = "/" + this.getClass().getName() + "/testCalendarType"
+		+ System.currentTimeMillis();
+		String resourceUrl = IntegrationServer.BASEURL + resource;
+		HttpPost post = new HttpPost(resourceUrl);
+		UsernamePasswordCredentials creds = new UsernamePasswordCredentials(
+				ADMIN_USER, ADMIN_USER);
+		post.addHeader(new BasicScheme().authenticate(creds, post));
+		UrlEncodedFormEntity form = new UrlEncodedFormEntity(Lists.newArrayList(
+				new BasicNameValuePair("testsingle@Calendar", "2011-01-30"),
+				new BasicNameValuePair("testproperty@Calendar", "2011-02-20"),
+				new BasicNameValuePair("testproperty@Calendar", "2011-03-21"),
+				new BasicNameValuePair("testproperty@Calendar", "2011-03-22"),
+				new BasicNameValuePair("testproperty@Calendar", "2011-04-23T11:23:13+11:30"),
+				new BasicNameValuePair("testarray[]@Calendar", "2011-06-30T09:12:01Z")));
+		post.setEntity(form);
+
+		httpTestUtils.execute(post, 200, APPLICATION_JSON);
+
+		JsonObject json = JsonTestUtils.toJsonObject(httpTestUtils.get(
+				resourceUrl + ".pp.json", 200, APPLICATION_JSON));
+
+		JsonTestUtils.checkProperty(json, "testproperty", new String[] {
+				"2011-02-20", "2011-03-21", "2011-03-22", "2011-04-23T11:23:13+11:30" });
+
+		JsonTestUtils.checkProperty(json, "testarray", new String[] { "2011-06-30T09:12:01Z" });
+
+		JsonTestUtils.checkProperty(json, "testsingle", "2011-01-30" );
+
+		JsonTestUtils.checkProperty(json, "_path", resource);		
+	}
+
+	@Test
+	public void testUpload() throws ClientProtocolException, IOException,
+			AuthenticationException {
+		String resource = "/" + this.getClass().getName() + "/testUpload"
+				+ System.currentTimeMillis();
+		String resourceUrl = IntegrationServer.BASEURL + resource;
+		HttpPost post = new HttpPost(resourceUrl);
+		MultipartEntity multipartEntity = new MultipartEntity();
+		multipartEntity
+				.addPart("title", new StringBody("TestUploadFail", UTF8));
+		multipartEntity.addPart("desc", new StringBody("TestUploadFail", UTF8));
+		byte[] b = new byte[10240];
+		random.nextBytes(b);
+		ByteArrayBody bab = new ByteArrayBody(b, "testUpload.bin", "test/bin");
+		multipartEntity.addPart("fileX", bab);
+
+		post.setEntity(multipartEntity);
+
+		httpTestUtils.execute(post, 403, null);
+
+		// do it again and authenticate
+		post = new HttpPost(resourceUrl);
+		multipartEntity = new MultipartEntity();
+		multipartEntity.addPart("title", new StringBody("TestUploadPassTitle",
+				UTF8));
+		multipartEntity.addPart("desc", new StringBody("TestUploadPass", UTF8));
+		bab = new ByteArrayBody(b, "testUpload.bin", "test/bin");
+		multipartEntity.addPart("fileA", bab);
+
+		UsernamePasswordCredentials creds = new UsernamePasswordCredentials(
+				ADMIN_USER, ADMIN_PASSWORD);
+		post.addHeader(new BasicScheme().authenticate(creds, post));
+		post.setEntity(multipartEntity);
+
+		JsonElement jsonElement = httpTestUtils.execute(post, 200,
+				APPLICATION_JSON);
+		Set<String> responseSet = JsonTestUtils.toResponseSet(jsonElement);
+
+		Assert.assertTrue(responseSet.contains("Multipart Upload"));
+		Assert.assertTrue(responseSet.contains("Added title"));
+		Assert.assertTrue(responseSet.contains("Added desc"));
+		Assert.assertTrue(responseSet.contains("Saved Stream fileA"));
+
+		HttpResponse response = httpTestUtils.get(resourceUrl + "/fileA");
+		Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+		byte[] responseBody = IOUtils.toByteArray(response.getEntity()
+				.getContent());
+		Assert.assertArrayEquals(b, responseBody);
+
+		// subpaths that dont exist should give 404 on GET
+		httpTestUtils.get(resourceUrl + "/fileA/subpath.pp.json", 404, null);
+
+		JsonObject fileProperties = JsonTestUtils.toJsonObject(httpTestUtils
+				.get(resourceUrl + "/fileA.pp.json", 200, APPLICATION_JSON));
+
+		// we should get the object we asked for
+		JsonTestUtils.checkProperty(fileProperties, "_path", resource
+				+ "/fileA");
+
+		JsonTestUtils.checkProperty(fileProperties, "desc", "TestUploadPass");
+		JsonTestUtils.checkProperty(fileProperties, "title",
+				"TestUploadPassTitle");
+
 	}
 
 }

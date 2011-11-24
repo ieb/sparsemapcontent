@@ -27,6 +27,7 @@ import org.apache.commons.fileupload.util.Streams;
 import org.apache.commons.io.IOUtils;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
@@ -60,6 +61,12 @@ public class DefaultResponse implements Adaptable {
 				return ResponseUtils.getResponse(
 						HttpServletResponse.SC_NOT_FOUND, "Not Found");
 			}
+			if ( !content.getPath().equals(resource.getToCreatePath()) ) {
+				// ie the Content item does not exist.
+				return ResponseUtils.getResponse(
+						HttpServletResponse.SC_NOT_FOUND, "Not Found "+content.getPath()+" is not "+resource.getToCreatePath());				
+			}
+			LOGGER.info("Get found Resource:[{}] Content:[{}]",resource,content);
 			if (requestExt == null || requestExt.isEmpty()) {
 				Session session = adaptTo(Session.class);
 				final ContentManager contentManager = session
@@ -119,13 +126,8 @@ public class DefaultResponse implements Adaptable {
 		try {
 			ContentManager contentManager = session.getContentManager();
 			String contentPath = resource.getToCreatePath();
-			Content content = contentManager.get(contentPath);
-			if (content == null) {
-				LOGGER.info("Created New Content {} ",contentPath);
-				content = new Content(contentPath, null);
-			} else {
-				LOGGER.info("Content Existed at {} ",content);
-			}
+			Map<String, Content> toSave = Maps.newHashMap();
+			Content content = getOrCreateContent(contentManager, contentPath, toSave);
 			Set<String> toRemove = Sets.newHashSet();
 			Map<String, Object> toAdd = Maps.newHashMap();
 			final List<String> feedback = Lists.newArrayList();
@@ -154,11 +156,21 @@ public class DefaultResponse implements Adaptable {
 					} else {
 						String alternativeStreamName = RequestUtils
 								.getStreamName(name);
+						String fileName = RequestUtils.getFileName(name);
+						String path = content.getPath();
+						if ( fileName != null ) {
+							path = StorageClientUtils.newPath(path, fileName);
+							Content childContent = getOrCreateContent(contentManager, path, toSave);
+							applyProperties(childContent, toRemove, toAdd);
+						} else {
+							// all properties to this point in a stream get saved to the upload object.
+							applyProperties(content, toRemove, toAdd);
+						}
 						if (alternativeStreamName == null) {
-							contentManager.writeBody(content.getPath(), stream);
+							contentManager.writeBody(path, stream);
 							feedback.add("Saved Stream " + name);
 						} else {
-							contentManager.writeBody(content.getPath(), stream,
+							contentManager.writeBody(path, stream,
 									alternativeStreamName);
 							feedback.add("Saved Stream " + name);
 						}
@@ -190,16 +202,12 @@ public class DefaultResponse implements Adaptable {
 				}
 			}
 
-			for (String k : toRemove) {
-				content.removeProperty(k);
-			}
+			applyProperties(content, toRemove, toAdd);
 
-			for (Entry<String, Object> e : toAdd.entrySet()) {
-				content.setProperty(e.getKey(), e.getValue());
+			for ( Content c : toSave.values()) {
+				contentManager.update(c);
+				LOGGER.info("Updated {} ",c);
 			}
-
-			LOGGER.info("Updating {} ",content);
-			contentManager.update(content);
 			return Response
 					.ok(new StreamingOutput() {
 						@Override
@@ -216,6 +224,7 @@ public class DefaultResponse implements Adaptable {
 					e.getMessage());
 
 		} catch (AccessDeniedException e) {
+			LOGGER.info("Denied "+e.getMessage());
 			LOGGER.debug(e.getMessage(),e);
 			return ResponseUtils.getResponse(HttpServletResponse.SC_FORBIDDEN,
 					e.getMessage());
@@ -224,6 +233,36 @@ public class DefaultResponse implements Adaptable {
 			throw new IOException(e);
 		}
 
+	}
+
+	private void applyProperties(Content content, Set<String> toRemove,
+			Map<String, Object> toAdd) {
+		for (String k : toRemove) {
+			content.removeProperty(k);
+		}
+
+		for (Entry<String, Object> e : toAdd.entrySet()) {
+			content.setProperty(e.getKey(), e.getValue());
+		}
+		toRemove.clear();
+		toAdd.clear();
+		
+	}
+
+	private Content getOrCreateContent(ContentManager contentManager,
+			String contentPath, Map<String, Content> toSave) throws StorageClientException, AccessDeniedException {
+		Content content = toSave.get(contentPath);
+		if ( content == null ) {
+			content = contentManager.get(contentPath);
+			if (content == null) {
+				LOGGER.info("Created A New Unsaved Content object {} ",contentPath);
+				content = new Content(contentPath, null);
+			} else {
+				LOGGER.info("Content Existed at {} ",content);
+			}
+			toSave.put(contentPath, content);
+		}
+		return content;
 	}
 
 	private void accumulate(Map<String, Object> toAdd, String propertyName,
