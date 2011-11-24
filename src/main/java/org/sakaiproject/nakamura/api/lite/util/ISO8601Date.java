@@ -170,4 +170,8 @@ public class ISO8601Date extends GregorianCalendar {
     public void setDate(boolean b) {
         date = b;
     }
+
+    public boolean isDate() {
+        return date;
+    }
 }
