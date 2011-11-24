@@ -41,7 +41,9 @@ public class Types {
         new CalendarArrayType(),
         new RemovePropertyType(),
         new LongStringArrayType(),
-        new LongStringType()
+        new LongStringType(),
+        new BigIntegerType(),
+        new BigIntegerArrayType()
     };
     private static final Type<String> UNKNOWN_TYPE = new StringType();
     private static final Logger LOGGER = LoggerFactory.getLogger(Types.class);
