@@ -33,7 +33,7 @@ public class DefaultResourceTest {
 
 	private static final String ADMIN_USER = "admin";
 	private static final String ADMIN_PASSWORD = "admin";
-	private static final String APPLICATION_JSON = "application/json";
+	private static final String APPLICATION_JSON = "application/json; charset=utf-8";
 	private static final Charset UTF8 = Charset.forName("UTF-8");
 	private Random random;
 	private HttpTestUtils httpTestUtils = new HttpTestUtils();
@@ -63,7 +63,7 @@ public class DefaultResourceTest {
 
 		post = new HttpPost(resourceUrl);
 		UsernamePasswordCredentials creds = new UsernamePasswordCredentials(
-				ADMIN_USER, ADMIN_USER);
+				ADMIN_USER, ADMIN_PASSWORD);
 		post.addHeader(new BasicScheme().authenticate(creds, post));
 		form = new UrlEncodedFormEntity(Lists.newArrayList(
 				new BasicNameValuePair("testproperty", "testvalue1"),
@@ -88,72 +88,6 @@ public class DefaultResourceTest {
 		JsonTestUtils.checkProperty(json, "_path", resource);
 	}
 
-	@Test
-	public void testBooleanType() throws AuthenticationException, ClientProtocolException, IOException {
-		String resource = "/" + this.getClass().getName() + "/testBooleanType"
-		+ System.currentTimeMillis();
-		String resourceUrl = IntegrationServer.BASEURL + resource;
-		HttpPost post = new HttpPost(resourceUrl);
-		UsernamePasswordCredentials creds = new UsernamePasswordCredentials(
-				ADMIN_USER, ADMIN_USER);
-		post.addHeader(new BasicScheme().authenticate(creds, post));
-		UrlEncodedFormEntity form = new UrlEncodedFormEntity(Lists.newArrayList(
-				new BasicNameValuePair("testsingle@Boolean", "true"),
-				new BasicNameValuePair("testproperty@Boolean", "true"),
-				new BasicNameValuePair("testproperty@Boolean", "false"),
-				new BasicNameValuePair("testproperty@Boolean", "true"),
-				new BasicNameValuePair("testproperty@Boolean", "true"),
-				new BasicNameValuePair("testarray[]@Boolean", "true")));
-		post.setEntity(form);
-
-		httpTestUtils.execute(post, 200, APPLICATION_JSON);
-
-		JsonObject json = JsonTestUtils.toJsonObject(httpTestUtils.get(
-				resourceUrl + ".pp.json", 200, APPLICATION_JSON));
-
-		JsonTestUtils.checkProperty(json, "testproperty", new Boolean[] {
-				true, false, true,
-				true });
-
-		JsonTestUtils.checkProperty(json, "testarray", new Boolean[] { true });
-
-		JsonTestUtils.checkProperty(json, "testsingle", true );
-
-		JsonTestUtils.checkProperty(json, "_path", resource);		
-	}
-
-	@Test
-	public void testCalendarType() throws AuthenticationException, ClientProtocolException, IOException {
-		String resource = "/" + this.getClass().getName() + "/testCalendarType"
-		+ System.currentTimeMillis();
-		String resourceUrl = IntegrationServer.BASEURL + resource;
-		HttpPost post = new HttpPost(resourceUrl);
-		UsernamePasswordCredentials creds = new UsernamePasswordCredentials(
-				ADMIN_USER, ADMIN_USER);
-		post.addHeader(new BasicScheme().authenticate(creds, post));
-		UrlEncodedFormEntity form = new UrlEncodedFormEntity(Lists.newArrayList(
-				new BasicNameValuePair("testsingle@Calendar", "2011-01-30"),
-				new BasicNameValuePair("testproperty@Calendar", "2011-02-20"),
-				new BasicNameValuePair("testproperty@Calendar", "2011-03-21"),
-				new BasicNameValuePair("testproperty@Calendar", "2011-03-22"),
-				new BasicNameValuePair("testproperty@Calendar", "2011-04-23T11:23:13+11:30"),
-				new BasicNameValuePair("testarray[]@Calendar", "2011-06-30T09:12:01Z")));
-		post.setEntity(form);
-
-		httpTestUtils.execute(post, 200, APPLICATION_JSON);
-
-		JsonObject json = JsonTestUtils.toJsonObject(httpTestUtils.get(
-				resourceUrl + ".pp.json", 200, APPLICATION_JSON));
-
-		JsonTestUtils.checkProperty(json, "testproperty", new String[] {
-				"2011-02-20", "2011-03-21", "2011-03-22", "2011-04-23T11:23:13+11:30" });
-
-		JsonTestUtils.checkProperty(json, "testarray", new String[] { "2011-06-30T09:12:01Z" });
-
-		JsonTestUtils.checkProperty(json, "testsingle", "2011-01-30" );
-
-		JsonTestUtils.checkProperty(json, "_path", resource);		
-	}
 
 	@Test
 	public void testUpload() throws ClientProtocolException, IOException,

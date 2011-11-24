@@ -47,6 +47,52 @@ public class JsonTestUtils {
 			Assert.assertEquals(values[i], jsonArray.get(i).getAsString());
 		}
 	}
+	public static void checkProperty(JsonObject json, String propertyName,
+			Double[] values) {
+		JsonArray jsonArray = toJsonArray(json.get(propertyName));
+		Assert.assertEquals(values.length, jsonArray.size());
+		for ( int i = 0; i < values.length; i++ ) {
+			Assert.assertEquals((Double)values[i], (Double)jsonArray.get(i).getAsDouble());
+		}
+	}
+	public static void checkProperty(JsonObject json, String propertyName,
+			double propertyValue) {
+		JsonElement testProp = json.get(propertyName);
+		Assert.assertNotNull(testProp);
+		Assert.assertEquals((Double)propertyValue, (Double)testProp.getAsDouble());
+	}
+	
+	public static void checkProperty(JsonObject json, String propertyName,
+			Integer[] values) {
+		JsonArray jsonArray = toJsonArray(json.get(propertyName));
+		Assert.assertEquals(values.length, jsonArray.size());
+		for ( int i = 0; i < values.length; i++ ) {
+			Assert.assertEquals(values[i], (Integer)jsonArray.get(i).getAsInt());
+		}
+	}
+
+	public static void checkProperty(JsonObject json, String propertyName,
+			Integer propertyValue) {
+		JsonElement testProp = json.get(propertyName);
+		Assert.assertNotNull(testProp);
+		Assert.assertEquals((Integer)propertyValue, (Integer)testProp.getAsInt());
+	}
+
+	public static void checkProperty(JsonObject json, String propertyName,
+			Long[] values) {
+		JsonArray jsonArray = toJsonArray(json.get(propertyName));
+		Assert.assertEquals(values.length, jsonArray.size());
+		for ( int i = 0; i < values.length; i++ ) {
+			Assert.assertEquals(values[i], (Long)jsonArray.get(i).getAsLong());
+		}
+	}
+
+	public static void checkProperty(JsonObject json, String propertyName,
+			Long propertyValue) {
+		JsonElement testProp = json.get(propertyName);
+		Assert.assertNotNull(testProp);
+		Assert.assertEquals((Long)propertyValue, (Long)testProp.getAsLong());
+	}
 
 	public static Set<String> toResponseSet(JsonElement jsonElement) {
 		Set<String> result = Sets.newHashSet();

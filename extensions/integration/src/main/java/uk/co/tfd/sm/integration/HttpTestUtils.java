@@ -27,6 +27,11 @@ public class HttpTestUtils {
 
 	public JsonElement execute(HttpUriRequest post, int code,
 			String contentType) throws ClientProtocolException, IOException {
+		 return execute(post, code, contentType, false);
+	}
+
+	public JsonElement execute(HttpUriRequest post, int code,
+			String contentType, boolean echo) throws ClientProtocolException, IOException {
 		HttpResponse response = defaultHttpClient.execute(post);
 		Assert.assertEquals(code, response.getStatusLine().getStatusCode());
 		if (code >= 200 && code < 300) {
@@ -34,7 +39,9 @@ public class HttpTestUtils {
 					response.getHeaders("Content-Type")[0].getValue());
 			String jsonBody = IOUtils.toString(response.getEntity()
 					.getContent());
-			LOGGER.info("Got {} ", jsonBody);
+			if ( echo ) {
+				LOGGER.info("Got {} ", jsonBody);
+			}
 			JsonParser parser = new JsonParser();
 			return parser.parse(jsonBody);
 		}
@@ -46,6 +53,11 @@ public class HttpTestUtils {
 	public JsonElement get(String uri, int code,
 			String contentType) throws ClientProtocolException, IOException {
 		return execute(new HttpGet(uri), code, contentType);
+	}
+
+	public JsonElement get(String uri, int code,
+			String contentType, boolean echo) throws ClientProtocolException, IOException {
+		return execute(new HttpGet(uri), code, contentType, echo );
 	}
 
 	public HttpResponse execute(HttpUriRequest request) throws ClientProtocolException, IOException {
