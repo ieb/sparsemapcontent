@@ -130,6 +130,29 @@ public class ISO8601Date extends GregorianCalendar {
     	}
         return super.compareTo(anotherCalendar);
     }
+    
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if ( obj instanceof ISO8601Date ) {
+            ISO8601Date d = (ISO8601Date) obj;
+            if ( date && d.date ) {
+                return get(YEAR) == d.get(YEAR) && get(DAY_OF_YEAR) == d.get(DAY_OF_YEAR);
+            } else if (date != d.date ) {
+                return false;
+            } else {
+                return super.equals(obj);
+            }
+        }
+        if ( date ) {
+            return false;
+        }
+        return super.equals(obj);
+    }
 
     @Override
     public String toString() {
