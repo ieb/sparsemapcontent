@@ -22,13 +22,32 @@ import java.util.Map;
 public class CacheHolder {
 
     private Map<String, Object> o;
+    private long locker;
+    private long ttl;
 
     public CacheHolder(Map<String, Object> o) {
         this.o = o;
+        this.ttl = System.currentTimeMillis()+10000L;
+        this.locker = -1;
+    }
+    public CacheHolder(Map<String, Object> o, long locker) {
+        this.o = o;
+        this.ttl = System.currentTimeMillis()+10000L;
+        this.locker = locker;        
     }
 
     public Map<String, Object> get() {
         return o;
+    }
+
+    public boolean isLocked(long managerId) {
+        if ( locker == -1 || managerId == locker ) {
+            return false;
+        }
+        return (System.currentTimeMillis() < ttl);
+    }
+    public boolean wasLockedTo(long managerId) {
+        return (locker == managerId);
     }
 
 }

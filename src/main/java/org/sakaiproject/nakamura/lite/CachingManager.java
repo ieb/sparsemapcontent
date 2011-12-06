@@ -19,11 +19,14 @@ package org.sakaiproject.nakamura.lite;
 
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.lite.storage.Disposable;
+import org.sakaiproject.nakamura.lite.storage.Disposer;
 import org.sakaiproject.nakamura.lite.storage.RowHasher;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.SecureRandom;
 import java.util.Map;
 
 /**
@@ -37,6 +40,8 @@ public abstract class CachingManager implements DirectCacheAccess {
     private int hit;
     private int miss;
     private long calls;
+    private long managerId;
+    private static SecureRandom secureRandom = new SecureRandom(); // need to assume that the secure random will be reasonably quick to start up
 
     /**
      * Create a new {@link CachingManager}
@@ -46,6 +51,13 @@ public abstract class CachingManager implements DirectCacheAccess {
     public CachingManager(StorageClient client, Map<String, CacheHolder> sharedCache) {
         this.client = client;
         this.sharedCache = sharedCache;
+        managerId = getManagerId();
+    }
+
+    private long getManagerId() {
+        // needs to have a low probability of clashing with any other Cache manager in the cluster.
+        // no idea what the probability of a clash is here, although I assume its lowish.
+        return secureRandom.nextLong();
     }
 
     /**
@@ -76,7 +88,7 @@ public abstract class CachingManager implements DirectCacheAccess {
             if (m != null) {
                 LOGGER.debug("Cache Miss, Found Map {} {}", cacheKey, m);
             }
-            putToCacheInternal(cacheKey, new CacheHolder(m));
+            putToCacheInternal(cacheKey, new CacheHolder(m), true);
         }
         calls++;
         if ((calls % 10000) == 0) {
@@ -86,13 +98,24 @@ public abstract class CachingManager implements DirectCacheAccess {
         return m;
     }
     public void putToCache(String cacheKey, CacheHolder cacheHolder) {
+        putToCache(cacheKey, cacheHolder, false);
+    }
+    
+    public void putToCache(String cacheKey, CacheHolder cacheHolder, boolean respectDeletes) {
         if ( client instanceof RowHasher ) {
-            putToCacheInternal(cacheKey, cacheHolder);
+            putToCacheInternal(cacheKey, cacheHolder, respectDeletes);
         }
     }
 
-    private void putToCacheInternal(String cacheKey, CacheHolder cacheHolder) {
+    private void putToCacheInternal(String cacheKey, CacheHolder cacheHolder, boolean respectDeletes) {
         if (sharedCache != null) {
+            if ( respectDeletes ) {
+                CacheHolder ch = sharedCache.get(cacheKey);
+                if ( ch != null && ch.get() == null ) {
+                    // item is deleted, dont update it
+                    return;
+                }
+            }
             sharedCache.put(cacheKey, cacheHolder);
         }
     }
@@ -138,7 +161,30 @@ public abstract class CachingManager implements DirectCacheAccess {
     protected void removeCached(String keySpace, String columnFamily, String key) throws StorageClientException {
         if (sharedCache != null) {
             // insert a replacement. This should cause an invalidation message to propagate in the cluster.
-            putToCacheInternal(getCacheKey(keySpace, columnFamily, key), new CacheHolder(null));
+            final String cacheKey = getCacheKey(keySpace, columnFamily, key);
+            putToCacheInternal(cacheKey, new CacheHolder(null, managerId), false);
+            LOGGER.debug("Marked as deleted in Cache {} ", cacheKey);
+            if ( client instanceof Disposer ) {
+                // we might want to change this to register the action as a commit handler rather than a disposable.
+                // it depends on if we think the delete is a transactional thing or a operational cache thing.
+                // at the moment, I am leaning towards an operational cache thing, since regardless of if 
+                // the session commits or not, we want this to dispose when the session is closed, or commits.
+                ((Disposer)client).registerDisposable(new Disposable() {
+            
+                    @Override
+                    public void setDisposer(Disposer disposer) {
+                    }
+                    
+                    @Override
+                    public void close() {
+                        CacheHolder ch = sharedCache.get(cacheKey);
+                        if ( ch != null && ch.wasLockedTo(managerId)) {
+                            sharedCache.remove(cacheKey);
+                            LOGGER.debug("Removed deleted marker from Cache {} ", cacheKey);
+                        }
+                    }
+                }); 
+            }
         }
         client.remove(keySpace, columnFamily, key);
 
@@ -162,7 +208,8 @@ public abstract class CachingManager implements DirectCacheAccess {
         }
         if ( sharedCache != null && !probablyNew ) {
             CacheHolder ch = getFromCacheInternal(cacheKey);
-            if ( ch != null && ch.get() == null ) {
+            if ( ch != null && ch.isLocked(this.managerId) ) {
+                LOGGER.debug("Is Locked {} ",ch);
                 return; // catch the case where another method creates while something is in the cache.
                 // this is a big assumption since if the item is not in the cache it will get updated
                 // there is no difference in sparsemap between create and update, they are all insert operations
@@ -174,12 +221,20 @@ public abstract class CachingManager implements DirectCacheAccess {
                 // gone, and the marker in the database has gone, so the put operation, must be a create operation.
                 // To change this behavior we would need to differentiate more strongly between new and update and change 
                 // probablyNew into certainlyNew, but that would probably break the BASIC assumption of the whole system.
+                // Update 2011-12-06 related to issue 136
+                // I am not certain this code is correct. What happens if the session wants to remove and then add items.
+                // the session will never get past this point, since sitting in the cache is a null CacheHolder preventing the session
+                // removing then adding. 
+                // also, how long should the null cache holder be placed in there for ? 
+                // I think the solution is to bind the null Cache holder to the instance of the caching manager that created it,
+                // let the null Cache holder last for 10s, and during that time only the CachingManager that created it can remove it.
             }
         }
         LOGGER.debug("Saving {} {} {} {} ", new Object[] { keySpace, columnFamily, key,
                 encodedProperties });
         client.insert(keySpace, columnFamily, key, encodedProperties, probablyNew);
         if ( sharedCache != null ) {
+            // if we just added a value in, remove the key so that any stale state (including a previously deleted object is removed)
             sharedCache.remove(cacheKey);
         }
     }

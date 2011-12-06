@@ -92,6 +92,7 @@ public class SessionImpl implements Session {
 
     public void logout() throws ClientPoolException {
         if (closedAt == null) {
+            commit();
             accessControlManager.close();
             authorizableManager.close();
             contentManager.close();

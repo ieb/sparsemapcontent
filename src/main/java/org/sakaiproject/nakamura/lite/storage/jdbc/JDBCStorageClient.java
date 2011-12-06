@@ -243,7 +243,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             close(selectStringRow, "A");
         }
         if ( cachingManager instanceof DirectCacheAccess) {
-            cachingManager.putToCache(rid, new CacheHolder(result));
+            cachingManager.putToCache(rid, new CacheHolder(result),true);
         }
         return result;
     }
@@ -621,7 +621,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
         }
     }
 
-    <T extends Disposable> T registerDisposable(T disposable) {
+    public <T extends Disposable> T registerDisposable(T disposable) {
         // this should not be necessary, but just in case some one is sharing the client between threads.
         synchronized (desponseLock) {
             toDispose.add(disposable);
