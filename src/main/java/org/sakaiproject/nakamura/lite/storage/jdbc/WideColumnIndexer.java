@@ -304,6 +304,7 @@ public class WideColumnIndexer extends AbstractIndexer {
         // collect information on paging
         long page = 0;
         long items = 25;
+        String sortProp = null;
         if (properties != null) {
           if (properties.containsKey(StorageConstants.PAGE)) {
             page = Long.valueOf(String.valueOf(properties.get(StorageConstants.PAGE)));
@@ -311,12 +312,12 @@ public class WideColumnIndexer extends AbstractIndexer {
           if (properties.containsKey(StorageConstants.ITEMS)) {
             items = Long.valueOf(String.valueOf(properties.get(StorageConstants.ITEMS)));
           }
+          sortProp = (String) properties.get(StorageConstants.SORT);
         }
         long offset = page * items;
 
         // collect information on sorting
         List<String> sortingList = Lists.newArrayList();
-        String sortProp = (String) properties.get(StorageConstants.SORT);
         if (sortProp != null) {
           String[] sorts = StringUtils.split(sortProp);
           if (sorts.length == 1) {
