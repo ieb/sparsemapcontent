@@ -102,7 +102,7 @@ public class MigrateContentComponent implements MigrateContentService {
 
 
     @Activate
-    public void activate(Map<String, Object> properties) throws StorageClientException,
+    public synchronized void activate(Map<String, Object> properties) throws StorageClientException,
             AccessDeniedException, IOException {
         redoLogLocation = StorageClientUtils.getSetting(properties.get(PROP_REDOLOG_LOCATION), DEFAULT_REDOLOG_LOCATION);
         maxLogFileSize = StorageClientUtils.getSetting(properties.get(PROP_MAX_LOG_SIZE), DEFAULT_MAX_LOG_SIZE);
