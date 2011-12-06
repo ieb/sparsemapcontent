@@ -36,7 +36,11 @@ public class FileRedoLogger implements StorageClientListener {
         logFileNameFormat = new SimpleDateFormat("yyyyMMddHHmmssZ");
         this.feedback = feedback;
         this.redoLocation = new File(redoLogLocation,logFileNameFormat.format(new Date()));
-        this.redoLocation.mkdirs();
+        if( !this.redoLocation.exists() ) {
+            if (!this.redoLocation.mkdirs() ) {
+                throw new IllegalArgumentException("Unable to create redo log at "+this.redoLocation.getPath());
+            }
+        }
         
     }
 
