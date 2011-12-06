@@ -49,7 +49,6 @@ import org.sakaiproject.nakamura.api.lite.StorageConstants;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
 import org.sakaiproject.nakamura.lite.CachingManager;
-import org.sakaiproject.nakamura.lite.DirectCacheAccess;
 import org.sakaiproject.nakamura.lite.content.FileStreamContentHelper;
 import org.sakaiproject.nakamura.lite.content.InternalContent;
 import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
@@ -193,7 +192,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
         return internalGet(keySpace, columnFamily, rid, null); // gets through this route should have already consulted the cache.
     }
     Map<String, Object> internalGet(String keySpace, String columnFamily, String rid, CachingManager cachingManager) throws StorageClientException {
-        if ( cachingManager instanceof DirectCacheAccess ) {
+        if ( cachingManager != null ) {
             CacheHolder ch = cachingManager.getFromCache(rid);
             if ( ch != null ) {
                 Map<String, Object> cached = ch.get();
@@ -242,7 +241,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             close(body, "B");
             close(selectStringRow, "A");
         }
-        if ( cachingManager instanceof DirectCacheAccess) {
+        if ( cachingManager != null ) {
             cachingManager.putToCache(rid, new CacheHolder(result),true);
         }
         return result;
