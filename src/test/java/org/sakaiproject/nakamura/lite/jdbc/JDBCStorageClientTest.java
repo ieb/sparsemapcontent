@@ -46,6 +46,8 @@ import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClientPool;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
+
 /**
  *
  */
@@ -93,6 +95,7 @@ public class JDBCStorageClientTest {
   }
 
   @Test
+  @SuppressWarnings(value="ODR_OPEN_DATABASE_RESOURCE", justification="Mock objects")
   public void test2TermsAnd() throws Exception {
 
     String keySpace = "cn";
@@ -127,6 +130,7 @@ public class JDBCStorageClientTest {
   }
 
   @Test
+  @SuppressWarnings(value="ODR_OPEN_DATABASE_RESOURCE", justification="Mock objects")
   public void test2TermsOr() throws Exception {
 
     String keySpace = "cn";
@@ -163,6 +167,7 @@ public class JDBCStorageClientTest {
   }
 
   @Test
+  @SuppressWarnings(value="ODR_OPEN_DATABASE_RESOURCE", justification="Mock objects")
   public void test1TermAnd2TermsOr1TermAnd() throws Exception {
 
     String keySpace = "cn";
@@ -213,6 +218,7 @@ public class JDBCStorageClientTest {
   }
 
   @Test
+  @SuppressWarnings(value="ODR_OPEN_DATABASE_RESOURCE", justification="Mock objects")
   public void test2TermsAnd2TermsOr2TermsOr() throws Exception {
 
     String keySpace = "cn";
@@ -275,6 +281,7 @@ public class JDBCStorageClientTest {
   }
 
   @Test
+  @SuppressWarnings(value="ODR_OPEN_DATABASE_RESOURCE", justification="Mock objects")
   public void test2Terms1Indexed() throws Exception {
 
     String keySpace = "cn";
@@ -305,6 +312,7 @@ public class JDBCStorageClientTest {
   }
 
   @Test
+  @SuppressWarnings(value="ODR_OPEN_DATABASE_RESOURCE", justification="Mock objects")
   public void test2TermsMultivalueAnd() throws Exception {
 
     String keySpace = "cn";
@@ -344,6 +352,7 @@ public class JDBCStorageClientTest {
   }
 
   @Test
+  @SuppressWarnings(value="ODR_OPEN_DATABASE_RESOURCE", justification="Mock objects")
   public void test2TermsMultivalueOr() throws Exception {
 
     String keySpace = "cn";

@@ -57,6 +57,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
+
 public class AccessControlManagerImpl extends CachingManager implements AccessControlManager {
 
     private static final String _SECRET_KEY = "_secretKey";
@@ -192,6 +194,7 @@ public class AccessControlManagerImpl extends CachingManager implements AccessCo
         // the caller must save the target.
     }
 
+    @SuppressWarnings(value="RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE", justification="Not correct, the line in question doesnt check for a null, so the check is not redundant")
     public void setAcl(String objectType, String objectPath, AclModification[] aclModifications)
             throws StorageClientException, AccessDeniedException {
         checkOpen();

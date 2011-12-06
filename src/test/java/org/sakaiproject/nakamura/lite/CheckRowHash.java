@@ -3,6 +3,8 @@ package org.sakaiproject.nakamura.lite;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
+
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -12,6 +14,7 @@ public class CheckRowHash {
     private static final String USAGE = "Generate a RowHash\n" +
     		"java "+CheckRowHash.class.getName()+" <keySpace> <columnFamily> <key> [<hashAlg (default:SHA1)]";
 
+    @SuppressWarnings(value="NP_ALWAYS_NULL", justification="How can System.err be null ?")
     public static void main(String[] argv) throws StorageClientException {
     //    argv = new String[] { 
     //            "n", "cn", "a:af1148/contacts",

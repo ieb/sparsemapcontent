@@ -5,6 +5,8 @@ import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -50,7 +52,11 @@ public class LongString {
         if ( isnew && f.exists()) {
             throw new IOException("LongString Storage file at location "+location+" already exists, this should not happen, nothing stored");
         }
-        f.getParentFile().mkdirs();
+        if (!f.getParentFile().exists() ) {
+            if (!f.getParentFile().mkdirs() ) {
+                throw new IOException("Failed to create LongString storage space at "+location);
+            }
+        }
         FileWriter fw = new FileWriter(f);
         fw.write(content);
         fw.close();
@@ -73,6 +79,7 @@ public class LongString {
     }
     
     @Override
+    @SuppressWarnings(value="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification="Invalid report")
     public String toString() {
         if ( value == null || value.get() == null || lastModifed < 0 ) {
             try {

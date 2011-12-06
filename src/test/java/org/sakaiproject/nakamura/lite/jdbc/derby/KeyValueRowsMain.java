@@ -17,11 +17,14 @@ import java.util.Set;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
+
 public class KeyValueRowsMain {
 
     private Connection connection;
     private String[] dictionary;
 
+    @SuppressWarnings(value="NP_ALWAYS_NULL", justification="How can System.err be null ?")
     public KeyValueRowsMain() {
         System.err.println(this.getClass().getName());
     }
@@ -60,18 +63,21 @@ public class KeyValueRowsMain {
         }
     }
 
+    @SuppressWarnings(value="NP_ALWAYS_NULL", justification="How can System.err be null ?")
     public void loadTable(int columns, int records) throws SQLException,
             UnsupportedEncodingException, NoSuchAlgorithmException {
         StringBuilder sb = new StringBuilder();
         sb.append("insert into cn_css_kv (rid, cid, v) values ( ?, ?, ?)");
         PreparedStatement p = null;
+        Statement s = null;
         ResultSet rs = null;
         try {
             p = connection.prepareStatement(sb.toString());
             MessageDigest sha1 = MessageDigest.getInstance("SHA1");
             SecureRandom sr = new SecureRandom();
             long cs = System.currentTimeMillis();
-            rs = connection.createStatement().executeQuery(
+            s = connection.createStatement();
+            rs = s.executeQuery(
                     "select count(*) from cn_css_kv");
             rs.next();
             int nrows = rs.getInt(1);
@@ -105,6 +111,13 @@ public class KeyValueRowsMain {
                     
                 }
             }
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e ) {
+                    
+                }
+            }
             if (p != null) {
                 try {
                     p.close();
@@ -119,6 +132,7 @@ public class KeyValueRowsMain {
         connection.close();
     }
 
+    @SuppressWarnings(value="NP_ALWAYS_NULL", justification="How can System.err be null ?")
     public void testSelect(int ncols, int sorts, int columns, long timeToLive, boolean csv) throws SQLException {
         StringBuilder sb = new StringBuilder();
         SecureRandom sr = new SecureRandom();

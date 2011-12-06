@@ -39,6 +39,7 @@ public class ContentCreateClient extends AbstractScalingClient {
         this.totalContentItems = totalContentItems;
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value="DLS_DEAD_LOCAL_STORE",justification="Its a test, so not used.")
     public void run() {
         try {
             super.setup();

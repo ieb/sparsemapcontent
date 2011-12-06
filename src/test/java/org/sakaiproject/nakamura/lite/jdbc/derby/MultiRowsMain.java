@@ -18,12 +18,15 @@ import java.util.Set;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
+
 public class MultiRowsMain {
 
     
     private Connection connection;
     private String[] dictionary;
 
+    @SuppressWarnings(value="NP_ALWAYS_NULL", justification="How can System.err be null ?")
     public MultiRowsMain() {
         System.err.println(this.getClass().getName());
     }
@@ -62,6 +65,7 @@ public class MultiRowsMain {
         }
     }
     
+    @SuppressWarnings(value="NP_ALWAYS_NULL", justification="How can System.err be null ?")
     public void loadTable(int columns, int records) throws SQLException, UnsupportedEncodingException, NoSuchAlgorithmException {
         StringBuilder sb = new StringBuilder();
         sb.append("insert into cn_css_index (rid");
@@ -73,12 +77,13 @@ public class MultiRowsMain {
             sb.append(",?");
         }
         sb.append(")");
+        Statement s = connection.createStatement();
         PreparedStatement p = connection.prepareStatement(sb.toString());
         MessageDigest sha1 = MessageDigest.getInstance("SHA1");
         SecureRandom sr = new SecureRandom();
         long cst = System.currentTimeMillis();
         long cs = System.currentTimeMillis();
-        ResultSet rs = connection.createStatement().executeQuery("select count(*) from cn_css_index");
+        ResultSet rs = s.executeQuery("select count(*) from cn_css_index");
         rs.next();
         int nrows = rs.getInt(1);
         for ( int i = 0+nrows; i < records+nrows; i++) {
@@ -105,12 +110,14 @@ public class MultiRowsMain {
         }
         long ctt = System.currentTimeMillis();
         System.err.println("Commit "+records+" "+(ctt-cst)+" ms average time per row to insert "+((double)records/((double)ctt-(double)cst)));
-        p.close();   
+        p.close(); 
+        s.close();
     }
     private void close() throws SQLException {
         connection.close();
     }
 
+    @SuppressWarnings(value="NP_ALWAYS_NULL", justification="How can System.err be null ?")
     public void testSelect(int ncols, int sorts, int columns, long timeToLive, boolean csv) throws SQLException {
         StringBuilder sb = new StringBuilder();
         sb.append("select rid from cn_css_index where ");
@@ -173,6 +180,7 @@ public class MultiRowsMain {
             System.err.println("Found " + arows + " in " + t + "ms executed " + nq + " queries");
             System.err.println("Average " + (arows / nq) + " in " + a + "ms");
         }
+        p.close();
         
     }
     
