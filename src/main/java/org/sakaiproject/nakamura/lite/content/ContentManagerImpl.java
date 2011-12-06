@@ -613,6 +613,10 @@ public class ContentManagerImpl extends CachingManager implements ContentManager
                 Permissions.CAN_READ.combine(Permissions.CAN_WRITE));
         Map<String, Object> fromStructure = Maps.newHashMap(getCached(keySpace, contentColumnFamily, from));
         if (fromStructure == null || fromStructure.size() == 0) {
+            throw new StorageClientException("The source content to move from " + from
+                    + " does not exist, move operation failed");
+        }
+        if (fromStructure != null && fromStructure.size() > 0 ) {
             String contentId = (String)fromStructure.get(STRUCTURE_UUID_FIELD);
             Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
             if (content == null || content.size() == 0 && TRUE.equals(content.get(DELETED_FIELD))) {
