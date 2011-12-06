@@ -24,7 +24,6 @@ import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.util.EnabledPeriod;
-import org.sakaiproject.nakamura.api.lite.util.ISO8601Date;
 
 import java.security.Principal;
 import java.util.Calendar;
@@ -35,7 +34,7 @@ import java.util.TimeZone;
 import javax.security.auth.Subject;
 
 /**
- * Represetnation of the User.
+ * Representation of the User.
  */
 public class User extends Authorizable {
 
