@@ -17,7 +17,8 @@
  */
 package org.sakaiproject.nakamura.lite.accesscontrol;
 
-import org.apache.commons.lang.StringUtils;
+import java.util.Map;
+
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
@@ -25,16 +26,10 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Authenticator;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.lite.util.EnabledPeriod;
-import org.sakaiproject.nakamura.api.lite.util.ISO8601Date;
 import org.sakaiproject.nakamura.lite.authorizable.UserInternal;
 import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Map;
-import java.util.TimeZone;
 
 public class AuthenticatorImpl implements Authenticator {
 
