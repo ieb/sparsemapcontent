@@ -3,7 +3,6 @@ package org.sakaiproject.nakamura.lite.types;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public class BigIntegerType implements Type<BigInteger> {
