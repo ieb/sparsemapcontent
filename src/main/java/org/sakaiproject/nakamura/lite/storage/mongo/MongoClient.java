@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.Repository;
@@ -281,9 +282,9 @@ public class MongoClient implements StorageClient, RowHasher {
 		DBCollection collection = mongodb.getCollection(columnFamily);
 		BasicDBObject query = new BasicDBObject();
 
-		for (String key: properties.keySet()){
-			Object val = properties.get(key);
-			key = MongoUtils.escapeFieldName(key);
+		for (Entry<String, Object> e : properties.entrySet()){
+			Object val = e.getValue();
+			String key = MongoUtils.escapeFieldName(e.getKey());
 
 			if (val instanceof Map){
 				// This is how it comes from sparse
@@ -344,7 +345,7 @@ public class MongoClient implements StorageClient, RowHasher {
 				}
 
 				public Map<String, Object> next() {
-					return ImmutableMap.of("1", (Object)new Integer(count));
+					return ImmutableMap.of("1", (Object)Integer.valueOf(count));
 				}
 				public void remove() { }
 				public void close() { mongodb.requestDone(); }

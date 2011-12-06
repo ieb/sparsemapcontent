@@ -8,6 +8,7 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 
@@ -51,9 +52,9 @@ public class MongoUtils {
 		DBObject updatedFields = new BasicDBObject();
 
 		// Partition the properties into update and remove ops
-		for (String key : props.keySet()){
-			Object value = props.get(key);
-			key = escapeFieldName(key);
+		for (Entry<String, Object> e : props.entrySet()){
+			Object value = e.getValue();
+			String key = escapeFieldName(e.getKey());
 			// Replace the sparse RemoveProperty with the Mongo $unset.
 			if (value instanceof RemoveProperty){
 				removeFields.put(key, 1);
