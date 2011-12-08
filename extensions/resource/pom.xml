@@ -26,8 +26,8 @@
         <configuration>
           <instructions>
             <Bundle-Category> sparse-map </Bundle-Category>
-            <Export-Package> uk.co.tfd.sm.api.resource.*, uk.co.tfd.sm.api.authn.*  </Export-Package>
-            <Private-Package>uk.co.tfd.sm.resource.*, uk.co.tfd.sm.authn.* </Private-Package>
+            <Export-Package> uk.co.tfd.sm.api.resource.*, uk.co.tfd.sm.api.authn.*, uk.co.tfd.sm.util.*  </Export-Package>
+            <Private-Package>uk.co.tfd.sm.resource.*, uk.co.tfd.sm.authn.*, uk.co.tfd.sm.authorizables.* </Private-Package>
             <Import-Package>
               *
             </Import-Package>
@@ -47,7 +47,6 @@
     <dependency>
       <groupId>org.apache.felix</groupId>
       <artifactId>org.apache.felix.scr.annotations</artifactId>
-      <version>1.5.0</version>
     </dependency>
     <dependency>
       <groupId>com.googlecode.guava-osgi</groupId>
