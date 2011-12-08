@@ -253,6 +253,18 @@ public class Authorizable {
         return StorageClientUtils.getFilterMap(authorizableMap, modifiedMap, null,
                 FILTER_PROPERTIES, false);
     }
+    
+    /**
+     * Returns the properties of the authorizable taking into account any modifications. This includes fields that could be modified.
+     * @return
+     */
+    public  Map<String, Object> getProperties() {
+        if (!readOnly && principalsModified) {
+            modifiedMap.put(PRINCIPALS_FIELD, StringUtils.join(principals, ';'));
+        }
+        return StorageClientUtils.getFilterMap(authorizableMap, modifiedMap, null,
+                PRIVATE_PROPERTIES, false);
+    }
 
     /**
      * @return true if this authorizable is a group.
