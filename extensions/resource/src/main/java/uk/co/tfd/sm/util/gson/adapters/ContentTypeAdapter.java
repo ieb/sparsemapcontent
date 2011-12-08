@@ -1,4 +1,4 @@
-package uk.co.tfd.sm.resource;
+package uk.co.tfd.sm.util.gson.adapters;
 
 import java.lang.reflect.Type;
 import java.util.Map.Entry;

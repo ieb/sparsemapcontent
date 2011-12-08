@@ -1,4 +1,4 @@
-package uk.co.tfd.sm.resource;
+package uk.co.tfd.sm.util.http;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -10,7 +10,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status.Family;
 import javax.ws.rs.core.Response.StatusType;
 
+import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.content.Content;
+
+import uk.co.tfd.sm.util.gson.adapters.AuthorizableTypeAdapter;
+import uk.co.tfd.sm.util.gson.adapters.CalenderTypeAdapter;
+import uk.co.tfd.sm.util.gson.adapters.ContentTypeAdapter;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -66,6 +71,17 @@ public class ResponseUtils {
 		gb.registerTypeHierarchyAdapter(Calendar.class, new CalenderTypeAdapter());
 		Gson gson = gb.create();
 		output.write(gson.toJson(content).getBytes("UTF-8"));
+	}
+
+	public static void writeTree(Authorizable authorizable, String format, OutputStream output) throws UnsupportedEncodingException, IOException {
+		GsonBuilder gb = new GsonBuilder();
+		if ( "pp.json".equals(format) || "tidy.json".equals(format) ) {
+			gb.setPrettyPrinting();
+		}
+		gb.registerTypeHierarchyAdapter(Authorizable.class, new AuthorizableTypeAdapter());
+		gb.registerTypeHierarchyAdapter(Calendar.class, new CalenderTypeAdapter());
+		Gson gson = gb.create();
+		output.write(gson.toJson(authorizable).getBytes("UTF-8"));
 	}
 
 	private static boolean contains(String[] selectors, String ... value) {

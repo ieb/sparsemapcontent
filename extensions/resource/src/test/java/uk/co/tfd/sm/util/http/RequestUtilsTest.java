@@ -1,4 +1,4 @@
-package uk.co.tfd.sm.resource;
+package uk.co.tfd.sm.util.http;
 
 import java.util.Calendar;
 
@@ -8,13 +8,29 @@ import org.junit.Test;
 public class RequestUtilsTest {
 
 	@Test
+	public void testGetFileName() {
+		Assert.assertEquals("testname",RequestUtils.getFileName("testname"));
+		Assert.assertEquals("testname",RequestUtils.getFileName("testname@stream1"));
+		Assert.assertEquals("testname",RequestUtils.getFileName("testname@stream1@xxx"));
+		Assert.assertNull(RequestUtils.getFileName(null));
+	}
+
+	@Test
+	public void testGetStreamName() {
+		Assert.assertEquals(null,RequestUtils.getStreamName("testname"));
+		Assert.assertEquals("stream1",RequestUtils.getStreamName("testname@stream1"));
+		Assert.assertEquals("stream1",RequestUtils.getStreamName("testname@stream1@xxx"));
+		Assert.assertNull(RequestUtils.getStreamName(null));
+	}
+
+	@Test
 	public void testGetStream() {
 		Assert.assertNull(RequestUtils.getStreamName(null));
 		Assert.assertNull(RequestUtils.getStreamName(""));
 		Assert.assertNull(RequestUtils.getStreamName("filedefault"));
 		Assert.assertEquals("x",RequestUtils.getStreamName("filedefault@x"));
-		Assert.assertEquals("x@sdfsdf",RequestUtils.getStreamName("filedefault@x@sdfsdf"));
-		Assert.assertEquals("x....@sdfsdf",RequestUtils.getStreamName("filedefault@x....@sdfsdf"));
+		Assert.assertEquals("x",RequestUtils.getStreamName("filedefault@x@sdfsdf"));
+		Assert.assertEquals("x....",RequestUtils.getStreamName("filedefault@x....@sdfsdf"));
 	}
 	
 	@Test
@@ -29,10 +45,12 @@ public class RequestUtilsTest {
 	
 	@Test
 	public void testPropertyDelete() {
-		Assert.assertTrue(RequestUtils.isDelete("something@Delete"));
-		Assert.assertFalse(RequestUtils.isDelete("something@NotDelete"));
-		Assert.assertFalse(RequestUtils.isDelete("something@"));
-		Assert.assertFalse(RequestUtils.isDelete("something"));
+		Assert.assertEquals(ParameterType.REMOVE, ParameterType.typeOfRequestParameter("something@Delete"));
+		Assert.assertEquals(ParameterType.ADD, ParameterType.typeOfRequestParameter("something@NotDelete"));
+		Assert.assertEquals(ParameterType.ADD, ParameterType.typeOfRequestParameter("something@"));
+		Assert.assertEquals(ParameterType.ADD, ParameterType.typeOfRequestParameter("something"));
+		Assert.assertEquals(ParameterType.SPECIAL, ParameterType.typeOfRequestParameter("something:"));
+		Assert.assertEquals(ParameterType.OPERATION, ParameterType.typeOfRequestParameter(":something"));
 
 	}
 
@@ -85,7 +103,5 @@ public class RequestUtilsTest {
 		Assert.assertEquals(23, c.get(Calendar.MINUTE));
 		Assert.assertEquals(11, c.get(Calendar.SECOND));
 	}
-
-	
 
 }

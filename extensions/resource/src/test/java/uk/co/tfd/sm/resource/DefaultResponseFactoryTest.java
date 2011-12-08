@@ -9,9 +9,9 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -23,15 +23,17 @@ import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
+import org.sakaiproject.nakamura.lite.BaseMemoryRepository;
 
 import uk.co.tfd.sm.api.resource.Adaptable;
 import uk.co.tfd.sm.api.resource.Resource;
 import uk.co.tfd.sm.api.resource.ResponseFactory;
 import uk.co.tfd.sm.api.resource.binding.ResponseBindingList;
 import uk.co.tfd.sm.api.resource.binding.RuntimeResponseBinding;
+import uk.co.tfd.sm.util.http.ParameterUtil;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 
 public class DefaultResponseFactoryTest {
 
@@ -213,5 +215,50 @@ public class DefaultResponseFactoryTest {
 				new DefaultResponseFactory());
 		Collections.sort(factories);
 	}
+	
+	
+	@Test
+	public void testPostResource() throws IOException, StorageClientException, AccessDeniedException, ClassNotFoundException {
+		BaseMemoryRepository repository = new BaseMemoryRepository();
+		Session adminSession = repository.getRepository().loginAdministrative();
+		
+		ContentManager contentManager = adminSession.getContentManager();
+		contentManager.update(new Content("/test/path",null));
+		Content realContent = contentManager.get("/test/path");
+		
+		DefaultResponseFactory fac = new DefaultResponseFactory();
+		Adaptable gr = fac.getResponse(adaptable);
+		Assert.assertNotNull(gr);
+		DefaultResponse dg = (DefaultResponse) gr;
+		Mockito.when(adaptable.adaptTo(Resource.class)).thenReturn(resource);
+		Mockito.when(adaptable.adaptTo(Session.class)).thenReturn(adminSession);
+		Mockito.when(adaptable.adaptTo(Content.class)).thenReturn(realContent);
+		Mockito.when(resource.getToCreatePath()).thenReturn("/test/path");
+		Mockito.when(adaptable.adaptTo(Date.class)).thenReturn(new Date());
+		Mockito.when(resource.getRequestExt()).thenReturn(null);
+
+		HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+		Mockito.when(adaptable.adaptTo(HttpServletRequest.class)).thenReturn(request);
+		Mockito.when(request.getMethod()).thenReturn("POST");
+		Mockito.when(request.getParameterMap()).thenReturn(ParameterUtil.getParameters());
+
+		
+		Response response = dg.doPost();
+		Object o = response.getEntity();
+		int status = response.getStatus();
+		Assert.assertEquals(200, status);
+		StreamingOutput out = (StreamingOutput) o;
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		out.write(output);
+		String outputData = new String(output.toByteArray(),"UTF-8");
+		ParameterUtil.checkResponse(outputData);
+		
+		Content finalContent = contentManager.get("/test/path");
+		ParameterUtil.testProperties(finalContent.getProperties());
+
+
+
+	}
+
 
 }

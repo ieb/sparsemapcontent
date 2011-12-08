@@ -1,4 +1,4 @@
-package uk.co.tfd.sm.resource;
+package uk.co.tfd.sm.util.http;
 
 import java.lang.reflect.Array;
 import java.util.Map;
@@ -32,9 +32,6 @@ public class RequestUtils {
 		DoubleType.class};
 	private static final Map<String, RequestParameterType<?>> TYPES = createScalarTypes();
 
-	public static boolean isDelete(String name) {
-		return name.endsWith("@Delete");
-	}
 
 	private static Map<String, RequestParameterType<?>> createScalarTypes() {
 		Builder<String, RequestParameterType<?>> b = ImmutableMap.builder();
@@ -128,8 +125,8 @@ public class RequestUtils {
 	 */
 	public static String getStreamName(String name) {
 		
-		String[] parts = StringUtils.split(name, "@", 2);
-		if (parts != null && parts.length == 2) {
+		String[] parts = StringUtils.split(name, "@", 3);
+		if (parts != null && parts.length >= 2) {
 			return parts[1];
 		}
 		return null;
@@ -146,5 +143,47 @@ public class RequestUtils {
 		}
 		return name;
 	}
+
+	public static void accumulate(Map<String, Object> toAdd, String propertyName,
+			Object value) {
+
+		Object o = toAdd.get(propertyName);
+		if (o == null) {
+			toAdd.put(propertyName, value);
+			if (LOGGER.isDebugEnabled()) {
+				LOGGER.debug("Saved {} {}", propertyName, value);
+			}
+		} else {
+			int sl = 1;
+			try {
+				sl = Array.getLength(o);
+			} catch (IllegalArgumentException e) {
+				Object[] newO = (Object[]) Array.newInstance(o.getClass(), 1);
+				newO[0] = o;
+				o = newO;
+			}
+			int vl = 1;
+			try {
+				vl = Array.getLength(value);
+			} catch (IllegalArgumentException e) {
+				Object[] newO = (Object[]) Array.newInstance(value.getClass(),
+						1);
+				newO[0] = value;
+				value = newO;
+			}
+			Object type = Array.get(o, 0);
+			Object[] newArray = (Object[]) Array.newInstance(type.getClass(),
+					sl + vl);
+			System.arraycopy(o, 0, newArray, 0, sl);
+			System.arraycopy(value, 0, newArray, sl, vl);
+			toAdd.put(propertyName, newArray);
+			if (LOGGER.isDebugEnabled()) {
+				LOGGER.debug("Appended {} {} {}", new Object[] { propertyName,
+						value, newArray });
+			}
+		}
+	}
+
+
 
 }
