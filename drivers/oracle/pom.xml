@@ -8,11 +8,11 @@
 		<relativePath>parent/pom.xml</relativePath>
 	</parent>
 	<groupId>org.sakaiproject.nakamura</groupId>
-	<artifactId>org.sakaiproject.nakamura.postgres-driver</artifactId>
+	<artifactId>org.sakaiproject.nakamura.oracle-driver</artifactId>
 	<packaging>bundle</packaging>
-	<version>9.0-801-0.1-SNAPSHOT</version>
-	<name>Sparse Map :: PostgresSQL SPI Implementation</name>
-	<description>Storage SPI implementation using Postgres </description>
+	<version>1.4-0.1-SNAPSHOT</version>
+	<name>Sparse Map :: Oracle SPI Implementation</name>
+	<description>Storage SPI implementation using Oracle </description>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -29,19 +29,22 @@
 						<Import-Package> !* </Import-Package>
 						<Service-Component></Service-Component>
 						<Fragment-Host>org.sakaiproject.nakamura.core</Fragment-Host>
-						<Private-Package>org.sakaiproject.nakamura.lite.storage.jdbc.postgres.*</Private-Package>
+						<Private-Package>org.sakaiproject.nakamura.lite.storage.jdbc.oracle.*</Private-Package>
 						<Embed-Transitive>true</Embed-Transitive>
-						<Embed-Dependency>postgresql</Embed-Dependency>
+						<Embed-Dependency>ojdbc</Embed-Dependency>
 					</instructions>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
 	<dependencies>
+		<!-- To use Oracle, install ojdbc14.jar to your local mvn repository and 
+			then uncomment the dependency below. mvn install:install-file -Dfile=path-to-your-ojdbc14-jar 
+			\ -DgroupId=com.oracle \ -DartifactId=ojdbc \ -Dversion=1.4 \ -Dpackaging=jar -->
 		<dependency>
-			<groupId>postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<version>9.0-801.jdbc4</version>
+			<groupId>com.oracle</groupId>
+			<artifactId>ojdbc</artifactId>
+			<version>1.4</version>
 		</dependency>
 		<!-- OSGi Libraries -->
 		<dependency>
@@ -60,29 +63,29 @@
 			<version>1.4-SNAPSHOT</version>
 			<scope>test</scope>
 		</dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.5.10</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.5.10</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.4</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>findbugs</groupId>
-            <artifactId>annotations</artifactId>
-            <version>1.0.0</version>
-            <scope>provided</scope>
-            <!-- just needed for compiling, not runtime -->
-        </dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.5.10</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>1.5.10</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.4</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>findbugs</groupId>
+			<artifactId>annotations</artifactId>
+			<version>1.0.0</version>
+			<scope>provided</scope>
+			<!-- just needed for compiling, not runtime -->
+		</dependency>
 	</dependencies>
 </project>

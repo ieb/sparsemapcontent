@@ -8,11 +8,11 @@
 		<relativePath>parent/pom.xml</relativePath>
 	</parent>
 	<groupId>org.sakaiproject.nakamura</groupId>
-	<artifactId>org.sakaiproject.nakamura.postgres-driver</artifactId>
+	<artifactId>org.sakaiproject.nakamura.hbase-driver</artifactId>
 	<packaging>bundle</packaging>
-	<version>9.0-801-0.1-SNAPSHOT</version>
-	<name>Sparse Map :: PostgresSQL SPI Implementation</name>
-	<description>Storage SPI implementation using Postgres </description>
+	<version>0.90.3-0.1-SNAPSHOT</version>
+	<name>Sparse Map :: HBase SPI Implementation</name>
+	<description>Storage SPI implementation using HBase </description>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -29,20 +29,27 @@
 						<Import-Package> !* </Import-Package>
 						<Service-Component></Service-Component>
 						<Fragment-Host>org.sakaiproject.nakamura.core</Fragment-Host>
-						<Private-Package>org.sakaiproject.nakamura.lite.storage.jdbc.postgres.*</Private-Package>
+						<Private-Package>org.sakaiproject.nakamura.lite.storage.hbase.*</Private-Package>
 						<Embed-Transitive>true</Embed-Transitive>
-						<Embed-Dependency>postgresql</Embed-Dependency>
+						<Embed-Dependency>hbase</Embed-Dependency>
 					</instructions>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
 	<dependencies>
-		<dependency>
-			<groupId>postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<version>9.0-801.jdbc4</version>
-		</dependency>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase</artifactId>
+            <version>0.90.3</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-log4j12</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 		<!-- OSGi Libraries -->
 		<dependency>
 			<groupId>org.apache.felix</groupId>

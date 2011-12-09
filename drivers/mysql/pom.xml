@@ -8,11 +8,11 @@
 		<relativePath>parent/pom.xml</relativePath>
 	</parent>
 	<groupId>org.sakaiproject.nakamura</groupId>
-	<artifactId>org.sakaiproject.nakamura.postgres-driver</artifactId>
+	<artifactId>org.sakaiproject.nakamura.mysql-driver</artifactId>
 	<packaging>bundle</packaging>
-	<version>9.0-801-0.1-SNAPSHOT</version>
-	<name>Sparse Map :: PostgresSQL SPI Implementation</name>
-	<description>Storage SPI implementation using Postgres </description>
+	<version>5.1.13-0.1-SNAPSHOT</version>
+	<name>Sparse Map :: MySQL SPI Implementation</name>
+	<description>Storage SPI implementation using MySQL </description>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -29,9 +29,9 @@
 						<Import-Package> !* </Import-Package>
 						<Service-Component></Service-Component>
 						<Fragment-Host>org.sakaiproject.nakamura.core</Fragment-Host>
-						<Private-Package>org.sakaiproject.nakamura.lite.storage.jdbc.postgres.*</Private-Package>
+						<Private-Package>org.sakaiproject.nakamura.lite.storage.jdbc.mysql.*</Private-Package>
 						<Embed-Transitive>true</Embed-Transitive>
-						<Embed-Dependency>postgresql</Embed-Dependency>
+						<Embed-Dependency>mysql-connector-java</Embed-Dependency>
 					</instructions>
 				</configuration>
 			</plugin>
@@ -39,9 +39,9 @@
 	</build>
 	<dependencies>
 		<dependency>
-			<groupId>postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<version>9.0-801.jdbc4</version>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>5.1.13</version>
 		</dependency>
 		<!-- OSGi Libraries -->
 		<dependency>
