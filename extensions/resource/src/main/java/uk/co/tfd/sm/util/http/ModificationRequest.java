@@ -126,7 +126,9 @@ public class ModificationRequest {
 			FileItemIterator iterator = upload.getItemIterator(request);
 			while (iterator.hasNext()) {
 				FileItemStream item = iterator.next();
-				LOGGER.info("Got Item {}",item);
+				if (debug) {
+					LOGGER.debug("Got Item {}",item);
+				}
 				String name = item.getFieldName();
 				InputStream stream = item.openStream();
 				if (item.isFormField()) {
@@ -142,10 +144,14 @@ public class ModificationRequest {
 
 				}
 			}
-			LOGGER.info("No More items ");
+			if (debug) {
+				LOGGER.debug("No More items ");
+			}
 
 		} else {
-			LOGGER.info("Trad Post ");
+			if (debug) {
+				LOGGER.debug("Trad Post ");
+			}
 			// use traditional unstreamed operations.
 			@SuppressWarnings("unchecked")
 			Map<String, String[]> parameters = request.getParameterMap();

@@ -9,7 +9,7 @@ public class RequestUtilsTest {
 
 	@Test
 	public void testGetFileName() {
-		Assert.assertEquals("testname",RequestUtils.getFileName("testname"));
+		Assert.assertEquals("testname.bin",RequestUtils.getFileName("testname.bin"));
 		Assert.assertEquals("testname",RequestUtils.getFileName("testname@stream1"));
 		Assert.assertEquals("testname",RequestUtils.getFileName("testname@stream1@xxx"));
 		Assert.assertNull(RequestUtils.getFileName(null));
@@ -20,11 +20,6 @@ public class RequestUtilsTest {
 		Assert.assertEquals(null,RequestUtils.getStreamName("testname"));
 		Assert.assertEquals("stream1",RequestUtils.getStreamName("testname@stream1"));
 		Assert.assertEquals("stream1",RequestUtils.getStreamName("testname@stream1@xxx"));
-		Assert.assertNull(RequestUtils.getStreamName(null));
-	}
-
-	@Test
-	public void testGetStream() {
 		Assert.assertNull(RequestUtils.getStreamName(null));
 		Assert.assertNull(RequestUtils.getStreamName(""));
 		Assert.assertNull(RequestUtils.getStreamName("filedefault"));

@@ -115,7 +115,7 @@ public class DefaultResourceTest {
 		multipartEntity.addPart("title", new StringBody("TestUploadPassTitle",
 				UTF8));
 		multipartEntity.addPart("desc", new StringBody("TestUploadPass", UTF8));
-		bab = new ByteArrayBody(b, "testUpload.bin", "test/bin");
+		bab = new ByteArrayBody(b, "test/bin", "testUpload.bin");
 		multipartEntity.addPart("fileA", bab);
 
 		UsernamePasswordCredentials creds = new UsernamePasswordCredentials(
@@ -125,28 +125,29 @@ public class DefaultResourceTest {
 
 		JsonElement jsonElement = httpTestUtils.execute(post, 200,
 				APPLICATION_JSON);
+		System.err.println(jsonElement);
 		Set<String> responseSet = JsonTestUtils.toResponseSet(jsonElement);
 
 		Assert.assertTrue(responseSet.contains("Multipart Upload"));
 		Assert.assertTrue(responseSet.contains("Added title"));
 		Assert.assertTrue(responseSet.contains("Added desc"));
-		Assert.assertTrue(responseSet.contains("Saved Stream fileA"));
+		Assert.assertTrue(responseSet.contains("Saved Stream testUpload.bin"));
 
-		HttpResponse response = httpTestUtils.get(resourceUrl + "/fileA");
+		HttpResponse response = httpTestUtils.get(resourceUrl + "/testUpload.bin");
 		Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 		byte[] responseBody = IOUtils.toByteArray(response.getEntity()
 				.getContent());
 		Assert.assertArrayEquals(b, responseBody);
 
 		// subpaths that dont exist should give 404 on GET
-		httpTestUtils.get(resourceUrl + "/fileA/subpath.pp.json", 404, null);
+		httpTestUtils.get(resourceUrl + "/testUpload.bin/subpath.pp.json", 404, null);
 
 		JsonObject fileProperties = JsonTestUtils.toJsonObject(httpTestUtils
-				.get(resourceUrl + "/fileA.pp.json", 200, APPLICATION_JSON));
+				.get(resourceUrl + "/testUpload.bin.pp.json", 200, APPLICATION_JSON));
 
 		// we should get the object we asked for
 		JsonTestUtils.checkProperty(fileProperties, "_path", resource
-				+ "/fileA");
+				+ "/testUpload.bin");
 
 		JsonTestUtils.checkProperty(fileProperties, "desc", "TestUploadPass");
 		JsonTestUtils.checkProperty(fileProperties, "title",
