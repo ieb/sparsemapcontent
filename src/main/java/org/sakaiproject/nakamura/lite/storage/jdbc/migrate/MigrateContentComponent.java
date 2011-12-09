@@ -232,7 +232,7 @@ public class MigrateContentComponent implements MigrateContentService {
     
 
 
-    private void reindex(boolean dryRun, StorageClient jdbcClient, CacheAwareMigrationManager migrationManager, String keySpace,
+    private void reindex(boolean dryRun, JDBCStorageClient jdbcClient, CacheAwareMigrationManager migrationManager, String keySpace,
             String columnFamily, Indexer indexer, DependencySequence propertyMigrators,
             IdExtractor idExtractor, int limit, Feedback feedback, boolean reindexAll) throws StorageClientException {
         long objectCount = jdbcClient.allCount(keySpace, columnFamily);
@@ -291,13 +291,7 @@ public class MigrateContentComponent implements MigrateContentService {
                         LOGGER.warn(e.getMessage(), e);
                         feedback.exception(e);
                     } finally {
-                        for(PreparedStatement statement : statementCache.values()) {
-                            try {
-                              statement.close();
-                            } catch (SQLException e) {
-                                LOGGER.warn("Failed to close all prepared statements. Could result in a leak of database cursors.");
-                            }
-                        }
+                        jdbcClient.closeStatementCache(statementCache);
                     }
                 }
             } finally {
