@@ -1,264 +1,288 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
- <parent>
-    <groupId>org.sakaiproject.nakamura</groupId>
-    <artifactId>core-base</artifactId>
-    <version>3-SNAPSHOT</version>
-    <relativePath>parent/pom.xml</relativePath>
-  </parent>
-  <groupId>org.sakaiproject.nakamura</groupId>
-  <artifactId>org.sakaiproject.nakamura.core</artifactId>
-  <packaging>bundle</packaging>
-  <version>1.4-SNAPSHOT</version>
-  <name>Sakai Nakamura :: Sparse Map Content Storage bundle.</name>
-  <description>Server that uses a sparse map to represent content mapping closely to a colum database like Cassandra.</description>
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
-  </properties>
-  <scm>
-    <connection>scm:git:git://github.com/ieb/sparsemapcontent.git</connection>
-    <developerConnection>scm:git:git@github.com:ieb/sparsemapcontent.git</developerConnection>
-    <url>http://github.com/ieb/sparsemapcontent/</url>
-  </scm>
-  <prerequisites>
-    <maven>3.0.3</maven>
-  </prerequisites>
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-        <version>2.0.1</version>
-        <extensions>true</extensions>
-        <configuration>
-          <instructions>
-            <Bundle-Category>sparse-map</Bundle-Category>
-            <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-            <Export-Package>
-              org.sakaiproject.nakamura.api.lite.*
-			</Export-Package>
-			<DynamicImport-Package>*</DynamicImport-Package>
-               
-			<Import-Package>
-			   !org.apache.xpath.*,
-			   !org.apache.xalan.*,
-			   !org.apache.xml.utils.*,
-			   !org.apache.derby.impl.drda.*,
-			   org.apache.cassandra.thrift;resolution:=optional,
-			   org.apache.thrift;resolution:=optional,
-			   org.apache.thrift.protocol;resolution:=optional,
-			   org.apache.thrift.transport;resolution:=optional,
-               org.apache.hadoop.*;resolution:=optional,   
-			   com.mongodb.*;resolution:=optional,
-			   <!-- Uncomment for Oracle -->
-			   <!--
-			   Please verify that with Dynamic-Import this is not required. I think only packages that are explicity mentioned need this.
-                oracle.i18n.text;resolution:=optional,
-                oracle.i18n.text.converter;resolution:=optional,
-                oracle.ons;resolution:=optional,
-                oracle.security.pki;resolution:=optional,
-                -->
-               *
-			</Import-Package>
-            <Private-Package>!org.sakaiproject.nakamura.lite.storage.spi.hbase.*,org.sakaiproject.nakamura.lite.*</Private-Package>
-            <!-- For Oracle, include ojdbc in your Embed-Dependency element -->
-            <!-- <Embed-Dependency>libthrift,apache-cassandra,mysql-connector-java,derby,ojdbc</Embed-Dependency> -->
-            <!--  <Embed-Dependency>libthrift,apache-cassandra,mysql-connector-java,derby</Embed-Dependency> -->
-            <!--  Only embed Derby, the other Jars must be provided as seperate bundles -->
-            <Embed-Dependency>derby</Embed-Dependency>
-          </instructions>
-        </configuration>
-      </plugin>
-      <plugin>
-       <groupId>org.apache.maven.plugins</groupId>
-       <artifactId>maven-surefire-plugin</artifactId>
-       <version>2.5</version>
-       <configuration>
-         <includes>
-               <include>**/Test*.java</include>
-               <include>**/*Test.java</include>
-               <include>**/*TestCase.java</include>
-       <!-- Uncomment includes to enable database specific tests.
-             Ensure you modify the setup java e.g. \src\test\java\org\sakaiproject\nakamura\lite\jdbc\oracle\oraclesetup.java to include your database connection details -->
-               <!-- <include>**/oracle/*Man.java</include> -->
-               <!-- <include>**/mysql/*Man.java</include> -->
-               <!-- <include>**/postgresql/*Man.java</include> -->
-         </includes>
-       </configuration>
-     </plugin>
-     <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-install-plugin</artifactId>
-        <version>2.3.1</version>
-        <executions>
-          <execution>
-            <id>install-parent</id>
-            <phase>initialize</phase>
-            <goals>
-              <goal>install-file</goal>
-            </goals>
-            <configuration>
-               <file>parent/pom.xml</file>
-               <pomFile>parent/pom.xml</pomFile>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
-  <dependencies>
-  
-     
-    <!--  Obviously we need thrift. -->
-    <dependency>
-      <groupId>org.apache.cassandra.deps</groupId>
-      <artifactId>libthrift</artifactId>
-	  <!--
-      <version>r917130</version>
-	  -->
-      <version>0.5.0</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.cassandra.thrift</groupId>
-      <artifactId>apache-cassandra</artifactId>
-      <version>0.6.5</version>
-      <scope>provided</scope>
-    </dependency>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.sakaiproject.nakamura</groupId>
+		<artifactId>core-base</artifactId>
+		<version>3-SNAPSHOT</version>
+		<relativePath>parent/pom.xml</relativePath>
+	</parent>
+	<groupId>org.sakaiproject.nakamura</groupId>
+	<artifactId>org.sakaiproject.nakamura.core</artifactId>
+	<packaging>bundle</packaging>
+	<version>1.4-SNAPSHOT</version>
+	<name>Sparse Map :: Sparse Map Content Storage bundle.</name>
+	<description>Server that uses a sparse map to represent content mapping closely to a colum database like Cassandra.</description>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
+	</properties>
+	<scm>
+		<connection>scm:git:git://github.com/ieb/sparsemapcontent.git</connection>
+		<developerConnection>scm:git:git@github.com:ieb/sparsemapcontent.git</developerConnection>
+		<url>http://github.com/ieb/sparsemapcontent/</url>
+	</scm>
+	<prerequisites>
+		<maven>3.0.3</maven>
+	</prerequisites>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-scr-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>generate-scr-scrdescriptor</id>
+						<goals>
+							<goal>scr</goal>
+						</goals>
+						<configuration>
+							<finalName>core-serviceComponents.xml</finalName>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<version>2.3.6</version>
+				<extensions>true</extensions>
+				<configuration>
+					<instructions>
+						<Bundle-Category>sparse-map</Bundle-Category>
+						<Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+						<Export-Package>
+							org.sakaiproject.nakamura.api.lite.*
+			            </Export-Package>
+						<Service-Component></Service-Component>
+						<DynamicImport-Package>*</DynamicImport-Package>
+						<!-- The core-serviceComponent.xml is here. The serviceComponent.xml 
+							comes from the fragment -->
+						<Import-Package>
+							com.mongodb.*;resolution:=optional,
+							<!-- Uncomment for Oracle -->
+							<!-- Please verify that with Dynamic-Import this is not required. 
+								I think only packages that are explicity mentioned need this. oracle.i18n.text;resolution:=optional, 
+								oracle.i18n.text.converter;resolution:=optional, oracle.ons;resolution:=optional, 
+								oracle.security.pki;resolution:=optional, -->
+							*
+						</Import-Package>
+						<Private-Package>!org.sakaiproject.nakamura.lite.storage.hbase.*,org.sakaiproject.nakamura.lite.*</Private-Package>
+						<!-- For Oracle, include ojdbc in your Embed-Dependency element -->
+						<!-- <Embed-Dependency>libthrift,apache-cassandra,mysql-connector-java,derby,ojdbc</Embed-Dependency> -->
+						<!-- <Embed-Dependency>libthrift,apache-cassandra,mysql-connector-java,derby</Embed-Dependency> -->
+						<!-- Only embed Derby, the other Jars must be provided as seperate 
+							bundles -->
+						<!-- <Embed-Dependency>derby</Embed-Dependency> -->
+					</instructions>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>2.5</version>
+				<executions>
+					<execution>
+						<id>copy-osgi-resources</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${basedir}/target/classes</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/target/scr-plugin-generated</directory>
+									<filtering>true</filtering>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.3.2</version>
+				<executions>
+					<execution>
+						<!-- a test jar is needed for fragments -->
+						<id>test-jar</id>
+						<goals>
+							<goal>test-jar</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<archive>
+						<manifestFile>${basedir}/target/classes/META-INF/MANIFEST.MF</manifestFile>
+						<manifestEntries>                                         
+							<Service-Component>OSGI-INF/core-serviceComponents.xml,OSGI-INF/serviceComponents.xml</Service-Component>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.5</version>
+				<configuration>
+					<includes>
+						<include>**/Test*.java</include>
+						<include>**/*Test.java</include>
+						<include>**/*TestCase.java</include>
+						<!-- Uncomment includes to enable database specific tests. Ensure you 
+							modify the setup java e.g. \src\test\java\org\sakaiproject\nakamura\lite\jdbc\oracle\oraclesetup.java 
+							to include your database connection details -->
+						<!-- <include>**/oracle/*Man.java</include> -->
+						<!-- <include>**/mysql/*Man.java</include> -->
+						<!-- <include>**/postgresql/*Man.java</include> -->
+					</includes>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-install-plugin</artifactId>
+				<version>2.3.1</version>
+				<executions>
+					<execution>
+						<id>install-parent</id>
+						<phase>initialize</phase>
+						<goals>
+							<goal>install-file</goal>
+						</goals>
+						<configuration>
+							<file>parent/pom.xml</file>
+							<pomFile>parent/pom.xml</pomFile>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
 
-    <dependency>
-        <groupId>org.mongodb</groupId>
-        <artifactId>mongo-java-driver</artifactId>
-        <version>2.7.2</version>
-    </dependency>
-    
-    <dependency>
-       <groupId>commons-pool</groupId>
-       <artifactId>commons-pool</artifactId>
-       <version>1.5</version>
-    </dependency>
-    
-    <dependency>
-       <groupId>commons-lang</groupId>
-       <artifactId>commons-lang</artifactId>
-       <version>2.5</version>
-    </dependency>
-    
-    <dependency>
-       <groupId>commons-io</groupId>
-       <artifactId>commons-io</artifactId>
-       <version>1.4</version>
-    </dependency>
-    <dependency>
-       <groupId>commons-codec</groupId>
-       <artifactId>commons-codec</artifactId>
-       <version>1.4</version>
-    </dependency>
 
-    <dependency>
-       <groupId>com.googlecode.guava-osgi</groupId>
-       <artifactId>guava-osgi</artifactId>
-       <version>9.0.0</version>
-    </dependency>
-    
-    <!-- osgi for events -->
-    <dependency>
-      <groupId>org.apache.felix</groupId>
-      <artifactId>org.osgi.core</artifactId>
-      <version>1.2.0</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.felix</groupId>
-      <artifactId>org.osgi.compendium</artifactId>
-      <version>1.2.0</version>
-      <scope>provided</scope>
-    </dependency>
-    
 
-    <!-- We also need slf4j -->
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>1.5.10</version>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
-      <version>1.5.10</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
-      <version>1.8.5</version>
-    </dependency>
+		<dependency>
+			<groupId>org.mongodb</groupId>
+			<artifactId>mongo-java-driver</artifactId>
+			<version>2.7.2</version>
+		</dependency>
 
-    <!--  Since we will be running in OSGi we also include the following -->
-    <dependency>
-      <groupId>org.apache.felix</groupId>
-      <artifactId>org.apache.felix.scr.annotations</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.derby</groupId>
-      <artifactId>derby</artifactId>
-      <version>10.6.2.1</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
-      <version>5.1.13</version>
-    </dependency>
-    <dependency>
-	  <groupId>postgresql</groupId>
-	  <artifactId>postgresql</artifactId>
-	  <version>9.0-801.jdbc4</version>    
-    </dependency>
-    <dependency>
-	  <groupId>org.apache.hbase</groupId>
-	  <artifactId>hbase</artifactId>
-	  <version>0.90.3</version>    
-          <scope>provided</scope>
-          <exclusions>
-          	<exclusion>
-          		<artifactId>slf4j-log4j12</artifactId>
-          		<groupId>org.slf4j</groupId>
-          	</exclusion>
-          </exclusions>
-    </dependency>
-<!--
-    To use Oracle, install ojdbc14.jar to your local mvn
-    repository and then uncomment the dependency below.
+		<dependency>
+			<groupId>commons-pool</groupId>
+			<artifactId>commons-pool</artifactId>
+			<version>1.5</version>
+		</dependency>
 
-    mvn install:install-file -Dfile=path-to-your-ojdbc14-jar \
-                             -DgroupId=com.oracle \
-                             -DartifactId=ojdbc \
-                             -Dversion=1.4 \
-                             -Dpackaging=jar
--->
-<!--
-    <dependency>
-      <groupId>com.oracle</groupId>
-      <artifactId>ojdbc</artifactId>
-      <version>1.4</version>
-    </dependency>
--->
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>2.5</version>
+		</dependency>
 
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.4</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>findbugs</groupId>
-      <artifactId>annotations</artifactId>
-      <version>1.0.0</version>
-      <scope>provided</scope>
-<!-- just needed for compiling, not runtime -->
-    </dependency>
-  </dependencies>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>1.4</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+			<version>1.4</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.googlecode.guava-osgi</groupId>
+			<artifactId>guava-osgi</artifactId>
+			<version>9.0.0</version>
+		</dependency>
+
+		<!-- osgi for events -->
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.osgi.core</artifactId>
+			<version>1.2.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.osgi.compendium</artifactId>
+			<version>1.2.0</version>
+			<scope>provided</scope>
+		</dependency>
+
+
+		<!-- We also need slf4j -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.5.10</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>1.5.10</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-all</artifactId>
+			<version>1.8.5</version>
+		</dependency>
+
+		<!-- Since we will be running in OSGi we also include the following -->
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.scr.annotations</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.derby</groupId>
+			<artifactId>derby</artifactId>
+			<version>10.6.2.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>5.1.13</version>
+		</dependency>
+		<dependency>
+			<groupId>postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>9.0-801.jdbc4</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hbase</groupId>
+			<artifactId>hbase</artifactId>
+			<version>0.90.3</version>
+			<scope>provided</scope>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-log4j12</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- To use Oracle, install ojdbc14.jar to your local mvn repository and 
+			then uncomment the dependency below. mvn install:install-file -Dfile=path-to-your-ojdbc14-jar 
+			\ -DgroupId=com.oracle \ -DartifactId=ojdbc \ -Dversion=1.4 \ -Dpackaging=jar -->
+		<!-- <dependency> <groupId>com.oracle</groupId> <artifactId>ojdbc</artifactId> 
+			<version>1.4</version> </dependency> -->
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.4</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>findbugs</groupId>
+			<artifactId>annotations</artifactId>
+			<version>1.0.0</version>
+			<scope>provided</scope>
+			<!-- just needed for compiling, not runtime -->
+		</dependency>
+	</dependencies>
 </project>

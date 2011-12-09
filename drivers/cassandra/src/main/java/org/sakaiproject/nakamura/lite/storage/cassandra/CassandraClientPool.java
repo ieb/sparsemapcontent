@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-@Component(enabled = false, metatype = true, inherit = true)
+@Component(enabled = true, metatype = true, inherit = true)
 @Service(value = StorageClientPool.class)
 public class CassandraClientPool extends AbstractClientConnectionPool {
 

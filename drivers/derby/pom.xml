@@ -9,10 +9,10 @@
     <relativePath>parent/pom.xml</relativePath>
   </parent>
   <groupId>org.sakaiproject.nakamura</groupId>
-  <artifactId>org.sakaiproject.nakamura.cassandra-driver</artifactId>
+  <artifactId>org.sakaiproject.nakamura.derby-driver</artifactId>
   <packaging>bundle</packaging>
-  <version>0.6.5-0.5.0-0.1-SNAPSHOT</version>
-  <name>Sakai Nakamura :: Cassandra SPI Implementation</name>
+  <version>10.6.2.1-0.1-SNAPSHOT</version>
+  <name>Sakai Nakamura :: Embedded Derby SPI Implementation</name>
   <description>Storage SPI implementation using Cassandra </description>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -30,9 +30,9 @@
             <Import-Package> !* </Import-Package>
             <Service-Component></Service-Component>
             <Fragment-Host>org.sakaiproject.nakamura.core</Fragment-Host>
-            <Private-Package>org.sakaiproject.nakamura.lite.storage.cassandra.*</Private-Package>
+            <Private-Package>org.sakaiproject.nakamura.lite.storage.jdbc.derby.*</Private-Package>
             <Embed-Transitive>true</Embed-Transitive>
-            <Embed-Dependency>libthrift, apache-cassandra</Embed-Dependency>
+            <Embed-Dependency>derby</Embed-Dependency>
           </instructions>
         </configuration>
       </plugin>
@@ -40,17 +40,12 @@
   </build>
 
   <dependencies>
+    <dependency>
+      <groupId>org.apache.derby</groupId>
+      <artifactId>derby</artifactId>
+      <version>10.6.2.1</version>
+    </dependency>
 <!-- OSGi Libraries -->
-    <dependency>
-      <groupId>org.apache.cassandra.deps</groupId>
-      <artifactId>libthrift</artifactId>
-      <version>0.5.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.cassandra.thrift</groupId>
-      <artifactId>apache-cassandra</artifactId>
-      <version>0.6.5</version>
-    </dependency>
     <dependency>
       <groupId>org.apache.felix</groupId>
       <artifactId>org.apache.felix.scr.annotations</artifactId>

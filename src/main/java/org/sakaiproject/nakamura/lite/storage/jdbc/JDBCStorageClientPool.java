@@ -34,13 +34,11 @@ import java.util.Timer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.ReferencePolicy;
-import org.apache.felix.scr.annotations.Service;
 import org.sakaiproject.nakamura.api.lite.BaseColumnFamilyCacheManager;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
@@ -51,7 +49,6 @@ import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.lite.storage.spi.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.spi.ConcurrentLRUMap;
-import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,8 +57,9 @@ import com.google.common.collect.ImmutableMap.Builder;
 
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
-@Component(immediate = true, metatype = true, inherit = true)
-@Service(value = StorageClientPool.class)
+// The component is activated or not in the fragment bundle
+//@Component(immediate = true, metatype = true, inherit = true)
+//@Service(value = StorageClientPool.class)
 public class JDBCStorageClientPool extends AbstractClientConnectionPool {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JDBCStorageClientPool.class);
@@ -72,9 +70,9 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
     public static final String JDBC_DRIVER = "jdbc-driver";
 
     @Property(value = { "sa" })
-    private static final String USERNAME = "username";
+    public static final String USERNAME = "username";
     @Property(value = { "" })
-    private static final String PASSWORD = "password";
+    public static final String PASSWORD = "password";
  
     @Reference(cardinality=ReferenceCardinality.OPTIONAL_UNARY, policy=ReferencePolicy.DYNAMIC)
     private StorageCacheManager storageManagerCache;
