@@ -21,8 +21,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import org.sakaiproject.nakamura.lite.CachingManager;
-import org.sakaiproject.nakamura.lite.types.Types;
 import org.apache.cassandra.thrift.Cassandra.Client;
 import org.apache.cassandra.thrift.Column;
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
@@ -46,14 +44,16 @@ import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
-import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
-import org.sakaiproject.nakamura.lite.content.BlockSetContentHelper;
-import org.sakaiproject.nakamura.lite.storage.Disposable;
-import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
-import org.sakaiproject.nakamura.lite.storage.Disposer;
-import org.sakaiproject.nakamura.lite.storage.SparseRow;
-import org.sakaiproject.nakamura.lite.storage.StorageClient;
-import org.sakaiproject.nakamura.lite.storage.StorageClientListener;
+import org.sakaiproject.nakamura.lite.storage.spi.DirectCacheAccess;
+import org.sakaiproject.nakamura.lite.storage.spi.Disposable;
+import org.sakaiproject.nakamura.lite.storage.spi.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.spi.Disposer;
+import org.sakaiproject.nakamura.lite.storage.spi.SparseRow;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClientListener;
+import org.sakaiproject.nakamura.lite.storage.spi.content.BlockContentHelper;
+import org.sakaiproject.nakamura.lite.storage.spi.content.BlockSetContentHelper;
+import org.sakaiproject.nakamura.lite.storage.spi.types.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -289,7 +289,7 @@ public class CassandraClient extends Client implements StorageClient {
     }
 
   public DisposableIterator<Map<String, Object>> find(String keySpace,
-      String authorizableColumnFamily, Map<String, Object> properties, CachingManager cachingManager)
+      String authorizableColumnFamily, Map<String, Object> properties, DirectCacheAccess cachingManager)
       throws StorageClientException {
     final String fKeyspace = keySpace;
     final String fAuthorizableColumnFamily = authorizableColumnFamily;
@@ -445,7 +445,7 @@ public class CassandraClient extends Client implements StorageClient {
   }
 
     public DisposableIterator<Map<String, Object>> listChildren(String keySpace,
-            String columnFamily, String key, CachingManager cachingManager) throws StorageClientException {
+            String columnFamily, String key, DirectCacheAccess cachingManager) throws StorageClientException {
         throw new UnsupportedOperationException();
     }
 

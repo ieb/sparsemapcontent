@@ -26,9 +26,9 @@ import java.util.Map;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
-import org.sakaiproject.nakamura.lite.content.InternalContent;
-import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
-import org.sakaiproject.nakamura.lite.storage.RowHasher;
+import org.sakaiproject.nakamura.api.lite.content.Content;
+import org.sakaiproject.nakamura.lite.storage.spi.RowHasher;
+import org.sakaiproject.nakamura.lite.storage.spi.content.StreamedContentHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,8 +84,8 @@ public class GridFSContentHelper implements StreamedContentHelper {
         LOGGER.debug("Wrote {} bytes to {} as body of {}:{}:{} stream {} ", new Object[] { file.getLength(), path,
                 keySpace, columnFamily, contentBlockId, streamId });
         Map<String, Object> metadata = Maps.newHashMap();
-        metadata.put(StorageClientUtils.getAltField(InternalContent.LENGTH_FIELD, streamId), file.getLength());
-        metadata.put(StorageClientUtils.getAltField(InternalContent.BLOCKID_FIELD, streamId), contentBlockId);
+        metadata.put(StorageClientUtils.getAltField(Content.LENGTH_FIELD, streamId), file.getLength());
+        metadata.put(StorageClientUtils.getAltField(Content.BLOCKID_FIELD, streamId), contentBlockId);
         metadata.put(StorageClientUtils.getAltField(STORE_LOCATION_FIELD, streamId), path);
         return metadata;
     }

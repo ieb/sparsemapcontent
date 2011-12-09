@@ -21,9 +21,9 @@ import com.google.common.collect.ImmutableMap;
 
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.lite.authorizable.AbstractAuthorizableManagerImplTest;
-import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
-import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.content.BlockContentHelper;
 
 public class AuthorizableManagerImplTest extends AbstractAuthorizableManagerImplTest {
 

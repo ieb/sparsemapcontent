@@ -16,10 +16,10 @@ import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
-import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
-import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
-import org.sakaiproject.nakamura.lite.storage.StorageClient;
-import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
+import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl; // FIXME, SPI impls should not depend in core implementation
+import org.sakaiproject.nakamura.lite.storage.spi.ConcurrentLRUMap;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;

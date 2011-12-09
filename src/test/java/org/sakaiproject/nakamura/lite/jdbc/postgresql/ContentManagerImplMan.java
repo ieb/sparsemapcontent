@@ -19,7 +19,7 @@ package org.sakaiproject.nakamura.lite.jdbc.postgresql;
 
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.lite.content.AbstractContentManagerTest;
-import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 
 public class ContentManagerImplMan extends AbstractContentManagerTest {
 

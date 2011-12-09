@@ -14,7 +14,6 @@ import java.util.regex.Matcher;
 
 import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 import org.sakaiproject.nakamura.api.lite.content.Content;
-import org.sakaiproject.nakamura.lite.content.InternalContent;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
@@ -35,7 +34,7 @@ public class MongoUtils {
 	public static final String MONGO_FIELD_DOLLAR_REPLACEMENT = "\u00A7";
 
 	// _:mongo:
-	public static final String MONGO_INTERNAL_FIELD_PREFIX = InternalContent.INTERNAL_FIELD_PREFIX + "mongo:";
+	public static final String MONGO_INTERNAL_FIELD_PREFIX = Content.INTERNAL_FIELD_PREFIX + "mongo:";
 	// _:mongo:bd:
 	public static final String MONGO_BIGDECIMAL_FIELD_PREFIX = MONGO_INTERNAL_FIELD_PREFIX + "bd:";
 	// _:mongo:tz:

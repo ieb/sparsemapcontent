@@ -3,8 +3,8 @@ package org.sakaiproject.nakamura.lite.storage.jdbc;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.sakaiproject.nakamura.lite.storage.Disposable;
-import org.sakaiproject.nakamura.lite.storage.Disposer;
+import org.sakaiproject.nakamura.lite.storage.spi.Disposable;
+import org.sakaiproject.nakamura.lite.storage.spi.Disposer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

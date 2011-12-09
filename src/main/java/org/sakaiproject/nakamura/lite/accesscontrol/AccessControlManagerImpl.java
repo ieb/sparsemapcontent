@@ -47,8 +47,8 @@ import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
 import org.sakaiproject.nakamura.api.lite.authorizable.Group;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.lite.content.Content;
-import org.sakaiproject.nakamura.lite.CachingManager;
-import org.sakaiproject.nakamura.lite.storage.StorageClient;
+import org.sakaiproject.nakamura.lite.CachingManagerImpl;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +59,7 @@ import com.google.common.collect.Sets;
 
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
-public class AccessControlManagerImpl extends CachingManager implements AccessControlManager {
+public class AccessControlManagerImpl extends CachingManagerImpl implements AccessControlManager {
 
     private static final String _SECRET_KEY = "_secretKey";
     private static final String _PATH = "_aclPath";

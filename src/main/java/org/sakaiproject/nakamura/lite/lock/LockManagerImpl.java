@@ -10,12 +10,12 @@ import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.lite.lock.AlreadyLockedException;
 import org.sakaiproject.nakamura.api.lite.lock.LockManager;
 import org.sakaiproject.nakamura.api.lite.lock.LockState;
-import org.sakaiproject.nakamura.lite.CachingManager;
-import org.sakaiproject.nakamura.lite.storage.StorageClient;
+import org.sakaiproject.nakamura.lite.CachingManagerImpl;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LockManagerImpl extends CachingManager implements LockManager {
+public class LockManagerImpl extends CachingManagerImpl implements LockManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LockManagerImpl.class);
     private String lockColumnFamily;

@@ -1,10 +1,10 @@
 package org.sakaiproject.nakamura.lite.memory;
 
 import org.sakaiproject.nakamura.api.lite.Configuration;
-import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
 import org.sakaiproject.nakamura.lite.lock.AbstractLockManagerImplTest;
-import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.content.BlockContentHelper;
 
 import com.google.common.collect.ImmutableMap;
 

@@ -33,8 +33,8 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.PrincipalValidatorResolv
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
-import org.sakaiproject.nakamura.lite.storage.StorageClient;
-import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

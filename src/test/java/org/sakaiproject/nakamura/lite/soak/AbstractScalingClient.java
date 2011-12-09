@@ -22,8 +22,8 @@ import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
-import org.sakaiproject.nakamura.lite.storage.StorageClient;
-import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 
 /**
  * Base class for multithreads soak tests, this class is the thing that is

@@ -38,7 +38,7 @@ import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.content.ContentManagerImpl;
 import org.sakaiproject.nakamura.lite.lock.LockManagerImpl;
-import org.sakaiproject.nakamura.lite.storage.StorageClient;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 
 import com.google.common.collect.Maps;
 

@@ -18,8 +18,8 @@ import org.sakaiproject.nakamura.lite.accesscontrol.PrincipalValidatorResolverIm
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.content.ContentManagerImpl;
 import org.sakaiproject.nakamura.lite.soak.AbstractScalingClient;
-import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
-import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.ConcurrentLRUMap;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

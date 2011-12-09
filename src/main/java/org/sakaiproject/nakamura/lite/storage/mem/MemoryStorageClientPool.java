@@ -29,8 +29,8 @@ import org.sakaiproject.nakamura.api.lite.BaseColumnFamilyCacheManager;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ColumnFamilyCacheManager;
 import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
-import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
-import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.AbstractClientConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 
 import com.google.common.collect.Maps;
 

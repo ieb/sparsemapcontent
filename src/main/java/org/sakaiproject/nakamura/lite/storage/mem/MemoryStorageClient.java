@@ -30,15 +30,14 @@ import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
-import org.sakaiproject.nakamura.lite.CachingManager;
-import org.sakaiproject.nakamura.lite.content.BlockContentHelper;
-import org.sakaiproject.nakamura.lite.content.BlockSetContentHelper;
-import org.sakaiproject.nakamura.lite.content.InternalContent;
-import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
-import org.sakaiproject.nakamura.lite.storage.SparseMapRow;
-import org.sakaiproject.nakamura.lite.storage.SparseRow;
-import org.sakaiproject.nakamura.lite.storage.StorageClient;
-import org.sakaiproject.nakamura.lite.storage.StorageClientListener;
+import org.sakaiproject.nakamura.lite.storage.spi.DirectCacheAccess;
+import org.sakaiproject.nakamura.lite.storage.spi.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.spi.SparseMapRow;
+import org.sakaiproject.nakamura.lite.storage.spi.SparseRow;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClientListener;
+import org.sakaiproject.nakamura.lite.storage.spi.content.BlockContentHelper;
+import org.sakaiproject.nakamura.lite.storage.spi.content.BlockSetContentHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,7 +149,7 @@ public class MemoryStorageClient implements StorageClient {
             addIndexValue(keySpace, columnFamily, key, columnKey, value);
         }
         if ( !StorageClientUtils.isRoot(key) ) {
-            addIndexValue(keySpace, columnFamily, key, InternalContent.PARENT_HASH_FIELD, (rowHash(keySpace, columnFamily,StorageClientUtils.getParentObjectPath(key))));
+            addIndexValue(keySpace, columnFamily, key, Content.PARENT_HASH_FIELD, (rowHash(keySpace, columnFamily,StorageClientUtils.getParentObjectPath(key))));
         }
     }
 
@@ -214,7 +213,7 @@ public class MemoryStorageClient implements StorageClient {
     }
 
     public DisposableIterator<Map<String, Object>> find(String keySpace,
-            String columnFamily, Map<String, Object> properties, CachingManager cachingManager) {
+            String columnFamily, Map<String, Object> properties, DirectCacheAccess cachingManager) {
         List<Set<String>> matchingSets = Lists.newArrayList();
         for (Entry<String, Object> e : properties.entrySet()) {
             Object v = e.getValue();
@@ -284,10 +283,10 @@ public class MemoryStorageClient implements StorageClient {
     }
 
     public DisposableIterator<Map<String, Object>> listChildren(String keySpace,
-            String columnFamily, String key, CachingManager cachingManager) throws StorageClientException {
+            String columnFamily, String key, DirectCacheAccess cachingManager) throws StorageClientException {
         String hash = rowHash(keySpace, columnFamily, key);
         LOGGER.debug("Finding {}:{}:{} as {} ",new Object[]{keySpace,columnFamily, key, hash});
-        return find(keySpace, columnFamily, ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash), cachingManager);
+        return find(keySpace, columnFamily, ImmutableMap.of(Content.PARENT_HASH_FIELD, (Object)hash), cachingManager);
     }
 
     public DisposableIterator<SparseRow> listAll(String keySpace, String columnFamily) {

@@ -15,7 +15,6 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
-import org.apache.felix.scr.annotations.Services;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.SparseSessionTracker;
@@ -25,10 +24,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Sets;
 
 @Component(immediate=true, metatype=true)
-@Services(value={
-        @Service(value=Filter.class),
-        @Service(value=SparseSessionTracker.class)
-})
+@Service(value={Filter.class,SparseSessionTracker.class})
 @Properties( value={
         @Property(name="pattern", value="/.*")
 })

@@ -49,9 +49,9 @@ import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
-import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
-import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
-import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.AbstractClientConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.spi.ConcurrentLRUMap;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

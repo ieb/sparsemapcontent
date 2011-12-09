@@ -10,7 +10,7 @@ import java.util.Date;
 import java.util.Map;
 
 import org.sakaiproject.nakamura.api.lite.Feedback;
-import org.sakaiproject.nakamura.lite.storage.StorageClientListener;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClientListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

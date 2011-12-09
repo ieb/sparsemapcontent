@@ -29,7 +29,7 @@ import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.jdbc.derby.DerbySetup;
 import org.sakaiproject.nakamura.lite.soak.AbstractSoakController;
 import org.sakaiproject.nakamura.lite.soak.authorizable.CreateUsersAndGroupsWithMembersClient;
-import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 
 import com.google.common.collect.Maps;
 

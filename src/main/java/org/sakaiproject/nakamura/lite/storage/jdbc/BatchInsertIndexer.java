@@ -10,7 +10,7 @@ import java.util.Map.Entry;
 import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
-import org.sakaiproject.nakamura.lite.content.InternalContent;
+import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +82,7 @@ public class BatchInsertIndexer extends KeyValueIndexer {
 
         if ( !StorageClientUtils.isRoot(key)) {
             // create a holding map containing a rowhash of the parent and then process the entry to generate a update operation.
-            Map<String, Object> autoIndexMap = ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)client.rowHash(keySpace, columnFamily, StorageClientUtils.getParentObjectPath(key)));
+            Map<String, Object> autoIndexMap = ImmutableMap.of(Content.PARENT_HASH_FIELD, (Object)client.rowHash(keySpace, columnFamily, StorageClientUtils.getParentObjectPath(key)));
             for ( Entry<String, Object> e : autoIndexMap.entrySet()) {
                 // remove all previous values
                 PreparedStatement removeStringColumn = client.getStatement(keySpace,

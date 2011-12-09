@@ -4,8 +4,8 @@ import java.util.Map;
 
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
-import org.sakaiproject.nakamura.lite.CachingManager;
-import org.sakaiproject.nakamura.lite.storage.StorageClient;
+import org.sakaiproject.nakamura.lite.CachingManagerImpl;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
  * @author ieb
  *
  */
-public class CacheAwareMigrationManager extends CachingManager {
+public class CacheAwareMigrationManager extends CachingManagerImpl {
 
     public CacheAwareMigrationManager(StorageClient client, Map<String, CacheHolder> sharedCache) {
         super(client, sharedCache);

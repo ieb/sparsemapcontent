@@ -28,8 +28,8 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.soak.AbstractSoakController;
 import org.sakaiproject.nakamura.lite.soak.authorizable.CreateUsersAndGroupsClient;
-import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.mongo.MongoClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;

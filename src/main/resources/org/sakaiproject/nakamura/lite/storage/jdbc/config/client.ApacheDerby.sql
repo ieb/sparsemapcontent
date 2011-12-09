@@ -96,7 +96,7 @@ countestimate.n.lk = select count(*) from (select distinct a.rid  {5} from lk_cs
 use-batch-inserts = 0
 
 # Queries that take longer than these times to execute will be logged with warn and error respectively.
-# Logging is performed against org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClient.SlowQueryLogger
+# Logging is performed against org.sakaiproject.nakamura.lite.storage.spi.jdbc.JDBCStorageClient.SlowQueryLogger
 slow-query-time = 50
 very-slow-query-time = 100
 

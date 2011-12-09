@@ -1,7 +1,7 @@
 package org.sakaiproject.nakamura.api.lite.util;
 
-import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
-import org.sakaiproject.nakamura.lite.storage.Disposer;
+import org.sakaiproject.nakamura.lite.storage.spi.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.spi.Disposer;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;

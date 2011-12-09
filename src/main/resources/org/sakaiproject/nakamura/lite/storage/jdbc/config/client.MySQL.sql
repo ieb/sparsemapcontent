@@ -112,7 +112,7 @@ check-schema = select count(*) from css
 use-batch-inserts = 1
 
 # Queries that take longer than these times to execute will be logged with warn and error respectively.
-# Logging is performed against org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClient.SlowQueryLogger
+# Logging is performed against org.sakaiproject.nakamura.lite.storage.spi.jdbc.JDBCStorageClient.SlowQueryLogger
 slow-query-time = 50
 very-slow-query-time = 100
 

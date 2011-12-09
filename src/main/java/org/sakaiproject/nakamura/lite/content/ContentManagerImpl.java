@@ -70,10 +70,10 @@ import org.sakaiproject.nakamura.api.lite.content.ActionRecord;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
-import org.sakaiproject.nakamura.lite.CachingManager;
-import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
-import org.sakaiproject.nakamura.lite.storage.SparseRow;
-import org.sakaiproject.nakamura.lite.storage.StorageClient;
+import org.sakaiproject.nakamura.lite.CachingManagerImpl;
+import org.sakaiproject.nakamura.lite.storage.spi.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.spi.SparseRow;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -144,7 +144,7 @@ import com.google.common.collect.Sets;
  * @author ieb
  * 
  */
-public class ContentManagerImpl extends CachingManager implements ContentManager {
+public class ContentManagerImpl extends CachingManagerImpl implements ContentManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentManagerImpl.class);
 

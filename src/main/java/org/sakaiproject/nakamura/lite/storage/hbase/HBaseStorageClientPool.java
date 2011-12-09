@@ -30,9 +30,9 @@ import org.sakaiproject.nakamura.api.lite.BaseColumnFamilyCacheManager;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
-import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
-import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
 import org.sakaiproject.nakamura.lite.storage.hbase.HBaseStorageClient;
+import org.sakaiproject.nakamura.lite.storage.spi.AbstractClientConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.spi.ConcurrentLRUMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

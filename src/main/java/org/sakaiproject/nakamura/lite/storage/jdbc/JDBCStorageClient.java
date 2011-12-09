@@ -47,20 +47,20 @@ import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.StorageConstants;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
-import org.sakaiproject.nakamura.lite.CachingManager;
-import org.sakaiproject.nakamura.lite.content.FileStreamContentHelper;
-import org.sakaiproject.nakamura.lite.content.InternalContent;
-import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
-import org.sakaiproject.nakamura.lite.storage.Disposable;
-import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
-import org.sakaiproject.nakamura.lite.storage.Disposer;
-import org.sakaiproject.nakamura.lite.storage.RowHasher;
-import org.sakaiproject.nakamura.lite.storage.SparseMapRow;
-import org.sakaiproject.nakamura.lite.storage.SparseRow;
-import org.sakaiproject.nakamura.lite.storage.StorageClient;
-import org.sakaiproject.nakamura.lite.storage.StorageClientListener;
-import org.sakaiproject.nakamura.lite.types.Types;
+import org.sakaiproject.nakamura.lite.storage.spi.DirectCacheAccess;
+import org.sakaiproject.nakamura.lite.storage.spi.Disposable;
+import org.sakaiproject.nakamura.lite.storage.spi.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.spi.Disposer;
+import org.sakaiproject.nakamura.lite.storage.spi.RowHasher;
+import org.sakaiproject.nakamura.lite.storage.spi.SparseMapRow;
+import org.sakaiproject.nakamura.lite.storage.spi.SparseRow;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClientListener;
+import org.sakaiproject.nakamura.lite.storage.spi.content.FileStreamContentHelper;
+import org.sakaiproject.nakamura.lite.storage.spi.content.StreamedContentHelper;
+import org.sakaiproject.nakamura.lite.storage.spi.types.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -191,7 +191,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
         String rid = rowHash(keySpace, columnFamily, key);
         return internalGet(keySpace, columnFamily, rid, null); // gets through this route should have already consulted the cache.
     }
-    Map<String, Object> internalGet(String keySpace, String columnFamily, String rid, CachingManager cachingManager) throws StorageClientException {
+    Map<String, Object> internalGet(String keySpace, String columnFamily, String rid, DirectCacheAccess cachingManager) throws StorageClientException {
         if ( cachingManager != null ) {
             CacheHolder ch = cachingManager.getFromCache(rid);
             if ( ch != null ) {
@@ -786,15 +786,15 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
         return jcbcStorageClientConnection.getConnection();
     }
 
-    public DisposableIterator<Map<String, Object>> listChildren(String keySpace, String columnFamily, String key, CachingManager cachingManager) throws StorageClientException {
+    public DisposableIterator<Map<String, Object>> listChildren(String keySpace, String columnFamily, String key, DirectCacheAccess cachingManager) throws StorageClientException {
         // this will load all child object directly.
         String hash = rowHash(keySpace, columnFamily, key);
         LOGGER.debug("Finding {}:{}:{} as {} ",new Object[]{keySpace,columnFamily, key, hash});
-        return find(keySpace, columnFamily, ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash, StorageConstants.CUSTOM_STATEMENT_SET, "listchildren"), cachingManager);
+        return find(keySpace, columnFamily, ImmutableMap.of(Content.PARENT_HASH_FIELD, (Object)hash, StorageConstants.CUSTOM_STATEMENT_SET, "listchildren"), cachingManager);
     }
 
     public DisposableIterator<Map<String,Object>> find(final String keySpace, final String columnFamily,
-            Map<String, Object> properties, CachingManager cachingManager) throws StorageClientException {
+            Map<String, Object> properties, DirectCacheAccess cachingManager) throws StorageClientException {
         checkClosed();
         return indexer.find(keySpace, columnFamily, properties, cachingManager);
         

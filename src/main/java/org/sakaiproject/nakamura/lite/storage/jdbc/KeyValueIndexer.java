@@ -16,9 +16,9 @@ import org.apache.commons.lang.StringUtils;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageConstants;
 import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
-import org.sakaiproject.nakamura.lite.CachingManager;
-import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
-import org.sakaiproject.nakamura.lite.storage.Disposer;
+import org.sakaiproject.nakamura.lite.storage.spi.DirectCacheAccess;
+import org.sakaiproject.nakamura.lite.storage.spi.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.spi.Disposer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +45,7 @@ public abstract class KeyValueIndexer extends AbstractIndexer {
     }
 
     public DisposableIterator<Map<String, Object>> find(final String keySpace, final String columnFamily,
-            Map<String, Object> properties, final CachingManager cacheManager) throws StorageClientException {
+            Map<String, Object> properties, final DirectCacheAccess cacheManager) throws StorageClientException {
         String[] keys = null;
         if ( properties != null  && properties.containsKey(StorageConstants.CUSTOM_STATEMENT_SET)) {
             String customStatement = (String) properties.get(StorageConstants.CUSTOM_STATEMENT_SET);

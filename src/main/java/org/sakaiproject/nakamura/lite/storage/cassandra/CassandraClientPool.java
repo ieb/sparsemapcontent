@@ -40,10 +40,9 @@ import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
-import org.sakaiproject.nakamura.lite.ConfigurationImpl;
-import org.sakaiproject.nakamura.lite.storage.AbstractClientConnectionPool;
-import org.sakaiproject.nakamura.lite.storage.ConcurrentLRUMap;
-import org.sakaiproject.nakamura.lite.storage.StorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.AbstractClientConnectionPool;
+import org.sakaiproject.nakamura.lite.storage.spi.ConcurrentLRUMap;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -199,7 +198,8 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
                
                  // If not stored, store default values.
                  if (cacheProperties == null) {
-                   client.insert(PROPERTIES_KEYSPACE, INDEX_COLUMN_FAMILY, ROW_OF_PROPERTIES,ImmutableMap.of(PROPERTIES_INDEX_COLUMN_NAME,(Object) (new ConfigurationImpl().getIndexColumnNames())),true);
+                     // FIXME: This needs to be checked, and what about the types ?
+                   client.insert(PROPERTIES_KEYSPACE, INDEX_COLUMN_FAMILY, ROW_OF_PROPERTIES,  ImmutableMap.of(PROPERTIES_INDEX_COLUMN_NAME, (Object)StringUtils.join(getIndexColumns(),";")),true);
                  } 
              } 
          } catch (ClientPoolException e) {

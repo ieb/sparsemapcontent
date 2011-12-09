@@ -9,7 +9,7 @@ import java.util.Set;
 import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
-import org.sakaiproject.nakamura.lite.content.InternalContent;
+import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,7 +94,7 @@ public class NonBatchInsertIndexer extends KeyValueIndexer {
             LOGGER.debug("Hash of {}:{}:{} is {} ", new Object[] { keySpace, columnFamily,
                     parent, hash });
             Map<String, Object> autoIndexMap = ImmutableMap.of(
-                    InternalContent.PARENT_HASH_FIELD, (Object) hash);
+                    Content.PARENT_HASH_FIELD, (Object) hash);
             for (Entry<String, Object> e : autoIndexMap.entrySet()) {
                 String k = e.getKey();
                 Object v = e.getValue();

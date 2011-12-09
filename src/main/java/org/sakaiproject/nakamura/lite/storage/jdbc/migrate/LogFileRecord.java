@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringUtils;
-import org.sakaiproject.nakamura.lite.types.Types;
+import org.sakaiproject.nakamura.lite.storage.spi.types.Types;
 
 import com.google.common.collect.Maps;
 

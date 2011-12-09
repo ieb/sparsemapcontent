@@ -18,16 +18,16 @@ import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.StorageConstants;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
-import org.sakaiproject.nakamura.lite.CachingManager;
-import org.sakaiproject.nakamura.lite.content.InternalContent;
-import org.sakaiproject.nakamura.lite.content.StreamedContentHelper;
-import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
-import org.sakaiproject.nakamura.lite.storage.Disposer;
-import org.sakaiproject.nakamura.lite.storage.RowHasher;
-import org.sakaiproject.nakamura.lite.storage.SparseMapRow;
-import org.sakaiproject.nakamura.lite.storage.SparseRow;
-import org.sakaiproject.nakamura.lite.storage.StorageClient;
-import org.sakaiproject.nakamura.lite.storage.StorageClientListener;
+import org.sakaiproject.nakamura.api.lite.content.Content;
+import org.sakaiproject.nakamura.lite.storage.spi.DirectCacheAccess;
+import org.sakaiproject.nakamura.lite.storage.spi.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.spi.Disposer;
+import org.sakaiproject.nakamura.lite.storage.spi.RowHasher;
+import org.sakaiproject.nakamura.lite.storage.spi.SparseMapRow;
+import org.sakaiproject.nakamura.lite.storage.spi.SparseRow;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClientListener;
+import org.sakaiproject.nakamura.lite.storage.spi.content.StreamedContentHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -154,8 +154,8 @@ public class MongoClient implements StorageClient, RowHasher {
 		columnFamily = columnFamily.toLowerCase();
 		HashMap<String,Object> mutableValues = new HashMap<String,Object>(values);
 		
-		if (values.containsKey(InternalContent.DELETED_FIELD) 
-				&& values.get(InternalContent.DELETED_FIELD).equals(InternalContent.TRUE)){
+		if (values.containsKey(Content.DELETED_FIELD) 
+				&& values.get(Content.DELETED_FIELD).equals(Content.TRUE)){
 			this.remove(keySpace, columnFamily, key);
 			return;
 		}
@@ -168,8 +168,8 @@ public class MongoClient implements StorageClient, RowHasher {
 		}
 
 		// Set the parent path hash if this is a piece of content that is not a root (roots are orphans)
-		if (mutableValues.keySet().contains(InternalContent.PATH_FIELD) && !StorageClientUtils.isRoot(key)) {
-			mutableValues.put(InternalContent.PARENT_HASH_FIELD,
+		if (mutableValues.keySet().contains(Content.PATH_FIELD) && !StorageClientUtils.isRoot(key)) {
+			mutableValues.put(Content.PARENT_HASH_FIELD,
 					rowHash(keySpace, columnFamily, StorageClientUtils.getParentObjectPath(key)));
 		}
 
@@ -212,7 +212,7 @@ public class MongoClient implements StorageClient, RowHasher {
 		collection.remove(new BasicDBObject(MONGO_INTERNAL_SPARSE_UUID_FIELD, key));
 		
 		if (columnFamily.equals((String)props.get(MongoClientPool.PROP_CONTENT_COLLECTION))){
-			collection.remove(new BasicDBObject(InternalContent.STRUCTURE_UUID_FIELD, key));
+			collection.remove(new BasicDBObject(Content.STRUCTURE_UUID_FIELD, key));
 		}
 		log.debug("remove {}:{}:{}", new Object[]{keySpace, columnFamily, key});
 	}
@@ -275,7 +275,7 @@ public class MongoClient implements StorageClient, RowHasher {
 
 	@SuppressWarnings("unchecked")
 	public DisposableIterator<Map<String, Object>> find(String keySpace,
-			String columnFamily, Map<String, Object> properties, CachingManager cachingManager)
+			String columnFamily, Map<String, Object> properties, DirectCacheAccess cachingManager)
 			throws StorageClientException {
 
 		columnFamily = columnFamily.toLowerCase();
@@ -385,14 +385,14 @@ public class MongoClient implements StorageClient, RowHasher {
 	}
 
 	public DisposableIterator<Map<String, Object>> listChildren(
-			String keySpace, String columnFamily, String key, CachingManager cachingManager)
+			String keySpace, String columnFamily, String key, DirectCacheAccess cachingManager)
 			throws StorageClientException {
 		columnFamily = columnFamily.toLowerCase();
 		// Hash the object we're considering
 		String hash = rowHash(keySpace, columnFamily, key);
 		log.debug("Finding {}:{}:{} as {} ", new Object[]{keySpace,columnFamily, key, hash});
 		// Issue a query for anyone who lists that hash as their parent.
-		return find(keySpace, columnFamily, ImmutableMap.of(InternalContent.PARENT_HASH_FIELD, (Object)hash), cachingManager);
+		return find(keySpace, columnFamily, ImmutableMap.of(Content.PARENT_HASH_FIELD, (Object)hash), cachingManager);
 	}
 
 	public boolean hasBody(Map<String, Object> content, String streamId) {

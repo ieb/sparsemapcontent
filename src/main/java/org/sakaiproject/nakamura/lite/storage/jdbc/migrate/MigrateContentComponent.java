@@ -25,12 +25,12 @@ import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.lite.SessionImpl;
 import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
-import org.sakaiproject.nakamura.lite.content.BlockSetContentHelper;
-import org.sakaiproject.nakamura.lite.storage.DisposableIterator;
-import org.sakaiproject.nakamura.lite.storage.SparseRow;
-import org.sakaiproject.nakamura.lite.storage.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.jdbc.Indexer;
 import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClient;
+import org.sakaiproject.nakamura.lite.storage.spi.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.spi.SparseRow;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
+import org.sakaiproject.nakamura.lite.storage.spi.content.BlockSetContentHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
