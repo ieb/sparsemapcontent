@@ -1,0 +1,22 @@
+ DROP TABLE css cascade constraints;
+ DROP TABLE au_css cascade constraints;
+ DROP TABLE cn_css cascade constraints;
+ DROP TABLE ac_css cascade constraints;
+ DROP TABLE lk_css cascade constraints;
+ DROP TABLE css_w cascade constraints;
+ DROP TABLE ac_css_w cascade constraints;
+ DROP TABLE au_css_w cascade constraints;
+ DROP TABLE cn_css_w cascade constraints;
+ DROP TABLE lk_css_w cascade constraints;
+ DROP TABLE css_wr cascade constraints;
+ DROP TABLE css_b cascade constraints;
+ DROP TABLE cn_css_b cascade constraints;
+ DROP TABLE au_css_b cascade constraints;
+ DROP TABLE ac_css_b cascade constraints;
+ DROP TABLE lk_css_b cascade constraints;
+ DROP SEQUENCE SEQ_CSS_ID;
+ DROP SEQUENCE SEQ_AC_CSS_ID;
+ DROP SEQUENCE SEQ_AU_CSS_ID;
+ DROP SEQUENCE SEQ_CN_CSS_ID;
+ DROP SEQUENCE SEQ_LK_CSS_ID;
+ 

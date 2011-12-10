@@ -121,11 +121,6 @@
   		<artifactId>guava-osgi</artifactId>
   		<version>9.0.0</version>
     </bundle>
-        <bundle>
-            <groupId>org.sakaiproject.nakamura</groupId>
-            <artifactId>org.sakaiproject.nakamura.derby-driver</artifactId>
-            <version>10.6.2.1-0.1-SNAPSHOT</version>
-        </bundle>
    </startLevel>
    <startLevel level="12" >
     <bundle>
@@ -138,6 +133,23 @@
             <artifactId>org.sakaiproject.nakamura.core</artifactId>
             <version>1.4-SNAPSHOT</version>
         </bundle>
+        <bundle>
+            <groupId>org.sakaiproject.nakamura</groupId>
+            <artifactId>org.sakaiproject.nakamura.postgres-driver</artifactId>
+            <version>9.0-801-0.1-SNAPSHOT</version>
+        </bundle>
+<!--
+        <bundle>
+            <groupId>org.sakaiproject.nakamura</groupId>
+            <artifactId>org.sakaiproject.nakamura.mysql-driver</artifactId>
+            <version>5.1.13-0.1-SNAPSHOT</version>
+        </bundle>
+        <bundle>
+            <groupId>org.sakaiproject.nakamura</groupId>
+            <artifactId>org.sakaiproject.nakamura.derby-driver</artifactId>
+            <version>10.6.2.1-0.1-SNAPSHOT</version>
+        </bundle>
+-->
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
             <artifactId>org.sakaiproject.nakamura.solr</artifactId>
