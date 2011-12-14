@@ -13,6 +13,11 @@
 	<version>0.90.3-0.1-SNAPSHOT</version>
 	<name>Sparse Map :: HBase SPI Implementation</name>
 	<description>Storage SPI implementation using HBase </description>
+	<scm>
+		<connection>scm:git:git://github.com/ieb/sparsemapcontent.git</connection>
+		<developerConnection>scm:git:git@github.com:ieb/sparsemapcontent.git</developerConnection>
+		<url>http://github.com/ieb/sparsemapcontent/</url>
+	</scm>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>

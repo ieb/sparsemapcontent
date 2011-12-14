@@ -13,6 +13,11 @@
 	<version>9.0-801-0.1-SNAPSHOT</version>
 	<name>Sparse Map :: PostgresSQL SPI Implementation</name>
 	<description>Storage SPI implementation using Postgres </description>
+	<scm>
+		<connection>scm:git:git://github.com/ieb/sparsemapcontent.git</connection>
+		<developerConnection>scm:git:git@github.com:ieb/sparsemapcontent.git</developerConnection>
+		<url>http://github.com/ieb/sparsemapcontent/</url>
+	</scm>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
