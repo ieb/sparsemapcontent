@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.sakaiproject.nakamura</groupId>
@@ -11,7 +10,7 @@
   <groupId>org.sakaiproject.nakamura</groupId>
   <artifactId>org.sakaiproject.nakamura.derby-driver</artifactId>
   <packaging>bundle</packaging>
-  <version>10.6.2.1-0.1-SNAPSHOT</version>
+  <version>10.6.2.1-1.4</version>
   <name>Sakai Nakamura :: Embedded Derby SPI Implementation</name>
   <description>Storage SPI implementation using Cassandra </description>
   <scm>
@@ -33,7 +32,7 @@
             <Bundle-Category>driver</Bundle-Category>
             <Export-Package> !* </Export-Package>
             <Import-Package> !* </Import-Package>
-            <Service-Component></Service-Component>
+            <Service-Component />
             <Fragment-Host>org.sakaiproject.nakamura.core</Fragment-Host>
             <Private-Package>org.sakaiproject.nakamura.lite.storage.jdbc.derby.*</Private-Package>
             <Embed-Transitive>true</Embed-Transitive>
