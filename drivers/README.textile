@@ -1,16 +1,17 @@
 h1. Map Content System Drivers.
 
-This subtree contains external drivers that may be needed to run other storage back ends. These drviers should be loaded seperately into the OSGi container, or used seperately in the JVM.
+This subtree contains Storage SPI implementations that are needed to run SparseMap. They are OSGi Fragments and one of them must be included in the OSGi Container when sparsemap is started.
 
-Cassandra
-   Contains a combined Thrift + Cassandra Bundle
+derby/, mysql/, postgres/, oracle/
 
-Postgres
-  Contains a repackaged Postgres 9 driver
+   These projects contain JDBC based drivers for each database. The Fragment contains a configuration 
+   for the database in question, and service and the JDBC driver. The code for the driver is contained in the core bundle
 
+cassandra/
+   The bundle contains an implemetnation of the Cassandra SPI implementation and the necessary depedencies to connect to an existing Cassandra cluster.
 
-MySQL
-  MySQL comes with the OSGi manifest already in the jar from the central maven repos
+mongo/
+   The bundle contains an implemetnation of the MongoDB SPI implementation and the necessary depedencies to connect to an existing MongoDB cluster.
 
-Oracle
-  ?
+hbase/
+   The bundle contains an implemetnation of the HBase SPI implementation and the necessary depedencies to connect to an existing HBase cluster.
