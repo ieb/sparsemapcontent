@@ -462,6 +462,44 @@ public abstract class AbstractContentManagerTest {
     }
 
     @Test
+    public void testDeleteContentDeletesPathConsistently() throws StorageClientException, AccessDeniedException
+    {
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
+
+        AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
+
+        ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
+                configuration,  sharedCache, new LoggingStorageListener());
+        contentManager.update(new Content("/testDeleteContent", ImmutableMap.of("prop1", (Object) "value1")));
+        contentManager.update(new Content("/testDeleteContent/test", ImmutableMap.of("prop1", (Object) "value2")));
+
+        contentManager.delete("/testDeleteContent/test");
+
+        Assert.assertNull(contentManager.get("/testDeleteContent/test"));
+
+        Content parent = contentManager.get("/testDeleteContent");
+
+        Iterator<Content>
+            children = null;
+        Iterator<String>
+            childPaths = null;
+
+        children = parent.listChildren().iterator();
+        childPaths = parent.listChildPaths().iterator();
+
+        Assert.assertFalse(children.hasNext());
+        Assert.assertFalse(childPaths.hasNext());
+
+        children = contentManager.listChildren("/testDeleteContent");
+        childPaths = contentManager.listChildPaths("/testDeleteContent");
+
+        Assert.assertFalse(children.hasNext());
+        Assert.assertFalse(childPaths.hasNext());
+    }
+
+    @Test
     public void testUpdateContent() throws StorageClientException, AccessDeniedException {
         AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
