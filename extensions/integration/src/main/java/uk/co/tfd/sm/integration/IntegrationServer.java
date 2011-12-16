@@ -9,7 +9,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.junit.Test;
 import org.sakaiproject.nakamura.app.NakamuraMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

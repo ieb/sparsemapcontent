@@ -4,7 +4,6 @@ import java.lang.reflect.Type;
 import java.util.Calendar;
 
 import org.sakaiproject.nakamura.api.lite.util.ISO8601Date;
-import org.slf4j.LoggerFactory;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;

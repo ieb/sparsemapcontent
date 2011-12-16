@@ -24,15 +24,11 @@ import org.sakaiproject.nakamura.lite.BaseMemoryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import uk.co.tfd.sm.api.authn.AuthenticationService;
+import uk.co.tfd.sm.util.http.ParameterUtil;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
-import uk.co.tfd.sm.api.authn.AuthenticationService;
-import uk.co.tfd.sm.authn.AuthenticationServiceImpl;
-import uk.co.tfd.sm.authorizables.RestAuthorizableManager;
-import uk.co.tfd.sm.util.http.ParameterUtil;
 
 
 public class RestAuthorizableManagerTest {
