@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
+import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 
@@ -34,6 +35,18 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 public interface StorageClient {
 
 	/**
+     * Where an object is deleted, in the repository but still exists in the storage
+     * It will be marked with  "Y" in the deleted field. 
+     * @since 1.5
+     */
+    public static final String DELETED_FIELD = Repository.SYSTEM_PROP_PREFIX + "deleted";
+    /**
+     * true, for above.
+     * @since 1.5
+     */
+    public static final String TRUE = "Y";
+
+    /**
 	 * Lookup an object by key
 	 * @param keySpace the keyspace to search
 	 * @param columnFamily the group of columns we're considering

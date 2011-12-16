@@ -183,7 +183,8 @@ public class CassandraClient extends Client implements StorageClient {
             List<Mutation> keyMutations = Lists.newArrayList();
             columnMutations.put(columnFamily, keyMutations);
             mutation.put(key, columnMutations);
-            
+            // TODO We need to handle deletions correctly.
+            // If the deleted flag is set we should probably just delete completely.
             for (Entry<String, Object> value : values.entrySet()) {
                 String name = value.getKey();
                 byte[] bname=null;

@@ -154,8 +154,8 @@ public class MongoClient implements StorageClient, RowHasher {
 		columnFamily = columnFamily.toLowerCase();
 		HashMap<String,Object> mutableValues = new HashMap<String,Object>(values);
 		
-		if (values.containsKey(Content.DELETED_FIELD) 
-				&& values.get(Content.DELETED_FIELD).equals(Content.TRUE)){
+		if (values.containsKey(StorageClient.DELETED_FIELD) 
+				&& values.get(StorageClient.DELETED_FIELD).equals(StorageClient.TRUE)){
 			this.remove(keySpace, columnFamily, key);
 			return;
 		}

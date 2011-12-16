@@ -287,6 +287,10 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             if ( storageClientListener != null ) {
                 storageClientListener.before(keySpace,columnFamily,key,m);
             }
+            if ( TRUE.equals(m.get(DELETED_FIELD)) ) {
+                // if the map was previously deleted, delete all content since we don't want the old map becoming part of the new map.
+                m.clear();
+            }
             for (Entry<String, Object> e : values.entrySet()) {
                 String k = e.getKey();
                 Object o = e.getValue();

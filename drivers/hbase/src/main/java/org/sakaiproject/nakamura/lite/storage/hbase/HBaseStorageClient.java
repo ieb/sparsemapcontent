@@ -94,6 +94,8 @@ public class HBaseStorageClient implements StorageClient {
     try {
       table = htab.getTable(columnFamily);
       Put row = new Put(key.getBytes("UTF-8"), System.currentTimeMillis());
+      // TODO We need to handle deletions correctly.
+      // If the deleted flag is set we should probably just delete completely.
 
       for (Entry<String, Object> value : values.entrySet()) {
         String q = value.getKey();

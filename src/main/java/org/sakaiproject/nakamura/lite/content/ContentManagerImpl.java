@@ -56,6 +56,7 @@ import java.util.Set;
 import com.google.common.collect.Ordering;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.Configuration;
+import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.StorageConstants;
@@ -199,10 +200,10 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
             checkOpen();
             accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
             Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
-            if (structure != null && structure.size() > 0) {
+            if (exists(structure)) {
                 String contentId = (String)structure.get(STRUCTURE_UUID_FIELD);
                 Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
-                if (content != null && content.size() > 0 && !TRUE.equals(content.get(DELETED_FIELD))) {
+                if (exists(content)) {
                     return true;
                 }
             }
@@ -218,10 +219,10 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
         Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
-        if (structure != null && structure.size() > 0) {
+        if (exists(structure)) {
             String contentId = (String)structure.get(STRUCTURE_UUID_FIELD);
             Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
-            if (content != null && content.size() > 0 && !TRUE.equals(content.get(DELETED_FIELD))) {
+            if (exists(content)) {
                 Content contentObject = new Content(path, content);
                 ((InternalContent) contentObject).internalize(this, false);
                 return contentObject;
@@ -246,7 +247,7 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
                     try {
                         Map<String, Object> structureMap = childContent.next();
                         LOGGER.debug("Loaded Next as {} ", structureMap);
-                        if ( structureMap != null && structureMap.size() > 0 ) {
+                        if ( exists(structureMap) ) {
                             String path = (String) structureMap.get(PATH_FIELD);
                             content = get(path);
                         }
@@ -285,13 +286,13 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
                     try {
                         Map<String, Object> structureMap = childContent.next();
                         LOGGER.debug("Loaded Next child of {} as {} ", path, structureMap);
-                        if ( structureMap != null && structureMap.size() > 0 ) {
+                        if ( exists(structureMap) ) {
                             String testChildPath = (String) structureMap.get(PATH_FIELD);
                                 accessControlManager.check(Security.ZONE_CONTENT, testChildPath, Permissions.CAN_READ);
                                 childPath = testChildPath;
                                 // this is not that efficient since it requires the map is
-                                // loaded, at the moment I dont have a way round this with the
-                                // underlying index strucutre.
+                                // loaded, at the moment I don't have a way round this with the
+                                // underlying index structure.
                                 LOGGER.debug("Got Next Child of {} as {} ", path, childPath);
                                 return true;
                         }
@@ -373,7 +374,8 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_WRITE);
         String id = null;
         Map<String, Object> toSave = null;
-        // deal with content that already exists.
+        // deal with content that already exists, but has been marked as new by merging in the new content.
+        // content that is deleted wont appear in this layer
         if (content.isNew()) {
             Content existingContent = get(path);
             if ( existingContent != null ) {
@@ -406,6 +408,7 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
             toSave.put(LASTMODIFIED_FIELD, System.currentTimeMillis());
             toSave.put(LASTMODIFIED_BY_FIELD,
                     accessControlManager.getCurrentUserId());
+            toSave.put(DELETED_FIELD, new RemoveProperty()); // make certain the deleted field is not set
             LOGGER.debug("New Content with {} {} ", id, toSave);
         } else if (content.isUpdated()) {
             originalProperties = content.getOriginalProperties();
@@ -420,14 +423,15 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
             toSave.put(LASTMODIFIED_FIELD, System.currentTimeMillis());
             toSave.put(LASTMODIFIED_BY_FIELD,
                     accessControlManager.getCurrentUserId());
+            toSave.put(DELETED_FIELD, new RemoveProperty()); // make certain the deleted field is not set
             LOGGER.debug("Updating Content with {} {} ", id, toSave);
         } else {
-            // if not new or updated, dont update.
+            // if not new or updated, don't update.
             return;
         }
 
         Map<String, Object> checkContent = getCached(keySpace, contentColumnFamily, id);
-        if (TRUE.equals((String)checkContent.get(READONLY_FIELD))) {
+        if (exists(checkContent) && TRUE.equals((String)checkContent.get(READONLY_FIELD))) {
             throw new AccessDeniedException(Security.ZONE_CONTENT, path,
                     "update on read only Content Item (possibly a previous version of the item)",
                     accessControlManager.getCurrentUserId());
@@ -436,7 +440,18 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
         if (content.isNew()) {
             isnew = true;
             putCached(keySpace, contentColumnFamily, path,
-                    ImmutableMap.of(STRUCTURE_UUID_FIELD, (Object)id, PATH_FIELD, path), true);
+                    ImmutableMap.of(STRUCTURE_UUID_FIELD, (Object)id, PATH_FIELD, path, DELETED_FIELD, new RemoveProperty()), true);
+        } else {
+            // get the structure field to see if we need to update that
+            Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
+            if ( !exists(structure)) {
+                // rewrite the structure field resetting the deleted field.
+                isnew = true;
+                putCached(keySpace, contentColumnFamily, path,
+                        ImmutableMap.of(STRUCTURE_UUID_FIELD, (Object)id, PATH_FIELD, path, DELETED_FIELD, new RemoveProperty()), true);                
+            }
+            
+            
         }
         // save the content id.
         putCached(keySpace, contentColumnFamily, id, toSave, isnew);
@@ -452,16 +467,26 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_DELETE);
         Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
-        if ( structure != null && structure.size() > 0 ) {
+        if ( exists(structure) ) {
             String uuid = (String)structure.get(STRUCTURE_UUID_FIELD);
             Map<String, Object> content = getCached(keySpace, contentColumnFamily, uuid);
-            Map<String, Object> contentBeforeDelete = ImmutableMap.copyOf(content);
-            String resourceType = (String) content.get("sling:resourceType");
-            putCached(keySpace, contentColumnFamily, uuid,
+            if ( exists(content)) {
+                Map<String, Object> contentBeforeDelete = ImmutableMap.copyOf(content);
+                String resourceType = (String) content.get("sling:resourceType");
+                putCached(keySpace, contentColumnFamily, uuid,
+                        ImmutableMap.of(DELETED_FIELD, (Object) TRUE), false);
+                eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), resourceType, contentBeforeDelete);
+            }
+            // at 1.4 the deleted field was not on the structure object, this will auto migrate content.
+            putCached(keySpace, contentColumnFamily, path,
                     ImmutableMap.of(DELETED_FIELD, (Object) TRUE), false);
-            eventListener.onDelete(Security.ZONE_CONTENT, path, accessControlManager.getCurrentUserId(), resourceType, contentBeforeDelete);
         }
     }
+
+    private boolean exists(Map<String, Object> map) {
+        return map != null && map.size() > 0 && !TRUE.equals(map.get(DELETED_FIELD));
+    }
+
 
     public long writeBody(String path, InputStream in) throws StorageClientException,
             AccessDeniedException, IOException {
@@ -473,13 +498,20 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_WRITE);
         Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
-        if ( structure == null || structure.size() == 0 ) {
-            Content content = new Content(path,null);
-            update(content);
+        if ( !exists(structure) ) {
+            Content contentObj = new Content(path,null);
+            update(contentObj);
             structure = getCached(keySpace, contentColumnFamily, path);
         }
         String contentId = (String)structure.get(STRUCTURE_UUID_FIELD);
         Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
+        if ( !exists(content)) {
+            Content contentObj = new Content(path,null);
+            update(contentObj);
+            structure = getCached(keySpace, contentColumnFamily, path);
+            contentId = (String)structure.get(STRUCTURE_UUID_FIELD);
+            content = getCached(keySpace, contentColumnFamily, contentId);
+        }
         boolean isnew = true;
         String blockIdField = StorageClientUtils.getAltField(BLOCKID_FIELD, streamId);
         if (content.containsKey(blockIdField)) {
@@ -520,6 +552,9 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
         Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
+        if ( !exists(structure) ) {
+            return null;
+        }
         LOGGER.debug("Structure Loaded {} {} ", path, structure);
         String contentId = (String)structure.get(STRUCTURE_UUID_FIELD);
         return internalGetInputStream(contentId, streamId);
@@ -528,6 +563,9 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
     private InputStream internalGetInputStream(String contentId, String streamId)
             throws StorageClientException, AccessDeniedException, IOException {
         Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
+        if ( !exists(content) ) {
+            return null;
+        }
         String contentBlockId = (String)content.get(StorageClientUtils
                 .getAltField(BLOCKID_FIELD, streamId));
         return client.streamBodyOut(keySpace, contentColumnFamily, contentId, contentBlockId, streamId,
@@ -612,11 +650,11 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
         accessControlManager.check(Security.ZONE_CONTENT, to,
                 Permissions.CAN_READ.combine(Permissions.CAN_WRITE));
         Map<String, Object> fromStructure = Maps.newHashMap(getCached(keySpace, contentColumnFamily, from));
-        if (fromStructure == null || fromStructure.size() == 0) {
+        if (!exists(fromStructure)) {
             throw new StorageClientException("The source content to move from " + from
                     + " does not exist, move operation failed");
         }
-        if (fromStructure != null && fromStructure.size() > 0 ) {
+        if (exists(fromStructure)) {
             String contentId = (String)fromStructure.get(STRUCTURE_UUID_FIELD);
             Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
             if (content == null || content.size() == 0 && TRUE.equals(content.get(DELETED_FIELD))) {
@@ -625,10 +663,10 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
             }
         }
         Map<String, Object> toStructure = getCached(keySpace, contentColumnFamily, to);
-        if (toStructure != null && toStructure.size() > 0) {
+        if (exists(toStructure)) {
             String contentId = (String)toStructure.get(STRUCTURE_UUID_FIELD);
             Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
-            if (content != null && content.size() > 0 && !TRUE.equals(content.get(DELETED_FIELD))) {
+            if (exists(content)) {
                 throw new StorageClientException("The destination content to move to " + to
                     + "  exists, move operation failed");
             }
@@ -642,7 +680,7 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
             String parent = StorageClientUtils.getParentObjectPath(to);
             Map<String, Object> parentToStructure = getCached(keySpace, contentColumnFamily,
                     parent);
-            if (parentToStructure == null || parentToStructure.size() == 0) {
+            if (!exists(parentToStructure)) {
                 // create a new parent
                 Content content = new Content(parent, null);
                 update(content);
@@ -658,7 +696,7 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
         putCached(keySpace, contentColumnFamily, to, fromStructure, true);
 
         // remove the old from.
-        removeCached(keySpace, contentColumnFamily, from);
+        putCached(keySpace, contentColumnFamily, from, ImmutableMap.of(DELETED_FIELD, (Object)TRUE), false);
         // move does not add resourceTypes to events.
         eventListener.onDelete(Security.ZONE_CONTENT, from, accessControlManager.getCurrentUserId(), null, null, "op:move");
         eventListener.onUpdate(Security.ZONE_CONTENT, to, accessControlManager.getCurrentUserId(), null, true, null, "op:move");
@@ -696,12 +734,12 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
         accessControlManager.check(Security.ZONE_CONTENT, from,
                 Permissions.CAN_READ.combine(Permissions.CAN_WRITE));
         Map<String, Object> toStructure = getCached(keySpace, contentColumnFamily, to);
-        if (toStructure == null || toStructure.size() == 0) {
+        if ( !exists(toStructure)) {
             throw new StorageClientException("The source content to link from " + to
                     + " does not exist, link operation failed");
         }
         Map<String, Object> fromStructure = getCached(keySpace, contentColumnFamily, from);
-        if (fromStructure != null && fromStructure.size() > 0) {
+        if (exists(fromStructure)) {
             throw new StorageClientException("The destination content to link to " + from
                     + "  exists, link operation failed");
         }
@@ -718,7 +756,7 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
         // structured if necessary
         String parent = StorageClientUtils.getParentObjectPath(from);
         Map<String, Object> parentToStructure = getCached(keySpace, contentColumnFamily, parent);
-        if (parentToStructure == null || parentToStructure.size() == 0) {
+        if (!exists(parentToStructure)) {
             // create a new parent
             Content content = new Content(parent, null);
             update(content);
@@ -726,7 +764,7 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
 
         // create the new object for the path, pointing to the Object
         putCached(keySpace, contentColumnFamily, from, ImmutableMap.of(STRUCTURE_UUID_FIELD,
-                idStore, PATH_FIELD, from, LINKED_PATH_FIELD, to), true);
+                idStore, PATH_FIELD, from, LINKED_PATH_FIELD, to, DELETED_FIELD, new RemoveProperty()), true);
 
     }
 
@@ -734,8 +772,14 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_WRITE);
         Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
+        if (!exists(structure)) {
+            throw new StorageClientException("Item "+path+" does not exist");
+        }
         String contentId = (String)structure.get(STRUCTURE_UUID_FIELD);
         Map<String, Object> saveVersion = getCached(keySpace, contentColumnFamily, contentId);
+        if (!exists(saveVersion)) {
+            throw new StorageClientException("Item "+path+" does not exist");
+        }
 
         // versionHistoryId is the UUID of the version history for this node.
 
@@ -790,10 +834,10 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
         Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
-        if (structure != null && structure.size() > 0) {
+        if (exists(structure)) {
             String contentId = (String)structure.get(STRUCTURE_UUID_FIELD);
             Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
-            if (content != null && content.size() > 0) {
+            if (exists(content)) {
                 String versionHistoryId = (String)content
                         .get(VERSION_HISTORY_ID_FIELD);
                 if (versionHistoryId != null) {
@@ -832,10 +876,10 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
         checkOpen();
         Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
-        if (structure != null && structure.size() > 0) {
+        if (exists(structure)) {
             String contentId = (String)structure.get(STRUCTURE_UUID_FIELD);
             Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
-            if (content != null && content.size() > 0) {
+            if (exists(content)) {
                 String versionHistoryId = (String)content
                         .get(VERSION_HISTORY_ID_FIELD);
                 if (versionHistoryId != null) {
@@ -855,10 +899,10 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
         checkOpen();
         accessControlManager.check(Security.ZONE_CONTENT, path, Permissions.CAN_READ);
         Map<String, Object> structure = getCached(keySpace, contentColumnFamily, path);
-        if (structure != null && structure.size() > 0) {
+        if (exists(structure)) {
             String contentId = (String)structure.get(STRUCTURE_UUID_FIELD);
             Map<String, Object> content = getCached(keySpace, contentColumnFamily, contentId);
-            if (content != null && content.size() > 0) {
+            if (exists(content)) {
                 String versionHistoryId = (String)content
                         .get(VERSION_HISTORY_ID_FIELD);
                 if (versionHistoryId != null) {
@@ -912,7 +956,7 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
                           try {
                               Map<String, Object> structureMap = clientSearchKeysIterator.next();
                               LOGGER.debug("Loaded Next as {} ", structureMap);
-                              if ( structureMap != null && structureMap.size() > 0 ) {
+                              if ( exists(structureMap) ) {
                                   String path = (String) structureMap.get(PATH_FIELD);
                                   contentResult = get(path);
                               }

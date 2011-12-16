@@ -29,6 +29,7 @@ import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.content.Content;
+import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,7 +97,7 @@ public class InternalContent {
     /**
      * set to "Y" if deleted. (content row)
      */
-    public static final String DELETED_FIELD = Repository.SYSTEM_PROP_PREFIX + "deleted";
+    public static final String DELETED_FIELD = StorageClient.DELETED_FIELD;
 
     /**
      * The block size in bytes in each block in a block set, if body store uses
@@ -114,7 +115,7 @@ public class InternalContent {
     /**
      * Yes, True, etc
      */
-    public static final String TRUE = "Y";
+    public static final String TRUE = StorageClient.TRUE;
 
     /**
      * The date (stored as GMT epoch long) the body was last modified. (content
