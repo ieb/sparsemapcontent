@@ -153,12 +153,6 @@ public class MongoClient implements StorageClient, RowHasher {
 	throws StorageClientException {
 		columnFamily = columnFamily.toLowerCase();
 		HashMap<String,Object> mutableValues = new HashMap<String,Object>(values);
-		
-		if (values.containsKey(StorageClient.DELETED_FIELD) 
-				&& values.get(StorageClient.DELETED_FIELD).equals(StorageClient.TRUE)){
-			this.remove(keySpace, columnFamily, key);
-			return;
-		}
 
 		// rewrite _id => MongoClient.MONGO_INTERNAL_SPARSE_UUID_FIELD
 		if (mutableValues.containsKey(MongoClient.MONGO_INTERNAL_ID_FIELD)){
@@ -209,10 +203,13 @@ public class MongoClient implements StorageClient, RowHasher {
 	throws StorageClientException {
 		columnFamily = columnFamily.toLowerCase();
 		DBCollection collection = mongodb.getCollection(columnFamily);
-		collection.remove(new BasicDBObject(MONGO_INTERNAL_SPARSE_UUID_FIELD, key));
 		
+		// Soft delete content
 		if (columnFamily.equals((String)props.get(MongoClientPool.PROP_CONTENT_COLLECTION))){
-			collection.remove(new BasicDBObject(Content.STRUCTURE_UUID_FIELD, key));
+			insert(keySpace, columnFamily, key, ImmutableMap.of(DELETED_FIELD, (Object)TRUE), false);
+		}
+		else {
+			collection.remove(new BasicDBObject(MONGO_INTERNAL_SPARSE_UUID_FIELD, key));
 		}
 		log.debug("remove {}:{}:{}", new Object[]{keySpace, columnFamily, key});
 	}
