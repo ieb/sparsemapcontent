@@ -518,9 +518,10 @@ public class AuthorizableManagerImpl extends CachingManagerImpl implements Autho
                             if (isAUser(authMap)) {
                                 authorizable = new UserInternal(authMap, session, false);
                                 return true;
-                            } else if (isAGroup(authMap))
+                            } else if (isAGroup(authMap)) {
                                 authorizable = new GroupInternal(authMap, session, false);
-                            return true;
+                                return true;
+                            }
                         } catch (AccessDeniedException e) {
                             LOGGER.debug("Search result filtered ", e.getMessage());
                         } catch (StorageClientException e) {
