@@ -95,7 +95,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
 
     @Test
     public void testAuthorizableManager() throws StorageClientException, AccessDeniedException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         Assert.assertNotNull(currentUser);
@@ -116,7 +116,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
     @Test
     public void testAuthorizableManagerAccessDenied() throws StorageClientException,
             AccessDeniedException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
         User currentUser = AuthenticatorImpl.authenticate("admin", "wrong-password");
 
         Assert.assertNull(currentUser);
@@ -125,7 +125,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
     @Test
     public void testAuthorizableManagerUserNotFound() throws StorageClientException,
             AccessDeniedException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
         User currentUser = AuthenticatorImpl.authenticate("nonuser", "wrong-password");
 
         Assert.assertNull(currentUser);
@@ -134,7 +134,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
     @Test
     public void testAuthorizableManagerCheckUser() throws StorageClientException,
             AccessDeniedException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
@@ -170,7 +170,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
     @Test
     public void testAuthorizableManagerCreateUser() throws StorageClientException,
             AccessDeniedException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
@@ -206,7 +206,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
     @Test
     public void testAuthorizableManagerCreateUserDenied() throws StorageClientException,
             AccessDeniedException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
@@ -267,7 +267,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
     @Test
     public void testAuthorizableManagerCreateGroup() throws StorageClientException,
             AccessDeniedException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
@@ -364,7 +364,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
     @Test
     public void testFindAuthorizable() throws StorageClientException, AccessDeniedException {
         try {
-            AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+            AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
             User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
             AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
@@ -437,7 +437,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
     @Test
     public void testAuthorizableManagerNullProperties() throws StorageClientException,
             AccessDeniedException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
@@ -465,7 +465,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
     @Test
     public void testAuthorizableManagerTrigger() throws StorageClientException,
             AccessDeniedException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,
@@ -493,7 +493,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
     @Test
     public void testAuthorizableManagerTriggerAll() throws StorageClientException,
             AccessDeniedException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(client,

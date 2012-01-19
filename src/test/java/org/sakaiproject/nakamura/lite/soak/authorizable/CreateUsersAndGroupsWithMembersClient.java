@@ -60,7 +60,7 @@ public class CreateUsersAndGroupsWithMembersClient extends AbstractScalingClient
             super.setup();
             String tname = String.valueOf(Thread.currentThread().getId())
                     + String.valueOf(System.currentTimeMillis());
-            AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+            AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
             User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
             AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(

@@ -69,9 +69,10 @@ public class SessionImpl implements Session {
                 BaseColumnFamilyCacheManager.getCache(configuration,
                         configuration.getAclColumnFamily(), storageCacheManager), storeListener,
                 principalValidatorResolver);
+        Map<String, CacheHolder> authorizableCache = BaseColumnFamilyCacheManager.getCache(configuration,
+                configuration.getAuthorizableColumnFamily(), storageCacheManager);
         authorizableManager = new AuthorizableManagerImpl(currentUser, this, client, configuration,
-                accessControlManager, BaseColumnFamilyCacheManager.getCache(configuration,
-                        configuration.getAuthorizableColumnFamily(), storageCacheManager),
+                accessControlManager, authorizableCache,
                 storeListener);
 
         contentManager = new ContentManagerImpl(client, accessControlManager, configuration,
@@ -82,7 +83,7 @@ public class SessionImpl implements Session {
                 BaseColumnFamilyCacheManager.getCache(configuration,
                         configuration.getLockColumnFamily(), storageCacheManager));
 
-        authenticator = new AuthenticatorImpl(client, configuration);
+        authenticator = new AuthenticatorImpl(client, configuration, authorizableCache);
 
         this.storeListener = storeListener;
         this.storageCacheManager = storageCacheManager;

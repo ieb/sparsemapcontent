@@ -43,7 +43,7 @@ public class ContentCreateClient extends AbstractScalingClient {
     public void run() {
         try {
             super.setup();
-            AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration);
+            AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
             User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
             AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(

@@ -22,10 +22,13 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
+import org.sakaiproject.nakamura.api.lite.BaseColumnFamilyCacheManager;
+import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
+import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StoreListener;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -120,7 +123,7 @@ public class RepositoryImpl implements Repository {
         StorageClient client = null;
         try {
             client = clientPool.getClient();
-            AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration);
+            AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration, getAuthorizableCache(clientPool.getStorageCacheManager()));
             User currentUser = authenticatorImpl.authenticate(username, password);
             if (currentUser == null) {
                 throw new StorageClientException("User " + username + " cant login with password");
@@ -142,12 +145,17 @@ public class RepositoryImpl implements Repository {
         }
     }
 
+    private Map<String, CacheHolder> getAuthorizableCache(StorageCacheManager storageCacheManager) {
+        return BaseColumnFamilyCacheManager.getCache(configuration,
+                configuration.getAuthorizableColumnFamily(), storageCacheManager);
+    }
+
     private Session openSession(String username) throws StorageClientException,
             AccessDeniedException {
         StorageClient client = null;
         try {
             client = clientPool.getClient();
-            AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration);
+            AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration, getAuthorizableCache(clientPool.getStorageCacheManager()));
             User currentUser = authenticatorImpl.systemAuthenticate(username);
             if (currentUser == null) {
                 throw new StorageClientException("User " + username
@@ -175,7 +183,7 @@ public class RepositoryImpl implements Repository {
         StorageClient client = null;
         try {
             client = clientPool.getClient();
-            AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration);
+            AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration, getAuthorizableCache(clientPool.getStorageCacheManager()));
             User currentUser = authenticatorImpl.systemAuthenticateBypassEnable(username);
             if (currentUser == null) {
                 throw new StorageClientException("User " + username
