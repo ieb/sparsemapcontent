@@ -479,7 +479,7 @@ public class StorageClientUtils {
      */
     @SuppressWarnings("unchecked")
     public static <T> T getSetting(Object setting, T defaultValue) {
-        if (setting != null) {
+        if (setting != null && defaultValue != null) {
             if (defaultValue.getClass().isAssignableFrom(setting.getClass())) {
                 return (T) setting;
             }
