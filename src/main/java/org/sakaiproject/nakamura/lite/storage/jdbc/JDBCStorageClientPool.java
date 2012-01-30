@@ -92,7 +92,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
 
         public void destroyObject(Object obj) throws Exception {
             JDBCStorageClient client = (JDBCStorageClient) obj;
-            client.close();
+            client.destroy();
 
         }
 

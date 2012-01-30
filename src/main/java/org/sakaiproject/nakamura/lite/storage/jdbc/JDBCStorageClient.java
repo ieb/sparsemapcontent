@@ -126,7 +126,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     private boolean active;
     private StreamedContentHelper streamedContentHelper;
     private List<Disposable> toDispose = Lists.newArrayList();
-    private Exception closed;
+    private Exception destroyed;
     private Exception passivate;
     private String rowidHash;
     private Map<String, AtomicInteger> counters = Maps.newConcurrentMap();
@@ -187,7 +187,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
 
     public Map<String, Object> get(String keySpace, String columnFamily, String key)
             throws StorageClientException {
-        checkClosed();
+        checkActive();
         String rid = rowHash(keySpace, columnFamily, key);
         return internalGet(keySpace, columnFamily, rid, null); // gets through this route should have already consulted the cache.
     }
@@ -223,8 +223,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             if (passivate != null) {
                 LOGGER.warn("Was Pasivated ", passivate);
             }
-            if (closed != null) {
-                LOGGER.warn("Was Closed ", closed);
+            if (destroyed != null) {
+                LOGGER.warn("Was Destroyed ", destroyed);
             }
             throw new StorageClientException(e.getMessage(), e);
         } catch (IOException e) {
@@ -233,8 +233,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             if (passivate != null) {
                 LOGGER.warn("Was Pasivated ", passivate);
             }
-            if (closed != null) {
-                LOGGER.warn("Was Closed ", closed);
+            if (destroyed != null) {
+                LOGGER.warn("Was Destroyed ", destroyed);
             }
             throw new StorageClientException(e.getMessage(), e);
         } finally {
@@ -267,7 +267,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
 
     public void insert(String keySpace, String columnFamily, String key, Map<String, Object> values, boolean probablyNew)
             throws StorageClientException {
-        checkClosed();
+        checkActive();
 
         Map<String, PreparedStatement> statementCache = Maps.newHashMap();
         boolean autoCommit = true;
@@ -484,7 +484,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
 
     public void remove(String keySpace, String columnFamily, String key)
             throws StorageClientException {
-        checkClosed();
+        checkActive();
         PreparedStatement deleteStringRow = null;
         PreparedStatement deleteBlockRow = null;
         String rid = rowHash(keySpace, columnFamily, key);
@@ -518,23 +518,44 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             close(deleteBlockRow, "deleteBlockRow");
         }
     }
-
+    
     public void close() {
-        if (closed == null) {
+        passivate();
+        jcbcStorageClientConnection.releaseClient(this);
+    }
+    
+    public void destroy() {
+        if (destroyed == null) {
             try {
-                closed = new Exception("Connection Closed Traceback");
-                shutdownConnection();
-                jcbcStorageClientConnection.releaseClient(this);
+                destroyed = new Exception("Connection Closed Traceback");
             } catch (Throwable t) {
-                LOGGER.error("Failed to close connection ", t);
+                LOGGER.error("Failed to dispose connection ", t);
             }
-        }
+        }        
     }
 
-    private void checkClosed() throws StorageClientException {
-        if (closed != null) {
+    private void checkActive() throws StorageClientException {
+     checkActive(true);
+    }
+
+    private void checkActive(boolean checkForActive) throws StorageClientException {
+        if (destroyed != null) {
+            LOGGER.warn("Using a disposed storage client ");
             throw new StorageClientException(
-                    "Connection Has Been closed, traceback of close location follows ", closed);
+                    "Client was destroyed, traceback of destroy location follows ", destroyed);
+        }
+        if ( checkForActive ) {
+            if ( passivate != null ) {
+                LOGGER.warn("Using a passive storage client");
+                    throw new StorageClientException(
+                            "Client has been passivated traceback of passivate location follows ", passivate);            
+            }
+            if ( ! active ) {
+                LOGGER.warn("Using a passive storage client, no passivate location");
+                throw new StorageClientException(
+                        "Client has been passivated");            
+                
+            }
         }
     }
 
@@ -597,15 +618,8 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
         return pst;
     }
 
-    public void shutdownConnection() {
-        if (active) {
-            disposeDisposables();
-            active = false;
-        }
-    }
 
     private void disposeDisposables() {
-        passivate = new Exception("Passivate Traceback");
         List<Disposable> dList = null;
         // this shoud not be necessary, but just in case.
         synchronized (desponseLock ) {
@@ -634,7 +648,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     }
 
     public boolean validate() throws StorageClientException {
-        checkClosed();
+        checkActive(false);
         Statement statement = null;
         try {
             statement = jcbcStorageClientConnection.getConnection().createStatement();
@@ -671,7 +685,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
 
     public void checkSchema(String[] clientConfigLocations) throws ClientPoolException,
             StorageClientException {
-        checkClosed();
+        checkActive();
         Statement statement = null;
         try {
 
@@ -755,16 +769,21 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
 
     public void activate() {
         passivate = null;
+        active = true;
     }
 
     public void passivate() {
-        disposeDisposables();
+        if (active) {
+            passivate = new Exception("Passivate Traceback");
+            disposeDisposables();
+            active = false;
+        }
     }
 
     public Map<String, Object> streamBodyIn(String keySpace, String columnFamily, String contentId,
             String contentBlockId, String streamId, Map<String, Object> content, InputStream in)
             throws StorageClientException, AccessDeniedException, IOException {
-        checkClosed();
+        checkActive();
         return streamedContentHelper.writeBody(keySpace, columnFamily, contentId, contentBlockId,
                 streamId, content, in);
     }
@@ -772,7 +791,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     public InputStream streamBodyOut(String keySpace, String columnFamily, String contentId,
             String contentBlockId, String streamId, Map<String, Object> content)
             throws StorageClientException, AccessDeniedException, IOException {
-        checkClosed();
+        checkActive();
         final InputStream in = streamedContentHelper.readBody(keySpace, columnFamily,
                 contentBlockId, streamId, content);
         if ( in != null ) {
@@ -786,7 +805,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     }
 
     protected Connection getConnection() throws StorageClientException, SQLException {
-        checkClosed();
+        checkActive();
         return jcbcStorageClientConnection.getConnection();
     }
 
@@ -799,7 +818,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
 
     public DisposableIterator<Map<String,Object>> find(final String keySpace, final String columnFamily,
             Map<String, Object> properties, DirectCacheAccess cachingManager) throws StorageClientException {
-        checkClosed();
+        checkActive();
         return indexer.find(keySpace, columnFamily, properties, cachingManager);
         
 
@@ -991,7 +1010,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     }
 
     public Map<String, String> syncIndexColumns() throws StorageClientException, SQLException {
-        checkClosed();
+        checkActive();
         String selectColumns = getSql(SQL_INDEX_COLUMN_NAME_SELECT);
         String insertColumns = getSql(SQL_INDEX_COLUMN_NAME_INSERT);
         String updateTable = getSql("alter-widestring-table");
