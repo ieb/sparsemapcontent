@@ -119,7 +119,7 @@ public class StaticContentServiceFactory {
 				props.put("alias", alias);
 				servlets.put(contentServlet, bundleContext.registerService(
 						Servlet.class.getName(), contentServlet, props));
-				LOGGER.info("Registering {} as {} {} ", new Object[] {
+				LOGGER.debug("Registering {} as {} {} ", new Object[] {
 						contentServlet, alias, path });
 			}
 		}

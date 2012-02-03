@@ -26,6 +26,7 @@
         <configuration>
           <instructions>
             <Bundle-Category> sparse-map </Bundle-Category>
+            <Export-Package> uk.co.tfd.sm.api.http.* </Export-Package>
             <Private-Package>uk.co.tfd.sm.http.*</Private-Package>
             <Import-Package>
             *</Import-Package>

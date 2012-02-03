@@ -64,7 +64,7 @@ public class BatchProcessor {
 					.getBytes("UTF-8")));
 			String cachedResult = responseCache.get(key);
 			if (cachedResult != null) {
-				LOGGER.info("Using Cache");
+				LOGGER.debug("Using Cache");
 				response.getWriter().write(cachedResult);
 				return;
 			}
