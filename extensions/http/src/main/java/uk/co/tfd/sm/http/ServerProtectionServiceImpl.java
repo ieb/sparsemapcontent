@@ -216,7 +216,7 @@ public class ServerProtectionServiceImpl implements ServerProtectionService,
 	public void modified(Map<String, Object> properties)
 			throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		Map<String, List<HostType>> ht = Maps.newHashMap();
-		String[] hostsConfig = (String[]) properties.get(HOSTS);
+		String[] hostsConfig = toStringArray(properties.get(HOSTS));
 		if (hostsConfig != null) {
 			for (String host : hostsConfig) {
 				String[] hostConfig = StringUtils.split(host, ";");
@@ -263,8 +263,15 @@ public class ServerProtectionServiceImpl implements ServerProtectionService,
 			input = encoder.encode(data);
 		}
 		
-		whitelist = (String[]) properties.get(WHITELIST);
+		whitelist = toStringArray(properties.get(WHITELIST));
 
+	}
+
+	private String[] toStringArray(Object object) {
+		if ( object instanceof String[] ) {
+			return (String[]) object;
+		}
+		return new String[]{ String.valueOf(object) };
 	}
 
 	protected String getRequestHmac(String requestURI, String userId) {
