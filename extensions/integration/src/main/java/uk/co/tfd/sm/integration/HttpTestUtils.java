@@ -32,6 +32,7 @@ public class HttpTestUtils {
 
 	public JsonElement execute(HttpUriRequest post, int code,
 			String contentType, boolean echo) throws ClientProtocolException, IOException {
+		post.setHeader("Referer", "/integrationtests");
 		HttpResponse response = defaultHttpClient.execute(post);
 		Assert.assertEquals(code, response.getStatusLine().getStatusCode());
 		if (code >= 200 && code < 300) {

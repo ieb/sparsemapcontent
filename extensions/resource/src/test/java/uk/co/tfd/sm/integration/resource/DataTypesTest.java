@@ -123,7 +123,7 @@ public class DataTypesTest {
 				.valueOf(testarray)));
 		UrlEncodedFormEntity form = new UrlEncodedFormEntity(v);
 		post.setEntity(form);
-
+		post.setHeader("Referer","/integratriontest/"+this.getClass().getName());
 		httpTestUtils.execute(post, 200, APPLICATION_JSON);
 
 		JsonObject json = JsonTestUtils.toJsonObject(httpTestUtils.get(

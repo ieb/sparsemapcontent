@@ -73,7 +73,7 @@ public class DefaultResourceTest {
 				new BasicNameValuePair("testproperty", "testvalue5"),
 				new BasicNameValuePair("testint[]@Integer", "1001")));
 		post.setEntity(form);
-
+		post.setHeader("Referer","/integratriontest/"+this.getClass().getName());
 		httpTestUtils.execute(post, 200, APPLICATION_JSON);
 
 		JsonObject json = JsonTestUtils.toJsonObject(httpTestUtils.get(
@@ -122,7 +122,7 @@ public class DefaultResourceTest {
 				ADMIN_USER, ADMIN_PASSWORD);
 		post.addHeader(new BasicScheme().authenticate(creds, post));
 		post.setEntity(multipartEntity);
-
+		post.setHeader("Referer","/integratriontest/"+this.getClass().getName());
 		JsonElement jsonElement = httpTestUtils.execute(post, 200,
 				APPLICATION_JSON);
 		System.err.println(jsonElement);
