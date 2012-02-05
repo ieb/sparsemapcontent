@@ -99,7 +99,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
 
         public Object makeObject() throws Exception {
             return checkSchema(new JDBCStorageClient(JDBCStorageClientPool.this, properties,
-                    getSqlConfig(), getIndexColumns(), getIndexColumnsTypes(), getIndexColumnsNames() ));
+                    getSqlConfig(), getIndexColumns(), getIndexColumnsTypes(), getIndexColumnsNames(), true ));
         }
 
         public void passivateObject(Object obj) throws Exception {
@@ -198,7 +198,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
         try {
             // dont use the pool, we dont want this client to be in the pool.
             client = new JDBCStorageClient(this, properties,
-                    getSqlConfig(), getIndexColumns(), getIndexColumnsTypes(), getIndexColumnsNames() );
+                    getSqlConfig(), getIndexColumns(), getIndexColumnsTypes(), getIndexColumnsNames(), false );
             client = checkSchema(client);
             if (client == null) {
                 LOGGER.warn("Failed to check Schema, no connection");

@@ -140,7 +140,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     private int maxNameLength;
 
     public JDBCStorageClient(JDBCStorageClientPool jdbcStorageClientConnectionPool,
-            Map<String, Object> properties, Map<String, Object> sqlConfig, Set<String> indexColumns, Set<String> indexColumnTypes, Map<String, String> indexColumnsNames) throws SQLException,
+            Map<String, Object> properties, Map<String, Object> sqlConfig, Set<String> indexColumns, Set<String> indexColumnTypes, Map<String, String> indexColumnsNames, boolean enforceWideColums) throws SQLException,
             NoSuchAlgorithmException, StorageClientException {
         if ( jdbcStorageClientConnectionPool == null ) {
             throw new StorageClientException("Null Connection Pool, cant create Client");
@@ -167,10 +167,17 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
         this.maxNameLength = Integer.parseInt(StorageClientUtils.getSetting(getSql(SQL_MAX_NAME_LENGTH),"50"));
         active = true;
         if ( indexColumnsNames != null ) {
+            LOGGER.debug("Using Wide Columns" );
             indexer = new WideColumnIndexer(this,indexColumnsNames, indexColumnTypes, sqlConfig);
         } else if ("1".equals(getSql(USE_BATCH_INSERTS))) {
+            if ( enforceWideColums ) {
+                LOGGER.warn("Batch Narrow Column Indexes are deprecated as of 1.5, please check your database and/or configuration, support will be removed in future releases" );
+            }
             indexer = new BatchInsertIndexer(this, indexColumns, sqlConfig);
         } else {
+            if ( enforceWideColums ) {
+                LOGGER.warn("Narrow Column Indexes are deprecated as of 1.5, please check your database and/or configuration, support will be removed in future releases" );
+            }
             indexer = new NonBatchInsertIndexer(this, indexColumns, sqlConfig);
         }
         

@@ -91,7 +91,7 @@ public class JDBCStorageClientTest {
     Set<String> colnames = ImmutableSet.of("conjunctions:key1","conjunctions:key2","conjunctions:key3","conjunctions:key4",
             "conjunctions:testKey1","conjunctions:testKey2","conjunctions:testKey3","conjunctions:testKey4");
 
-    client = new JDBCStorageClient(connPool, properties, sqlConfig, colnames, null, null);
+    client = new JDBCStorageClient(connPool, properties, sqlConfig, colnames, null, null, false);
   }
 
   @Test
