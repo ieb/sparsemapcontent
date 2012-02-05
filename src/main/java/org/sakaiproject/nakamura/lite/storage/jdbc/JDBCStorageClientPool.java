@@ -20,6 +20,7 @@ package org.sakaiproject.nakamura.lite.storage.jdbc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.Driver;
@@ -195,15 +196,26 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
         }
         JDBCStorageClient client = null;
         try {
-            client = (JDBCStorageClient) getClient();
+            // dont use the pool, we dont want this client to be in the pool.
+            client = new JDBCStorageClient(this, properties,
+                    getSqlConfig(), getIndexColumns(), getIndexColumnsTypes(), getIndexColumnsNames() );
+            client = checkSchema(client);
             if (client == null) {
                 LOGGER.warn("Failed to check Schema, no connection");
             }
         } catch (ClientPoolException e) {
             LOGGER.warn("Failed to check Schema", e);
+        } catch (NoSuchAlgorithmException e) {
+            LOGGER.warn("Failed to check Schema", e);
+        } catch (SQLException e) {
+            LOGGER.warn("Failed to check Schema", e);
+        } catch (StorageClientException e) {
+            LOGGER.warn("Failed to check Schema", e);
         } finally {
           if (client != null) {
-            client.close();
+              // do not close as this will add the client into the pool.
+            client.passivate();
+            client.destroy();
           }
         }
 
