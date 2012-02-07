@@ -19,7 +19,6 @@ package org.sakaiproject.nakamura.lite;
 
 import java.util.Map;
 
-import org.sakaiproject.nakamura.api.lite.BaseColumnFamilyCacheManager;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.CommitHandler;
@@ -39,11 +38,14 @@ import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.content.ContentManagerImpl;
 import org.sakaiproject.nakamura.lite.lock.LockManagerImpl;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
 
 public class SessionImpl implements Session {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(SessionImpl.class);
     private AccessControlManagerImpl accessControlManager;
     private ContentManagerImpl contentManager;
     private AuthorizableManagerImpl authorizableManager;
@@ -57,6 +59,7 @@ public class SessionImpl implements Session {
     private Map<String, CommitHandler> commitHandlers = Maps.newLinkedHashMap();
     private StorageCacheManager storageCacheManager;
     private Configuration configuration;
+    private static long nagclient;
 
     public SessionImpl(Repository repository, User currentUser, StorageClient client,
             Configuration configuration, StorageCacheManager storageCacheManager,
@@ -65,29 +68,32 @@ public class SessionImpl implements Session {
         this.currentUser = currentUser;
         this.repository = repository;
         this.client = client;
+        this.storageCacheManager = storageCacheManager;
+        this.storeListener = storeListener;
+        this.configuration = configuration;
+        
+        if ( this.storageCacheManager == null ) {
+            if ( (nagclient % 1000) == 0 ) {
+                LOGGER.warn("No Cache Manager, All Caching disabled, please provide an Implementation of NamedCacheManager. This message will appear every 1000th time a session is created. ");
+            }
+            nagclient++;
+        }
         accessControlManager = new AccessControlManagerImpl(client, currentUser, configuration,
-                BaseColumnFamilyCacheManager.getCache(configuration,
-                        configuration.getAclColumnFamily(), storageCacheManager), storeListener,
+                getCache(configuration.getAclColumnFamily()), storeListener,
                 principalValidatorResolver);
-        Map<String, CacheHolder> authorizableCache = BaseColumnFamilyCacheManager.getCache(configuration,
-                configuration.getAuthorizableColumnFamily(), storageCacheManager);
+        Map<String, CacheHolder> authorizableCache = getCache(configuration
+                .getAuthorizableColumnFamily());
         authorizableManager = new AuthorizableManagerImpl(currentUser, this, client, configuration,
-                accessControlManager, authorizableCache,
-                storeListener);
+                accessControlManager, authorizableCache, storeListener);
 
         contentManager = new ContentManagerImpl(client, accessControlManager, configuration,
-                BaseColumnFamilyCacheManager.getCache(configuration,
-                        configuration.getContentColumnFamily(), storageCacheManager), storeListener);
+                getCache(configuration.getContentColumnFamily()), storeListener);
 
         lockManager = new LockManagerImpl(client, configuration, currentUser,
-                BaseColumnFamilyCacheManager.getCache(configuration,
-                        configuration.getLockColumnFamily(), storageCacheManager));
+                getCache(configuration.getLockColumnFamily()));
 
         authenticator = new AuthenticatorImpl(client, configuration, authorizableCache);
 
-        this.storeListener = storeListener;
-        this.storageCacheManager = storageCacheManager;
-        this.configuration = configuration;
         storeListener.onLogin(currentUser.getId(), this.toString());
     }
 
@@ -167,10 +173,21 @@ public class SessionImpl implements Session {
             commitHandlers.clear();
         }
     }
-    
-    
+
     public Map<String, CacheHolder> getCache(String columnFamily) {
-        return BaseColumnFamilyCacheManager.getCache(configuration, columnFamily, storageCacheManager);
+        if (storageCacheManager != null) {
+            if (configuration.getAuthorizableColumnFamily().equals(columnFamily)) {
+                return storageCacheManager.getAuthorizableCache();
+            }
+            if (configuration.getAclColumnFamily().equals(columnFamily)) {
+                return storageCacheManager.getAccessControlCache();
+            }
+            if (configuration.getContentColumnFamily().equals(columnFamily)) {
+                return storageCacheManager.getContentCache();
+            }
+            return storageCacheManager.getCache(columnFamily);
+        }
+        return null;
     }
 
 }

@@ -2,11 +2,11 @@ package org.sakaiproject.nakamura.lite.storage.jdbc;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.text.MessageFormat;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -14,25 +14,27 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
+import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.StorageConstants;
 import org.sakaiproject.nakamura.api.lite.content.Content;
-import org.sakaiproject.nakamura.api.lite.util.PreemptiveIterator;
+import org.sakaiproject.nakamura.lite.storage.spi.CachableDisposableIterator;
 import org.sakaiproject.nakamura.lite.storage.spi.DirectCacheAccess;
 import org.sakaiproject.nakamura.lite.storage.spi.DisposableIterator;
-import org.sakaiproject.nakamura.lite.storage.spi.Disposer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-public class WideColumnIndexer extends AbstractIndexer {
+public class WideColumnIndexer extends AbstractIndexer implements CachingIndexer {
 
     private static final String SQL_INSERT_WIDESTRING_ROW = "insert-widestring-row";
     private static final String SQL_UPDATE_WIDESTRING_ROW = "update-widestring-row";
@@ -46,9 +48,19 @@ public class WideColumnIndexer extends AbstractIndexer {
     private static final int SQL_SORT_LIST_PART = 5;
     
     private static final Logger LOGGER = LoggerFactory.getLogger(WideColumnIndexer.class);
+    /**
+     * Values to exclude from the query cache key.
+     */
+    private static final Set<String> EXCLUDE_CACHE_KEYS = ImmutableSet.of(StorageConstants.CACHEABLE);
+    
+    /**
+     * Set of keys in query properties that cant be cached, normally because invalidation is too hard. 
+     */
+    private static final Set<String> DONT_CACHE_KEYS = ImmutableSet.of(StorageConstants.ITEMS, StorageConstants.PAGE, StorageConstants.SORT);
     private JDBCStorageClient client;
     private Map<String, String> indexColumnsNames;
     private Map<String, String> indexColumnsTypes;
+    private int gets;
 
     public WideColumnIndexer(JDBCStorageClient jdbcStorageClient,
             Map<String, String> indexColumnsNames, Set<String> indexColumnTypes, Map<String, Object> sqlConfig) {
@@ -60,7 +72,7 @@ public class WideColumnIndexer extends AbstractIndexer {
             String[] type = StringUtils.split(k,"=",2);
             b.put(type[0], type[1]);
         }
-        this.indexColumnsTypes = b.build();
+        this.indexColumnsTypes = b.build();        
     }
 
     public void index(Map<String, PreparedStatement> statementCache, String keySpace,
@@ -103,6 +115,7 @@ public class WideColumnIndexer extends AbstractIndexer {
                 LOGGER.debug("Hash of {}:{}:{} is {} ", new Object[] { keySpace, columnFamily,
                         parent, hash });
                 updateColumns.put(Content.PARENT_HASH_FIELD, hash);
+                invalidate(keySpace, columnFamily, ImmutableMap.of(Content.PARENT_HASH_FIELD, (Object) hash));
             }
 
             
@@ -200,6 +213,7 @@ public class WideColumnIndexer extends AbstractIndexer {
                     LOGGER.debug("   Param {} NULL ",i);
                     i++;
                 }
+                LOGGER.debug("   Param {} {} ",i, rid);
                 updateColumnPst.setString(i, rid);
                 long t = System.currentTimeMillis();
                 int n = updateColumnPst.executeUpdate();
@@ -222,6 +236,7 @@ public class WideColumnIndexer extends AbstractIndexer {
                     insertColumnPst.clearWarnings();
                     insertColumnPst.clearParameters();
                     insertColumnPst.setString(1, rid);
+                    LOGGER.debug("   Param 1 {} ",rid);
                     i = 2;
                     for (Entry<String, Object> e : updateColumns.entrySet()) {
                         LOGGER.debug("   Param {} {} ",i,e.getValue().toString());
@@ -276,6 +291,14 @@ public class WideColumnIndexer extends AbstractIndexer {
 
     public DisposableIterator<Map<String, Object>> find(final String keySpace, final String columnFamily,
             Map<String, Object> properties, final DirectCacheAccess cachingManager) throws StorageClientException {
+        
+        final boolean rawResults = properties != null && properties.containsKey(StorageConstants.RAWRESULTS);
+        
+        DisposableIterator<Map<String, Object>> cachedIterator = cachedFind(keySpace, columnFamily, properties, rawResults, cachingManager);
+        if ( cachedIterator != null ) {
+            return cachedIterator;
+        }
+        
         String[] keys = null;
         if ( properties != null  && properties.containsKey(StorageConstants.CUSTOM_STATEMENT_SET)) {
             String customStatement = (String) properties.get(StorageConstants.CUSTOM_STATEMENT_SET);
@@ -286,13 +309,13 @@ public class WideColumnIndexer extends AbstractIndexer {
                     "wide-block-find." + keySpace + "." + columnFamily,
                     "wide-block-find." + columnFamily, 
                     "wide-block-find" 
-           };            
+           };
         } else {
             keys = new String[] { "wide-block-find." + keySpace + "." + columnFamily,
                     "wide-block-find." + columnFamily, "wide-block-find" };            
         }
         
-        final boolean rawResults = properties != null && properties.containsKey(StorageConstants.RAWRESULTS);
+        
 
         String sql = client.getSql(keys);
         if (sql == null) {
@@ -402,30 +425,12 @@ public class WideColumnIndexer extends AbstractIndexer {
         // there was no where clause generated
         // to avoid returneing everything, we wont return anything.
         if (whereClause.length() == 0) {
-            return new DisposableIterator<Map<String,Object>>() {
-
-                private Disposer disposer;
-                public boolean hasNext() {
-                    return false;
-                }
-
-                public Map<String, Object> next() {
-                    return null;
-                }
-
-                public void remove() {
-                }
-
-                public void close() {
-                    if ( disposer != null ) {
-                        disposer.unregisterDisposable(this);
-                    }
-                }
-                public void setDisposer(Disposer disposer) {
-                    this.disposer = disposer;
-                }
-
-            };
+            return cacheResults(
+                    keySpace,
+                    columnFamily,
+                    properties,
+                    new PreemptiveCachedMapIterator(client, keySpace, columnFamily, ImmutableMap.of("rows",
+                            (Object) ImmutableList.of()),  rawResults, cachingManager));
         }
 
         StringBuilder sortClause = new StringBuilder();
@@ -471,80 +476,11 @@ public class WideColumnIndexer extends AbstractIndexer {
             LOGGER.debug("Executed ");
 
             // pass control to the iterator.
-            final PreparedStatement pst = tpst;
-            final ResultSet rs = trs;
-            final ResultSetMetaData rsmd = rs.getMetaData();
+            PreparedStatement pst = tpst;
+            ResultSet rs = trs;
             tpst = null;
             trs = null;
-            return client.registerDisposable(new PreemptiveIterator<Map<String, Object>>() {
-
-                private Map<String, Object> nextValue = Maps.newHashMap();
-                private boolean open = true;
-
-                @Override
-                protected Map<String, Object> internalNext() {
-                    return nextValue;
-                }
-
-                @Override
-                protected boolean internalHasNext() {
-                    try {
-                        if (open && rs.next()) {
-                            if ( rawResults ) {
-                                Builder<String, Object> b = ImmutableMap.builder();
-                                for  (int i = 1; i <= rsmd.getColumnCount(); i++ ) {
-                                    b.put(String.valueOf(i), rs.getObject(i));
-                                }
-                                nextValue = b.build();
-                            } else {
-                               String id = rs.getString(1);
-                               nextValue = client.internalGet(keySpace, columnFamily, id, cachingManager);
-                               LOGGER.debug("Got Row ID {} {} ", id, nextValue);
-                            }
-                            return true;
-                        }
-                        close();
-                        nextValue = null;
-                        LOGGER.debug("End of Set ");
-                        return false;
-                    } catch (SQLException e) {
-                        LOGGER.error(e.getMessage(), e);
-                        close();
-                        nextValue = null;
-                        return false;
-                    } catch (StorageClientException e) {
-                        LOGGER.error(e.getMessage(), e);
-                        close();
-                        nextValue = null;
-                        return false;
-                    }
-                }
-
-                @Override
-                public void close() {
-                    if (open) {
-                        open = false;
-                        try {
-                            if (rs != null) {
-                                rs.close();
-                                client.dec("iterator r");
-                            }
-                        } catch (SQLException e) {
-                            LOGGER.warn(e.getMessage(), e);
-                        }
-                        try {
-                            if (pst != null) {
-                                pst.close();
-                                client.dec("iterator");
-                            }
-                        } catch (SQLException e) {
-                            LOGGER.warn(e.getMessage(), e);
-                        }
-                        super.close();
-                    }
-
-                }
-            });
+            return client.registerDisposable(cacheResults(keySpace, columnFamily, properties, new PreemptiveCachedMapIterator(client, keySpace, columnFamily, rs, pst, rawResults, cachingManager)));
         } catch (SQLException e) {
             LOGGER.error(e.getMessage(), e);
             throw new StorageClientException(e.getMessage() + " SQL Statement was " + sqlStatement,
@@ -570,6 +506,8 @@ public class WideColumnIndexer extends AbstractIndexer {
             }
         }
     }
+
+
 
 
 
@@ -637,5 +575,91 @@ public class WideColumnIndexer extends AbstractIndexer {
         return tableIndex;
 
     }
+
+    
+    // Query Caching -----------------------------------------------------------------------------------
+    
+    
+    @Override
+    public void invalidate(String keySpace, String columnFamily, Map<String, Object> queryProperties) {
+        Map<String, CacheHolder> queryCache = client.getQueryCache();
+        if ( queryCache == null ) {
+            return;
+        }
+        String cacheKey = getCacheKey(keySpace, columnFamily, queryProperties);
+        if ( cacheKey != null ) {
+            queryCache.remove(cacheKey);
+        }
+    }
+    
+    private String getCacheKey(String keySpace, String columnFamily,
+            Map<String, Object> queryProperties) {
+        List<String> keys = Lists.newArrayList(queryProperties.keySet());
+        Collections.sort(keys);
+        StringBuilder sb = new StringBuilder();
+        sb.append(keySpace).append(";").append(columnFamily);
+        boolean hasKey = false;
+        for ( String key : keys ) {
+            if ( DONT_CACHE_KEYS.contains(key)) {
+                hasKey = false;
+                LOGGER.debug("Query cant be cached becuase it contains {} ",key);
+                break;
+            }
+            if ( !EXCLUDE_CACHE_KEYS.contains(key) ) {
+                sb.append(key).append(":").append(queryProperties.get(key)).append(";");
+                hasKey = true;
+            }
+        }
+        if ( hasKey ) {
+            // we might want to hash this to prevent the key getting massive.
+            return sb.toString();
+        }
+        return null;
+    }
+
+    private DisposableIterator<Map<String, Object>> cachedFind(String keySpace,
+            String columnFamily, Map<String, Object> queryProperties, boolean rawResults, DirectCacheAccess cachingManager) {
+        Map<String, CacheHolder> queryCache = client.getQueryCache();
+        if ( queryCache == null ) {
+            gets++;
+            if ( gets % 1000 == 0 ) {
+                LOGGER.info("No Query Cache in use, please provide one.");
+            }
+            return null;
+        }
+        String cacheKey = getCacheKey(keySpace, columnFamily, queryProperties);
+        if ( cacheKey != null ) {
+            CacheHolder ch = queryCache.get(cacheKey);
+            if ( ch != null ) {
+                Map<String, Object> m = ch.get();
+                if ( m != null ) {
+                    return new PreemptiveCachedMapIterator(client, keySpace, columnFamily, m, rawResults, cachingManager);
+                }
+            }
+        }
+        return null;
+    }
+    
+
+
+    private DisposableIterator<Map<String, Object>> cacheResults(String keySpace,
+            String columnFamily, Map<String, Object> queryProperties,
+            CachableDisposableIterator<Map<String, Object>> disposableIterator) {
+        Map<String, CacheHolder> queryCache = client.getQueryCache();
+        if ( queryCache == null ) {
+            return disposableIterator;
+        }
+        String cacheKey = getCacheKey(keySpace, columnFamily, queryProperties);
+        if ( cacheKey != null ) {
+            Map<String, Object> m = disposableIterator.getResultsMap();
+            if ( m != null ) {
+                queryCache.put(cacheKey, new CacheHolder(m));
+            }
+        }
+        return disposableIterator;
+    }
+
+
+
 
 }

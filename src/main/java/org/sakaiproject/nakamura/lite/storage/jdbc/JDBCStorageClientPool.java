@@ -35,21 +35,16 @@ import java.util.Timer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.ReferenceCardinality;
-import org.apache.felix.scr.annotations.ReferencePolicy;
-import org.sakaiproject.nakamura.api.lite.BaseColumnFamilyCacheManager;
-import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
-import org.sakaiproject.nakamura.api.lite.ColumnFamilyCacheManager;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.lite.storage.spi.AbstractClientConnectionPool;
-import org.sakaiproject.nakamura.lite.storage.spi.ConcurrentLRUMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,9 +53,13 @@ import com.google.common.collect.ImmutableMap.Builder;
 
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
-// The component is activated or not in the fragment bundle
-//@Component(immediate = true, metatype = true, inherit = true)
-//@Service(value = StorageClientPool.class)
+/**
+ * An base class for JDBC drivers. If you change the OSGi configuration of this
+ * class you will need to re-build all fragment bundles that contain code extending this.
+ * @author ieb
+ *
+ */
+@Component(componentAbstract = true)
 public class JDBCStorageClientPool extends AbstractClientConnectionPool {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JDBCStorageClientPool.class);
@@ -75,8 +74,12 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
     @Property(value = { "" })
     public static final String PASSWORD = "password";
  
-    @Reference(cardinality=ReferenceCardinality.OPTIONAL_UNARY, policy=ReferencePolicy.DYNAMIC)
+    /**
+     * Clients should provide an implementation of NamedCacheManager in preference to this cache manager. 
+     */
+    @Reference
     private StorageCacheManager storageManagerCache;
+
 
 
     private static final String BASESQLPATH = "org/sakaiproject/nakamura/lite/storage/jdbc/config/client";
@@ -94,7 +97,6 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
         public void destroyObject(Object obj) throws Exception {
             JDBCStorageClient client = (JDBCStorageClient) obj;
             client.destroy();
-
         }
 
         public Object makeObject() throws Exception {
@@ -135,10 +137,6 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
 
     private Timer timer;
 
-    private ColumnFamilyCacheManager defaultStorageManagerCache;
-
-    private Map<String, CacheHolder> sharedCache;
-
     private Map<String, String> indexColumnsMap;
 
     @Override
@@ -152,14 +150,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
         timer = new Timer();
         timer.schedule(connectionManager, 30000L, 30000L);
 
-        sharedCache = new ConcurrentLRUMap<String, CacheHolder>(10000);
         // this is a default cache used where none has been provided.
-        defaultStorageManagerCache = new BaseColumnFamilyCacheManager() {
-            
-            public Map<String, CacheHolder> getCache(String columnFamily) {
-                return sharedCache;
-            }
-        };
         if ( LOGGER.isDebugEnabled()) {
             DriverManager.setLogWriter(new PrintWriter(System.err));
         }
@@ -360,13 +351,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
     }
 
     public StorageCacheManager getStorageCacheManager() {
-        if ( storageManagerCache != null ) {
-            if ( sharedCache.size() > 0 ) {
-                sharedCache.clear(); // dump any memory consumed by the default cache.
-            }
-            return storageManagerCache ;
-        }
-        return defaultStorageManagerCache;
+        return storageManagerCache;
     }
 
     public Connection getConnection() throws SQLException {

@@ -21,6 +21,8 @@ import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
 
 import org.sakaiproject.nakamura.api.memory.Cache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,8 +32,12 @@ import java.util.List;
  */
 public class CacheImpl<V> implements Cache<V> {
 
-  private String cacheName;
+  private static final Logger LOGGER = LoggerFactory.getLogger(CacheImpl.class);
+private String cacheName;
   private net.sf.ehcache.Cache cache;
+  private long miss;
+  private long hits;
+  private long gets;
 
   /**
    * @param cacheManager
@@ -78,16 +84,33 @@ public class CacheImpl<V> implements Cache<V> {
    * 
    * @see org.sakaiproject.nakamura.api.memory.Cache#get(java.lang.String)
    */
-  @SuppressWarnings("unchecked")
   public V get(String key) {
     Element e = cache.get(key);
     if (e == null) {
-      return null;
+      return stats(null);
     }
-    return (V) e.getObjectValue();
+    return stats(e.getObjectValue());
+  }
+  
+  
+
+  @SuppressWarnings("unchecked")
+  private V stats(Object objectValue) {
+	if ( objectValue == null ) {
+		miss++;
+	} else {
+		hits++;
+	}
+	gets++;
+	if ( gets % 1000 == 0 ) {
+        long hp = (100*hits)/gets;
+        long mp = (100*miss)/gets;
+        LOGGER.info("{} Cache Stats hits {} ({}%), misses {} ({}%), calls {}",new Object[]{cacheName,hits,hp,miss,mp,gets});
+	}
+	return (V) objectValue;
   }
 
-  /**
+/**
    * {@inherit-doc}
    * 
    * @see org.sakaiproject.nakamura.api.memory.Cache#put(java.lang.String, java.lang.Object)

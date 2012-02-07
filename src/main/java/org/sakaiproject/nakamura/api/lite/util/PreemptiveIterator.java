@@ -1,16 +1,17 @@
 package org.sakaiproject.nakamura.api.lite.util;
 
-import org.sakaiproject.nakamura.lite.storage.spi.DisposableIterator;
+import org.sakaiproject.nakamura.lite.storage.spi.CachableDisposableIterator;
 import org.sakaiproject.nakamura.lite.storage.spi.Disposer;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
  * A Iterator wrapper that pre-emptively checks the next value in the underlying iterator before responding true to hasNext().
  * @param <T>
  */
-public abstract class PreemptiveIterator<T> implements Iterator<T>, DisposableIterator<T> {
+public abstract class PreemptiveIterator<T> implements Iterator<T>, CachableDisposableIterator<T> {
 
     private static final int UNDETERMINED = 0;
     private static final int TRUE = 1;
@@ -21,6 +22,14 @@ public abstract class PreemptiveIterator<T> implements Iterator<T>, DisposableIt
     protected abstract boolean internalHasNext();
 
     protected abstract T internalNext();
+
+    /**
+     * By default a preemptive iterator does not cache. Override this method to make it cache.
+     */
+    @Override
+    public Map<String, Object> getResultsMap() {
+        return null; 
+    }
 
     public final boolean hasNext() {
         if (lastCheck == FALSE) {

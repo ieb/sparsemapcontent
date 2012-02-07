@@ -43,6 +43,7 @@ import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.DataFormatException;
 import org.sakaiproject.nakamura.api.lite.RemoveProperty;
+import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.StorageConstants;
@@ -820,7 +821,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
         // this will load all child object directly.
         String hash = rowHash(keySpace, columnFamily, key);
         LOGGER.debug("Finding {}:{}:{} as {} ",new Object[]{keySpace,columnFamily, key, hash});
-        return find(keySpace, columnFamily, ImmutableMap.of(Content.PARENT_HASH_FIELD, (Object)hash, StorageConstants.CUSTOM_STATEMENT_SET, "listchildren"), cachingManager);
+        return find(keySpace, columnFamily, ImmutableMap.of(Content.PARENT_HASH_FIELD, (Object)hash, StorageConstants.CUSTOM_STATEMENT_SET, "listchildren", StorageConstants.CACHEABLE, true), cachingManager);
     }
 
     public DisposableIterator<Map<String,Object>> find(final String keySpace, final String columnFamily,
@@ -1238,5 +1239,13 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
     
     public void setStorageClientListener(StorageClientListener storageClientListener) {
         this.storageClientListener = storageClientListener;
+    }
+
+    public Map<String, CacheHolder> getQueryCache() {
+        StorageCacheManager storageCacheManager = this.jcbcStorageClientConnection.getStorageCacheManager();
+        if ( storageCacheManager != null ) {
+            return storageCacheManager.getCache("sparseQueryCache");
+        }
+        return null;
     }
 }

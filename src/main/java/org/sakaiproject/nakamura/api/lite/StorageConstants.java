@@ -32,5 +32,11 @@ public class StorageConstants {
      */
     public static final String RAWRESULTS = "_rawresults";
 
+    /**
+     * If true, then the query cache may be used. key-value pairs of the query must uniquely identify the query, and 
+     * cache must be cleared by other means. This is a big ask and requires effort.
+     */
+    public static final String CACHEABLE = "_cacheable";
+
 
 }

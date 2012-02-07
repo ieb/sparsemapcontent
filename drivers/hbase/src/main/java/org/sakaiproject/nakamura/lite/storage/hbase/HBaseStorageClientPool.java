@@ -17,6 +17,8 @@
  */
 package org.sakaiproject.nakamura.lite.storage.hbase;
 
+import java.util.Map;
+
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.felix.scr.annotations.Deactivate;
@@ -26,17 +28,11 @@ import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTablePool;
-import org.sakaiproject.nakamura.api.lite.BaseColumnFamilyCacheManager;
-import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
-import org.sakaiproject.nakamura.lite.storage.hbase.HBaseStorageClient;
 import org.sakaiproject.nakamura.lite.storage.spi.AbstractClientConnectionPool;
-import org.sakaiproject.nakamura.lite.storage.spi.ConcurrentLRUMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 public class HBaseStorageClientPool extends AbstractClientConnectionPool {
 
@@ -47,8 +43,6 @@ public class HBaseStorageClientPool extends AbstractClientConnectionPool {
   private StorageCacheManager storageManagerCache;
   private String connection = "127.0.0.1:2181";
   private Map<String, Object> properties;
-  private Map<String, CacheHolder> sharedCache;
-  private StorageCacheManager defaultStorageManagerCache;
 
   public static class ClientConnectionPoolFactory extends BasePoolableObjectFactory {
     private Map<String, Object> properties;
@@ -135,12 +129,6 @@ public class HBaseStorageClientPool extends AbstractClientConnectionPool {
       }
     }
 
-    sharedCache = new ConcurrentLRUMap<String, CacheHolder>(10000);
-    defaultStorageManagerCache = new BaseColumnFamilyCacheManager() {        
-        public Map<String, CacheHolder> getCache(String columnFamily) {
-            return sharedCache;
-        }
-    };
 
   }
 
@@ -151,11 +139,8 @@ public class HBaseStorageClientPool extends AbstractClientConnectionPool {
 
   public StorageCacheManager getStorageCacheManager() {
     if (storageManagerCache != null) {
-      if (sharedCache.size() > 0) {
-        sharedCache.clear(); // dump any memory consumed by the default cache.
-      }
       return storageManagerCache;
     }
-    return defaultStorageManagerCache;
+    return null;
   }
 }

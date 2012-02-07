@@ -38,9 +38,6 @@ public abstract class CachingManagerImpl implements DirectCacheAccess {
     private static final Logger LOGGER = LoggerFactory.getLogger(CachingManagerImpl.class);
     private Map<String, CacheHolder> sharedCache;
     private StorageClient client;
-    private int hit;
-    private int miss;
-    private long calls;
     private long managerId;
     private static SecureRandom secureRandom = new SecureRandom(); // need to assume that the secure random will be reasonably quick to start up
 
@@ -80,21 +77,14 @@ public abstract class CachingManagerImpl implements DirectCacheAccess {
             m = cacheHolder.get();
             if ( m != null ) {
                 LOGGER.debug("Cache Hit {} {} {} ", new Object[] { cacheKey, cacheHolder, m });
-                hit++;
             }
         }
         if (m == null) {
             m = client.get(keySpace, columnFamily, key);
-            miss++;
             if (m != null) {
                 LOGGER.debug("Cache Miss, Found Map {} {}", cacheKey, m);
             }
             putToCacheInternal(cacheKey, new CacheHolder(m), true);
-        }
-        calls++;
-        if ((calls % 10000) == 0) {
-            getLogger().info("Cache Stats Hits {} Misses {}  hit% {}", new Object[] { hit, miss,
-                    ((100 * hit) / (hit + miss)) });
         }
         return m;
     }

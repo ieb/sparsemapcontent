@@ -22,7 +22,6 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
-import org.sakaiproject.nakamura.api.lite.BaseColumnFamilyCacheManager;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Configuration;
@@ -146,8 +145,10 @@ public class RepositoryImpl implements Repository {
     }
 
     private Map<String, CacheHolder> getAuthorizableCache(StorageCacheManager storageCacheManager) {
-        return BaseColumnFamilyCacheManager.getCache(configuration,
-                configuration.getAuthorizableColumnFamily(), storageCacheManager);
+        if ( storageCacheManager != null ) {
+            return storageCacheManager.getAuthorizableCache();
+        }
+        return null;
     }
 
     private Session openSession(String username) throws StorageClientException,

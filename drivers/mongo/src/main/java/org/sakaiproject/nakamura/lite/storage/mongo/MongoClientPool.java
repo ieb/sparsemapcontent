@@ -11,13 +11,11 @@ import org.apache.felix.scr.annotations.Modified;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
-import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
-import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl; // FIXME, SPI impls should not depend in core implementation
-import org.sakaiproject.nakamura.lite.storage.spi.ConcurrentLRUMap;
+import org.sakaiproject.nakamura.lite.accesscontrol.AccessControlManagerImpl;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 
@@ -64,6 +62,8 @@ public class MongoClientPool implements StorageClientPool {
 	public static final String PROP_ALT_KEYS = "mongo.alternate.keys";
 	public static final String[] DEFAULT_ALT_KEYS = new String[] { "ac:" + AccessControlManagerImpl._KEY , };
 
+	
+	
 	private StorageCacheManager storageManagerCache;
 
 	@Reference
@@ -71,9 +71,6 @@ public class MongoClientPool implements StorageClientPool {
 
 	private Map<String,Object> props;
 
-	private ConcurrentLRUMap<String, CacheHolder> sharedCache;
-
-	private StorageCacheManager defaultStorageManagerCache;
 
 	@Activate
 	@Modified
@@ -128,19 +125,6 @@ public class MongoClientPool implements StorageClientPool {
 	}
 
 	private void initCache() {
-		this.sharedCache = new ConcurrentLRUMap<String, CacheHolder>(10000);
-		// this is a default cache used where none has been provided.
-        this.defaultStorageManagerCache = new StorageCacheManager() {
-			public Map<String, CacheHolder> getContentCache() {
-                return sharedCache;
-            }
-			public Map<String, CacheHolder> getAuthorizableCache() {
-                return sharedCache;
-            }
-			public Map<String, CacheHolder> getAccessControlCache() {
-                return sharedCache;
-            }
-        };
 	}
 
 	public StorageClient getClient() throws ClientPoolException {
@@ -149,12 +133,9 @@ public class MongoClientPool implements StorageClientPool {
 
 	public StorageCacheManager getStorageCacheManager() {
         if ( storageManagerCache != null ) {
-            if ( sharedCache.size() > 0 ) {
-                sharedCache.clear(); // dump any memory consumed by the default cache.
-            }
             return storageManagerCache;
         }
-        return defaultStorageManagerCache;
+        return null;
     }
 
     public void bindConfiguration(Configuration configuration) {

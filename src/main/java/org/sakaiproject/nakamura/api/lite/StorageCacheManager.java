@@ -33,5 +33,15 @@ public interface StorageCacheManager {
      *         others, see above for why.
      */
     Map<String, CacheHolder> getContentCache();
+    
+    
+    /**
+     * Get a named cache.
+     * @param cacheName
+     * @return
+     */
+    Map<String, CacheHolder> getCache(String cacheName);
 
+    
+    
 }
