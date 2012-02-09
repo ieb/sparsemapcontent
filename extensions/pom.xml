@@ -23,6 +23,7 @@
     <module>webdav</module>
     <module>jaxrs</module>
     <module>resource</module>
+    <module>integration</module>
     <module>app</module>
   </modules>
 </project>

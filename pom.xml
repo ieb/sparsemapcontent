@@ -174,7 +174,7 @@
 		<dependency>
 			<groupId>com.googlecode.guava-osgi</groupId>
 			<artifactId>guava-osgi</artifactId>
-			<version>9.0.0</version>
+			<version>10.0.1</version>
 		</dependency>
 		<!-- osgi for events -->
 		<dependency>
