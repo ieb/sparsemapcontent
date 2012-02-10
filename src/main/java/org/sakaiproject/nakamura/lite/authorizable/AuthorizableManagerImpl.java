@@ -610,7 +610,7 @@ public class AuthorizableManagerImpl extends CachingManagerImpl implements Autho
         if ( c != null ) {
             String type = getType(c);
             storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, id,
-                    accessControlManager.getCurrentUserId(),  type, false, c.getOriginalProperties(),
+                    accessControlManager.getCurrentUserId(),  type, false, null,
                     new String[] { type });
         }
     }
@@ -622,7 +622,7 @@ public class AuthorizableManagerImpl extends CachingManagerImpl implements Autho
                 while(all.hasNext()) {
                     Map<String, Object> c = all.next().getProperties();
                     if ( c.containsKey(Authorizable.ID_FIELD) ) {
-                        storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, (String)c.get(Authorizable.ID_FIELD), User.ADMIN_USER, getType(c), false, ImmutableMap.copyOf(c), (String[]) null);                    
+                        storeListener.onUpdate(Security.ZONE_AUTHORIZABLES, (String)c.get(Authorizable.ID_FIELD), User.ADMIN_USER, getType(c), false, null, (String[]) null);
                     }
                 }
             } finally {

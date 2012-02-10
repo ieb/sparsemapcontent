@@ -317,7 +317,7 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
     public void triggerRefresh(String path) throws StorageClientException, AccessDeniedException {
         Content c = get(path);
         if ( c != null ) {
-            eventListener.onUpdate(Security.ZONE_CONTENT, path,  accessControlManager.getCurrentUserId(), getResourceType(c), false, c.getOriginalProperties(), "op:update");
+            eventListener.onUpdate(Security.ZONE_CONTENT, path,  accessControlManager.getCurrentUserId(), getResourceType(c), false, null, "op:update");
         }
     }
     
@@ -357,7 +357,7 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
                     Map<String, Object> c = all.next().getProperties();
                     if ( c.containsKey(PATH_FIELD) && !c.containsKey(STRUCTURE_UUID_FIELD)) {
                         
-                        eventListener.onUpdate(Security.ZONE_CONTENT, (String)c.get(PATH_FIELD), User.ADMIN_USER, getResourceType(c), false, ImmutableMap.copyOf(c), "op:update");                    
+                        eventListener.onUpdate(Security.ZONE_CONTENT, (String)c.get(PATH_FIELD), User.ADMIN_USER, getResourceType(c), false, null, "op:update");
                     }
                 }
             } finally {
