@@ -22,7 +22,7 @@
     <dependency>
       <groupId>com.googlecode.guava-osgi</groupId>
       <artifactId>guava-osgi</artifactId>
-      <version>10.0.1</version>
+      <version>9.0.0</version>
     </dependency>
     <dependency>
     	<groupId>junit</groupId>
