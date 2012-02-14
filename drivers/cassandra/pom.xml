@@ -5,8 +5,8 @@
 	<parent>
 		<groupId>org.sakaiproject.nakamura</groupId>
 		<artifactId>core-base</artifactId>
-		<version>3</version>
-		<!-- Force download <relativePath>parent/pom.xml</relativePath> -->
+		<version>4-SNAPSHOT</version>
+		<relativePath>parent/pom.xml</relativePath>
 	</parent>
 	<groupId>org.sakaiproject.nakamura</groupId>
 	<artifactId>org.sakaiproject.nakamura.cassandra-driver</artifactId>
