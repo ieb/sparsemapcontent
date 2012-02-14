@@ -29,7 +29,7 @@
         <bundle>
           <groupId>commons-codec</groupId>
           <artifactId>commons-codec</artifactId>
-          <version>1.4</version>
+          <version>1.5</version>
         </bundle>
         <!-- felix httpservice whiteboard -->
         <bundle>
@@ -150,13 +150,11 @@
             <artifactId>org.sakaiproject.nakamura.derby-driver</artifactId>
             <version>10.6.2.1-1.5-SNAPSHOT</version>
         </bundle>
-<!--
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
             <artifactId>org.sakaiproject.nakamura.solr</artifactId>
-            <version>1.3</version>
+            <version>1.4-SNAPSHOT</version>
         </bundle>
--->
    </startLevel>
    <startLevel level="15" >
         <bundle>
