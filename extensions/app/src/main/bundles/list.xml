@@ -136,18 +136,18 @@
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
             <artifactId>org.sakaiproject.nakamura.postgres-driver</artifactId>
-            <version>9.0-801-1.5-SNAPSHOT</version>
+            <version>9.0-801-1.5</version>
         </bundle>
 <!--
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
             <artifactId>org.sakaiproject.nakamura.mysql-driver</artifactId>
-            <version>5.1.13-1.5-SNAPSHOT</version>
+            <version>5.1.13-1.5</version>
         </bundle>
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
             <artifactId>org.sakaiproject.nakamura.derby-driver</artifactId>
-            <version>10.6.2.1-1.5-SNAPSHOT</version>
+            <version>10.6.2.1-1.5</version>
         </bundle>
 -->
         <bundle>
