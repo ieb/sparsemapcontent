@@ -5,13 +5,13 @@
 		<groupId>org.sakaiproject.nakamura</groupId>
 		<artifactId>core-base</artifactId>
 		<version>4-SNAPSHOT</version>
-		<relativePath>parent/pom.xml</relativePath>
+		<relativePath>../parent/pom.xml</relativePath>
 	</parent>
 	<groupId>org.sakaiproject.nakamura</groupId>
-	<artifactId>sparsemap</artifactId>
+	<artifactId>sparsemap-drivers</artifactId>
 	<packaging>pom</packaging>
 	<version>1.5-SNAPSHOT</version>
-	<name>Sparse Map :: Sparse Map Content Top level pom</name>
+	<name>Sparse Map :: Sparse Map Content Drivers Top level pom</name>
 	<description>Server that uses a sparse map to represent content mapping closely to a colum database like Cassandra.</description>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -26,35 +26,31 @@
 		<maven>3.0.3</maven>
 	</prerequisites>
         <profiles>
-           <profile>
-             <id>build</id>
-             <activation>
-                <activeByDefault>true</activeByDefault>
-             </activation>
-             <modules>
-                <module>parent</module>
-                <module>core</module>
-                <module>drivers</module>
-                <module>extensions</module>
-             </modules>
-           </profile>
-           <profile>
-             <id>build-app</id>
-             <build>
-                <defaultGoal>install</defaultGoal>
-             </build>
-             <modules>
-                <module>extensions</module>
-             </modules>
-           </profile>
-           <profile>
-             <id>run</id>
-             <build>
-                <defaultGoal>antrun:run</defaultGoal>
-             </build>
-             <modules>
-                <module>extensions/app</module>
-             </modules>
-           </profile>
+          <profile>
+            <id>build</id>
+            <activation>
+              <activeByDefault>true</activeByDefault>
+            </activation>
+            <!-- only put drivers here that are supported, and are Apache 2/MIT style licensed. -->
+            <modules>
+              <module>postgres</module>
+              <module>derby</module>
+            </modules>
+          </profile>
+          <profile>
+            <id>build-gpl-commercial-drivers</id>
+            <modules>
+              <module>oracle</module>
+              <module>mysql</module>
+            </modules>
+          </profile>
+          <profile>
+            <id>build-unsupported-drivers</id>
+            <modules>
+              <module>cassandra</module>
+              <module>hbase</module>
+              <module>mongo</module>
+            </modules>
+          </profile>
         </profiles>
 </project>

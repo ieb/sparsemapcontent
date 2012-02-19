@@ -10,20 +10,33 @@
   </parent>
   <artifactId>extensions</artifactId>
   <packaging>pom</packaging>
-  <version>0.1-SNAPSHOT</version>
+  <version>1.5-SNAPSHOT</version>
   <name>Sparse Map :: Extensions Builder</name>
   <description>Reactor to build extensions.</description>
-  <modules>
-    <module>http</module>
-    <module>jetty</module>
-    <module>memory</module>
-    <module>milton</module>
-    <module>proxy</module>
-    <module>template</module>
-    <module>webdav</module>
-    <module>jaxrs</module>
-    <module>resource</module>
-    <module>integration</module>
-    <module>app</module>
-  </modules>
+  <profiles>
+          <profile>
+            <id>build</id>
+            <activation>
+              <activeByDefault>true</activeByDefault>
+            </activation>
+            <modules>
+              <module>http</module>
+              <module>jetty</module>
+              <module>memory</module>
+              <module>milton</module>
+              <module>proxy</module>
+              <module>template</module>
+              <module>webdav</module>
+              <module>jaxrs</module>
+              <module>resource</module>
+              <module>integration</module>
+            </modules>
+          </profile>
+          <profile>
+            <id>build-app</id>
+            <modules>
+              <module>app</module>
+            </modules>
+          </profile>
+  </profiles>
 </project>

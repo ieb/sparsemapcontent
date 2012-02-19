@@ -8,7 +8,7 @@
 		<relativePath>../../parent/pom.xml</relativePath>
 	</parent>
 	<groupId>org.sakaiproject.nakamura</groupId>
-	<artifactId>org.sakaiproject.nakamura.hbase-driver</artifactId>
+	<artifactId>uk.co.tfd.sm.hbase-driver</artifactId>
 	<packaging>bundle</packaging>
 	<version>0.90.3-0.1-SNAPSHOT</version>
 	<name>Sparse Map :: HBase SPI Implementation</name>
@@ -33,7 +33,7 @@
 						<Export-Package> !* </Export-Package>
 						<Import-Package> !* </Import-Package>
 						<Service-Component></Service-Component>
-						<Fragment-Host>org.sakaiproject.nakamura.core</Fragment-Host>
+						<Fragment-Host>uk.co.tfd.sm.core</Fragment-Host>
 						<Private-Package>org.sakaiproject.nakamura.lite.storage.hbase.*</Private-Package>
 						<Embed-Transitive>true</Embed-Transitive>
 						<Embed-Dependency>hbase</Embed-Dependency>
@@ -62,12 +62,12 @@
 		</dependency>
 		<dependency>
 			<groupId>org.sakaiproject.nakamura</groupId>
-			<artifactId>org.sakaiproject.nakamura.core</artifactId>
+			<artifactId>uk.co.tfd.sm.core</artifactId>
 			<version>1.5-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.sakaiproject.nakamura</groupId>
-			<artifactId>org.sakaiproject.nakamura.core</artifactId>
+			<artifactId>uk.co.tfd.sm.core</artifactId>
 			<classifier>tests</classifier>
 			<version>1.5-SNAPSHOT</version>
 			<scope>test</scope>

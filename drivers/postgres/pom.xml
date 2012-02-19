@@ -4,10 +4,10 @@
 		<groupId>org.sakaiproject.nakamura</groupId>
 		<artifactId>core-base</artifactId>
 		<version>4-SNAPSHOT</version>
-		<relativePath>parent/pom.xml</relativePath>
+		<relativePath>../../parent/pom.xml</relativePath>
 	</parent>
 	<groupId>org.sakaiproject.nakamura</groupId>
-	<artifactId>org.sakaiproject.nakamura.postgres-driver</artifactId>
+	<artifactId>uk.co.tfd.sm.postgres-driver</artifactId>
 	<packaging>bundle</packaging>
 	<version>9.0-801-1.5-SNAPSHOT</version>
 	<name>Sparse Map :: PostgresSQL SPI Implementation</name>
@@ -32,7 +32,7 @@
 						<Export-Package> !* </Export-Package>
 						<Import-Package> !* </Import-Package>
 						<Service-Component />
-						<Fragment-Host>org.sakaiproject.nakamura.core</Fragment-Host>
+						<Fragment-Host>uk.co.tfd.sm.core</Fragment-Host>
 						<Private-Package>org.sakaiproject.nakamura.lite.storage.jdbc.postgres.*</Private-Package>
 						<Embed-Transitive>true</Embed-Transitive>
 						<Embed-Dependency>postgresql</Embed-Dependency>
@@ -54,12 +54,12 @@
 		</dependency>
 		<dependency>
 			<groupId>org.sakaiproject.nakamura</groupId>
-			<artifactId>org.sakaiproject.nakamura.core</artifactId>
+			<artifactId>uk.co.tfd.sm.core</artifactId>
 			<version>1.5-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.sakaiproject.nakamura</groupId>
-			<artifactId>org.sakaiproject.nakamura.core</artifactId>
+			<artifactId>uk.co.tfd.sm.core</artifactId>
 			<classifier>tests</classifier>
 			<version>1.5-SNAPSHOT</version>
 			<scope>test</scope>

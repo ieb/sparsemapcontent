@@ -8,10 +8,10 @@
     <relativePath>../../parent/pom.xml</relativePath>
   </parent>
   <groupId>org.sakaiproject.nakamura</groupId>
-  <artifactId>org.sakaiproject.nakamura.derby-driver</artifactId>
+  <artifactId>uk.co.tfd.sm.derby-driver</artifactId>
   <packaging>bundle</packaging>
   <version>10.6.2.1-1.5-SNAPSHOT</version>
-  <name>Sakai Nakamura :: Embedded Derby SPI Implementation</name>
+  <name>Sparse Map :: Embedded Derby SPI Implementation</name>
   <description>Storage SPI implementation using Cassandra </description>
   <scm>
      <connection>scm:git:git://github.com/ieb/sparsemapcontent.git</connection>
@@ -33,7 +33,7 @@
             <Export-Package> !* </Export-Package>
             <Import-Package> !* </Import-Package>
             <Service-Component />
-            <Fragment-Host>org.sakaiproject.nakamura.core</Fragment-Host>
+            <Fragment-Host>uk.co.tfd.sm.core</Fragment-Host>
             <Private-Package>org.sakaiproject.nakamura.lite.storage.jdbc.derby.*</Private-Package>
             <Embed-Transitive>true</Embed-Transitive>
             <Embed-Dependency>derby</Embed-Dependency>
@@ -56,12 +56,12 @@
     </dependency>
     <dependency>
        <groupId>org.sakaiproject.nakamura</groupId>
-       <artifactId>org.sakaiproject.nakamura.core</artifactId>
+       <artifactId>uk.co.tfd.sm.core</artifactId>
        <version>1.5-SNAPSHOT</version>
     </dependency>
     <dependency>
        <groupId>org.sakaiproject.nakamura</groupId>
-       <artifactId>org.sakaiproject.nakamura.core</artifactId>
+       <artifactId>uk.co.tfd.sm.core</artifactId>
        <classifier>tests</classifier>
        <version>1.5-SNAPSHOT</version>
        <scope>test</scope>

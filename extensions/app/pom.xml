@@ -17,7 +17,6 @@
     <name>Sparse Map :: Standalone App</name>
     <description> Standalone Launchpad Java Application. Everything needed to run the Launchpad is
     included in a single JAR file. </description>
-
     <build>
         <plugins>
             <plugin>
@@ -114,8 +113,62 @@
                     </descriptors>
                 </configuration>
             </plugin>
-        </plugins>
-    </build>
+           </plugins>
+        </build>
+   <profiles>
+      <profile>
+         <id>run</id>
+         <build>
+            <defaultGoal>antrun:run</defaultGoal>
+            <plugins>
+              <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
+                <configuration>
+                   <tasks>
+                      <delete dir="${project.basedir}/sling" />
+                      <exec  dir="${project.basedir}"  executable="java"  failonerror="true">  
+                          <arg line="-jar"/>  
+                          <arg line="${project.basedir}/target/${project.artifactId}-${project.version}.jar"/>  
+                          <arg line="-f"/>  
+                          <arg line="-"/>  
+                      </exec>  
+                   </tasks>
+                </configuration>
+              </plugin>
+            </plugins>
+         </build>
+      </profile>
+      <profile>
+            <id>dist</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>assemble-distribution</id>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>
+                                            assembly.xml
+                                        </descriptor>
+                                    </descriptors>
+                                    <appendAssemblyId>
+                                        false
+                                    </appendAssemblyId>
+                                </configuration>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>attached</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
     <reporting>
         <plugins>
             <plugin>
@@ -150,36 +203,5 @@
         </dependency>
     </dependencies>
 
-    <profiles>
-        <profile>
-            <id>dist</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>assemble-distribution</id>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>
-                                            assembly.xml
-                                        </descriptor>
-                                    </descriptors>
-                                    <appendAssemblyId>
-                                        false
-                                    </appendAssemblyId>
-                                </configuration>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>attached</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>
 

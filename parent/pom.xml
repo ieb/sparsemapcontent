@@ -12,7 +12,7 @@
 	<packaging>pom</packaging>
 	<version>4-SNAPSHOT</version>
 	<description>Core Base Pom for Map Content Storage bundle.</description>
-	<name>Core Base</name>
+	<name>Sparse Map :: Core Base</name>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>

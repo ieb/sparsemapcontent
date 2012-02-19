@@ -9,7 +9,7 @@
     <relativePath>../../parent/pom.xml</relativePath>
   </parent>
   <groupId>org.sakaiproject.nakamura</groupId>
-  <artifactId>org.sakaiproject.nakamura.milton</artifactId>
+  <artifactId>uk.co.tfd.sm.milton</artifactId>
   <packaging>bundle</packaging>
   <version>1.6.4-SNAPSHOT</version>
   <name>Sparse Map :: Milton Support</name>

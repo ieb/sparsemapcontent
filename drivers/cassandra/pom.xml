@@ -9,7 +9,7 @@
 		<relativePath>parent/pom.xml</relativePath>
 	</parent>
 	<groupId>org.sakaiproject.nakamura</groupId>
-	<artifactId>org.sakaiproject.nakamura.cassandra-driver</artifactId>
+	<artifactId>uk.co.tfd.sm.cassandra-driver</artifactId>
 	<packaging>bundle</packaging>
 	<version>0.6.5-0.5.0-0.1-SNAPSHOT</version>
 	<name>Sakai Nakamura :: Cassandra SPI Implementation</name>
@@ -62,12 +62,12 @@
 		</dependency>
 		<dependency>
 			<groupId>org.sakaiproject.nakamura</groupId>
-			<artifactId>org.sakaiproject.nakamura.core</artifactId>
+			<artifactId>uk.co.tfd.sm.core</artifactId>
 			<version>1.4</version>
 		</dependency>
 		<dependency>
 			<groupId>org.sakaiproject.nakamura</groupId>
-			<artifactId>org.sakaiproject.nakamura.core</artifactId>
+			<artifactId>uk.co.tfd.sm.core</artifactId>
 			<classifier>tests</classifier>
 			<version>1.4</version>
 			<scope>test</scope>

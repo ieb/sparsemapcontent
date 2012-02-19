@@ -85,8 +85,8 @@
     <!--  needed for Anon user ID -->
     <dependency>
        <groupId>org.sakaiproject.nakamura</groupId>
-       <artifactId>org.sakaiproject.nakamura.core</artifactId>
-       <version>1.2</version>
+       <artifactId>uk.co.tfd.sm.core</artifactId>
+       <version>1.5-SNAPSHOT</version>
        <scope>compile</scope>
     </dependency>
     <!--  needed for Template Service -->

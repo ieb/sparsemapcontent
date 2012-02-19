@@ -54,7 +54,7 @@
         </bundle>
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
-            <artifactId>org.sakaiproject.nakamura.milton</artifactId>
+            <artifactId>uk.co.tfd.sm.milton</artifactId>
             <version>1.6.4-SNAPSHOT</version>
         </bundle>
         <bundle>
@@ -130,36 +130,36 @@
     </bundle>
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
-            <artifactId>org.sakaiproject.nakamura.core</artifactId>
+            <artifactId>uk.co.tfd.sm.core</artifactId>
             <version>1.5-SNAPSHOT</version>
         </bundle>
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
-            <artifactId>org.sakaiproject.nakamura.postgres-driver</artifactId>
+            <artifactId>uk.co.tfd.sm.postgres-driver</artifactId>
             <version>9.0-801-1.5-SNAPSHOT</version>
         </bundle>
 <!--
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
-            <artifactId>org.sakaiproject.nakamura.mysql-driver</artifactId>
+            <artifactId>uk.co.tfd.sm.mysql-driver</artifactId>
             <version>5.1.13-1.5-SNAPSHOT</version>
         </bundle>
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
-            <artifactId>org.sakaiproject.nakamura.derby-driver</artifactId>
+            <artifactId>uk.co.tfd.sm.derby-driver</artifactId>
             <version>10.6.2.1-1.5-SNAPSHOT</version>
         </bundle>
 -->
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
-            <artifactId>org.sakaiproject.nakamura.solr</artifactId>
+            <artifactId>uk.co.tfd.sm.solr</artifactId>
             <version>1.4-SNAPSHOT</version>
         </bundle>
    </startLevel>
    <startLevel level="15" >
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
-            <artifactId>org.sakaiproject.nakamura.webdav</artifactId>
+            <artifactId>uk.co.tfd.sm.webdav</artifactId>
             <version>0.1-SNAPSHOT</version>
         </bundle>
         <bundle>

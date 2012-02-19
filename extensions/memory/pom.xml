@@ -70,7 +70,7 @@
     </dependency>
     <dependency>
       <groupId>org.sakaiproject.nakamura</groupId>
-      <artifactId>org.sakaiproject.nakamura.core</artifactId>
+      <artifactId>uk.co.tfd.sm.core</artifactId>
       <version>1.5-SNAPSHOT</version>
     </dependency>
     <dependency>
