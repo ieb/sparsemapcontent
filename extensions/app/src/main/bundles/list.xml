@@ -131,7 +131,7 @@
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
             <artifactId>org.sakaiproject.nakamura.core</artifactId>
-            <version>1.5-SNAPSHOT</version>
+            <version>1.5</version>
         </bundle>
         <bundle>
             <groupId>org.sakaiproject.nakamura</groupId>
