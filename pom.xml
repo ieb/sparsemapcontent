@@ -10,7 +10,7 @@
 	<groupId>org.sakaiproject.nakamura</groupId>
 	<artifactId>org.sakaiproject.nakamura.core</artifactId>
 	<packaging>bundle</packaging>
-	<version>1.5-SNAPSHOT</version>
+	<version>1.5</version>
 	<name>Sparse Map :: Sparse Map Content Storage bundle.</name>
 	<description>Server that uses a sparse map to represent content mapping closely to a colum database like Cassandra.</description>
 	<properties>
