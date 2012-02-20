@@ -1,0 +1,80 @@
+##
+##
+##
+## Output a reference.
+##
+#macro( outputReference  $ref )
+  #if ( $ref.hasLabelAndKey() )
+	  <a href="?vid=${ref.key}" >${ref.label}</a> 
+  #else
+     ${ref}
+  #end
+#end
+##
+##
+##
+## Output a label
+##
+#macro( rdfs_label $value)
+  <div class="label" >${value}</div>
+#end
+##
+##
+##
+## Dump an array
+##
+#macro( listArray $array )
+	#foreach( $e in $array ) 
+	    <li> 
+	       #if ( $e.isReference()  ) 
+	          #outputReference($e) 
+	       #elseif ( $e.entrySet() && $e.entrySet().size() && $e.entrySet().size() > 0 )
+	           
+	          <ul>
+	             #listRdfKeys($e)
+	          </ul> 
+	           
+	       #elseif ( $e.size() && $e.size() > 0 )
+	           
+	          <ul>
+	             #listArray($e)
+	          </ul> 
+	           
+	       #else
+	          ${e}
+	       #end
+	    </li>
+	#end
+#end
+##
+##
+##
+## Dump a map
+##
+#macro( listRdfKeys $keyset )
+	#foreach( $e in $keyset.entrySet() )
+	    #if ( $e.getKey() == "rdfs_label" )
+	      #rdfs_label($e.getValue()) 
+	    #else
+	    <li> ${e.getKey()}  
+	       #if ( $e.getValue().isReference() )
+	          #outputReference($e.getValue()) 
+	       #elseif ( $e.getValue().entrySet().size() > 0 )
+	           
+	          <ul>
+	             #listRdfKeys($e)
+	          </ul> 
+	           
+	       #elseif ( $e.getValue().size() > 0 )
+	           
+	          <ul>
+	             #listArray($e.getValue())
+	          </ul> 
+	           
+	       #else
+	          ${e.getValue()}
+	       #end
+	    </li>
+	    #end
+	#end
+#end

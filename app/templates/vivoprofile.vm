@@ -1,0 +1,14 @@
+<!-- testing ${result} -->
+<div class="profile" >
+<div class="profile_label" >Profile of </div><div class="profile_value rdfs_label">${result.rdfs_label}</div>
+<div class="profile_label" >Title</div><div class="profile_value vivocore_preferredTitle">${result.vivocore_preferredTitle}</div>
+<div class="profile_label" >LastName</div><div class="profile_value foaf_lastName">${result.foaf_lastName}</div>
+<div class="profile_label" >FirstName</div><div class="profile_value foaf_firstName">${result.foaf_firstName}</div>
+<div class="profile_label" >Primary Email</div><div class="profile_value vivocore_primaryEmail">${result.vivocore_primaryEmail}</div>
+<div class="profile_label" >Role</div><div class="profile_value vitro_mostSpecificType">${result.vitro_mostSpecificType}</div>
+<div class="profile_label" >Research Area</div><div class="profile_value vivocore_hasResearchArea">${result.vivocore_hasResearchArea.rdfs_label}</div>
+<div class="profile_label" >Possition</div><div class="profile_value vivocore_personInPosition">${result.vivocore_personInPosition.rdfs_label}</div>
+<div class="profile_label" >Organiza</div><div class="profile_value vivocore_positionInOrganization">${result.vivocore_personInPosition.vivocore_positionInOrganization.rdfs_label}</div>
+<div class="profile_label" >Possition Type</div><div class="profile_value vivocore_personInPosition">${result.vivocore_personInPosition.vitro_mostSpecificType}</div>
+</profile>    
+

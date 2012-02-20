@@ -1,0 +1,22 @@
+# Proxy Setup
+# Get operation to the Cornell RDF end point.
+# test with http://localhost:8080/proxy/vivo/ufl.raw.json?vid=n128483
+request-proxy-endpoint = http://vivo.ufl.edu/individual/${vid}/${vid}.rdf
+request-proxy-method = GET
+# Pre processor setup
+preprocessor = None
+# Post processor setup
+# The vivo URL for the instance must be listed as a defaul name space
+# in this instance thats http://vivo.tfd.co.uk/individual/
+postprocessor = RDFToHTMLResolvedJsonProxyPostProcessor
+namespacemap  = rdf=http://www.w3.org/1999/02/22-rdf-syntax-ns#; \
+   vivocore=http://vivoweb.org/ontology/core#; \
+   http://vivo.ufl.edu/individual/; \
+   rdfs=http://www.w3.org/2000/01/rdf-schema#; \
+   vitro=http://vitro.mannlib.cornell.edu/ns/vitro/0.7#; \
+   foaf=http://xmlns.com/foaf/0.1/; \
+   owl=http://www.w3.org/2002/07/owl#
+finaltemplate = vivoprofile.vm
+content-type = text/html
+content-encoding = UTF-8
+result-key = vid

@@ -1,0 +1,10 @@
+#parse("cornell.html.macros.vm")
+#parse("cornell.html.header.vm")
+#if ($result.vivocore_dateTime) 
+	<div class="label" >Date/Time</div><div  class="value">
+	${result.vivocore_dateTime}
+	</div>
+	<div class="wrap"></div>
+#end
+<div class="label" >Template</div><div class="value">vivocore_DateTimeValue</div><div class="wrap"></div>
+#parse("cornell.html.footer.vm")
