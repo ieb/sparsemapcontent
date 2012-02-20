@@ -1,0 +1,219 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.sakaiproject.nakamura</groupId>
+		<artifactId>core-base</artifactId>
+		<relativePath>../../parent/pom.xml</relativePath> 
+		<version>4</version>
+	</parent>
+	<groupId>org.sakaiproject.nakamura</groupId>
+	<artifactId>uk.co.tfd.sm.solr</artifactId>
+	<packaging>bundle</packaging>
+	<version>1.5-SNAPSHOT</version>
+	<name>Sparse Map :: Solr based search service.</name>
+	<description>A Solr bundle that embeds Solr 4 into OSGi and makes an embeded server available or references a remote server.</description>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<extensions>true</extensions>
+				<configuration>
+					<instructions>
+						<Bundle-Category>sakai-nakamura</Bundle-Category>
+						<Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+						<Export-Package>
+							org.sakaiproject.nakamura.api.solr.*,
+							org.apache.lucene.analysis,
+							org.apache.lucene.index;-split-package:=merge-first,
+							org.apache.lucene.queryparser.classic,
+							org.apache.lucene.search;-split-package:=merge-first,
+							org.apache.lucene.util,
+							org.apache.solr.common,
+							org.apache.solr.common.params,
+							org.apache.solr.common.util,
+							org.apache.solr.client.solrj,
+							org.apache.solr.client.solrj.response,
+							org.apache.solr.client.solrj.util,
+							org.apache.solr.schema
+			</Export-Package>
+						<Import-Package>
+							!com.werken.*,
+							!org.apache.log.*,
+							!org.apache.tools.ant.*,
+							!org.apache.log4j.*,
+							!jline.*,
+							!org.jdom.*,
+							!org.apache.struts.*,
+							!org.apache.commons.logging.impl.*,
+							!org.apache.avalon.*,
+							!org.dom4j.*,
+							com.ctc.wstx.stax;resolution:=optional,
+							org.mortbay.*;resolution:=optional,
+							javax.servlet.jsp.*;resolution:=optional,
+						        com.google.common.collect; version="9.0.0",
+							*
+             </Import-Package>
+						<Private-Package>
+							org.sakaiproject.nakamura.solr.*,
+							org.apache.solr.core;-split-package:=merge-first,
+							org.apache.lucene.*;-split-package:=merge-first
+            </Private-Package>
+						<Embed-Transitive>true</Embed-Transitive>
+						<Embed-Dependency>
+							solr-core,
+							solr-solrj,
+							solr-noggit,
+							lucene-core,
+							lucene-analyzers-common,
+							lucene-analyzers-phonetic,
+							lucene-highlighter,
+							lucene-memory,
+							lucene-misc,
+							lucene-queries,
+							lucene-spatial,
+							zookeeper,
+							velocity,
+							oro,
+							velocity-tools,
+							commons-validator,
+							commons-digester,
+							solr-commons-csv,
+							commons-beanutils,
+							commons-httpclient
+            </Embed-Dependency>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+
+		<dependency>
+			<groupId>org.apache.solr</groupId>
+			<artifactId>solr-solrj</artifactId>
+			<version>4.0.1162474</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.solr</groupId>
+			<artifactId>solr-core</artifactId>
+			<version>4.0.1162474</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-jdk14</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- json library used by solr when faceting -->
+		<dependency>
+			<groupId>org.apache.solr</groupId>
+			<artifactId>solr-noggit</artifactId>
+			<version>4.0.1162474</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<version>2.4</version>
+		</dependency>
+
+
+
+
+		<!-- We also need slf4j -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.5.10</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>1.5.10</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.osgi.core</artifactId>
+			<version>1.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.osgi.compendium</artifactId>
+			<version>1.2.0</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.sakaiproject.nakamura</groupId>
+			<artifactId>uk.co.tfd.sm.core</artifactId>
+			<version>1.6-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.googlecode.guava-osgi</groupId>
+			<artifactId>guava-osgi</artifactId>
+			<version>9.0.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+			<version>1.5</version>
+		</dependency>
+
+
+		<!-- Since we will be running in OSGi we also include the following -->
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.scr.annotations</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-all</artifactId>
+			<version>1.8.5</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.4</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>findbugs</groupId>
+			<artifactId>annotations</artifactId>
+			<version>1.0.0</version>
+			<scope>provided</scope>
+			<!-- just needed for compiling, not runtime -->
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-core</artifactId>
+			<version>1.0.0</version>
+			<type>jar</type>
+			<scope>test</scope>
+                        <!-- needed for the bloom test  -->
+		</dependency>
+	</dependencies>
+	<repositories>
+		<repository>
+			<id>sakai-releases</id>
+			<name>Sakai Releases</name>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<url>http://source.sakaiproject.org/maven2/</url>
+		</repository>
+	</repositories>
+</project>

@@ -30,6 +30,7 @@
               <module>jaxrs</module>
               <module>resource</module>
               <module>integration</module>
+              <module>solr</module>
             </modules>
           </profile>
   </profiles>
