@@ -17,7 +17,7 @@
  */
 package org.sakaiproject.nakamura.lite.storage.cassandra;
 
-import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.pool.BasePoolableObjectFactory;
@@ -34,19 +34,17 @@ import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
-import org.sakaiproject.nakamura.api.lite.BaseColumnFamilyCacheManager;
-import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
+import org.sakaiproject.nakamura.lite.NullCacheManagerX;
 import org.sakaiproject.nakamura.lite.storage.spi.AbstractClientConnectionPool;
-import org.sakaiproject.nakamura.lite.storage.spi.ConcurrentLRUMap;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
+import com.google.common.collect.ImmutableMap;
 
 @Component(enabled = true, metatype = true, inherit = true)
 @Service(value = StorageClientPool.class)
@@ -172,7 +170,6 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
 
     private String[] connections;
     private Map<String, Object> properties;
-    private Map<String, CacheHolder> sharedCache;
     private StorageCacheManager defaultStorageManagerCache;
 
     public CassandraClientPool() {
@@ -214,12 +211,7 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
              } 
    
      
-      sharedCache = new ConcurrentLRUMap<String, CacheHolder>(10000);
-      defaultStorageManagerCache = new BaseColumnFamilyCacheManager() {        
-        public Map<String, CacheHolder> getCache(String columnFamily) {
-            return sharedCache;
-        }
-      };
+      defaultStorageManagerCache = new NullCacheManagerX();
 
   }
 
@@ -235,9 +227,6 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
 
     public StorageCacheManager getStorageCacheManager() {
         if ( storageManagerCache != null ) {
-            if ( sharedCache.size() > 0 ) {
-                sharedCache.clear(); // dump any memory consumed by the default cache.
-            }
             return storageManagerCache ;
         }
         return defaultStorageManagerCache;

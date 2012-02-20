@@ -17,9 +17,16 @@
  */
 package org.sakaiproject.nakamura.api.lite;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
-import com.google.common.collect.Maps;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimeZone;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
@@ -28,24 +35,12 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.api.lite.util.Type1UUID;
-import org.sakaiproject.nakamura.lite.storage.spi.types.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Method;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimeZone;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.Maps;
 
 /**
  * Utilites for managing storage related to the Sparse Map Content Store.
@@ -120,45 +115,6 @@ public class StorageClientUtils {
         return field + "/" + streamId;
     }
 
-    /**
-     * Convert the object from application to store format. This should be used
-     * whenever a value is being placed into the store.
-     * 
-     * @param object
-     *            the object to place in store.
-     * @return the Store representation of the object.
-     * @deprecated Objects do not need to be converted when placing in the
-     *             store, provided they are one of the ones listed in
-     *             {@link Types.ALLTYPES}. If they are not your code should
-     *             convert to one or more of those types.
-     */
-    @Deprecated
-    public static Object toStore(Object object) {
-        return object;
-    }
-
-    /**
-     * Convert a store object to a byte[]
-     * 
-     * @param value
-     *            the store object
-     * @return a byte[] of the store object.
-     * @deprecated if its a byte[] just use it as a byte[] otherwise convert to
-     *             a byte[] before storing. eg
-     *             String.valueOf(value).getBytes("UTF-8")
-     */
-    @Deprecated
-    public static byte[] toBytes(Object value) {
-        if (value instanceof byte[]) {
-            return (byte[]) value;
-        } else {
-            try {
-                return String.valueOf(value).getBytes("UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                return null; // no utf8.. get real!
-            }
-        }
-    }
 
     /**
      * @param objectPath
@@ -289,18 +245,8 @@ public class StorageClientUtils {
      * 
      * @param hash
      *            the hash to encode
-     * @param encode
-     *            a char array of encodings any length you lik but probably but
-     *            the shorter it is the longer the result. Dont be dumb and use
-     *            an encoding size of < 2.
      * @return
-     * @deprecated use encode(byte[])
      */
-    @Deprecated
-    public static String encode(byte[] hash, char[] encode) {
-        return encode(hash);
-    }
-    
     public static String encode(byte[] hash) {
         return Base64.encodeBase64URLSafeString(hash);
     }
@@ -429,25 +375,6 @@ public class StorageClientUtils {
         return Long.parseLong(toString(object), ENCODING_BASE);
     }
 
-    /**
-     * @param object
-     * @return the store object as a {@link Calendar}
-     * @throws ParseException
-     * @deprecated no need to convert, just get the calendar object directly out of the store.
-     */
-    @Deprecated
-    public static Calendar toCalendar(Object object) throws ParseException {
-        if (object instanceof Calendar) {
-            return (Calendar) object;
-        } else if (object == null || object instanceof RemoveProperty) {
-            return null;
-        }
-        final SimpleDateFormat sdf = new SimpleDateFormat(ISO8601_JCR_PATTERN, Locale.ENGLISH);
-        final Date date = sdf.parse(toString(object));
-        final Calendar c = Calendar.getInstance();
-        c.setTime(date);
-        return c;
-    }
 
     /**
      * @param path
@@ -558,27 +485,6 @@ public class StorageClientUtils {
         }
     }
 
-    /**
-     * @param object
-     * @return null or the store object converted to a Calendar[]
-     * @throws ParseException
-     * @deprecated no need to convert, just get the Calendar[] object directly out of the store.
-     */
-    @Deprecated
-    public static Calendar[] toCalendarArray(Object object) throws ParseException {
-        if ( object instanceof Calendar[] ) {
-            return (Calendar[]) object;
-        } else if (object == null) {
-            return null;
-        } else {
-            String[] v = StringUtils.split(StorageClientUtils.toString(object), ',');
-            Calendar[] c = new Calendar[v.length];
-            for (int i = 0; i < v.length; i++) {
-                c[i] = toCalendar(arrayUnEscape(v[i]));
-            }
-            return c;
-        }
-    }
 
     /**
      * @param parameterValues
@@ -641,15 +547,6 @@ public class StorageClientUtils {
         return null;
     }
 
-    /**
-     * @param property
-     * @return
-     * @deprecated no need to convert, just get the Boolean object directly out of the store.
-     */
-    @Deprecated
-    public static boolean toBoolean(Object property) {
-        return "true".equals(StorageClientUtils.toString(property));
-    }
 
     /**
      * Delete an entire tree starting from the deepest part of the tree and

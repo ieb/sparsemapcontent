@@ -468,25 +468,6 @@ public class InternalContent {
         return "Path: " + getPath() + "; Properties: " + getProperties();
     }
 
-    /**
-     * @deprecated This method sets the ID field for the whole system. Do not
-     *             use. Its been provided to make it possible to configure the
-     *             ID field name used by Sparse to allow Berkley to continue
-     *             running without migration. DO NOT USE, IT WILL HAVE NO
-     *             EFFECT.
-     * @param idFieldName
-     */
-    public static void setUuidField(String idFieldName) {
-        if (!idFieldIsSet) {
-            idFieldIsSet = true;
-            LOGGER.warn("ID Field is being set to {}, this can only be done once per JVM start ",
-                    idFieldName);
-            UUID_FIELD = idFieldName;
-        } else {
-            LOGGER.warn("ID Field has already been set to {} and cannot be reset. ", idFieldName);
-        }
-    }
-
 
     /**
      * 

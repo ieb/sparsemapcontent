@@ -12,10 +12,8 @@ import com.bradmcevoy.http.SecurityManager;
 public class LoggingAuthenticationHander implements AuthenticationHandler {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(LoggingAuthenticationHander.class);
-	private SecurityManager securityManager;
 
 	public LoggingAuthenticationHander(SecurityManager securityManager) {
-		this.securityManager = securityManager;
 	}
 
 	public boolean supports(Resource r, Request request) {

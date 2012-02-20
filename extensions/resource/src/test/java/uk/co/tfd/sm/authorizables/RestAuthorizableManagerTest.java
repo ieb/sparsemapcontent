@@ -43,6 +43,7 @@ public class RestAuthorizableManagerTest {
 	private SparseSessionTracker sparseSessionTracker;
 	@Mock
 	private HttpServletRequest request;
+	@SuppressWarnings("unused")
 	private Session userSession;
 	
 	public RestAuthorizableManagerTest() {

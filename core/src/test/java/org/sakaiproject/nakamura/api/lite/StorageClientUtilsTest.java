@@ -32,33 +32,6 @@ import java.util.Set;
 
 public class StorageClientUtilsTest {
 
-    @SuppressWarnings("deprecation")
-    @Test
-    public void testInt() throws UnsupportedEncodingException {
-        for (int i = -100000; i < 10000; i++) {
-            Assert.assertEquals(i, StorageClientUtils.toInt(StorageClientUtils.toStore(i)));
-        }
-        for (int i = Integer.MIN_VALUE; i < Integer.MIN_VALUE + 10000; i++) {
-            Assert.assertEquals(i, StorageClientUtils.toInt(StorageClientUtils.toStore(i)));
-        }
-        for (int i = Integer.MAX_VALUE - 10000; i < Integer.MAX_VALUE; i++) {
-            Assert.assertEquals(i, StorageClientUtils.toInt(StorageClientUtils.toStore(i)));
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-    @Test
-    public void testLong() throws UnsupportedEncodingException {
-        for (long i = -100000; i < 10000; i++) {
-            Assert.assertEquals(i, StorageClientUtils.toLong(StorageClientUtils.toStore(i)));
-        }
-        for (long i = Long.MIN_VALUE; i < Long.MIN_VALUE + 10000; i++) {
-            Assert.assertEquals(i, StorageClientUtils.toLong(StorageClientUtils.toStore(i)));
-        }
-        for (long i = Long.MAX_VALUE - 10000; i < Long.MAX_VALUE; i++) {
-            Assert.assertEquals(i, StorageClientUtils.toLong(StorageClientUtils.toStore(i)));
-        }
-    }
 
     @SuppressWarnings("deprecation")
     @Test
@@ -69,18 +42,6 @@ public class StorageClientUtilsTest {
         Assert.assertEquals("100", StorageClientUtils.toString(100));
     }
 
-    @SuppressWarnings("deprecation")
-    @Test
-    public void testToBytes() {
-        Assert.assertEquals(null, StorageClientUtils.toStore(null));
-        Assert.assertEquals("test", StorageClientUtils.toStore("test"));
-        Assert.assertEquals(100L,
-                StorageClientUtils.toStore((long) 100));
-        Assert.assertEquals(100,
-                StorageClientUtils.toStore((int) 100));
-        Object o = new Object();
-        Assert.assertEquals(o, StorageClientUtils.toStore(o));
-    }
 
     @Test
     public void testIsRoot() throws UnsupportedEncodingException {

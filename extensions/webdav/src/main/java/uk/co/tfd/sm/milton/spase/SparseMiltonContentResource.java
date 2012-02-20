@@ -142,6 +142,7 @@ public class SparseMiltonContentResource implements FileResource, FolderResource
 			Method.ACL, Method.COPY, Method.DELETE, Method.MKCALENDAR,
 			Method.MKCOL, Method.MOVE, Method.POST, Method.PROPPATCH,
 			Method.PUT);
+	@SuppressWarnings("unused")
 	private static final Set<Method> WRITE_METHODS = ImmutableSet.of(
 			Method.COPY, Method.ACL, Method.DELETE, Method.MKCALENDAR,
 			Method.MKCOL, Method.MOVE, Method.POST, Method.PROPPATCH,
@@ -702,8 +703,7 @@ public class SparseMiltonContentResource implements FileResource, FolderResource
 				LockHolder lockHolder = new LockHolder(extra, true);
 				LockToken lockToken = new LockToken(token, lockHolder.getLockInfo(),
 						lockHolder.getLockTimeout());
-				return new LockToken(token, lockHolder.getLockInfo(),
-						lockHolder.getLockTimeout());
+				return lockToken;
 			}
 			LOGGER.debug("No Lock Present at {} ", path);
 		} catch (StorageClientException e) {
