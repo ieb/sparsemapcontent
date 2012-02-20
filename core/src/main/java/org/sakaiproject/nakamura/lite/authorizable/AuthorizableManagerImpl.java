@@ -459,7 +459,7 @@ public class AuthorizableManagerImpl extends CachingManagerImpl implements Autho
             if (!thisUser.isAdmin()) {
                 User u = authenticator.authenticate(id, oldPassword);
                 if (u == null) {
-                    throw new StorageClientException(
+                    throw new IllegalArgumentException(
                             "Unable to change passwords, old password does not match");
                 }
             }

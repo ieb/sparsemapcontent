@@ -4,13 +4,13 @@
 	<parent>
 		<groupId>org.sakaiproject.nakamura</groupId>
 		<artifactId>core-base</artifactId>
-		<version>4-SNAPSHOT</version>
+		<version>4</version>
 		<relativePath>parent/pom.xml</relativePath>
 	</parent>
 	<groupId>org.sakaiproject.nakamura</groupId>
 	<artifactId>sparsemap</artifactId>
 	<packaging>pom</packaging>
-	<version>1.5-SNAPSHOT</version>
+	<version>1.6-SNAPSHOT</version>
 	<name>Sparse Map :: Sparse Map Content Top level pom</name>
 	<description>Server that uses a sparse map to represent content mapping closely to a colum database like Cassandra.</description>
 	<properties>
@@ -44,7 +44,7 @@
                 <defaultGoal>install</defaultGoal>
              </build>
              <modules>
-                <module>extensions</module>
+                <module>app</module>
              </modules>
            </profile>
            <profile>
@@ -53,7 +53,7 @@
                 <defaultGoal>antrun:run</defaultGoal>
              </build>
              <modules>
-                <module>extensions/app</module>
+                <module>app</module>
              </modules>
            </profile>
         </profiles>

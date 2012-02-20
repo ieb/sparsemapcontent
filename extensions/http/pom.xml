@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.sakaiproject.nakamura</groupId>
     <artifactId>core-base</artifactId>
-    <version>4-SNAPSHOT</version>
+    <version>4</version>
     <relativePath>../../parent/pom.xml</relativePath>
   </parent>
   <artifactId>uk.co.tfd.sm.http</artifactId>
@@ -86,7 +86,7 @@
     <dependency>
        <groupId>org.sakaiproject.nakamura</groupId>
        <artifactId>uk.co.tfd.sm.core</artifactId>
-       <version>1.5-SNAPSHOT</version>
+       <version>1.6-SNAPSHOT</version>
        <scope>compile</scope>
     </dependency>
     <!--  needed for Template Service -->
