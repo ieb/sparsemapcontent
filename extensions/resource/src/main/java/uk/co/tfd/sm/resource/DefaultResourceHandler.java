@@ -87,7 +87,7 @@ public class DefaultResourceHandler implements JaxRestService, Adaptable {
 		if (session == null) {
 
 			session = sessionTracker.register(
-					authenticationService.authenticate(request), request);
+					authenticationService.authenticate(request, response), request);
 		}
 		ContentManager contentManager = session.getContentManager();
 

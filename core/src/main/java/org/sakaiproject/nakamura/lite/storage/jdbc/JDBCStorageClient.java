@@ -206,7 +206,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
                 Map<String, Object> cached = ch.get();
                 if ( cached == null ) {
                     // the cache was an empty object, we respond with empty.
-                    cached = Maps.newHashMap();
+                    cached = ImmutableMap.of();
                 }
                 return cached;
             }
@@ -249,6 +249,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
             close(body, "B");
             close(selectStringRow, "A");
         }
+        result = ImmutableMap.copyOf(result);
         if ( cachingManager != null ) {
             cachingManager.putToCache(rid, new CacheHolder(result),true);
         }
@@ -291,28 +292,30 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
                 }
             }
 
-            Map<String, Object> m = get(keySpace, columnFamily, key);
+            // updates here don't evict elements from the directAccess Cache, thats done in the Manager itself.
+            // If you find that your getting stale objects, then the cache manager isnt evicting correctly.
+            Map<String, Object> updateMap = Maps.newHashMap(get(keySpace, columnFamily, key));
             if ( storageClientListener != null ) {
-                storageClientListener.before(keySpace,columnFamily,key,m);
+                storageClientListener.before(keySpace,columnFamily,key,updateMap);
             }
-            if ( TRUE.equals(m.get(DELETED_FIELD)) ) {
+            if ( TRUE.equals(updateMap.get(DELETED_FIELD)) ) {
                 // if the map was previously deleted, delete all content since we don't want the old map becoming part of the new map.
-                m.clear();
+                updateMap.clear();
             }
             for (Entry<String, Object> e : values.entrySet()) {
                 String k = e.getKey();
                 Object o = e.getValue();
 
                 if (o instanceof RemoveProperty || o == null) {
-                    m.remove(k);
+                    updateMap.remove(k);
                 } else {
-                    m.put(k, o);
+                    updateMap.put(k, o);
                 }
             }
             if ( storageClientListener != null ) {
-                storageClientListener.after(keySpace,columnFamily,key,m);
+                storageClientListener.after(keySpace,columnFamily,key,updateMap);
             }
-            LOGGER.debug("Saving {} {} {} ", new Object[]{key, rid, m});
+            LOGGER.debug("Saving {} {} {} ", new Object[]{key, rid, updateMap});
             if ( probablyNew && !UPDATE_FIRST_SEQUENCE.equals(getSql(SQL_STATEMENT_SEQUENCE))) {
                 PreparedStatement insertBlockRow = getStatement(keySpace, columnFamily,
                         SQL_BLOCK_INSERT_ROW, rid, statementCache);
@@ -321,7 +324,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
                 insertBlockRow.setString(1, rid);
                 InputStream insertStream = null;
                 try {
-                  insertStream = Types.storeMapToStream(rid, m, columnFamily);
+                  insertStream = Types.storeMapToStream(rid, updateMap, columnFamily);
                 } catch (UTFDataFormatException e) {
                   throw new DataFormatException(INVALID_DATA_ERROR, e);
                 }
@@ -345,7 +348,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
                     updateBlockRow.clearParameters();
                     updateBlockRow.setString(2, rid);
                   try {
-                    insertStream = Types.storeMapToStream(rid, m, columnFamily);
+                    insertStream = Types.storeMapToStream(rid, updateMap, columnFamily);
                   } catch (UTFDataFormatException e) {
                     throw new DataFormatException(INVALID_DATA_ERROR, e);
                   }
@@ -373,7 +376,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
                 updateBlockRow.setString(2, rid);
               InputStream updateStream = null;
               try {
-                updateStream = Types.storeMapToStream(rid, m, columnFamily);
+                updateStream = Types.storeMapToStream(rid, updateMap, columnFamily);
               } catch (UTFDataFormatException e) {
                   throw new DataFormatException(INVALID_DATA_ERROR, e);
               }
@@ -392,7 +395,7 @@ public class JDBCStorageClient implements StorageClient, RowHasher, Disposer {
                     insertBlockRow.clearParameters();
                     insertBlockRow.setString(1, rid);
                     try {
-                      updateStream = Types.storeMapToStream(rid, m, columnFamily);
+                      updateStream = Types.storeMapToStream(rid, updateMap, columnFamily);
                     } catch (UTFDataFormatException e) {
                       throw new DataFormatException(INVALID_DATA_ERROR, e);
                     }

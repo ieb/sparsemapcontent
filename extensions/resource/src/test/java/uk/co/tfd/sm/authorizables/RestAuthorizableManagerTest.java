@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -45,6 +46,8 @@ public class RestAuthorizableManagerTest {
 	private HttpServletRequest request;
 	@SuppressWarnings("unused")
 	private Session userSession;
+	@Mock
+	private HttpServletResponse response;
 	
 	public RestAuthorizableManagerTest() {
 		MockitoAnnotations.initMocks(this);
@@ -67,12 +70,12 @@ public class RestAuthorizableManagerTest {
 	
 	@Test
 	public void test() throws StorageClientException, WebApplicationException, IOException {
-		Mockito.when(authenticationService.authenticate(request)).thenReturn(session);
+		Mockito.when(authenticationService.authenticate(request, response)).thenReturn(session);
 		Mockito.when(sparseSessionTracker.register(session, request)).thenReturn(session);
-		Response response = restAuthorizableManager.getUser(request, "user", "testuser", "pp");
-		Assert.assertNotNull(response);
-		Assert.assertEquals(200, response.getStatus());
-	    StreamingOutput entity = (StreamingOutput) response.getEntity();
+		Response rsresponse = restAuthorizableManager.getUser(request, response, "user", "testuser", "pp");
+		Assert.assertNotNull(rsresponse);
+		Assert.assertEquals(200, rsresponse.getStatus());
+	    StreamingOutput entity = (StreamingOutput) rsresponse.getEntity();
 	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
 	    entity.write(baos);
 	    String output = new String(baos.toByteArray(),"UTF-8");
@@ -88,14 +91,14 @@ public class RestAuthorizableManagerTest {
 	
 	@Test
 	public void testUpdate() throws StorageClientException, WebApplicationException, IOException, AccessDeniedException {
-		Mockito.when(authenticationService.authenticate(request)).thenReturn(session);
+		Mockito.when(authenticationService.authenticate(request, response)).thenReturn(session);
 		Mockito.when(sparseSessionTracker.register(session, request)).thenReturn(session);
 		Mockito.when(request.getParameterMap()).thenReturn(ParameterUtil.getParameters());
 		Mockito.when(request.getMethod()).thenReturn("POST");
-		Response response = restAuthorizableManager.doUpdateAuthorizable(request, "user", "testuser");
-		Assert.assertNotNull(response);
-		Assert.assertEquals(200, response.getStatus());
-	    StreamingOutput entity = (StreamingOutput) response.getEntity();
+		Response rsresponse = restAuthorizableManager.doUpdateAuthorizable(request, response, "user", "testuser");
+		Assert.assertNotNull(rsresponse);
+		Assert.assertEquals(200, rsresponse.getStatus());
+	    StreamingOutput entity = (StreamingOutput) rsresponse.getEntity();
 	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
 	    entity.write(baos);
 	    String output = new String(baos.toByteArray(),"UTF-8");

@@ -776,7 +776,7 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
             throw new StorageClientException("Item "+path+" does not exist");
         }
         String contentId = (String)structure.get(STRUCTURE_UUID_FIELD);
-        Map<String, Object> saveVersion = getCached(keySpace, contentColumnFamily, contentId);
+        Map<String, Object> saveVersion = Maps.newHashMap(getCached(keySpace, contentColumnFamily, contentId));
         if (!exists(saveVersion)) {
             throw new StorageClientException("Item "+path+" does not exist");
         }
@@ -841,8 +841,8 @@ public class ContentManagerImpl extends CachingManagerImpl implements ContentMan
                 String versionHistoryId = (String)content
                         .get(VERSION_HISTORY_ID_FIELD);
                 if (versionHistoryId != null) {
-                    final Map<String, Object> versionHistory = getCached(keySpace,
-                            contentColumnFamily, versionHistoryId);
+                    final Map<String, Object> versionHistory = Maps.newHashMap(getCached(keySpace,
+                            contentColumnFamily, versionHistoryId));
                     LOGGER.debug("Loaded Version History  {} {} ", versionHistoryId, versionHistory);
                     versionHistory.remove(UUID_FIELD);
                   return Ordering.from(new Comparator<String>() {

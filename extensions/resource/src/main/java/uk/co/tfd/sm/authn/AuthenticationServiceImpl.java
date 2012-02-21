@@ -3,6 +3,7 @@ package uk.co.tfd.sm.authn;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
@@ -18,6 +19,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import uk.co.tfd.sm.api.authn.AuthenticationService;
 import uk.co.tfd.sm.api.authn.AuthenticationServiceCredentials;
 import uk.co.tfd.sm.api.authn.AuthenticationServiceHandler;
+import uk.co.tfd.sm.authn.token.TokenAuthenticationService;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -27,37 +29,49 @@ import com.google.common.collect.Sets;
 @Reference(name = "authenticationHandler", referenceInterface = AuthenticationServiceHandler.class, bind = "bind", unbind = "unbind", cardinality = ReferenceCardinality.OPTIONAL_MULTIPLE, policy = ReferencePolicy.DYNAMIC, strategy = ReferenceStrategy.EVENT)
 public class AuthenticationServiceImpl implements AuthenticationService {
 
-	private static final Set<String> TRUSTED = ImmutableSet
-			.of("uk.co.tfd.sm.authn.TrustedCredentials");
+	private static final Set<String> TRUSTED = ImmutableSet.of(
+			TrustedCredentials.class.getName(),
+			TransferCredentials.class.getName());
+	private static final Set<String> SSO = ImmutableSet
+			.of(TrustedCredentials.class.getName());
 	@Reference
 	protected Repository repository;
-	
+
+	@Reference
+	private TokenAuthenticationService tokenAuthenticationService;
+
 	private AuthenticationServiceHandler[] authenticationServiceHandlers = new AuthenticationServiceHandler[0];
 	private Set<AuthenticationServiceHandler> handlers = Sets.newHashSet();
-	
+
 	public AuthenticationServiceImpl() {
 	}
-	
+
 	public AuthenticationServiceImpl(Repository repository) {
-		if ( repository == null ) {
+		if (repository == null) {
 			throw new IllegalArgumentException("Repository cant be null");
 		}
 		this.repository = repository;
 	}
 
 	@Override
-	public Session authenticate(HttpServletRequest request) throws StorageClientException {
+	public Session authenticate(HttpServletRequest request,
+			HttpServletResponse response) throws StorageClientException {
 		try {
 			AuthenticationServiceHandler[] hs = authenticationServiceHandlers;
 			for (AuthenticationServiceHandler h : hs) {
 				AuthenticationServiceCredentials c = h.getCredentials(request);
 				if (c != null) {
+					Session s = null;
 					if (isTrusted(c)) {
-						return repository.loginAdministrative(c.getUserName());
+						s = repository.loginAdministrative(c.getUserName());
 					} else {
-						return repository.login(c.getUserName(),
-								c.getPassword());
+						s = repository.login(c.getUserName(), c.getPassword());
 					}
+					if (isSso(c)) {
+						tokenAuthenticationService.refreshCredentials(c,
+								request, response);
+					}
+					return s;
 				}
 			}
 			return repository.login();
@@ -65,9 +79,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 			try {
 				return repository.login();
 			} catch (AccessDeniedException e2) {
-				throw new StorageClientException("Unable to login as anon ",e2);
-			}			
+				throw new StorageClientException("Unable to login as anon ", e2);
+			}
 		}
+	}
+
+	private boolean isSso(AuthenticationServiceCredentials c) {
+		return SSO.contains(c.getClass().getName());
 	}
 
 	private boolean isTrusted(AuthenticationServiceCredentials c) {

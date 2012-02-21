@@ -1,4 +1,4 @@
-package uk.co.tfd.sm.resource;
+package uk.co.tfd.sm.authn.basic;
 
 import java.io.UnsupportedEncodingException;
 
@@ -11,7 +11,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import uk.co.tfd.sm.api.authn.AuthenticationServiceCredentials;
-import uk.co.tfd.sm.authn.BasicAuthenticationHandler;
+import uk.co.tfd.sm.authn.basic.BasicAuthenticationHandler;
 
 public class BasicAuthenticationHanderTest {
 

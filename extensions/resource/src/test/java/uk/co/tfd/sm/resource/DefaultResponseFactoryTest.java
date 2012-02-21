@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -68,7 +69,7 @@ public class DefaultResponseFactoryTest {
 	}
 
 	@Test
-	public void testGetResource() throws IOException, StorageClientException, AccessDeniedException {
+	public void testGetResource() throws IOException, StorageClientException, AccessDeniedException, URISyntaxException {
 		DefaultResponseFactory fac = new DefaultResponseFactory();
 		Adaptable gr = fac.getResponse(adaptable);
 		Assert.assertNotNull(gr);
@@ -99,7 +100,7 @@ public class DefaultResponseFactoryTest {
 	}
 
 	@Test
-	public void testGetResourceJson() throws IOException, StorageClientException, AccessDeniedException {
+	public void testGetResourceJson() throws IOException, StorageClientException, AccessDeniedException, URISyntaxException {
 		DefaultResponseFactory fac = new DefaultResponseFactory();
 		Adaptable gr = fac.getResponse(adaptable);
 		Assert.assertNotNull(gr);
@@ -125,7 +126,7 @@ public class DefaultResponseFactoryTest {
 		Assert.assertEquals("{\"key\":\"value\"}", outputData);
 	}
 	@Test
-	public void testGetResourceXml() throws IOException, StorageClientException, AccessDeniedException {
+	public void testGetResourceXml() throws IOException, StorageClientException, AccessDeniedException, URISyntaxException {
 		DefaultResponseFactory fac = new DefaultResponseFactory();
 		Adaptable gr = fac.getResponse(adaptable);
 		Assert.assertNotNull(gr);
@@ -147,7 +148,7 @@ public class DefaultResponseFactoryTest {
 	}
 	
 	@Test
-	public void testGetResourceInvalid() throws IOException, StorageClientException, AccessDeniedException {
+	public void testGetResourceInvalid() throws IOException, StorageClientException, AccessDeniedException, URISyntaxException {
 		DefaultResponseFactory fac = new DefaultResponseFactory();
 		Adaptable gr = fac.getResponse(adaptable);
 		Assert.assertNotNull(gr);
@@ -167,7 +168,7 @@ public class DefaultResponseFactoryTest {
 	}
 	
 	@Test
-	public void testGetResourceDenied() throws IOException, StorageClientException, AccessDeniedException {
+	public void testGetResourceDenied() throws IOException, StorageClientException, AccessDeniedException, URISyntaxException {
 		DefaultResponseFactory fac = new DefaultResponseFactory();
 		Adaptable gr = fac.getResponse(adaptable);
 		Assert.assertNotNull(gr);
@@ -188,7 +189,7 @@ public class DefaultResponseFactoryTest {
 	}
 
 	@Test
-	public void testGetResourceError() throws IOException, StorageClientException, AccessDeniedException {
+	public void testGetResourceError() throws IOException, StorageClientException, AccessDeniedException, URISyntaxException {
 		DefaultResponseFactory fac = new DefaultResponseFactory();
 		Adaptable gr = fac.getResponse(adaptable);
 		Assert.assertNotNull(gr);

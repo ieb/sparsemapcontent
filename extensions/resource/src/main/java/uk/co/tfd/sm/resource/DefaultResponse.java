@@ -3,6 +3,8 @@ package uk.co.tfd.sm.resource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
 
@@ -20,11 +22,14 @@ import org.apache.commons.io.IOUtils;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+import uk.co.tfd.sm.api.http.IdentityRedirectService;
 import uk.co.tfd.sm.api.resource.Adaptable;
 import uk.co.tfd.sm.api.resource.Resource;
 import uk.co.tfd.sm.util.http.ContentHelper;
@@ -38,14 +43,15 @@ public class DefaultResponse implements Adaptable {
 			.getLogger(DefaultResponse.class);
 	private Adaptable adaptable;
 	private boolean debug;
-
+	
+	
 	public DefaultResponse(Adaptable adaptable) {
 		debug = LOGGER.isDebugEnabled();
 		this.adaptable = adaptable;
 	}
 
 	@GET
-	public Response doGet() throws IOException {
+	public Response doGet() throws IOException, URISyntaxException {
 		try {
 			Resource resource = adaptable.adaptTo(Resource.class);
 			final String requestExt = resource.getRequestExt();
@@ -67,6 +73,18 @@ public class DefaultResponse implements Adaptable {
 						content);
 			}
 			if (requestExt == null || requestExt.isEmpty()) {
+				
+				User user = adaptTo(User.class);
+				HttpServletRequest request = adaptTo(HttpServletRequest.class);
+				IdentityRedirectService identityRedirectService = adaptTo(IdentityRedirectService.class);
+				if ( identityRedirectService != null ) {
+					// only if there is an identity redirect service, will check to see if the content is safe.
+					String redirect = identityRedirectService.getRedirectIdentityUrl(request, user.getId());
+					if ( redirect != null ) {
+						return Response.temporaryRedirect(new URI(redirect)).build();
+					}
+				}
+				
 				Session session = adaptTo(Session.class);
 				final ContentManager contentManager = session
 						.getContentManager();

@@ -1,4 +1,4 @@
-package uk.co.tfd.sm.authn;
+package uk.co.tfd.sm.authn.basic;
 
 import java.io.UnsupportedEncodingException;
 

@@ -335,6 +335,9 @@ public class SparseMiltonContentResource implements FileResource, FolderResource
 		try {
 			InputStream in;
 			try {
+				// FIXME: This wont obey the server protection.
+				// We need to reedirect and we need to be able to extract the identity when we do
+				// WebDav should only be used in trusted situations where streaming bodies presents no risk.
 				in = session.getContentManager().getInputStream(path);
 			} catch (IOException e) {
 				throw new BadRequestException(this, e.getMessage());

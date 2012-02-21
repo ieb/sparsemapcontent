@@ -26,14 +26,34 @@
         <configuration>
           <instructions>
             <Bundle-Category> sparse-map </Bundle-Category>
-            <Export-Package> uk.co.tfd.sm.api.resource.*, uk.co.tfd.sm.api.authn.*, uk.co.tfd.sm.util.*  </Export-Package>
-            <Private-Package>uk.co.tfd.sm.resource.*, uk.co.tfd.sm.authn.*, uk.co.tfd.sm.authorizables.* </Private-Package>
+            <Export-Package> 
+                    uk.co.tfd.sm.api.resource.*, 
+                    uk.co.tfd.sm.api.authn.*, 
+                    uk.co.tfd.sm.api.cluster.*, 
+                    uk.co.tfd.sm.util.*,
+            </Export-Package>
+            <Private-Package>
+                    uk.co.tfd.sm.resource.*, 
+                    uk.co.tfd.sm.authn.*, 
+                    uk.co.tfd.sm.cluster.*,
+                    uk.co.tfd.sm.authorizables.*
+            </Private-Package>
             <Import-Package>
+              <!--  all from openid4java -->
+              !net.sf.ehcache.*,
+              !org.apache.axiom.*,
+              !org.apache.commons.httpclient.*,
+              !org.apache.html.dom.*,
+              !org.apache.xerces.xni.*,
+              !org.cyberneko.html.*,
+              !org.eclipse.higgins.*,
+              !org.openxri.*,
+              !org.springframework.*,
               com.google.common.collect; version="9.0.0",
               *
             </Import-Package>
             <Embed-Transitive>true</Embed-Transitive>
-            <Embed-Dependency></Embed-Dependency>
+            <Embed-Dependency>openid4java-consumer, openid4java-nodeps</Embed-Dependency>
           </instructions>
         </configuration>
       </plugin>
@@ -87,6 +107,21 @@
    </dependency>
     <dependency>
       <groupId>org.sakaiproject.nakamura</groupId>
+      <artifactId>uk.co.tfd.sm.http</artifactId>
+      <version>0.1-SNAPSHOT</version>
+   </dependency>
+    <dependency>
+      <groupId>org.sakaiproject.nakamura</groupId>
+      <artifactId>uk.co.tfd.sm.jetty</artifactId>
+      <version>0.1-SNAPSHOT</version>
+   </dependency>
+    <dependency>
+      <groupId>org.sakaiproject.nakamura</groupId>
+      <artifactId>uk.co.tfd.sm.memory</artifactId>
+      <version>0.1-SNAPSHOT</version>
+   </dependency>
+    <dependency>
+      <groupId>org.sakaiproject.nakamura</groupId>
       <artifactId>uk.co.tfd.sm.core</artifactId>
       <version>1.6-SNAPSHOT</version>
    </dependency>
@@ -99,6 +134,11 @@
       <groupId>commons-fileupload</groupId>
       <artifactId>commons-fileupload</artifactId>
       <version>1.2.2</version>
+   </dependency>
+   <dependency>
+      <groupId>org.openid4java</groupId>
+      <artifactId>openid4java-consumer</artifactId>
+      <version>0.9.5</version>
    </dependency>
    <dependency>
       <groupId>org.sakaiproject.nakamura</groupId>

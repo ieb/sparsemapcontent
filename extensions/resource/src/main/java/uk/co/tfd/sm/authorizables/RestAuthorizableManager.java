@@ -48,12 +48,13 @@ public class RestAuthorizableManager implements JaxRestService {
 	@GET
 	@Path("{type:user|group}/{userid}.{format}")
 	public Response getUser(@Context HttpServletRequest request,
+			@Context HttpServletResponse response,
 			@PathParam(value = "type") String authorizableType,
 			@PathParam(value = "userid") String authorizableId,
 			@PathParam(value = "format") final String outputFormat) {
 		try {
 
-			AuthorizableManager authorizableManager = getAuthorizableManager(request);
+			AuthorizableManager authorizableManager = getAuthorizableManager(request, response);
 			final Authorizable authorizable = authorizableManager
 					.findAuthorizable(authorizableId);
 			Response checkType = checkType(authorizable, authorizableType);
@@ -95,10 +96,11 @@ public class RestAuthorizableManager implements JaxRestService {
 	@POST
 	@Path("{type:user|group}/{userid}")
 	public Response doUpdateAuthorizable(@Context HttpServletRequest request,
+			@Context HttpServletResponse response,
 			@PathParam(value = "type") String authorizableType,
 			@PathParam(value = "userid") String authorizableId) {
 		try {
-			AuthorizableManager authorizableManager = getAuthorizableManager(request);
+			AuthorizableManager authorizableManager = getAuthorizableManager(request, response);
 			Authorizable authorizable = authorizableManager
 					.findAuthorizable(authorizableId);
 			Response checkType = checkType(authorizable, authorizableType);
@@ -147,12 +149,12 @@ public class RestAuthorizableManager implements JaxRestService {
 	}
 
 	private AuthorizableManager getAuthorizableManager(
-			HttpServletRequest request) throws StorageClientException {
+			HttpServletRequest request, HttpServletResponse response) throws StorageClientException {
 		Session session = sessionTracker.get(request);
 		if (session == null) {
 
 			session = sessionTracker.register(
-					authenticationService.authenticate(request), request);
+					authenticationService.authenticate(request, response), request);
 		}
 		return session.getAuthorizableManager();
 	}
