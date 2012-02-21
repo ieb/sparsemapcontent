@@ -22,7 +22,7 @@ public class OpenIdAuthenticationHandler implements AuthenticationServiceHandler
 			HttpServletRequest request) {
 		String userId = openIdService.getIdentity(request);
 		if ( userId != null ) {
-			// TrustedCredentials cause a Token to be set for subsequent reqests.
+			// TrustedCredentials cause a Token to be set for subsequent requests.
 			return new TrustedCredentials(userId);
 		}
 		return null;

@@ -14,3 +14,17 @@ The content is the post to that content.
 This makes it possible for a single post operation to update many content items in sequence.
 
 
+# Authentication
+
+The AuhenticationService holds references to AuthenticationHandlers which inspect the request and if 
+the handler is able to perform authentication it will respond with an Implementation of an 
+AuthenticationServiceCredentials. This may include the password and it may not. If its trusted
+then it will be used to log the user in administratively as the authentication was performed 
+by a provider. If its not trusted it the password will be used to log the request in against
+the repository. Once logged in, the credential as appropriate the a token principal is added to the 
+response so that subsequent request authentication binds to the token processing.
+
+Authentcation Types:
+Basic, OpenID, OpenID with OAuth, Token and TrustedHeader, TrustedRequest.
+
+

@@ -1,10 +1,13 @@
 package uk.co.tfd.sm.authn.openid;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Modified;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.openid4java.association.AssociationException;
@@ -38,10 +41,19 @@ public class OpenIdServiceImpl implements OpenIdService {
 
 	private Cache<DiscoveryInformation> discoveryCache;
 
-	public OpenIdServiceImpl() throws ConsumerException {
+	
+	@Activate
+	protected void activate(Map<String, Object> properties)
+			throws ConsumerException {
+		modified(properties);
+	}
+
+	@Modified
+	protected void modified(Map<String, Object> properties) throws ConsumerException {
 		consumerManager = new ConsumerManager();
 		discoveryCache = cacheManagerService.getCache(
 				this.getClass().getName(), CacheScope.INSTANCE);
+		
 	}
 
 	@Override

@@ -42,7 +42,6 @@
               <!--  all from openid4java -->
               !net.sf.ehcache.*,
               !org.apache.axiom.*,
-              !org.apache.commons.httpclient.*,
               !org.apache.html.dom.*,
               !org.apache.xerces.xni.*,
               !org.cyberneko.html.*,
@@ -53,7 +52,7 @@
               *
             </Import-Package>
             <Embed-Transitive>true</Embed-Transitive>
-            <Embed-Dependency>openid4java-consumer, openid4java-nodeps</Embed-Dependency>
+            <Embed-Dependency>openid4java-consumer, openid4java-nodeps, commons-httpclient</Embed-Dependency>
           </instructions>
         </configuration>
       </plugin>
