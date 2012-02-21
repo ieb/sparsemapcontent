@@ -185,6 +185,7 @@ public class NakamuraMain {
 				}
 			}
 		}
+		System.setProperty(SharedConstants.SLING_HOME, slingHome);
 
 		info("Setting sling.home=" + slingHome + " (" + source + ")", null);
 		return slingHome;
