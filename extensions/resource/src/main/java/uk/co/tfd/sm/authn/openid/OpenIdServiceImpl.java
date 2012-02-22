@@ -112,6 +112,9 @@ public class OpenIdServiceImpl implements OpenIdService {
 			String key = StorageClientUtils.getUuid();
 			discoveryCache.put(key, discoveryInformation);
 
+			if ( returnToUrl == null ) {
+				returnToUrl="/";
+			}
 			if (returnToUrl.contains("?")) {
 				returnToUrl = returnToUrl + "&_oidk" + key;
 			} else {
