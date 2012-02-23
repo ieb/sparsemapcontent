@@ -1,27 +1,36 @@
-package uk.co.tfd.sm.api.authn;
+package uk.co.tfd.sm.authn.token;
 
-import java.io.Serializable;
 import java.security.Key;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.spec.SecretKeySpec;
 
-public class KeyHolder implements Serializable {
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
+
+public class KeyHolder {
 
 	public static final String HMAC = "HmacSHA512";
 	public static final String SHA = "SHA-512";
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 7808366141279637770L;
 	private long expires;
-	private transient Key key;
+	private Key key;
 
 	private byte[] keySpec;
 	
 	public KeyHolder() {
+	}
+	
+	public KeyHolder(String spec) {
+		String[] specParts = StringUtils.split(spec,":");
+		keySpec = Base64.decodeBase64(specParts[0]);
+		expires = Long.parseLong(specParts[1]);
+	}
+	
+	@Override
+	public String toString() {
+		return  Base64.encodeBase64URLSafeString(keySpec)+":"+expires;
 	}
 	
 	public void reset(byte[] seed, long ttl) throws NoSuchAlgorithmException {
