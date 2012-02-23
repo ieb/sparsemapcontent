@@ -82,7 +82,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     if (isRefresh(c)) {
                         tokenAuthenticationService.refreshCredentials(c, request, response);
                     }
-                    LOGGER.info("Logged in as {} ", s.getUserId());
+                    LOGGER.debug("Logged in as {} ", s.getUserId());
                     return s;
                 }
             }

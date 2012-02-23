@@ -39,6 +39,15 @@
              </modules>
            </profile>
            <profile>
+             <id>core</id>
+             <build>
+                <defaultGoal>install</defaultGoal>
+             </build>
+             <modules>
+                <module>core</module>
+             </modules>
+           </profile>
+           <profile>
              <id>build-app</id>
              <build>
                 <defaultGoal>install</defaultGoal>

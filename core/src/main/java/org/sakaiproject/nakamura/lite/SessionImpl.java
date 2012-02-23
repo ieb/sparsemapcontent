@@ -101,6 +101,7 @@ public class SessionImpl implements Session {
     public void logout() throws ClientPoolException {
         if (closedAt == null) {
             commit();
+            statsService.sessionLogout();
             accessControlManager.close();
             authorizableManager.close();
             contentManager.close();
@@ -113,7 +114,6 @@ public class SessionImpl implements Session {
             authenticator = null;
             closedAt = new Exception("This session was closed at:");
             storeListener.onLogout(currentUser.getId(), this.toString());
-            statsService.sessionLogout();
         }
     }
 
