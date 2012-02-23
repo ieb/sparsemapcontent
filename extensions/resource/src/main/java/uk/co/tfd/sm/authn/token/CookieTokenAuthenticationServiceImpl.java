@@ -24,9 +24,10 @@ import org.sakaiproject.nakamura.api.memory.Cache;
 import org.sakaiproject.nakamura.api.memory.CacheManagerService;
 import org.sakaiproject.nakamura.api.memory.CacheScope;
 import org.sakaiproject.nakamura.api.servlet.HttpOnlyCookie;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.co.tfd.sm.api.authn.AuthenticationServiceCredentials;
-import uk.co.tfd.sm.api.authn.KeyHolder;
 import uk.co.tfd.sm.api.cluster.ClusterService;
 import uk.co.tfd.sm.authn.TrustedCredentials;
 
@@ -46,6 +47,8 @@ public class CookieTokenAuthenticationServiceImpl implements
 	private static final String COOKIE_AGE = "cookie-age";
 	@Property(boolValue=false)
 	private static final String SECURE_TRANSPORT = "secure-transport";
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(CookieTokenAuthenticationServiceImpl.class);
 
 	public class Token {
 
@@ -111,7 +114,7 @@ public class CookieTokenAuthenticationServiceImpl implements
 		}
 
 		public boolean willExpire() {
-			return ((System.currentTimeMillis() - expires) < (getTtl() / 2));
+			return ((expires - System.currentTimeMillis()) < (getTtl() / 2));
 		}
 
 		private String hash() throws NoSuchAlgorithmException,
@@ -146,7 +149,7 @@ public class CookieTokenAuthenticationServiceImpl implements
 
 	@Reference
 	protected ClusterService clusterService;
-	private Cache<KeyHolder> keyCache;
+	private Cache<String> keyCache;
 	private SecureRandom random = new SecureRandom();
 	private Object keyLock = new Object();
 
@@ -191,11 +194,11 @@ public class CookieTokenAuthenticationServiceImpl implements
 	}
 
 	public Key getKey(String keyId) {
-		KeyHolder kh = keyCache.get(keyId);
+		KeyHolder kh = getKeyHolder(keyId);
 		if (kh == null || kh.hasExpired()) {
 			synchronized (keyLock) {
 				// get it out again just in case it was replaced by the blocker.
-				kh = keyCache.get(keyId);
+				kh = getKeyHolder(keyId);
 				if (kh == null || kh.hasExpired()) {
 					kh = new KeyHolder();
 					byte[] b = new byte[1024];
@@ -205,40 +208,65 @@ public class CookieTokenAuthenticationServiceImpl implements
 					} catch (NoSuchAlgorithmException e) {
 						throw new RuntimeException(e);
 					}
-					keyCache.put(keyId, kh);
+					keyCache.put(keyId, kh.toString());
 				}
 			}
 		}
 		return kh.getKey();
 	}
 
+	private KeyHolder getKeyHolder(String keyId) {
+		String keySpec = keyCache.get(keyId);
+		if ( keySpec != null ) {
+			return new KeyHolder(keySpec);
+		}
+		return null;
+	}
+
 	@Override
 	public AuthenticationServiceCredentials refreshCredentials(
 			AuthenticationServiceCredentials credentials,
 			HttpServletRequest request, HttpServletResponse response) {
-		Token t = getToken(request);
-		if (t == null || t.willExpire()) {
-			Token newToken = new Token(credentials);
-			Cookie cookie = new HttpOnlyCookie(cookieName, newToken.toString());
-			cookie.setMaxAge(cookieAge);
-			cookie.setDomain("/");
-			cookie.setSecure(secure);
-			response.addCookie(cookie);
+		LOGGER.debug("Refresh Credentials on {} ", credentials);
+		if ( credentials != null ) {
+			Token t = getToken(request);
+			if (t == null || t.willExpire() || !credentials.getUserName().equals(t.getUser())) {
+				Token newToken = new Token(credentials);
+				if ( t == null ) {
+					LOGGER.info("No Cookie ");
+				} else if ( t.willExpire() ) {
+					LOGGER.info("Cookie Will expire ");					
+				} else if (!credentials.getUserName().equals(t.getUser())) {
+					LOGGER.info("Change User ");
+				}
+				LOGGER.info("Setting Token Cookie to user {} ", newToken.getUser());
+				Cookie cookie = new HttpOnlyCookie(cookieName, newToken.toString());
+				cookie.setMaxAge(cookieAge);
+				cookie.setPath("/");
+				cookie.setSecure(secure);
+				response.addCookie(cookie);
+			}
 		}
 		return credentials;
 	}
+	
 
 	private Token getToken(HttpServletRequest request) {
 		Cookie[] cs = request.getCookies();
 		if (cs != null) {
 			for (Cookie c : cs) {
 				if (cookieName.equals(c.getName())) {
-					return new Token(c.getValue());
+					try {
+						return new Token(c.getValue());
+					} catch ( IllegalArgumentException  e) {
+						LOGGER.debug(e.getMessage(),e);
+					}
 				}
 			}
 		}
 		return null;
 	}
+
 	
 
 }
