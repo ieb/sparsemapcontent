@@ -37,6 +37,7 @@ public class PreemptiveCachedMapIterator extends PreemptiveIterator<Map<String, 
 
     /**
      * Construct an iterator from a query response.
+     * 
      * @param client
      * @param resultSet
      * @param preparedStatement
@@ -45,8 +46,7 @@ public class PreemptiveCachedMapIterator extends PreemptiveIterator<Map<String, 
      * @throws SQLException
      */
     public PreemptiveCachedMapIterator(JDBCStorageClient client, String keySpace, String columnFamily, ResultSet resultSet,
-            PreparedStatement preparedStatement, boolean rawResults,
-            DirectCacheAccess cachingManager) throws SQLException {
+            PreparedStatement preparedStatement, boolean rawResults, DirectCacheAccess cachingManager) throws SQLException {
         this.keySpace = keySpace;
         this.columnFamily = columnFamily;
         this.resultSet = resultSet;
@@ -60,19 +60,20 @@ public class PreemptiveCachedMapIterator extends PreemptiveIterator<Map<String, 
 
     /**
      * Construct a iterator from a cached response.
+     * 
      * @param client
      * @param cachedResults
      * @param cachingManager
      */
     @SuppressWarnings("unchecked")
-    public PreemptiveCachedMapIterator(JDBCStorageClient client, String keySpace, String columnFamily, Map<String, Object> cachedResults, boolean rawResults,
-            DirectCacheAccess cachingManager) {
+    public PreemptiveCachedMapIterator(JDBCStorageClient client, String keySpace, String columnFamily,
+            Map<String, Object> cachedResults, boolean rawResults, DirectCacheAccess cachingManager) {
         this.keySpace = keySpace;
         this.columnFamily = columnFamily;
         this.rawResults = rawResults;
         this.client = client;
         this.cachingManager = cachingManager;
-        
+
         this.preloadedResults = (List<Map<String, Object>>) cachedResults.get("rows");
         this.preloadedResultsIndex = 0;
     }
@@ -92,8 +93,7 @@ public class PreemptiveCachedMapIterator extends PreemptiveIterator<Map<String, 
                 if (started) {
                     throw new IllegalStateException("Cant get results map once iteration has started");
                 }
-                com.google.common.collect.ImmutableList.Builder<Map<String, Object>> resultsBuilder = ImmutableList
-                        .builder();
+                com.google.common.collect.ImmutableList.Builder<Map<String, Object>> resultsBuilder = ImmutableList.builder();
                 int size = 0;
                 while (size < 500 && resultSet.next()) {
                     Builder<String, Object> b = ImmutableMap.builder();
@@ -110,8 +110,8 @@ public class PreemptiveCachedMapIterator extends PreemptiveIterator<Map<String, 
                     return null;
                 }
             }
-            if ( preloadedResults == null && resultSet == null ) {
-                throw new IllegalStateException("Cant get results map, no source results set.");                
+            if (preloadedResults == null && resultSet == null) {
+                throw new IllegalStateException("Cant get results map, no source results set.");
             }
             return ImmutableMap.of("rows", (Object) preloadedResults);
         } catch (SQLException e) {

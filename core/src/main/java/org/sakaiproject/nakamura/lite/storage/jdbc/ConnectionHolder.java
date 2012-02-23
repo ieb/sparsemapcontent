@@ -37,7 +37,8 @@ public class ConnectionHolder {
 
     public ConnectionHolder(Connection connection, JDBCStorageClientPool jdbcStorageClientPool) {
         this.lastUsed = System.currentTimeMillis();
-        this.lastValidated = 0L; // force the connection to get validated, even if its new.
+        this.lastValidated = 0L; // force the connection to get validated, even
+        // if its new.
         this.connection = connection;
         this.jdbcStorageClientPool = jdbcStorageClientPool;
     }
@@ -47,11 +48,10 @@ public class ConnectionHolder {
     }
 
     public boolean hasExpired() {
-        //add validity check
+        // add validity check
         /*
-            if enough time has elapsed
-                run validation query
-                on any exception return false;
+         * if enough time has elapsed run validation query on any exception
+         * return false;
          */
         long now = System.currentTimeMillis();
 
@@ -62,12 +62,12 @@ public class ConnectionHolder {
             try {
                 s = connection.createStatement();
                 String validationSql = jdbcStorageClientPool.getValidationSql();
-                if ( validationSql != null ) {
+                if (validationSql != null) {
                     rs = s.executeQuery(validationSql);
                     if (rs.next()) {
                         valid = true;
                     }
-                } else if ( lastValidated == 0L ) {
+                } else if (lastValidated == 0L) {
                     LOGGER.warn("No Validation SQL has been set in the SQL configuration, connections may randomly fail");
                     valid = true;
                 }
@@ -96,7 +96,8 @@ public class ConnectionHolder {
     }
 
     public Connection get() {
-        if (hasExpired()) return null;
+        if (hasExpired())
+            return null;
 
         ping();
 

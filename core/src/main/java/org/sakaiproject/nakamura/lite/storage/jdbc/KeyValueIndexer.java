@@ -47,27 +47,19 @@ public abstract class KeyValueIndexer extends AbstractIndexer {
     public DisposableIterator<Map<String, Object>> find(final String keySpace, final String columnFamily,
             Map<String, Object> properties, final DirectCacheAccess cacheManager) throws StorageClientException {
         String[] keys = null;
-        if ( properties != null  && properties.containsKey(StorageConstants.CUSTOM_STATEMENT_SET)) {
+        if (properties != null && properties.containsKey(StorageConstants.CUSTOM_STATEMENT_SET)) {
             String customStatement = (String) properties.get(StorageConstants.CUSTOM_STATEMENT_SET);
-            keys = new String[] { 
-                    customStatement+ "." + keySpace + "." + columnFamily,
-                    customStatement +  "." + columnFamily, 
-                    customStatement, 
-                    "block-find." + keySpace + "." + columnFamily,
-                    "block-find." + columnFamily, 
-                    "block-find" 
-           };            
+            keys = new String[] { customStatement + "." + keySpace + "." + columnFamily, customStatement + "." + columnFamily,
+                    customStatement, "block-find." + keySpace + "." + columnFamily, "block-find." + columnFamily, "block-find" };
         } else {
-            keys = new String[] { "block-find." + keySpace + "." + columnFamily,
-                    "block-find." + columnFamily, "block-find" };            
+            keys = new String[] { "block-find." + keySpace + "." + columnFamily, "block-find." + columnFamily, "block-find" };
         }
-        
+
         final boolean rawResults = properties != null && properties.containsKey(StorageConstants.RAWRESULTS);
 
         String sql = client.getSql(keys);
         if (sql == null) {
-            throw new StorageClientException("Failed to locate SQL statement for any of  "
-                    + Arrays.toString(keys));
+            throw new StorageClientException("Failed to locate SQL statement for any of  " + Arrays.toString(keys));
         }
 
         String[] statementParts = StringUtils.split(sql, ';');
@@ -81,12 +73,12 @@ public abstract class KeyValueIndexer extends AbstractIndexer {
         long page = 0;
         long items = 25;
         if (properties != null) {
-          if (properties.containsKey(StorageConstants.PAGE)) {
-            page = Long.valueOf(String.valueOf(properties.get(StorageConstants.PAGE)));
-          }
-          if (properties.containsKey(StorageConstants.ITEMS)) {
-            items = Long.valueOf(String.valueOf(properties.get(StorageConstants.ITEMS)));
-          }
+            if (properties.containsKey(StorageConstants.PAGE)) {
+                page = Long.valueOf(String.valueOf(properties.get(StorageConstants.PAGE)));
+            }
+            if (properties.containsKey(StorageConstants.ITEMS)) {
+                items = Long.valueOf(String.valueOf(properties.get(StorageConstants.ITEMS)));
+            }
         } else {
             properties = ImmutableMap.of();
         }
@@ -96,13 +88,13 @@ public abstract class KeyValueIndexer extends AbstractIndexer {
         String[] sorts = new String[] { null, "asc" };
         String _sortProp = (String) properties.get(StorageConstants.SORT);
         if (_sortProp != null) {
-          String[] _sorts = StringUtils.split(_sortProp);
-          if (_sorts.length == 1) {
-            sorts[0] = _sorts[0];
-          } else if (_sorts.length == 2) {
-            sorts[0] = _sorts[0];
-            sorts[1] = _sorts[1];
-          }
+            String[] _sorts = StringUtils.split(_sortProp);
+            if (_sorts.length == 1) {
+                sorts[0] = _sorts[0];
+            } else if (_sorts.length == 2) {
+                sorts[0] = _sorts[0];
+                sorts[1] = _sorts[1];
+            }
         }
 
         List<Object> parameters = Lists.newArrayList();
@@ -110,56 +102,60 @@ public abstract class KeyValueIndexer extends AbstractIndexer {
         for (Entry<String, Object> e : properties.entrySet()) {
             Object v = e.getValue();
             String k = e.getKey();
-            if ( shouldFind(keySpace, columnFamily, k) || (v instanceof Map)) {
+            if (shouldFind(keySpace, columnFamily, k) || (v instanceof Map)) {
                 if (v != null) {
-                  // check for a value map and treat sub terms as for OR terms.
-                  // Only go 1 level deep; don't recurse. That's just silly.
-                  if (v instanceof Map) {
-                    // start the OR grouping
-                    where.append(" (");
-                    @SuppressWarnings("unchecked")
-                    Set<Entry<String, Object>> subterms = ((Map<String, Object>) v).entrySet();
-                    for(Iterator<Entry<String, Object>> subtermsIter = subterms.iterator(); subtermsIter.hasNext();) {
-                      Entry<String, Object> subterm = subtermsIter.next();
-                      String subk = subterm.getKey();
-                      Object subv = subterm.getValue();
-                      // check that each subterm should be indexed
-                      if (shouldFind(keySpace, columnFamily, subk)) {
-                        set = processEntry(statementParts, tables, where, order, extraColumns, parameters, subk, subv, sorts, set);
-                        // as long as there are more add OR
-                        if (subtermsIter.hasNext()) {
-                          where.append(" OR");
+                    // check for a value map and treat sub terms as for OR
+                    // terms.
+                    // Only go 1 level deep; don't recurse. That's just silly.
+                    if (v instanceof Map) {
+                        // start the OR grouping
+                        where.append(" (");
+                        @SuppressWarnings("unchecked")
+                        Set<Entry<String, Object>> subterms = ((Map<String, Object>) v).entrySet();
+                        for (Iterator<Entry<String, Object>> subtermsIter = subterms.iterator(); subtermsIter.hasNext();) {
+                            Entry<String, Object> subterm = subtermsIter.next();
+                            String subk = subterm.getKey();
+                            Object subv = subterm.getValue();
+                            // check that each subterm should be indexed
+                            if (shouldFind(keySpace, columnFamily, subk)) {
+                                set = processEntry(statementParts, tables, where, order, extraColumns, parameters, subk, subv,
+                                        sorts, set);
+                                // as long as there are more add OR
+                                if (subtermsIter.hasNext()) {
+                                    where.append(" OR");
+                                }
+                            }
                         }
-                      }
-                    }
-                    // end the OR grouping
-                    where.append(") AND");
-                  } else {
-                    // process a first level non-map value as an AND term
+                        // end the OR grouping
+                        where.append(") AND");
+                    } else {
+                        // process a first level non-map value as an AND term
 
-                      if (v instanceof Iterable<?>) {
-                          for (Object vo : (Iterable<?>)v) {
-                              set = processEntry(statementParts, tables, where, order, extraColumns, parameters, k, vo, sorts, set);
-                              where.append(" AND");
-                          }
-                      } else {
-                          set = processEntry(statementParts, tables, where, order, extraColumns, parameters, k, v, sorts, set);
-                          where.append(" AND");
-                      }
-                  }
+                        if (v instanceof Iterable<?>) {
+                            for (Object vo : (Iterable<?>) v) {
+                                set = processEntry(statementParts, tables, where, order, extraColumns, parameters, k, vo, sorts,
+                                        set);
+                                where.append(" AND");
+                            }
+                        } else {
+                            set = processEntry(statementParts, tables, where, order, extraColumns, parameters, k, v, sorts, set);
+                            where.append(" AND");
+                        }
+                    }
                 } else if (!k.startsWith("_")) {
-                  LOGGER.debug("Search on {}:{} filter dropped due to null value.", columnFamily, k);
+                    LOGGER.debug("Search on {}:{} filter dropped due to null value.", columnFamily, k);
                 }
             } else {
-              if (!k.startsWith("_")) {
-                  LOGGER.warn("Search on {}:{} is not supported, filter dropped ",columnFamily,k);
-              }
+                if (!k.startsWith("_")) {
+                    LOGGER.warn("Search on {}:{} is not supported, filter dropped ", columnFamily, k);
+                }
             }
         }
         if (where.length() == 0) {
-            return new DisposableIterator<Map<String,Object>>() {
+            return new DisposableIterator<Map<String, Object>>() {
 
                 private Disposer disposer;
+
                 public boolean hasNext() {
                     return false;
                 }
@@ -172,10 +168,11 @@ public abstract class KeyValueIndexer extends AbstractIndexer {
                 }
 
                 public void close() {
-                    if ( disposer != null ) {
+                    if (disposer != null) {
                         disposer.unregisterDisposable(this);
                     }
                 }
+
                 public void setDisposer(Disposer disposer) {
                     this.disposer = disposer;
                 }
@@ -184,24 +181,22 @@ public abstract class KeyValueIndexer extends AbstractIndexer {
         }
 
         if (sorts[0] != null && order.length() == 0) {
-          if (shouldFind(keySpace, columnFamily, sorts[0])) {
-            String t = "a"+set;
-            if ( statementParts.length > STMT_EXTRA_COLUMNS ) {
-                extraColumns.append(MessageFormat.format(statementParts[STMT_EXTRA_COLUMNS], t));
+            if (shouldFind(keySpace, columnFamily, sorts[0])) {
+                String t = "a" + set;
+                if (statementParts.length > STMT_EXTRA_COLUMNS) {
+                    extraColumns.append(MessageFormat.format(statementParts[STMT_EXTRA_COLUMNS], t));
+                }
+                tables.append(MessageFormat.format(statementParts[STMT_TABLE_JOIN], t));
+                parameters.add(sorts[0]);
+                where.append(MessageFormat.format(statementParts[STMT_WHERE_SORT], t)).append(" AND");
+                order.append(MessageFormat.format(statementParts[STMT_ORDER], t, sorts[1]));
+            } else {
+                LOGGER.warn("Sort on {}:{} is not supported, sort dropped", columnFamily, sorts[0]);
             }
-            tables.append(MessageFormat.format(statementParts[STMT_TABLE_JOIN], t));
-            parameters.add(sorts[0]);
-            where.append(MessageFormat.format(statementParts[STMT_WHERE_SORT], t)).append(" AND");
-            order.append(MessageFormat.format(statementParts[STMT_ORDER], t, sorts[1]));
-          } else {
-            LOGGER.warn("Sort on {}:{} is not supported, sort dropped", columnFamily,
-                sorts[0]);
-          }
         }
 
-
-        final String sqlStatement = MessageFormat.format(statementParts[STMT_BASE],
-            tables.toString(), where.toString(), order.toString(), items, offset, extraColumns.toString());
+        final String sqlStatement = MessageFormat.format(statementParts[STMT_BASE], tables.toString(), where.toString(),
+                order.toString(), items, offset, extraColumns.toString());
 
         PreparedStatement tpst = null;
         ResultSet trs = null;
@@ -220,12 +215,7 @@ public abstract class KeyValueIndexer extends AbstractIndexer {
 
             long qtime = System.currentTimeMillis();
             trs = tpst.executeQuery();
-            qtime = System.currentTimeMillis() - qtime;
-            if ( qtime > client.getSlowQueryThreshold() && qtime < client.getVerySlowQueryThreshold()) {
-                JDBCStorageClient.SQL_LOGGER.warn("Slow Query {}ms {} params:[{}]",new Object[]{qtime,sqlStatement,Arrays.toString(parameters.toArray(new String[parameters.size()]))});
-            } else if ( qtime > client.getVerySlowQueryThreshold() ) {
-                JDBCStorageClient.SQL_LOGGER.error("Very Slow Query {}ms {} params:[{}]",new Object[]{qtime,sqlStatement,Arrays.toString(parameters.toArray(new String[parameters.size()]))});
-            }
+            client.checkSlow(columnFamily, "index_select", System.currentTimeMillis() - qtime, sqlStatement);
             client.inc("iterator r");
             LOGGER.debug("Executed ");
 
@@ -249,16 +239,16 @@ public abstract class KeyValueIndexer extends AbstractIndexer {
                 protected boolean internalHasNext() {
                     try {
                         if (open && rs.next()) {
-                            if ( rawResults ) {
+                            if (rawResults) {
                                 Builder<String, Object> b = ImmutableMap.builder();
-                                for  (int i = 1; i <= rsmd.getColumnCount(); i++ ) {
+                                for (int i = 1; i <= rsmd.getColumnCount(); i++) {
                                     b.put(String.valueOf(i), rs.getObject(i));
                                 }
                                 nextValue = b.build();
                             } else {
-                               String id = rs.getString(1);
-                               nextValue = client.internalGet(keySpace, columnFamily, id, cacheManager);
-                               LOGGER.debug("Got Row ID {} {} ", id, nextValue);
+                                String id = rs.getString(1);
+                                nextValue = client.internalGet(keySpace, columnFamily, id, cacheManager);
+                                LOGGER.debug("Got Row ID {} {} ", id, nextValue);
                             }
                             return true;
                         }
@@ -306,8 +296,7 @@ public abstract class KeyValueIndexer extends AbstractIndexer {
             });
         } catch (SQLException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new StorageClientException(e.getMessage() + " SQL Statement was " + sqlStatement,
-                    e);
+            throw new StorageClientException(e.getMessage() + " SQL Statement was " + sqlStatement, e);
         } finally {
             // trs and tpst will only be non null if control has not been passed
             // to the iterator.
@@ -330,7 +319,6 @@ public abstract class KeyValueIndexer extends AbstractIndexer {
         }
     }
 
-
     /**
      * @param statementParts
      * @param where
@@ -340,39 +328,38 @@ public abstract class KeyValueIndexer extends AbstractIndexer {
      * @param t
      * @param conjunctionOr
      */
-    private int processEntry(String[] statementParts, StringBuilder tables,
-        StringBuilder where, StringBuilder order, StringBuilder extraColumns, List<Object> params, String k, Object v,
-        String[] sorts, int set) {
-      String t = "a" + set;
-      tables.append(MessageFormat.format(statementParts[STMT_TABLE_JOIN], t));
+    private int processEntry(String[] statementParts, StringBuilder tables, StringBuilder where, StringBuilder order,
+            StringBuilder extraColumns, List<Object> params, String k, Object v, String[] sorts, int set) {
+        String t = "a" + set;
+        tables.append(MessageFormat.format(statementParts[STMT_TABLE_JOIN], t));
 
-      if (v instanceof Iterable<?>) {
-        for (Iterator<?> vi = ((Iterable<?>) v).iterator(); vi.hasNext();) {
-          Object viObj = vi.next();
-          
-          params.add(k);
-          params.add(viObj);
-          where.append(" (").append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(")");
+        if (v instanceof Iterable<?>) {
+            for (Iterator<?> vi = ((Iterable<?>) v).iterator(); vi.hasNext();) {
+                Object viObj = vi.next();
 
-          // as long as there are more add OR
-          if (vi.hasNext()) {
-            where.append(" OR");
-          }
+                params.add(k);
+                params.add(viObj);
+                where.append(" (").append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(")");
+
+                // as long as there are more add OR
+                if (vi.hasNext()) {
+                    where.append(" OR");
+                }
+            }
+        } else {
+            params.add(k);
+            params.add(v);
+            where.append(" (").append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(")");
         }
-      } else {
-        params.add(k);
-        params.add(v);
-        where.append(" (").append(MessageFormat.format(statementParts[STMT_WHERE], t)).append(")");
-      }
 
-      // add in sorting based on the table ref and value
-      if (k.equals(sorts[0])) {
-        order.append(MessageFormat.format(statementParts[STMT_ORDER], t, sorts[1]));
-        if ( statementParts.length > STMT_EXTRA_COLUMNS ) {
-            extraColumns.append(MessageFormat.format(statementParts[STMT_EXTRA_COLUMNS], t));
+        // add in sorting based on the table ref and value
+        if (k.equals(sorts[0])) {
+            order.append(MessageFormat.format(statementParts[STMT_ORDER], t, sorts[1]));
+            if (statementParts.length > STMT_EXTRA_COLUMNS) {
+                extraColumns.append(MessageFormat.format(statementParts[STMT_EXTRA_COLUMNS], t));
+            }
         }
-      }
-      return set+1;
+        return set + 1;
     }
 
 }

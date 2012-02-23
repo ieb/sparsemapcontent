@@ -6,18 +6,21 @@ import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.lite.CachingManagerImpl;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Allows cached updates, keeping the supplied shared cache in step with the updates.
+ * Allows cached updates, keeping the supplied shared cache in step with the
+ * updates.
+ * 
  * @author ieb
- *
+ * 
  */
 public class CacheAwareMigrationManager extends CachingManagerImpl {
 
-    public CacheAwareMigrationManager(StorageClient client, Map<String, CacheHolder> sharedCache) {
-        super(client, sharedCache);
+    public CacheAwareMigrationManager(StorageClient client, Map<String, CacheHolder> sharedCache, StatsService statsService) {
+        super(client, sharedCache, statsService);
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CacheAwareMigrationManager.class);
@@ -26,8 +29,9 @@ public class CacheAwareMigrationManager extends CachingManagerImpl {
     protected Logger getLogger() {
         return LOGGER;
     }
-    
-    public void insert(String keySpace, String columnFamily, String key, Map<String, Object> encodedProperties, boolean probablyNew) throws StorageClientException {
+
+    public void insert(String keySpace, String columnFamily, String key, Map<String, Object> encodedProperties, boolean probablyNew)
+            throws StorageClientException {
         putCached(keySpace, columnFamily, key, encodedProperties, probablyNew);
     }
 
