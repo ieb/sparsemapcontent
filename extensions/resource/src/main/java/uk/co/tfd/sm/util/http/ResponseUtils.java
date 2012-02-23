@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status.Family;
@@ -82,6 +83,16 @@ public class ResponseUtils {
 		gb.registerTypeHierarchyAdapter(Calendar.class, new CalenderTypeAdapter());
 		Gson gson = gb.create();
 		output.write(gson.toJson(authorizable).getBytes("UTF-8"));
+	}
+	public static void writeTree(Map<String, Object> map, String format, OutputStream output) throws UnsupportedEncodingException, IOException {
+		GsonBuilder gb = new GsonBuilder();
+		if ( "pp.json".equals(format) || "tidy.json".equals(format) ) {
+			gb.setPrettyPrinting();
+		}
+		gb.registerTypeHierarchyAdapter(Authorizable.class, new AuthorizableTypeAdapter());
+		gb.registerTypeHierarchyAdapter(Calendar.class, new CalenderTypeAdapter());
+		Gson gson = gb.create();
+		output.write(gson.toJson(map).getBytes("UTF-8"));
 	}
 
 	private static boolean contains(String[] selectors, String ... value) {
