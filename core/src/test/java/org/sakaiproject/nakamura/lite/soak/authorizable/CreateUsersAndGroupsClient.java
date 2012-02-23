@@ -19,6 +19,7 @@ package org.sakaiproject.nakamura.lite.soak.authorizable;
 
 import com.google.common.collect.ImmutableMap;
 
+import org.mockito.Mockito;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Configuration;
@@ -35,6 +36,7 @@ import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.soak.AbstractScalingClient;
 import org.sakaiproject.nakamura.lite.storage.spi.ConcurrentLRUMap;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
 
 import java.util.Map;
 
@@ -43,6 +45,7 @@ public class CreateUsersAndGroupsClient extends AbstractScalingClient {
     private int nusers;
     private Map<String, CacheHolder> sharedCache = new ConcurrentLRUMap<String, CacheHolder>(1000);
     private PrincipalValidatorResolver principalValidatorResolver = new PrincipalValidatorResolverImpl();
+    private StatsService statsService = Mockito.mock(StatsService.class);
 
     public CreateUsersAndGroupsClient(int totalUsers, StorageClientPool clientPool, Configuration configuration)
             throws ClientPoolException, StorageClientException, AccessDeniedException {
@@ -55,14 +58,14 @@ public class CreateUsersAndGroupsClient extends AbstractScalingClient {
             super.setup();
             String tname = String.valueOf(Thread.currentThread().getId())
                     + String.valueOf(System.currentTimeMillis());
-            AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+            AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
             User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
             AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
-                    client, currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
+                    client, currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver, statsService);
 
             AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
-                    null, client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
+                    null, client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener(), statsService);
 
             for (int i = 0; i < nusers; i++) {
                 String userId = tname + "_" + i;

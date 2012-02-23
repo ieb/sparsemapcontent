@@ -24,6 +24,7 @@ import java.util.Map;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
 
 /**
  * Implementations of the SPI need to implement a {@link StorageClientPool} that
@@ -174,5 +175,7 @@ public interface StorageClient {
     long allCount(String keySpace, String columnFamily) throws StorageClientException;
 
     void setStorageClientListener(StorageClientListener storageClientListener);
+
+    void setStatsService(StatsService sessionStatsService);
 
 }

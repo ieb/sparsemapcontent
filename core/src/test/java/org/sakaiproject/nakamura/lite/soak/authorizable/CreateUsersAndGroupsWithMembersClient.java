@@ -17,9 +17,11 @@
  */
 package org.sakaiproject.nakamura.lite.soak.authorizable;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.mockito.Mockito;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Configuration;
@@ -35,10 +37,10 @@ import org.sakaiproject.nakamura.lite.accesscontrol.PrincipalValidatorResolverIm
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.soak.AbstractScalingClient;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 
 public class CreateUsersAndGroupsWithMembersClient extends AbstractScalingClient {
 
@@ -46,6 +48,7 @@ public class CreateUsersAndGroupsWithMembersClient extends AbstractScalingClient
     private int ngroups;
     private Map<String, CacheHolder> sharedCache = new ConcurrentHashMap<String, CacheHolder>(1000);
     private PrincipalValidatorResolver principalValidatorResolver = new PrincipalValidatorResolverImpl();
+    private StatsService statsService = Mockito.mock(StatsService.class);
 
     public CreateUsersAndGroupsWithMembersClient(int totalUsers, int totalGroups,
             StorageClientPool connectionPool, Configuration configuration) throws ClientPoolException, StorageClientException,
@@ -60,14 +63,14 @@ public class CreateUsersAndGroupsWithMembersClient extends AbstractScalingClient
             super.setup();
             String tname = String.valueOf(Thread.currentThread().getId())
                     + String.valueOf(System.currentTimeMillis());
-            AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+            AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
             User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
             AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
-                    client, currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
+                    client, currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver, statsService);
 
             AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
-                    null, client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener());
+                    null, client, configuration, accessControlManagerImpl, sharedCache,  new LoggingStorageListener(), statsService);
 
             List<String> userNames = Lists.newArrayList();
             List<String> groupNames = Lists.newArrayList();

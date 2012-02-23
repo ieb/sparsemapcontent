@@ -36,6 +36,7 @@ import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.spi.content.BlockContentHelper;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,6 +77,7 @@ public class RepositoryImplTest {
     public void testStart() throws ClientPoolException, StorageClientException,
             AccessDeniedException {
         RepositoryImpl repository = new RepositoryImpl();
+        repository.stats = new StatsServiceImpl();
         repository.configuration = configuration;
         repository.clientPool = clientPool;
         repository.storeListener = new LoggingStorageListener();

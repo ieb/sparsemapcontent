@@ -42,6 +42,8 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClient;
 import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceImpl;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -72,6 +74,8 @@ public class JDBCStorageClientTest {
   Map<String, Object> properties = Maps.newHashMap();
   Map<String, Object> sqlConfig = Maps.newHashMap();
 
+  StatsService statsService = new StatsServiceImpl();
+
   @Before
   public void setUp() throws Exception {
     // have the pool return the connection we control
@@ -91,7 +95,7 @@ public class JDBCStorageClientTest {
     Set<String> colnames = ImmutableSet.of("conjunctions:key1","conjunctions:key2","conjunctions:key3","conjunctions:key4",
             "conjunctions:testKey1","conjunctions:testKey2","conjunctions:testKey3","conjunctions:testKey4");
 
-    client = new JDBCStorageClient(connPool, properties, sqlConfig, colnames, null, null, false);
+    client = new JDBCStorageClient(connPool, properties, sqlConfig, colnames, null, null, false, statsService);
   }
 
   @Test

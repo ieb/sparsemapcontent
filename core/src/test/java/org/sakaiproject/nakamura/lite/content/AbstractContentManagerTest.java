@@ -31,6 +31,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Configuration;
@@ -49,6 +50,8 @@ import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
 import org.sakaiproject.nakamura.lite.storage.spi.ConcurrentLRUMap;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +68,7 @@ public abstract class AbstractContentManagerTest {
     private StorageClientPool clientPool;
     private Map<String, CacheHolder> sharedCache = new ConcurrentLRUMap<String, CacheHolder>(1000);
     private PrincipalValidatorResolver principalValidatorResolver = new PrincipalValidatorResolverImpl();
+    private StatsService statsService = new StatsServiceImpl();
 
     @Before
     public void before() throws StorageClientException, AccessDeniedException, ClientPoolException,
@@ -94,14 +98,14 @@ public abstract class AbstractContentManagerTest {
 
     @Test
     public void testCreateContent() throws StorageClientException, AccessDeniedException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
+                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver, statsService);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration, null,  new LoggingStorageListener());
+                configuration, null,  new LoggingStorageListener(), statsService);
         contentManager.update(new Content("/testCreateContent", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/testCreateContent/test", ImmutableMap.of("prop1", (Object) "value2")));
         contentManager
@@ -131,14 +135,14 @@ public abstract class AbstractContentManagerTest {
 
     @Test
     public void testCreateContent2() throws StorageClientException, AccessDeniedException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
+                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver, statsService);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration, null,  new LoggingStorageListener());
+                configuration, null,  new LoggingStorageListener(), statsService);
         contentManager.update(new Content("newRootTestCreateContent", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("newRootTestCreateContent/test", ImmutableMap.of("prop1", (Object) "value2")));
         contentManager
@@ -168,14 +172,14 @@ public abstract class AbstractContentManagerTest {
 
     @Test
     public void testConentTree() throws StorageClientException, AccessDeniedException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
+                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver, statsService);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration, null, new LoggingStorageListener());
+                configuration, null, new LoggingStorageListener(), statsService);
         contentManager.update(new Content("testConentTree/1/11/111", ImmutableMap.of("prop111",
                 (Object) "value111")));
         contentManager.update(new Content("testConentTree/1/11/333", ImmutableMap.of("prop333",
@@ -236,14 +240,14 @@ public abstract class AbstractContentManagerTest {
 
     @Test
     public void testCopySimple() throws StorageClientException, AccessDeniedException, IOException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
+                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver, statsService);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration, null, new LoggingStorageListener());
+                configuration, null, new LoggingStorageListener(), statsService);
         contentManager.update(new Content("testCopySimple/source/thefile", ImmutableMap.of("prop",
                 (Object) "source")));
         contentManager.update(new Content("testCopySimple/destination", ImmutableMap.of("prop",
@@ -293,14 +297,14 @@ public abstract class AbstractContentManagerTest {
 
     @Test
     public void testCopyOverwrite() throws StorageClientException, AccessDeniedException, IOException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
+                currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver, statsService);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration, null, new LoggingStorageListener());
+                configuration, null, new LoggingStorageListener(), statsService);
         contentManager.update(new Content("testCopyOverwrite/source/thefile", ImmutableMap.of("prop",
                 (Object) "source")));
         contentManager.update(new Content("testCopyOverwrite/destination/target", ImmutableMap.of("prop",
@@ -352,14 +356,14 @@ public abstract class AbstractContentManagerTest {
 
     @Test
     public void testSimpleDelete() throws AccessDeniedException, StorageClientException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver, statsService);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration,  sharedCache, new LoggingStorageListener());
+                configuration,  sharedCache, new LoggingStorageListener(), statsService);
         String path = "/testSimpleDelete/test2/test3/test4";
         String parentPath = "/testSimpleDelete/test2/test3";
         contentManager.update(new Content(parentPath, ImmutableMap.of("propParent", (Object) "valueParent")));
@@ -380,14 +384,14 @@ public abstract class AbstractContentManagerTest {
 
     @Test
     public void testSimpleDeleteRoot() throws AccessDeniedException, StorageClientException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver, statsService);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration,  sharedCache, new LoggingStorageListener());
+                configuration,  sharedCache, new LoggingStorageListener(), statsService);
         String path = "testSimpleDeleteRoot/test2/test3/test4";
         String parentPath = "testSimpleDeleteRoot/test2/test3";
         contentManager.update(new Content(parentPath, ImmutableMap.of("propParent", (Object) "valueParent")));
@@ -408,14 +412,14 @@ public abstract class AbstractContentManagerTest {
 
     @Test
     public void testDeleteContent() throws StorageClientException, AccessDeniedException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver, statsService);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration,  sharedCache, new LoggingStorageListener());
+                configuration,  sharedCache, new LoggingStorageListener(), statsService);
         contentManager.update(new Content("/testDeleteContent", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/testDeleteContent/test", ImmutableMap.of("prop1", (Object) "value2")));
         contentManager
@@ -464,14 +468,14 @@ public abstract class AbstractContentManagerTest {
     @Test
     public void testDeleteContentDeletesPathConsistently() throws StorageClientException, AccessDeniedException
     {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver, statsService);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration,  sharedCache, new LoggingStorageListener());
+                configuration,  sharedCache, new LoggingStorageListener(), statsService);
         contentManager.update(new Content("/testDeleteContent", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/testDeleteContent/test", ImmutableMap.of("prop1", (Object) "value2")));
 
@@ -501,14 +505,14 @@ public abstract class AbstractContentManagerTest {
 
     @Test
     public void testUpdateContent() throws StorageClientException, AccessDeniedException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver, statsService);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration,  sharedCache, new LoggingStorageListener());
+                configuration,  sharedCache, new LoggingStorageListener(), statsService);
         StorageClientUtils.deleteTree(contentManager, "/testUpdateContent");
         contentManager.update(new Content("/testUpdateContent", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/testUpdateContent/test", ImmutableMap.of("prop1", (Object) "value2")));
@@ -549,14 +553,14 @@ public abstract class AbstractContentManagerTest {
     @Test
     public void testVersionContent() throws StorageClientException, AccessDeniedException,
             InterruptedException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver, statsService);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration,  sharedCache, new LoggingStorageListener());
+                configuration,  sharedCache, new LoggingStorageListener(), statsService);
         StorageClientUtils.deleteTree(contentManager, "/testVersionContent");
         contentManager.update(new Content("/testVersionContent", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/testVersionContent/test", ImmutableMap.of("prop1", (Object) "value2")));
@@ -621,14 +625,14 @@ public abstract class AbstractContentManagerTest {
 
     @Test
     public void testUploadContent() throws StorageClientException, AccessDeniedException {
-        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+        AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
         User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
         AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver);
+                currentUser, configuration, sharedCache,  new LoggingStorageListener(), principalValidatorResolver, statsService);
 
         ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-                configuration,  sharedCache, new LoggingStorageListener());
+                configuration,  sharedCache, new LoggingStorageListener(), statsService);
         StorageClientUtils.deleteTree(contentManager, "/testUploadContent");
         contentManager.update(new Content("/testUploadContent", ImmutableMap.of("prop1", (Object) "value1")));
         contentManager.update(new Content("/testUploadContent/test", ImmutableMap.of("prop1", (Object) "value2")));
@@ -735,14 +739,14 @@ public abstract class AbstractContentManagerTest {
 
   @Test
   public void testMoveWithChildren() throws StorageClientException, AccessDeniedException {
-    AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+    AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
     User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
     AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-        currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver);
+        currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver, statsService);
 
     ContentManagerImpl contentManager = new ContentManagerImpl(client,
-        accessControlManager, configuration, null, new LoggingStorageListener());
+        accessControlManager, configuration, null, new LoggingStorageListener(), statsService);
     contentManager.update(new Content("/testMoveWithChildren", ImmutableMap.of("prop1", (Object) "value1")));
     contentManager.update(new Content("/testMoveWithChildren/movewc", ImmutableMap.of("prop1",
         (Object) "value2")));
@@ -785,14 +789,14 @@ public abstract class AbstractContentManagerTest {
   @Test
   public void testCanReuseAContentPath() throws Exception {
       String path = "/pathToReuse" + System.currentTimeMillis();
-      AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+      AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
       User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
       AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-          currentUser, configuration, sharedCache, new LoggingStorageListener(), principalValidatorResolver);
+          currentUser, configuration, sharedCache, new LoggingStorageListener(), principalValidatorResolver, statsService);
 
       ContentManagerImpl contentManager = new ContentManagerImpl(client,
-          accessControlManager, configuration, sharedCache, new LoggingStorageListener());
+          accessControlManager, configuration, sharedCache, new LoggingStorageListener(), statsService);
       contentManager.update(new Content(path, ImmutableMap.of("prop1", (Object) "value1", "prop2", "valueProp2")));
       Content content = contentManager.get(path);
       Assert.assertEquals("This property should have been updated.", content.getProperty("prop1"), "value1");
@@ -809,14 +813,14 @@ public abstract class AbstractContentManagerTest {
 
   @Test
   public void testListChildren() throws StorageClientException, AccessDeniedException {
-	  AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+	  AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
 	    User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
 	    AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-	        currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver);
+	        currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver, statsService);
 
 	    ContentManagerImpl contentManager = new ContentManagerImpl(client,
-	        accessControlManager, configuration, null, new LoggingStorageListener());
+	        accessControlManager, configuration, null, new LoggingStorageListener(), statsService);
 
 	    Iterator<Content> children = contentManager.listChildren("/testListChildrenDoesNotExist");
 	    Assert.assertEquals(0, Iterators.size(children));
@@ -843,14 +847,14 @@ public abstract class AbstractContentManagerTest {
 
   // @Test This Test runs forever and tests for OOM on disposables.
   public void testOOM() throws StorageClientException, AccessDeniedException {
-      AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+      AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
       User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
       AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-              currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver);
+              currentUser, configuration, null,  new LoggingStorageListener(), principalValidatorResolver, statsService);
 
       ContentManagerImpl contentManager = new ContentManagerImpl(client, accessControlManager,
-              configuration, null,  new LoggingStorageListener());
+              configuration, null,  new LoggingStorageListener(), statsService);
       contentManager.update(new Content("/testCreateContent", ImmutableMap.of("prop1", (Object) "value1")));
       contentManager.update(new Content("/testCreateContent/test", ImmutableMap.of("prop1", (Object) "value2")));
       contentManager
@@ -868,14 +872,14 @@ public abstract class AbstractContentManagerTest {
 
   @Test
   public void testTrigger() throws StorageClientException, AccessDeniedException {
-    AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+    AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
     User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
     AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-        currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver);
+        currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver, statsService);
 
     ContentManagerImpl contentManager = new ContentManagerImpl(client,
-        accessControlManager, configuration, null, new LoggingStorageListener());
+        accessControlManager, configuration, null, new LoggingStorageListener(), statsService);
     contentManager.update(new Content("/testMoveWithChildren", ImmutableMap.of("prop1", (Object) "value1")));
     contentManager.update(new Content("/testMoveWithChildren/movewc", ImmutableMap.of("prop1",
         (Object) "value2")));
@@ -888,14 +892,14 @@ public abstract class AbstractContentManagerTest {
 
   @Test
   public void testTriggerAll() throws StorageClientException, AccessDeniedException {
-    AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+    AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
     User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
     AccessControlManagerImpl accessControlManager = new AccessControlManagerImpl(client,
-        currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver);
+        currentUser, configuration, null, new LoggingStorageListener(), principalValidatorResolver, statsService);
 
     ContentManagerImpl contentManager = new ContentManagerImpl(client,
-        accessControlManager, configuration, null, new LoggingStorageListener());
+        accessControlManager, configuration, null, new LoggingStorageListener(), statsService);
     contentManager.update(new Content("/testMoveWithChildren", ImmutableMap.of("prop1", (Object) "value1")));
     contentManager.update(new Content("/testMoveWithChildren/movewc", ImmutableMap.of("prop1",
         (Object) "value2")));

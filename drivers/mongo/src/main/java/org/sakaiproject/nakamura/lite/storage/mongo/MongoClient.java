@@ -27,6 +27,7 @@ import org.sakaiproject.nakamura.lite.storage.spi.SparseRow;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientListener;
 import org.sakaiproject.nakamura.lite.storage.spi.content.StreamedContentHelper;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -421,4 +422,9 @@ public class MongoClient implements StorageClient, RowHasher {
 			StorageClientListener storageClientListener) {
 		this.storageClientListener = storageClientListener;
 	}
+
+	public void setStatsService(StatsService sessionStatsService) {
+	    // TODO Auto-generated method stub
+	    
+        }
 }

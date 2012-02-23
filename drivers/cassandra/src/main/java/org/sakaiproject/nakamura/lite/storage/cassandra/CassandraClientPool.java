@@ -38,7 +38,7 @@ import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
-import org.sakaiproject.nakamura.lite.NullCacheManagerX;
+import org.sakaiproject.nakamura.lite.NullCacheManager;
 import org.sakaiproject.nakamura.lite.storage.spi.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 import org.slf4j.Logger;
@@ -211,7 +211,7 @@ public class CassandraClientPool extends AbstractClientConnectionPool {
              } 
    
      
-      defaultStorageManagerCache = new NullCacheManagerX();
+	defaultStorageManagerCache = new NullCacheManager();
 
   }
 

@@ -7,6 +7,7 @@ import junit.framework.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -18,6 +19,8 @@ import org.sakaiproject.nakamura.lite.ConfigurationImpl;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +33,7 @@ public abstract class AbstractLockManagerImplTest {
     private ConfigurationImpl configuration;
     private StorageClientPool clientPool;
     private StorageClient client;
+    private StatsService statsService = new StatsServiceImpl();
 
     @Before
     public void before() throws StorageClientException, AccessDeniedException, ClientPoolException,
@@ -60,7 +64,7 @@ public abstract class AbstractLockManagerImplTest {
         User currentUser = new User(ImmutableMap.of(User.ID_FIELD, (Object) "ieb",
                 User.PASSWORD_FIELD, "test"));
         LockManagerImpl lockManagerImpl = new LockManagerImpl(client, configuration, currentUser,
-                null);
+                null, statsService);
         String token = lockManagerImpl.lock("/", 10000, "Some Extra Information");
         
         checkOwnerLockWithToken(lockManagerImpl, "/", "/", token);
@@ -82,7 +86,7 @@ public abstract class AbstractLockManagerImplTest {
         User currentUser = new User(ImmutableMap.of(User.ID_FIELD, (Object) "ieb",
                 User.PASSWORD_FIELD, "test"));
         LockManagerImpl lockManagerImpl = new LockManagerImpl(client, configuration, currentUser,
-                null);
+                null, statsService);
         String token = lockManagerImpl.lock("/sub/folder", 10000, "Some Extra Information");
         
         checkOwnerLockWithToken(lockManagerImpl, "/sub/folder", "/sub/folder", token);
@@ -104,7 +108,7 @@ public abstract class AbstractLockManagerImplTest {
         User currentUser = new User(ImmutableMap.of(User.ID_FIELD, (Object) "ieb",
                 User.PASSWORD_FIELD, "test"));
         LockManagerImpl lockManagerImpl = new LockManagerImpl(client, configuration, currentUser,
-                null);
+                null, statsService);
         String token = lockManagerImpl.lock("/sub/expire", 2, "Some Extra Information");
         
         checkOwnerLockWithToken(lockManagerImpl, "/sub/expire", "/sub/expire", token);
@@ -162,7 +166,7 @@ public abstract class AbstractLockManagerImplTest {
         User currentUser = new User(ImmutableMap.of(User.ID_FIELD, (Object) "ieb",
                 User.PASSWORD_FIELD, "test"));
         LockManagerImpl lockManagerImpl = new LockManagerImpl(client, configuration, currentUser,
-                null);
+                null, statsService);
         String token = lockManagerImpl.lock("/sub/ieb", 2, "Some Extra Information");
         
         checkOwnerLockWithToken(lockManagerImpl, "/sub/ieb", "/sub/ieb", token);
@@ -172,7 +176,7 @@ public abstract class AbstractLockManagerImplTest {
         User user2 = new User(ImmutableMap.of(User.ID_FIELD, (Object) "scl",
                 User.PASSWORD_FIELD, "test"));
         LockManagerImpl lockManagerImpl2 = new LockManagerImpl(client, configuration, user2,
-                null);
+                null, statsService);
         
         checkLocked(lockManagerImpl2, "/sub/ieb", "/sub/ieb", token);
         checkLocked(lockManagerImpl2, "/sub/ieb", "/sub/ieb/sdfs/sdf/sdf", token);
@@ -190,7 +194,7 @@ public abstract class AbstractLockManagerImplTest {
         User currentUser = new User(ImmutableMap.of(User.ID_FIELD, (Object) "ieb",
                 User.PASSWORD_FIELD, "test"));
         LockManagerImpl lockManagerImpl = new LockManagerImpl(client, configuration, currentUser,
-                null);
+                null, statsService);
         String token = lockManagerImpl.lock("/sub/iebrelock", 20, "Some Extra Information");
 
         checkOwnerLockWithToken(lockManagerImpl, "/sub/iebrelock", "/sub/iebrelock", token);
@@ -199,7 +203,7 @@ public abstract class AbstractLockManagerImplTest {
         User user2 = new User(ImmutableMap.of(User.ID_FIELD, (Object) "scl",
                 User.PASSWORD_FIELD, "test"));
         LockManagerImpl lockManagerImpl2 = new LockManagerImpl(client, configuration, user2,
-                null);
+                null, statsService);
         try {
             String token2 = lockManagerImpl2.lock("/sub/iebrelock", 30, "Some More Information");
             Assert.fail(token2);
@@ -219,7 +223,7 @@ public abstract class AbstractLockManagerImplTest {
         User currentUser = new User(ImmutableMap.of(User.ID_FIELD, (Object) "ieb",
                 User.PASSWORD_FIELD, "test"));
         LockManagerImpl lockManagerImpl = new LockManagerImpl(client, configuration, currentUser,
-                null);
+                null, statsService);
         String token = lockManagerImpl.lock("/sub/iebrelockexpire", 2, "Some Extra Information");
 
         checkOwnerLockWithToken(lockManagerImpl, "/sub/iebrelockexpire", "/sub/iebrelockexpire", token);
@@ -232,7 +236,7 @@ public abstract class AbstractLockManagerImplTest {
         User user2 = new User(ImmutableMap.of(User.ID_FIELD, (Object) "scl",
                 User.PASSWORD_FIELD, "test"));
         LockManagerImpl lockManagerImpl2 = new LockManagerImpl(client, configuration, user2,
-                null);
+                null, statsService);
 
         checkLocked(lockManagerImpl2, "/sub/iebrelockexpire", "/sub/iebrelockexpire", token);
         checkLocked(lockManagerImpl2, "/sub/iebrelockexpire", "/sub/iebrelockexpire/sdf/sdf/sdf", token);

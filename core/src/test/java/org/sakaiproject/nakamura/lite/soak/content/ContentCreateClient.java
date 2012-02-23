@@ -3,6 +3,7 @@ package org.sakaiproject.nakamura.lite.soak.content;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.mockito.Mockito;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Configuration;
@@ -20,6 +21,7 @@ import org.sakaiproject.nakamura.lite.content.ContentManagerImpl;
 import org.sakaiproject.nakamura.lite.soak.AbstractScalingClient;
 import org.sakaiproject.nakamura.lite.storage.spi.ConcurrentLRUMap;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +32,7 @@ public class ContentCreateClient extends AbstractScalingClient {
     private PrincipalValidatorResolver principalValidatorResolver = new PrincipalValidatorResolverImpl();
     private int totalContentItems;
     private Map<String, Object> propertyMap;
+    private StatsService statsService = Mockito.mock(StatsService.class);
 
     public ContentCreateClient(int totalContentItems, StorageClientPool clientPool,
             Configuration configuration, Map<String, Object> propertyMap)
@@ -43,21 +46,21 @@ public class ContentCreateClient extends AbstractScalingClient {
     public void run() {
         try {
             super.setup();
-            AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null);
+            AuthenticatorImpl AuthenticatorImpl = new AuthenticatorImpl(client, configuration, null, statsService);
             User currentUser = AuthenticatorImpl.authenticate("admin", "admin");
 
             AccessControlManagerImpl accessControlManagerImpl = new AccessControlManagerImpl(
                     client, currentUser, configuration, sharedCache, new LoggingStorageListener(),
-                    principalValidatorResolver);
+                    principalValidatorResolver, statsService);
 
             @SuppressWarnings("unused")
             AuthorizableManagerImpl authorizableManager = new AuthorizableManagerImpl(currentUser,
                     null, client, configuration, accessControlManagerImpl, sharedCache,
-                    new LoggingStorageListener());
+                    new LoggingStorageListener(), statsService);
 
             ContentManagerImpl contentManagerImpl = new ContentManagerImpl(client,
                     accessControlManagerImpl, configuration, sharedCache,
-                    new LoggingStorageListener(true));
+                    new LoggingStorageListener(true), statsService);
 
             String basePath = String.valueOf(System.currentTimeMillis());
             long s = System.currentTimeMillis();

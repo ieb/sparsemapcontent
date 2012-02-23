@@ -53,6 +53,7 @@ import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientListener;
 import org.sakaiproject.nakamura.lite.storage.spi.content.BlockContentHelper;
 import org.sakaiproject.nakamura.lite.storage.spi.content.BlockSetContentHelper;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
 import org.sakaiproject.nakamura.lite.storage.spi.types.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -504,6 +505,12 @@ public class CassandraClient extends Client implements StorageClient {
     public void setStorageClientListener(StorageClientListener storageClientListener) {
         // TODO Auto-generated method stub
         
+    }
+
+    @Override
+    public void setStatsService(StatsService sessionStatsService) {
+	// TODO Auto-generated method stub
+	
     }  
     
 }
