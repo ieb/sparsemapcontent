@@ -10,7 +10,7 @@ import org.sakaiproject.nakamura.api.lite.StorageCacheManager;
  * @author ieb
  *
  */
-public class NullCacheManagerX implements StorageCacheManager {
+public class NullCacheManager implements StorageCacheManager {
 
 
 
