@@ -1,6 +1,7 @@
 package uk.co.tfd.sm.authn.basic;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -37,6 +38,15 @@ public class BasicAuthenticationHandler implements AuthenticationServiceHandler 
 						public String getPassword() {
 							return userNamePW[1];
 						}
+
+						@Override
+						public Map<String, Object> getProperties() {
+							return null;
+						}
+						@Override
+						public boolean allowCreate() {
+							return false;
+						}
 					};
 				}
 			} catch (UnsupportedEncodingException e) {
@@ -44,6 +54,16 @@ public class BasicAuthenticationHandler implements AuthenticationServiceHandler 
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public int compareTo(AuthenticationServiceHandler o) {
+		return o.getPriority()-getPriority();
+	}
+
+	@Override
+	public int getPriority() {
+		return -10;
 	}
 
 }

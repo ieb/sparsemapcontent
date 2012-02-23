@@ -58,4 +58,14 @@ public class TrustedHeaderAuthenticationHandler implements
 		return null;
 	}
 
+	@Override
+	public int compareTo(AuthenticationServiceHandler o) {
+		return o.getPriority()-getPriority();
+	}
+
+	@Override
+	public int getPriority() {
+		return 20;
+	}
+
 }

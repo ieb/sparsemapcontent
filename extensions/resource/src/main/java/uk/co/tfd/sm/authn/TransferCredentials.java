@@ -1,5 +1,7 @@
 package uk.co.tfd.sm.authn;
 
+import java.util.Map;
+
 import uk.co.tfd.sm.api.authn.AuthenticationServiceCredentials;
 
 /**
@@ -23,6 +25,16 @@ public class TransferCredentials implements AuthenticationServiceCredentials {
 	@Override
 	public String getPassword() {
 		return null;
+	}
+
+	@Override
+	public Map<String, Object> getProperties() {
+		return null;
+	}
+
+	@Override
+	public boolean allowCreate() {
+		return false;
 	}
 
 }
