@@ -52,7 +52,6 @@ public class StaticContentServiceFactory {
 			"/search = static/ui/dev/search.html",
 			"/search/sakai2 = static/ui/dev/search_sakai2.html",
 			"/var = static/var", 
-			"/system/me = static/me.json",
 			"/tags = static/tags"
 
 	};
@@ -79,7 +78,6 @@ public class StaticContentServiceFactory {
 			"/search = static/ui/dev/search.html",
 			"/search/sakai2 = static/ui/dev/search_sakai2.html",
 			"/var = static/var", 
-			"/system/me = static/me.json",
 			"/tags = static/tags"
 			})
 	private static final String MAPPINGS = "mappings";
