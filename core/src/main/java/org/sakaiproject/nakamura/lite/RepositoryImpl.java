@@ -17,6 +17,8 @@
  */
 package org.sakaiproject.nakamura.lite;
 
+import java.util.Map;
+
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
@@ -37,10 +39,9 @@ import org.sakaiproject.nakamura.lite.accesscontrol.AuthenticatorImpl;
 import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 @Component(immediate = true, metatype = true)
 @Service(value = Repository.class)
@@ -60,24 +61,26 @@ public class RepositoryImpl implements Repository {
     @Reference
     protected PrincipalValidatorResolver principalValidatorResolver;
 
+    @Reference
+    protected StatsService stats;
+
     public RepositoryImpl() {
     }
 
-    public RepositoryImpl(Configuration configuration, StorageClientPool clientPool,
-            LoggingStorageListener listener) {
+    public RepositoryImpl(Configuration configuration, StorageClientPool clientPool, LoggingStorageListener listener,
+            StatsService statsService) {
         this.configuration = configuration;
         this.clientPool = clientPool;
         this.storeListener = listener;
+        this.stats = statsService;
     }
 
     @Activate
-    public void activate(Map<String, Object> properties) throws ClientPoolException,
-            StorageClientException, AccessDeniedException {
+    public void activate(Map<String, Object> properties) throws ClientPoolException, StorageClientException, AccessDeniedException {
         StorageClient client = null;
         try {
             client = clientPool.getClient();
-            AuthorizableActivator authorizableActivator = new AuthorizableActivator(client,
-                    configuration);
+            AuthorizableActivator authorizableActivator = new AuthorizableActivator(client, configuration);
             authorizableActivator.setup();
         } finally {
             if (client != null) {
@@ -92,116 +95,138 @@ public class RepositoryImpl implements Repository {
     public void deactivate(Map<String, Object> properties) throws ClientPoolException {
     }
 
-    public Session login(String username, String password) throws ClientPoolException,
-            StorageClientException, AccessDeniedException {
+    public Session login(String username, String password) throws ClientPoolException, StorageClientException,
+            AccessDeniedException {
         return openSession(username, password);
     }
 
-    public Session login() throws ClientPoolException, StorageClientException,
-            AccessDeniedException {
+    public Session login() throws ClientPoolException, StorageClientException, AccessDeniedException {
         return openSession(User.ANON_USER);
     }
 
-    public Session loginAdministrative() throws ClientPoolException, StorageClientException,
-            AccessDeniedException {
+    public Session loginAdministrative() throws ClientPoolException, StorageClientException, AccessDeniedException {
         return openSession(User.ADMIN_USER);
     }
 
-    public Session loginAdministrative(String username) throws StorageClientException,
-            ClientPoolException, AccessDeniedException {
+    public Session loginAdministrative(String username) throws StorageClientException, ClientPoolException, AccessDeniedException {
         return openSession(username);
     }
 
-    public Session loginAdministrativeBypassEnable(String username) throws StorageClientException,
-            ClientPoolException, AccessDeniedException {
+    public Session loginAdministrativeBypassEnable(String username) throws StorageClientException, ClientPoolException,
+            AccessDeniedException {
         return openSessionBypassEnable(username);
     }
 
-    private Session openSession(String username, String password) throws StorageClientException,
-            AccessDeniedException {
+    private Session openSession(String username, String password) throws StorageClientException, AccessDeniedException {
         StorageClient client = null;
         try {
+            StatsService sessionStatsService = stats.openSession();
             client = clientPool.getClient();
-            AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration, getAuthorizableCache(clientPool.getStorageCacheManager()));
+            client.setStatsService(sessionStatsService);
+            AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration,
+                    getAuthorizableCache(clientPool.getStorageCacheManager()), sessionStatsService);
             User currentUser = authenticatorImpl.authenticate(username, password);
             if (currentUser == null) {
+                sessionStatsService.sessionFailLogin();
                 throw new StorageClientException("User " + username + " cant login with password");
             }
-            return new SessionImpl(this, currentUser, client, configuration,
-                    clientPool.getStorageCacheManager(), storeListener, principalValidatorResolver);
+            Session session = new SessionImpl(this, currentUser, client, configuration, clientPool.getStorageCacheManager(),
+                    storeListener, principalValidatorResolver, sessionStatsService);
+            sessionStatsService.sessionLogin();
+            return session;
         } catch (ClientPoolException e) {
+            stats.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (StorageClientException e) {
+            stats.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (AccessDeniedException e) {
+            stats.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (Throwable e) {
+            stats.sessionFailLogin();
             clientPool.getClient();
             throw new StorageClientException(e.getMessage(), e);
         }
     }
 
     private Map<String, CacheHolder> getAuthorizableCache(StorageCacheManager storageCacheManager) {
-        if ( storageCacheManager != null ) {
+        if (storageCacheManager != null) {
             return storageCacheManager.getAuthorizableCache();
         }
         return null;
     }
 
-    private Session openSession(String username) throws StorageClientException,
-            AccessDeniedException {
+    private Session openSession(String username) throws StorageClientException, AccessDeniedException {
         StorageClient client = null;
         try {
+            StatsService sessionStatsService = stats.openSession();
             client = clientPool.getClient();
-            AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration, getAuthorizableCache(clientPool.getStorageCacheManager()));
+            client.setStatsService(sessionStatsService);
+            AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration,
+                    getAuthorizableCache(clientPool.getStorageCacheManager()), sessionStatsService);
             User currentUser = authenticatorImpl.systemAuthenticate(username);
             if (currentUser == null) {
-                throw new StorageClientException("User " + username
-                        + " does not exist, cant login administratively as this user");
+                sessionStatsService.sessionFailLogin();
+                throw new StorageClientException("User " + username + " does not exist, cant login administratively as this user");
             }
-            return new SessionImpl(this, currentUser, client, configuration,
-                    clientPool.getStorageCacheManager(), storeListener, principalValidatorResolver);
+            Session session = new SessionImpl(this, currentUser, client, configuration, clientPool.getStorageCacheManager(),
+                    storeListener, principalValidatorResolver, sessionStatsService);
+            sessionStatsService.sessionLogin();
+            return session;
         } catch (ClientPoolException e) {
+            stats.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (StorageClientException e) {
+            stats.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (AccessDeniedException e) {
+            stats.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (Throwable e) {
+            stats.sessionFailLogin();
             clientPool.getClient();
             throw new StorageClientException(e.getMessage(), e);
         }
     }
 
-    private Session openSessionBypassEnable(String username) throws StorageClientException,
-            AccessDeniedException {
+    private Session openSessionBypassEnable(String username) throws StorageClientException, AccessDeniedException {
         StorageClient client = null;
         try {
+            StatsService sessionStatsService = stats.openSession();
             client = clientPool.getClient();
-            AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration, getAuthorizableCache(clientPool.getStorageCacheManager()));
+            client.setStatsService(sessionStatsService);
+            AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration,
+                    getAuthorizableCache(clientPool.getStorageCacheManager()), sessionStatsService);
             User currentUser = authenticatorImpl.systemAuthenticateBypassEnable(username);
             if (currentUser == null) {
-                throw new StorageClientException("User " + username
-                        + " does not exist, cant login administratively as this user");
+                sessionStatsService.sessionFailLogin();
+                throw new StorageClientException("User " + username + " does not exist, cant login administratively as this user");
             }
-            return new SessionImpl(this, currentUser, client, configuration,
-                    clientPool.getStorageCacheManager(), storeListener, principalValidatorResolver);
+            Session session = new SessionImpl(this, currentUser, client, configuration, clientPool.getStorageCacheManager(),
+                    storeListener, principalValidatorResolver, sessionStatsService);
+            sessionStatsService.sessionLogin();
+            return session;
         } catch (ClientPoolException e) {
+            stats.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (StorageClientException e) {
+            stats.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (AccessDeniedException e) {
+            stats.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (Throwable e) {
+            stats.sessionFailLogin();
             clientPool.getClient();
             throw new StorageClientException(e.getMessage(), e);
         }

@@ -38,6 +38,7 @@ import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.content.ContentManagerImpl;
 import org.sakaiproject.nakamura.lite.lock.LockManagerImpl;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,40 +60,40 @@ public class SessionImpl implements Session {
     private Map<String, CommitHandler> commitHandlers = Maps.newLinkedHashMap();
     private StorageCacheManager storageCacheManager;
     private Configuration configuration;
+    private StatsService statsService;
     private static long nagclient;
 
-    public SessionImpl(Repository repository, User currentUser, StorageClient client,
-            Configuration configuration, StorageCacheManager storageCacheManager,
-            StoreListener storeListener, PrincipalValidatorResolver principalValidatorResolver)
-            throws ClientPoolException, StorageClientException, AccessDeniedException {
+    public SessionImpl(Repository repository, User currentUser, StorageClient client, Configuration configuration,
+            StorageCacheManager storageCacheManager, StoreListener storeListener,
+            PrincipalValidatorResolver principalValidatorResolver, StatsService statsService) throws ClientPoolException,
+            StorageClientException, AccessDeniedException {
+        this.statsService = statsService;
         this.currentUser = currentUser;
         this.repository = repository;
         this.client = client;
         this.storageCacheManager = storageCacheManager;
         this.storeListener = storeListener;
         this.configuration = configuration;
-        
-        if ( this.storageCacheManager == null ) {
-            if ( (nagclient % 1000) == 0 ) {
+
+        if (this.storageCacheManager == null) {
+            if ((nagclient % 1000) == 0) {
                 LOGGER.warn("No Cache Manager, All Caching disabled, please provide an Implementation of NamedCacheManager. This message will appear every 1000th time a session is created. ");
             }
             nagclient++;
         }
         accessControlManager = new AccessControlManagerImpl(client, currentUser, configuration,
-                getCache(configuration.getAclColumnFamily()), storeListener,
-                principalValidatorResolver);
-        Map<String, CacheHolder> authorizableCache = getCache(configuration
-                .getAuthorizableColumnFamily());
-        authorizableManager = new AuthorizableManagerImpl(currentUser, this, client, configuration,
-                accessControlManager, authorizableCache, storeListener);
+                getCache(configuration.getAclColumnFamily()), storeListener, principalValidatorResolver, statsService);
+        Map<String, CacheHolder> authorizableCache = getCache(configuration.getAuthorizableColumnFamily());
+        authorizableManager = new AuthorizableManagerImpl(currentUser, this, client, configuration, accessControlManager,
+                authorizableCache, storeListener, statsService);
 
         contentManager = new ContentManagerImpl(client, accessControlManager, configuration,
-                getCache(configuration.getContentColumnFamily()), storeListener);
+                getCache(configuration.getContentColumnFamily()), storeListener, statsService);
 
-        lockManager = new LockManagerImpl(client, configuration, currentUser,
-                getCache(configuration.getLockColumnFamily()));
+        lockManager = new LockManagerImpl(client, configuration, currentUser, getCache(configuration.getLockColumnFamily()),
+                statsService);
 
-        authenticator = new AuthenticatorImpl(client, configuration, authorizableCache);
+        authenticator = new AuthenticatorImpl(client, configuration, authorizableCache, statsService);
 
         storeListener.onLogin(currentUser.getId(), this.toString());
     }
@@ -112,6 +113,7 @@ public class SessionImpl implements Session {
             authenticator = null;
             closedAt = new Exception("This session was closed at:");
             storeListener.onLogout(currentUser.getId(), this.toString());
+            statsService.sessionLogout();
         }
     }
 
@@ -150,8 +152,7 @@ public class SessionImpl implements Session {
 
     private void check() throws StorageClientException {
         if (closedAt != null) {
-            throw new StorageClientException(
-                    "Session has been closed, see cause to see where this happend ", closedAt);
+            throw new StorageClientException("Session has been closed, see cause to see where this happend ", closedAt);
         }
     }
 

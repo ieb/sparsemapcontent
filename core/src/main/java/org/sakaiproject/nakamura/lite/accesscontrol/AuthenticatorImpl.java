@@ -30,6 +30,7 @@ import org.sakaiproject.nakamura.api.lite.util.EnabledPeriod;
 import org.sakaiproject.nakamura.lite.CachingManagerImpl;
 import org.sakaiproject.nakamura.lite.authorizable.UserInternal;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,13 +40,15 @@ public class AuthenticatorImpl extends CachingManagerImpl implements Authenticat
     private String keySpace;
     private String authorizableColumnFamily;
 
-    public AuthenticatorImpl(StorageClient client, Configuration configuration, Map<String, CacheHolder> sharedCache) {
-        super(client, sharedCache);
+    public AuthenticatorImpl(StorageClient client, Configuration configuration, Map<String, CacheHolder> sharedCache,
+            StatsService statsService) {
+        super(client, sharedCache, statsService);
         this.keySpace = configuration.getKeySpace();
         this.authorizableColumnFamily = configuration.getAuthorizableColumnFamily();
     }
 
     public User authenticate(String userid, String password) {
+        long t = System.currentTimeMillis();
         try {
             Map<String, Object> userAuthMap = getCached(keySpace, authorizableColumnFamily, userid);
             if (userAuthMap == null) {
@@ -54,10 +57,9 @@ public class AuthenticatorImpl extends CachingManagerImpl implements Authenticat
             }
             String passwordHash = StorageClientUtils.secureHash(password);
 
-            String storedPassword = (String) userAuthMap
-                    .get(User.PASSWORD_FIELD);
+            String storedPassword = (String) userAuthMap.get(User.PASSWORD_FIELD);
             if (passwordHash.equals(storedPassword)) {
-                if ( EnabledPeriod.isInEnabledPeriod((String) userAuthMap.get(User.LOGIN_ENABLED_PERIOD_FIELD)) ) {
+                if (EnabledPeriod.isInEnabledPeriod((String) userAuthMap.get(User.LOGIN_ENABLED_PERIOD_FIELD))) {
                     return new UserInternal(userAuthMap, null, false);
                 }
             }
@@ -66,13 +68,17 @@ public class AuthenticatorImpl extends CachingManagerImpl implements Authenticat
             LOGGER.debug("Failed To authenticate " + e.getMessage(), e);
         } catch (AccessDeniedException e) {
             LOGGER.debug("Failed To system authenticate user " + e.getMessage(), e);
+        } finally {
+            statsService.apiCall(AuthenticatorImpl.class.getName(), "signContentToken", System.currentTimeMillis() - t);
         }
         return null;
 
     }
+
     public User systemAuthenticate(String userid) {
         return internalSystemAuthenticate(userid, false);
     }
+
     public User systemAuthenticateBypassEnable(String userid) {
         return internalSystemAuthenticate(userid, true);
     }
@@ -84,7 +90,7 @@ public class AuthenticatorImpl extends CachingManagerImpl implements Authenticat
                 LOGGER.debug("User was not found {}", userid);
                 return null;
             }
-            if ( forceEnableLogin || EnabledPeriod.isInEnabledPeriod((String) userAuthMap.get(User.LOGIN_ENABLED_PERIOD_FIELD)) ) {
+            if (forceEnableLogin || EnabledPeriod.isInEnabledPeriod((String) userAuthMap.get(User.LOGIN_ENABLED_PERIOD_FIELD))) {
                 return new UserInternal(userAuthMap, null, false);
             }
         } catch (StorageClientException e) {
@@ -99,6 +105,5 @@ public class AuthenticatorImpl extends CachingManagerImpl implements Authenticat
     protected Logger getLogger() {
         return LOGGER;
     }
-
 
 }

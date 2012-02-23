@@ -11,19 +11,17 @@ import java.util.Map;
 
 public class GroupInternal extends Group {
 
-    public GroupInternal(Map<String, Object> groupMap, Session session, boolean objectIsNew)
-            throws StorageClientException, AccessDeniedException {
+    public GroupInternal(Map<String, Object> groupMap, Session session, boolean objectIsNew) throws StorageClientException,
+            AccessDeniedException {
         super(groupMap, session);
         setObjectNew(objectIsNew);
     }
 
-    public GroupInternal(ImmutableMap<String, Object> groupMap, Session session,
-            boolean objectIsNew, boolean readOnly) throws StorageClientException,
-            AccessDeniedException {
+    public GroupInternal(ImmutableMap<String, Object> groupMap, Session session, boolean objectIsNew, boolean readOnly)
+            throws StorageClientException, AccessDeniedException {
         super(groupMap, session);
         setObjectNew(objectIsNew);
         setReadOnly(readOnly);
     }
-
 
 }
