@@ -48,13 +48,14 @@
               !org.eclipse.higgins.*,
               !org.openxri.*,
               !org.springframework.*,
+              !org.cyberneko.*,
               !sun.io.*,
               com.google.common.collect; version="9.0.0",
               *,
               
             </Import-Package>
             <Embed-Transitive>true</Embed-Transitive>
-            <Embed-Dependency>openid4java-consumer, openid4java-nodeps, commons-httpclient, nekohtml, xercesImpl, xml-resolver</Embed-Dependency>
+            <Embed-Dependency>openid4java-consumer, openid4java-nodeps, commons-httpclient</Embed-Dependency>
           </instructions>
         </configuration>
       </plugin>
