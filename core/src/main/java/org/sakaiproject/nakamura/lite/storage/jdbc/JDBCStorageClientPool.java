@@ -369,6 +369,10 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
         }
         return connection;
     }
+    
+    public void resetConnection() {
+        connectionManager.clean();
+    }
 
     public String getValidationSql() {
         if (sqlConfig != null) {

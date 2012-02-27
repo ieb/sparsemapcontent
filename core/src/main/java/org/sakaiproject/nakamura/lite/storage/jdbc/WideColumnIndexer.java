@@ -465,6 +465,7 @@ public class WideColumnIndexer extends AbstractIndexer implements CachingIndexer
                     client, keySpace, columnFamily, rs, pst, rawResults, cachingManager)));
         } catch (SQLException e) {
             LOGGER.error(e.getMessage(), e);
+            client.resetConnection(null);
             throw new StorageClientException(e.getMessage() + " SQL Statement was " + sqlStatement, e);
         } finally {
             // trs and tpst will only be non null if control has not been passed
