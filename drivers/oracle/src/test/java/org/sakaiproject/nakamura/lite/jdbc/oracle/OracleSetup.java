@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
 import org.sakaiproject.nakamura.api.lite.Configuration;
+import org.sakaiproject.nakamura.lite.DummyStorageCacheManager;
 import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceImpl;
 
@@ -32,6 +33,7 @@ public class OracleSetup {
         try {
             JDBCStorageClientPool connectionPool = new JDBCStorageClientPool();
             connectionPool.statsService = new StatsServiceImpl();
+            connectionPool.storageManagerCache = new DummyStorageCacheManager();
             Builder<String, Object> b = ImmutableMap.builder();
             b.put(JDBCStorageClientPool.CONNECTION_URL,"jdbc:oracle:thin:@172.16.41.128:1521:XE");
             b.put(JDBCStorageClientPool.JDBC_DRIVER, "oracle.jdbc.driver.OracleDriver");

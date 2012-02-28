@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
 import org.sakaiproject.nakamura.api.lite.Configuration;
+import org.sakaiproject.nakamura.lite.DummyStorageCacheManager;
 import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceImpl;
 
@@ -31,6 +32,7 @@ public class PostgreSQLSetup {
     public synchronized static JDBCStorageClientPool createClientPool(Configuration configuration) {
         try {
             JDBCStorageClientPool connectionPool = new JDBCStorageClientPool();
+            connectionPool.storageManagerCache = new DummyStorageCacheManager();
             connectionPool.statsService = new StatsServiceImpl();
             Builder<String, Object> b = ImmutableMap.builder();
             b.put(JDBCStorageClientPool.CONNECTION_URL,"jdbc:postgresql://localhost/nak");

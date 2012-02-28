@@ -85,7 +85,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
      * preference to this cache manager.
      */
     @Reference
-    private StorageCacheManager storageManagerCache;
+    public StorageCacheManager storageManagerCache;
 
     private static final String BASESQLPATH = "org/sakaiproject/nakamura/lite/storage/jdbc/config/client";
 
