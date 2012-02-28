@@ -119,7 +119,8 @@ public class WideColumnIndexer extends AbstractIndexer implements CachingIndexer
                 String hash = client.rowHash(keySpace, columnFamily, parent);
                 LOGGER.debug("Hash of {}:{}:{} is {} ", new Object[] { keySpace, columnFamily, parent, hash });
                 updateColumns.put(Content.PARENT_HASH_FIELD, hash);
-                invalidate(keySpace, columnFamily, ImmutableMap.of(Content.PARENT_HASH_FIELD, (Object) hash));
+                invalidate(keySpace, columnFamily, ImmutableMap.of(Content.PARENT_HASH_FIELD, (Object) hash,
+                        StorageConstants.CUSTOM_STATEMENT_SET, "listchildren", StorageConstants.CACHEABLE, true));
             }
 
             LOGGER.debug("Removing Array {} ", removeArrayColumns);
@@ -567,30 +568,35 @@ public class WideColumnIndexer extends AbstractIndexer implements CachingIndexer
         }
         String cacheKey = getCacheKey(keySpace, columnFamily, queryProperties);
         if (cacheKey != null) {
+            LOGGER.debug("Removing Cached Query {} ",cacheKey);
             queryCache.remove(cacheKey);
         }
     }
 
     private String getCacheKey(String keySpace, String columnFamily, Map<String, Object> queryProperties) {
-        List<String> keys = Lists.newArrayList(queryProperties.keySet());
-        Collections.sort(keys);
-        StringBuilder sb = new StringBuilder();
-        sb.append(keySpace).append(";").append(columnFamily);
-        boolean hasKey = false;
-        for (String key : keys) {
-            if (DONT_CACHE_KEYS.contains(key)) {
-                hasKey = false;
-                LOGGER.debug("Query cant be cached becuase it contains {} ", key);
-                break;
+        if (Boolean.parseBoolean(String.valueOf(queryProperties.get(StorageConstants.CACHEABLE)))) {
+            List<String> keys = Lists.newArrayList(queryProperties.keySet());
+            Collections.sort(keys);
+            StringBuilder sb = new StringBuilder();
+            sb.append(keySpace).append(";").append(columnFamily);
+            boolean hasKey = false;
+            for (String key : keys) {
+                if (DONT_CACHE_KEYS.contains(key)) {
+                    hasKey = false;
+                    LOGGER.debug("Query cant be cached becuase it contains {} ", key);
+                    break;
+                }
+                if (!EXCLUDE_CACHE_KEYS.contains(key)) {
+                    sb.append(key).append(":").append(queryProperties.get(key)).append(";");
+                    hasKey = true;
+                }
             }
-            if (!EXCLUDE_CACHE_KEYS.contains(key)) {
-                sb.append(key).append(":").append(queryProperties.get(key)).append(";");
-                hasKey = true;
+            if (hasKey) {
+                // we might want to hash this to prevent the key getting
+                // massive.
+                LOGGER.debug("Cached Query Key is {} ", sb.toString());
+                return sb.toString();
             }
-        }
-        if (hasKey) {
-            // we might want to hash this to prevent the key getting massive.
-            return sb.toString();
         }
         return null;
     }
@@ -611,10 +617,12 @@ public class WideColumnIndexer extends AbstractIndexer implements CachingIndexer
             if (ch != null) {
                 Map<String, Object> m = ch.get();
                 if (m != null) {
+                    LOGGER.debug("Got Cached Query at {} ",cacheKey);
                     return new PreemptiveCachedMapIterator(client, keySpace, columnFamily, m, rawResults, cachingManager);
                 }
             }
         }
+        LOGGER.debug("No Cached Query at {} ",cacheKey);
         return null;
     }
 
@@ -628,6 +636,7 @@ public class WideColumnIndexer extends AbstractIndexer implements CachingIndexer
         if (cacheKey != null) {
             Map<String, Object> m = disposableIterator.getResultsMap();
             if (m != null) {
+                LOGGER.debug("Saved Cached Results at {} ",cacheKey);
                 queryCache.put(cacheKey, new CacheHolder(m));
             }
         }
