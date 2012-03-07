@@ -51,6 +51,7 @@ public class TestTypes {
         map.put("G", true);
         map.put("H", false);
         map.put("J", null);
+        map.put("K", "ByteArray".getBytes("UTF-8"));
         
         InputStream in = Types.storeMapToStream("testkey", map, "testcf");
         Map<String, Object> output = Maps.newHashMap();
@@ -84,6 +85,9 @@ public class TestTypes {
         Assert.assertFalse(h.booleanValue());
         Object j = output.get("J");
         Assert.assertNull(j);
+        byte[] k = (byte[]) output.get("K");
+        Assert.assertNotNull(k);
+        Assert.assertArrayEquals( "ByteArray".getBytes("UTF-8"), k);
         
         
         
@@ -206,6 +210,7 @@ public class TestTypes {
         map.put("F", new Double[]{});
         map.put("G", new Boolean[]{});
         map.put("H", new Boolean[]{});
+        map.put("J", new byte[]{});
         
         InputStream in = Types.storeMapToStream("testkey", map,"testcf");
         Map<String, Object> output = Maps.newHashMap();
@@ -235,6 +240,9 @@ public class TestTypes {
         Boolean[] h = (Boolean[]) output.get("H");
         Assert.assertNotNull(h);
         Assert.assertEquals(0, h.length);
+        byte[] j = (byte[]) output.get("J");
+        Assert.assertNotNull(j);
+        Assert.assertEquals(0, j.length);
         
         
         

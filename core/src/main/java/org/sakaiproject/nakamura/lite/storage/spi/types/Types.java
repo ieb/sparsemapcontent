@@ -9,6 +9,7 @@ import org.sakaiproject.nakamura.api.lite.RemoveProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -43,7 +44,8 @@ public class Types {
         new LongStringArrayType(),
         new LongStringType(),
         new BigIntegerType(),
-        new BigIntegerArrayType()
+        new BigIntegerArrayType(),
+        new ByteArrayType()
     };
     private static final Type<String> UNKNOWN_TYPE = new StringType();
     private static final Logger LOGGER = LoggerFactory.getLogger(Types.class);
