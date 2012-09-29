@@ -53,4 +53,14 @@ public class Iterables {
         };
     }
 
+	public static <T> Iterable<T> adaptTo(final Iterator<T> iterator) {
+		return new Iterable<T>() {
+
+			@Override
+			public Iterator<T> iterator() {
+				return iterator;
+			}
+		};
+	}
+
 }
