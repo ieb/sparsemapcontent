@@ -21,7 +21,6 @@
             </activation>
             <modules>
               <module>http</module>
-              <module>jetty</module>
               <module>memory</module>
               <module>milton</module>
               <module>proxy</module>

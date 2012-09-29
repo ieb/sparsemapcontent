@@ -23,7 +23,6 @@ import org.apache.felix.scr.annotations.Service;
 import org.sakaiproject.nakamura.api.memory.Cache;
 import org.sakaiproject.nakamura.api.memory.CacheManagerService;
 import org.sakaiproject.nakamura.api.memory.CacheScope;
-import org.sakaiproject.nakamura.api.servlet.HttpOnlyCookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -240,7 +239,8 @@ public class CookieTokenAuthenticationServiceImpl implements
 					LOGGER.info("Change User ");
 				}
 				LOGGER.info("Setting Token Cookie to user {} ", newToken.getUser());
-				Cookie cookie = new HttpOnlyCookie(cookieName, newToken.toString());
+				Cookie cookie = new Cookie(cookieName, newToken.toString());
+				// FIXME: make this httpOnly.
 				cookie.setMaxAge(cookieAge);
 				cookie.setPath("/");
 				cookie.setSecure(secure);

@@ -33,6 +33,14 @@ aspects related to social media will be added over time.
 
 # Building
 
+The application uses an unreleased version of the Felix HTTP Service (2.2.1-SNAPSHOT). The versions of this 
+jar that are in snapshot repositories are extreemly out of date, and so for the moment you will need to 
+checkout Apache felix and build the http subproject.
+
+svn co http://svn.apache.org/repos/asf/felix/trunk felix
+cd felix/http
+make clean install
+
 ## Building artifacts
 
 mvn clean install
@@ -56,6 +64,5 @@ mvn -Prun
 Then run the integration tests.
 
 mvn -Pintegration test 
-
 
 
