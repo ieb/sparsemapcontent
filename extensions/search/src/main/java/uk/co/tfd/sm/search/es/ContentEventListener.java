@@ -42,8 +42,8 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 /**
- * Manages one or more queues storing events on disk so that those events can be
- * replayed later against the solr index.
+ * Indexes content using elastic search.
+ * Driven by Events expected to be synchronous inside transactions.
  * 
  * @author ieb
  * 
