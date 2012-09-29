@@ -53,7 +53,7 @@
             <version>1.1.1</version>
         </bundle>
         <bundle>
-            <groupId>org.sakaiproject.nakamura</groupId>
+            <groupId>uk.co.tfd.sm</groupId>
             <artifactId>uk.co.tfd.sm.milton</artifactId>
             <version>1.6.4-SNAPSHOT</version>
         </bundle>
@@ -124,66 +124,66 @@
    </startLevel>
    <startLevel level="12" >
     <bundle>
-      <groupId>org.sakaiproject.nakamura</groupId>
+      <groupId>uk.co.tfd.sm</groupId>
       <artifactId>uk.co.tfd.sm.memory</artifactId>
       <version>0.1-SNAPSHOT</version>
     </bundle>
         <bundle>
-            <groupId>org.sakaiproject.nakamura</groupId>
+            <groupId>uk.co.tfd.sm</groupId>
             <artifactId>uk.co.tfd.sm.core</artifactId>
             <version>1.6-SNAPSHOT</version>
         </bundle>
         <bundle>
-            <groupId>org.sakaiproject.nakamura</groupId>
+            <groupId>uk.co.tfd.sm</groupId>
             <artifactId>uk.co.tfd.sm.postgres-driver</artifactId>
             <version>9.0-801-1.6-SNAPSHOT</version>
         </bundle>
 <!--
         <bundle>
-            <groupId>org.sakaiproject.nakamura</groupId>
+            <groupId>uk.co.tfd.sm</groupId>
             <artifactId>uk.co.tfd.sm.mysql-driver</artifactId>
             <version>5.1.13-1.6-SNAPSHOT</version>
         </bundle>
         <bundle>
-            <groupId>org.sakaiproject.nakamura</groupId>
+            <groupId>uk.co.tfd.sm</groupId>
             <artifactId>uk.co.tfd.sm.derby-driver</artifactId>
             <version>10.6.2.1-1.6-SNAPSHOT</version>
         </bundle>
 -->
         <bundle>
-            <groupId>org.sakaiproject.nakamura</groupId>
+            <groupId>uk.co.tfd.sm</groupId>
             <artifactId>uk.co.tfd.sm.solr</artifactId>
             <version>1.5-SNAPSHOT</version>
         </bundle>
    </startLevel>
    <startLevel level="15" >
         <bundle>
-            <groupId>org.sakaiproject.nakamura</groupId>
+            <groupId>uk.co.tfd.sm</groupId>
             <artifactId>uk.co.tfd.sm.webdav</artifactId>
             <version>0.1-SNAPSHOT</version>
         </bundle>
         <bundle>
-            <groupId>org.sakaiproject.nakamura</groupId>
+            <groupId>uk.co.tfd.sm</groupId>
             <artifactId>uk.co.tfd.sm.template</artifactId>
             <version>0.1-SNAPSHOT</version>
         </bundle>
         <bundle>
-            <groupId>org.sakaiproject.nakamura</groupId>
+            <groupId>uk.co.tfd.sm</groupId>
             <artifactId>uk.co.tfd.sm.http</artifactId>
             <version>0.1-SNAPSHOT</version>
         </bundle>
         <bundle>
-            <groupId>org.sakaiproject.nakamura</groupId>
+            <groupId>uk.co.tfd.sm</groupId>
             <artifactId>uk.co.tfd.sm.proxy</artifactId>
             <version>0.1-SNAPSHOT</version>
         </bundle>
         <bundle>
-            <groupId>org.sakaiproject.nakamura</groupId>
+            <groupId>uk.co.tfd.sm</groupId>
             <artifactId>uk.co.tfd.sm.jaxrs</artifactId>
             <version>0.1-SNAPSHOT</version>
         </bundle>
         <bundle>
-            <groupId>org.sakaiproject.nakamura</groupId>
+            <groupId>uk.co.tfd.sm</groupId>
             <artifactId>uk.co.tfd.sm.resource</artifactId>
             <version>0.1-SNAPSHOT</version>
         </bundle>

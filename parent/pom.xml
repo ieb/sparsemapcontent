@@ -7,10 +7,10 @@
 		<relativePath />
 		<version>7</version>
 	</parent>
-	<groupId>org.sakaiproject.nakamura</groupId>
+	<groupId>uk.co.tfd.sm</groupId>
 	<artifactId>core-base</artifactId>
 	<packaging>pom</packaging>
-	<version>4</version>
+	<version>5-SNAPSHOT</version>
 	<description>Core Base Pom for Map Content Storage bundle.</description>
 	<name>Sparse Map :: Core Base</name>
 	<properties>
@@ -269,4 +269,18 @@
 			</properties>
 		</developer>
 	</developers>
+	<repositories>
+		<repository>
+			<name>Apache Snapshot</name>
+			<id>aoache-snapshot</id>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<url>https://repository.apache.org/content/repositories/snapshots</url>
+		</repository>
+	</repositories>
+
 </project>
