@@ -28,6 +28,7 @@ aspects related to social media will be added over time.
 * Asymetric Social graph
 * ElasticSearch suport for indexing content
 * Single Instance content body store.
+* Support for resmon based monitoring.
 
 
 # Building
