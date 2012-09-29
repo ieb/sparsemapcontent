@@ -87,7 +87,7 @@ public class SparseMiltonServlet extends HttpServlet {
 			IOException {
 		String litmusTestId = null;
 		try {
-			Request request = new ServletRequest(servletRequest);
+			Request request = new ServletRequest(servletRequest, this.getServletContext());
 			Response response = new ServletResponse(servletResponse);
 			Map<String,String> headers = request.getHeaders();
 			if ( headers.containsKey("X-Litmus") ) {
