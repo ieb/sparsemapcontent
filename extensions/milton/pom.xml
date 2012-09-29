@@ -55,7 +55,7 @@
     <dependency>
 	  <groupId>com.ettrema</groupId>
 	  <artifactId>milton-api</artifactId>
-	  <version>1.6.4</version>    
+	  <version>1.8.1.4</version>    
     </dependency>
     <dependency>
 	  <groupId>eu.medsea.mimeutil</groupId>
@@ -75,7 +75,7 @@
     <dependency>
 	  <groupId>com.ettrema</groupId>
 	  <artifactId>milton-servlet</artifactId>
-	  <version>1.6.4</version>
+	  <version>1.8.1.4</version>
 	  <exclusions>
 	  	<exclusion>
 	  		<artifactId>spring</artifactId>
