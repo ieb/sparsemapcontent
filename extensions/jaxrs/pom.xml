@@ -91,6 +91,13 @@
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-jaxrs</artifactId>
       <version>2.2.3.GA</version>
+      <exclusions>
+         <!--  the 1.2 impl leaks in here. -->
+         <exclusion>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+         </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
