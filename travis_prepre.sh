@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 echo "Running Prepare for Travis"
 curl http://www.ettrema.com/maven2/com/ettrema/milton-api/1.8.1.4/milton-api-1.8.1.4.jar > /tmp/milton-api-1.8.1.4.jar
 curl http://www.ettrema.com/maven2/com/ettrema/milton-api/1.8.1.4/milton-api-1.8.1.4.pom > /tmp/milton-api-1.8.1.4.pom

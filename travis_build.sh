@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 echo "Doing Main Build"
 set -e
 jdk_switcher use default
