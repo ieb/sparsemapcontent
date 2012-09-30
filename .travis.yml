@@ -1,10 +1,2 @@
-before_script:
-   - curl http://www.ettrema.com/maven2/com/ettrema/milton-api/1.8.1.4/milton-api-1.8.1.4.jar > /tmp/milton-api-1.8.1.4.jar
-   - curl http://www.ettrema.com/maven2/com/ettrema/milton-api/1.8.1.4/milton-api-1.8.1.4.pom > /tmp/milton-api-1.8.1.4.pom
-   - curl http://www.ettrema.com/maven2/com/ettrema/milton-servlet/1.8.1.4/milton-servlet-1.8.1.4.jar > /tmp/milton-servlet-1.8.1.4.jar
-   - curl http://www.ettrema.com/maven2/com/ettrema/milton-servlet/1.8.1.4/milton-servlet-1.8.1.4.pom > /tmp/milton-servlet-1.8.1.4.pom
-   - mvn mvn install:install-file -DgroupId=com.ettrema -DartifactId=milton-api -Dpackaging=pom -Dversion=1.8.1.4 -Dfile=/tmp/milton-api-1.8.1.4.pom 
-   - mvn mvn install:install-file -DgroupId=com.ettrema -DartifactId=milton-api -Dpackaging=jar -Dversion=1.8.1.4 -Dfile=/tmp/milton-api-1.8.1.4.jar 
-   - mvn mvn install:install-file -DgroupId=com.ettrema -DartifactId=milton-servlet -Dpackaging=pom -Dversion=1.8.1.4 -Dfile=/tmp/milton-api-1.8.1.4.pom 
-   - mvn mvn install:install-file -DgroupId=com.ettrema -DartifactId=milton-servlet -Dpackaging=jar -Dversion=1.8.1.4 -Dfile=/tmp/milton-api-1.8.1.4.jar 
+before_script: ./travis_prepare.sh
 language: java
