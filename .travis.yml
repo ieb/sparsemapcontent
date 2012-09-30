@@ -1,5 +1,5 @@
 language: java
-before_script: 
+before_install: 
   - "curl http://www.ettrema.com/maven2/com/ettrema/milton-api/1.8.1.4/milton-api-1.8.1.4.jar -o /tmp/milton-api-1.8.1.4.jar"
   - "curl http://www.ettrema.com/maven2/com/ettrema/milton-api/1.8.1.4/milton-api-1.8.1.4.pom -o  /tmp/milton-api-1.8.1.4.pom"
   - "curl http://www.ettrema.com/maven2/com/ettrema/milton-servlet/1.8.1.4/milton-servlet-1.8.1.4.jar -o /tmp/milton-servlet-1.8.1.4.jar"
