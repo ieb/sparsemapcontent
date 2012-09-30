@@ -1,2 +1,3 @@
 before_script: ./travis_prepare.sh
+script: ./travis_build.sh
 language: java
