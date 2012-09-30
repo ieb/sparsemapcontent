@@ -10,6 +10,7 @@ import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -28,6 +29,8 @@ import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.Repository;
+import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.util.Iterables;
@@ -36,14 +39,15 @@ import org.slf4j.LoggerFactory;
 
 import uk.co.tfd.sm.api.search.IndexingHandler;
 import uk.co.tfd.sm.api.search.InputDocument;
+import uk.co.tfd.sm.api.search.RepositorySession;
 import uk.co.tfd.sm.api.search.TopicIndexer;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 /**
- * Indexes content using elastic search.
- * Driven by Events expected to be synchronous inside transactions.
+ * Indexes content using elastic search. Driven by Events expected to be
+ * synchronous inside transactions.
  * 
  * @author ieb
  * 
@@ -90,6 +94,9 @@ public class ContentEventListener implements EventHandler, TopicIndexer {
 	private Client client;
 
 	private Node node;
+
+	@Reference
+	private Repository repository;
 
 	@Activate
 	protected void activate(Map<String, Object> properties) throws IOException,
@@ -143,46 +150,72 @@ public class ContentEventListener implements EventHandler, TopicIndexer {
 	 */
 	public void handleEvent(Event event) {
 		String topic = event.getTopic();
-		LOGGER.debug("Got Event {} {} ", event, handlers);
-		Collection<IndexingHandler> contentIndexHandler = handlers.get(topic);
-		if (contentIndexHandler != null && contentIndexHandler.size() > 0) {
-			BulkRequestBuilder bulk = client.prepareBulk();
-			for (IndexingHandler indexingHandler : contentIndexHandler) {
-				Collection<InputDocument> documents = indexingHandler
-						.getDocuments(event);
-				for (InputDocument in : documents) {
-					if (in.isDelete()) {
-						bulk.add(client.prepareDelete(in.getIndexName(),
-								in.getDocumentType(), in.getDocumentId()));
-					} else {
-						try {
-							IndexRequestBuilder r = client.prepareIndex(
-									in.getIndexName(), in.getDocumentType(),
-									in.getDocumentId());
-							XContentBuilder d = XContentFactory.jsonBuilder();
-							d = d.startObject();
-							for (Entry<String, Object> e : in.getKeyData()) {
-								d = d.field(e.getKey(), e.getValue());
+		Session session = (Session) event.getProperty(Session.class.getName());
+		RepositorySession repositoryRession = null;
+		try {
+			try {
+				repositoryRession = new RepositorySessionImpl(session,
+						repository);
+			} catch (ClientPoolException e1) {
+				LOGGER.error(e1.getMessage(), e1);
+				return;
+			} catch (StorageClientException e1) {
+				LOGGER.error(e1.getMessage(), e1);
+				return;
+			} catch (AccessDeniedException e1) {
+				LOGGER.error(e1.getMessage(), e1);
+				return;
+			}
+
+			LOGGER.debug("Got Event {} {} ", event, handlers);
+			Collection<IndexingHandler> contentIndexHandler = handlers
+					.get(topic);
+			if (contentIndexHandler != null && contentIndexHandler.size() > 0) {
+				BulkRequestBuilder bulk = client.prepareBulk();
+				for (IndexingHandler indexingHandler : contentIndexHandler) {
+					Collection<InputDocument> documents = indexingHandler
+							.getDocuments(repositoryRession, event);
+					for (InputDocument in : documents) {
+						if (in.isDelete()) {
+							bulk.add(client.prepareDelete(in.getIndexName(),
+									in.getDocumentType(), in.getDocumentId()));
+						} else {
+							try {
+								IndexRequestBuilder r = client.prepareIndex(
+										in.getIndexName(),
+										in.getDocumentType(),
+										in.getDocumentId());
+								XContentBuilder d = XContentFactory
+										.jsonBuilder();
+								d = d.startObject();
+								for (Entry<String, Object> e : in.getKeyData()) {
+									d = d.field(e.getKey(), e.getValue());
+								}
+								r.setSource(d.endObject());
+								bulk.add(r);
+							} catch (IOException e) {
+								LOGGER.error(e.getMessage(), e);
 							}
-							r.setSource(d.endObject());
-							bulk.add(r);
-						} catch (IOException e) {
-							LOGGER.error(e.getMessage(), e);
 						}
 					}
 				}
-			}
-			BulkResponse resp = bulk.execute().actionGet();
-			if (resp.hasFailures()) {
-				for (BulkItemResponse br : Iterables.adaptTo(resp.iterator())) {
-					if (br.failed()) {
-						LOGGER.error("Failed {} {} ", br.getId(),
-								br.getFailureMessage());
-						// not going to retry at the moment, just log.
+				BulkResponse resp = bulk.execute().actionGet();
+				if (resp.hasFailures()) {
+					for (BulkItemResponse br : Iterables.adaptTo(resp
+							.iterator())) {
+						if (br.failed()) {
+							LOGGER.error("Failed {} {} ", br.getId(),
+									br.getFailureMessage());
+							// not going to retry at the moment, just log.
+						}
 					}
 				}
-			}
 
+			}
+		} finally {
+			if (repositoryRession != null) {
+				repositoryRession.logout();
+			}
 		}
 	}
 

@@ -56,7 +56,7 @@ public interface IndexingHandler {
 	 * @return a collection of SolrInputDocuments to be indexed. If none then
 	 *         return an empty list, do not return null.
 	 */
-	Collection<InputDocument> getDocuments(Event event);
+	Collection<InputDocument> getDocuments(RepositorySession respRepositorySession, Event event);
 
 	/**
 	 * Get a collection of queries to execute as delete operations against the
@@ -71,6 +71,6 @@ public interface IndexingHandler {
 	 *         operations. If none then return an empty list, do not return
 	 *         null.
 	 */
-	Collection<String> getDeleteQueries(Event event);
+	Collection<String> getDeleteQueries(RepositorySession repositorySession, Event event);
 
 }
