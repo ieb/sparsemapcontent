@@ -101,8 +101,8 @@ public class ContentEventListener implements EventHandler, TopicIndexer {
 	@Activate
 	protected void activate(Map<String, Object> properties) throws IOException,
 			ClientPoolException, StorageClientException, AccessDeniedException {
-		boolean embeded = Utils.get(properties.get(PROP_EMBEDED), true);
-		boolean withData = Utils.get(properties.get(PROP_LOCAL_SHARDS), true);
+		Boolean embeded = Utils.get(properties.get(PROP_EMBEDED), true);
+		Boolean withData = Utils.get(properties.get(PROP_LOCAL_SHARDS), true);
 		String clusterName = Utils.get(properties.get(PROP_CLUSTER_NAME),
 				DEFAULT_CLUSTER_NAME);
 		if (client == null) {

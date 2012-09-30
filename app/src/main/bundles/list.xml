@@ -157,8 +157,8 @@
 -->
         <bundle>
             <groupId>uk.co.tfd.sm</groupId>
-            <artifactId>uk.co.tfd.sm.solr</artifactId>
-            <version>1.5-SNAPSHOT</version>
+            <artifactId>uk.co.tfd.sm.search</artifactId>
+            <version>0.1-SNAPSHOT</version>
         </bundle>
    </startLevel>
    <startLevel level="15" >
