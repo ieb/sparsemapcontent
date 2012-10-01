@@ -212,6 +212,7 @@ public class ContentEventListener implements EventHandler, TopicIndexer {
 					.get(topic);
 			if (contentIndexHandler != null && contentIndexHandler.size() > 0) {
 				BulkRequestBuilder bulk = client.prepareBulk();
+				int added = 0;
 				for (IndexingHandler indexingHandler : contentIndexHandler) {
 					Collection<InputDocument> documents = indexingHandler
 							.getDocuments(repositoryRession, event);
@@ -219,6 +220,7 @@ public class ContentEventListener implements EventHandler, TopicIndexer {
 						if (in.isDelete()) {
 							bulk.add(client.prepareDelete(in.getIndexName(),
 									in.getDocumentType(), in.getDocumentId()));
+							added++;
 						} else {
 							try {
 								IndexRequestBuilder r = client.prepareIndex(
@@ -233,20 +235,23 @@ public class ContentEventListener implements EventHandler, TopicIndexer {
 								}
 								r.setSource(d.endObject());
 								bulk.add(r);
+								added++;
 							} catch (IOException e) {
 								LOGGER.error(e.getMessage(), e);
 							}
 						}
 					}
 				}
-				BulkResponse resp = bulk.execute().actionGet();
-				if (resp.hasFailures()) {
-					for (BulkItemResponse br : Iterables.adaptTo(resp
-							.iterator())) {
-						if (br.failed()) {
-							LOGGER.error("Failed {} {} ", br.getId(),
-									br.getFailureMessage());
-							// not going to retry at the moment, just log.
+				if ( added > 0 ) {
+					BulkResponse resp = bulk.execute().actionGet();
+					if (resp.hasFailures()) {
+						for (BulkItemResponse br : Iterables.adaptTo(resp
+								.iterator())) {
+							if (br.failed()) {
+								LOGGER.error("Failed {} {} ", br.getId(),
+										br.getFailureMessage());
+								// not going to retry at the moment, just log.
+							}
 						}
 					}
 				}
