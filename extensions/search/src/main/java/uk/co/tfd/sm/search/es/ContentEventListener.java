@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.ErrorManager;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
@@ -18,6 +19,8 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.client.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.inject.CreationException;
+import org.elasticsearch.common.inject.spi.Message;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.ImmutableSettings.Builder;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
@@ -74,7 +77,7 @@ public class ContentEventListener implements EventHandler, TopicIndexer {
 	private static final String PROP_CLUSTER_NAME = "clustername";
 
 	@Property(boolValue = true, description = "If set to true, the ES node should serve local shards")
-	private static final Object PROP_LOCAL_SHARDS = "local-shards";
+	private static final String PROP_LOCAL_SHARDS = "local-shards";
 
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(ContentEventListener.class);
@@ -101,29 +104,62 @@ public class ContentEventListener implements EventHandler, TopicIndexer {
 	@Activate
 	protected void activate(Map<String, Object> properties) throws IOException,
 			ClientPoolException, StorageClientException, AccessDeniedException {
-		Boolean embeded = Utils.get(properties.get(PROP_EMBEDED), true);
-		Boolean withData = Utils.get(properties.get(PROP_LOCAL_SHARDS), true);
-		String clusterName = Utils.get(properties.get(PROP_CLUSTER_NAME),
-				DEFAULT_CLUSTER_NAME);
-		if (client == null) {
-			if (embeded) {
-				node = NodeBuilder.nodeBuilder().data(withData)
-						.clusterName(clusterName).build();
-				client = node.client();
-			} else {
-				Builder settingsBuilder = ImmutableSettings.settingsBuilder();
-				settingsBuilder.put("cluster.name", clusterName);
-				TransportClient tclient = new TransportClient(
-						settingsBuilder.build());
-				String[] clusterHosts = Utils.get(
-						properties.get(PROP_ESCLUSTER), DEFAULT_ESCLUSTER);
-				for (String s : clusterHosts) {
-					String[] h = StringUtils.split(s, ":");
-					tclient.addTransportAddress(new InetSocketTransportAddress(
-							h[0], Integer.parseInt(h[1])));
+		try {
+			Boolean embeded = Utils.get(properties.get(PROP_EMBEDED), true);
+			Boolean withData = Utils.get(properties.get(PROP_LOCAL_SHARDS), true);
+			String clusterName = Utils.get(properties.get(PROP_CLUSTER_NAME),
+					DEFAULT_CLUSTER_NAME);
+			if (client == null) {
+				LOGGER.error("Thread context classloader is {} ", Thread.currentThread().getContextClassLoader());
+				// Elastic search needs to come up this class so unfortunately we have to set the context classloader
+				// as it will use that by default
+				Thread thisThread = Thread.currentThread();
+				ClassLoader classloader = thisThread.getContextClassLoader();
+				try {
+					thisThread.setContextClassLoader(this.getClass().getClassLoader());
+					if (embeded) {
+						node = NodeBuilder.nodeBuilder().data(withData)
+								.clusterName(clusterName).build();
+						client = node.client();
+					} else {
+						Builder settingsBuilder = ImmutableSettings.settingsBuilder();
+						settingsBuilder.put("cluster.name", clusterName);
+						TransportClient tclient = new TransportClient(
+								settingsBuilder.build());
+						String[] clusterHosts = Utils.get(
+								properties.get(PROP_ESCLUSTER), DEFAULT_ESCLUSTER);
+						for (String s : clusterHosts) {
+							String[] h = StringUtils.split(s, ":");
+							tclient.addTransportAddress(new InetSocketTransportAddress(
+									h[0], Integer.parseInt(h[1])));
+						}
+						client = tclient;
+					}
+				} finally {
+					thisThread.setContextClassLoader(classloader);
 				}
-				client = tclient;
 			}
+		} catch ( Exception e ) {
+			LOGGER.error("Failed to start Elastic search {} ",e.getClass());
+			for ( StackTraceElement se : e.getStackTrace()) {
+				LOGGER.error("Error {} {} {} {} ", new Object[]{se.getClassName(), se.getFileName(), se.getLineNumber(), se.getMethodName()});
+			}
+			Throwable c = e.getCause();
+			while (c != null) {
+				LOGGER.error("Caused By : {} ",e.getClass());
+				for ( StackTraceElement se : c.getStackTrace()) {
+					LOGGER.error("Error {} {} {} {} ", new Object[]{se.getClassName(), se.getFileName(), se.getLineNumber(), se.getMethodName()});
+				}
+			}
+			LOGGER.error("End of cause ");
+			if ( e instanceof CreationException ) {
+				CreationException ce = (CreationException) e;
+				for ( Message m : ce.getErrorMessages()) {
+					LOGGER.error("Error message {} ",m.getMessage());
+				}
+				LOGGER.error(e.getMessage());
+			}
+			throw new RuntimeException(e);
 		}
 
 	}
@@ -152,7 +188,11 @@ public class ContentEventListener implements EventHandler, TopicIndexer {
 		String topic = event.getTopic();
 		Session session = (Session) event.getProperty(Session.class.getName());
 		RepositorySession repositoryRession = null;
+		Thread thisThread = Thread.currentThread();
+		ClassLoader classloader = thisThread.getContextClassLoader();
+		// ES might load classes so we had better set the context classloader.
 		try {
+			thisThread.setContextClassLoader(this.getClass().getClassLoader());
 			try {
 				repositoryRession = new RepositorySessionImpl(session,
 						repository);
@@ -216,6 +256,7 @@ public class ContentEventListener implements EventHandler, TopicIndexer {
 			if (repositoryRession != null) {
 				repositoryRession.logout();
 			}
+			thisThread.setContextClassLoader(classloader);
 		}
 	}
 

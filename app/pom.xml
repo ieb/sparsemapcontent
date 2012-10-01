@@ -163,6 +163,9 @@
                    <tasks>
                       <delete dir="${project.basedir}/sling" />
                       <exec  dir="${project.basedir}"  executable="java"  failonerror="true">  
+                          <arg line="-Xmx512m"/>  <!-- if not embedding ES you only need 64M --> 
+                          <arg line="-XX:MaxPermSize=256m" />
+                          <arg line="-server" />
                           <arg line="-jar"/>  
                           <arg line="${project.basedir}/target/${project.artifactId}-${project.version}.jar"/>  
                           <arg line="-f"/>  
