@@ -31,7 +31,7 @@ public interface IndexingHandler {
 	public static final String FIELD_ID = "id";
 
 	/**
-	 * The Solr Field name for principals that can read, multivalued.
+	 * The Field name for principals that can read, multivalued.
 	 */
 	public static final String FIELD_READERS = "readers";
 
@@ -46,6 +46,12 @@ public interface IndexingHandler {
 	public static final String FIELD_PATH = "path";
 
 	/**
+	 * The Field that if present indicates the path has been deleted. If not
+	 * present, update or create is assumed.
+	 */
+	public static final String FIELD_DELETE = "delete";
+
+	/**
 	 * Get a Collection of documents to be added to the index based on the
 	 * event.
 	 * 
@@ -58,19 +64,5 @@ public interface IndexingHandler {
 	 */
 	Collection<InputDocument> getDocuments(RepositorySession respRepositorySession, Event event);
 
-	/**
-	 * Get a collection of queries to execute as delete operations against the
-	 * index in response to an event. Delete operations are performed before add
-	 * operations.
-	 * 
-	 * @param respositorySession
-	 *            an adaptable RepositorySession.
-	 * @param event
-	 *            the event that specified the delete queries.
-	 * @return a Collection of lucene queries to be executed as Solr Delete
-	 *         operations. If none then return an empty list, do not return
-	 *         null.
-	 */
-	Collection<String> getDeleteQueries(RepositorySession repositorySession, Event event);
 
 }
