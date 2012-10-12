@@ -29,7 +29,6 @@ import java.text.MessageFormat;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.ImmutableList;
 import junit.framework.Assert;
 
 import org.apache.commons.lang.StringUtils;
@@ -43,8 +42,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClient;
 import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
-import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceImpl;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceFactroyImpl;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 
@@ -74,7 +74,7 @@ public class JDBCStorageClientTest {
   Map<String, Object> properties = Maps.newHashMap();
   Map<String, Object> sqlConfig = Maps.newHashMap();
 
-  StatsService statsService = new StatsServiceImpl();
+  StatsService statsService = new StatsServiceFactroyImpl().openSession();
 
   @Before
   public void setUp() throws Exception {

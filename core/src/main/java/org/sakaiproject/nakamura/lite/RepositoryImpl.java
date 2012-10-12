@@ -40,6 +40,7 @@ import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,13 +63,13 @@ public class RepositoryImpl implements Repository {
     protected PrincipalValidatorResolver principalValidatorResolver;
 
     @Reference
-    protected StatsService stats;
+    protected StatsServiceFactory stats;
 
     public RepositoryImpl() {
     }
 
     public RepositoryImpl(Configuration configuration, StorageClientPool clientPool, LoggingStorageListener listener,
-            StatsService statsService) {
+            StatsServiceFactory statsService) {
         this.configuration = configuration;
         this.clientPool = clientPool;
         this.storeListener = listener;
@@ -119,8 +120,8 @@ public class RepositoryImpl implements Repository {
 
     private Session openSession(String username, String password) throws StorageClientException, AccessDeniedException {
         StorageClient client = null;
+        StatsService sessionStatsService = stats.openSession();
         try {
-            StatsService sessionStatsService = stats.openSession();
             client = clientPool.getClient();
             client.setStatsService(sessionStatsService);
             AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration,
@@ -135,19 +136,19 @@ public class RepositoryImpl implements Repository {
             sessionStatsService.sessionLogin();
             return session;
         } catch (ClientPoolException e) {
-            stats.sessionFailLogin();
+        	sessionStatsService.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (StorageClientException e) {
-            stats.sessionFailLogin();
+        	sessionStatsService.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (AccessDeniedException e) {
-            stats.sessionFailLogin();
+        	sessionStatsService.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (Throwable e) {
-            stats.sessionFailLogin();
+        	sessionStatsService.sessionFailLogin();
             clientPool.getClient();
             throw new StorageClientException(e.getMessage(), e);
         }
@@ -162,8 +163,8 @@ public class RepositoryImpl implements Repository {
 
     private Session openSession(String username) throws StorageClientException, AccessDeniedException {
         StorageClient client = null;
+        StatsService sessionStatsService = stats.openSession();
         try {
-            StatsService sessionStatsService = stats.openSession();
             client = clientPool.getClient();
             client.setStatsService(sessionStatsService);
             AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration,
@@ -178,19 +179,19 @@ public class RepositoryImpl implements Repository {
             sessionStatsService.sessionLogin();
             return session;
         } catch (ClientPoolException e) {
-            stats.sessionFailLogin();
+        	sessionStatsService.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (StorageClientException e) {
-            stats.sessionFailLogin();
+        	sessionStatsService.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (AccessDeniedException e) {
-            stats.sessionFailLogin();
+        	sessionStatsService.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (Throwable e) {
-            stats.sessionFailLogin();
+        	sessionStatsService.sessionFailLogin();
             clientPool.getClient();
             throw new StorageClientException(e.getMessage(), e);
         }
@@ -198,8 +199,8 @@ public class RepositoryImpl implements Repository {
 
     private Session openSessionBypassEnable(String username) throws StorageClientException, AccessDeniedException {
         StorageClient client = null;
+        StatsService sessionStatsService = stats.openSession();
         try {
-            StatsService sessionStatsService = stats.openSession();
             client = clientPool.getClient();
             client.setStatsService(sessionStatsService);
             AuthenticatorImpl authenticatorImpl = new AuthenticatorImpl(client, configuration,
@@ -214,19 +215,19 @@ public class RepositoryImpl implements Repository {
             sessionStatsService.sessionLogin();
             return session;
         } catch (ClientPoolException e) {
-            stats.sessionFailLogin();
+        	sessionStatsService.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (StorageClientException e) {
-            stats.sessionFailLogin();
+        	sessionStatsService.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (AccessDeniedException e) {
-            stats.sessionFailLogin();
+        	sessionStatsService.sessionFailLogin();
             clientPool.getClient();
             throw e;
         } catch (Throwable e) {
-            stats.sessionFailLogin();
+        	sessionStatsService.sessionFailLogin();
             clientPool.getClient();
             throw new StorageClientException(e.getMessage(), e);
         }

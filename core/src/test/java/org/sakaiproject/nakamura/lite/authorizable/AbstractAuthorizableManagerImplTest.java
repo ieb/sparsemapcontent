@@ -51,7 +51,7 @@ import org.sakaiproject.nakamura.lite.storage.spi.ConcurrentLRUMap;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
-import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceImpl;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceFactroyImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +67,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
     private StorageClientPool clientPool;
     private Map<String, CacheHolder> sharedCache = new ConcurrentLRUMap<String, CacheHolder>(1000);
     private PrincipalValidatorResolver principalValidatorResolver = new PrincipalValidatorResolverImpl();
-    private StatsService statsService = new StatsServiceImpl();
+    private StatsService statsService = new StatsServiceFactroyImpl().openSession();
 
     @Before
     public void before() throws StorageClientException, AccessDeniedException, ClientPoolException, ClassNotFoundException,
@@ -476,7 +476,7 @@ public abstract class AbstractAuthorizableManagerImplTest {
     @Test
     public void testAuthorizablePermissions() throws ClientPoolException, StorageClientException, AccessDeniedException {
         RepositoryImpl repository = new RepositoryImpl(configuration, clientPool, new LoggingStorageListener(),
-                new StatsServiceImpl());
+                new StatsServiceFactroyImpl());
         Map<String, Object> properties = ImmutableMap.of("t", (Object) "x");
         repository.activate(properties);
 

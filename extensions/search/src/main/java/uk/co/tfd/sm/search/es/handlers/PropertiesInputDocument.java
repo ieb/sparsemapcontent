@@ -22,6 +22,7 @@ public class PropertiesInputDocument implements InputDocument {
 	private Map<String, Object> properties;
 	private String path;
 	private String documentType;
+	private String stringValue;
 
 	public PropertiesInputDocument(String indexName, String path, 
 			Map<String, Object> metadata, Map<String, Object> config) {
@@ -34,6 +35,8 @@ public class PropertiesInputDocument implements InputDocument {
 			String[] im = StringUtils.split(indexmap,"=");
 			properties.put(im[1], metadata.get(im[0]) );
 		}
+		stringValue = indexName+": Update "+path;
+
 	}
 
 	@Override
@@ -100,6 +103,11 @@ public class PropertiesInputDocument implements InputDocument {
 	@Override
 	public void removeField(String fieldName) {
 		properties.remove(fieldName);
+	}
+	
+	@Override
+	public String toString() {
+		return stringValue;
 	}
 
 }

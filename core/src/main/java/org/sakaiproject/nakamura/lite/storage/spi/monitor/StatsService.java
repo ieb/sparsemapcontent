@@ -47,10 +47,5 @@ public interface StatsService {
      */
     void apiCall(String className, String methodName, long t);
 
-    /**
-     * return a StatsService implementation for the lifetime for the session.
-     * @return
-     */
-    StatsService openSession();
 
 }

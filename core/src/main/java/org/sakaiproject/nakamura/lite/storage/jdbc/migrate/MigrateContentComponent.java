@@ -32,6 +32,7 @@ import org.sakaiproject.nakamura.lite.storage.spi.SparseRow;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.spi.content.BlockSetContentHelper;
 import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,7 +100,7 @@ public class MigrateContentComponent implements MigrateContentService {
     private Integer maxLogFileSize;
 
     @Reference
-    private StatsService statsService;
+    private StatsServiceFactory statsServiceFactory;
 
     @Activate
     public synchronized void activate(Map<String, Object> properties) throws StorageClientException, AccessDeniedException,
@@ -142,6 +143,7 @@ public class MigrateContentComponent implements MigrateContentService {
                     throw new PropertyMigrationException("There are unresolved dependencies "
                             + migratorDependencySequence.getUnresolved());
                 }
+                StatsService statsService = statsServiceFactory.openSession();
                 CacheAwareMigrationManager cacheAwareMigrationManager = new CacheAwareMigrationManager(jdbcClient,
                         session.getCache(configuration.getAuthorizableColumnFamily()), statsService);
                 reindex(dryRun, jdbcClient, cacheAwareMigrationManager, keySpace, configuration.getAuthorizableColumnFamily(),

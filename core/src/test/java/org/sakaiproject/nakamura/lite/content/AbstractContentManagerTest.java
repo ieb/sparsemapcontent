@@ -31,7 +31,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.sakaiproject.nakamura.api.lite.CacheHolder;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Configuration;
@@ -51,7 +50,7 @@ import org.sakaiproject.nakamura.lite.storage.spi.ConcurrentLRUMap;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
-import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceImpl;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceFactroyImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +67,7 @@ public abstract class AbstractContentManagerTest {
     private StorageClientPool clientPool;
     private Map<String, CacheHolder> sharedCache = new ConcurrentLRUMap<String, CacheHolder>(1000);
     private PrincipalValidatorResolver principalValidatorResolver = new PrincipalValidatorResolverImpl();
-    private StatsService statsService = new StatsServiceImpl();
+    private StatsService statsService = new StatsServiceFactroyImpl().openSession();
 
     @Before
     public void before() throws StorageClientException, AccessDeniedException, ClientPoolException,

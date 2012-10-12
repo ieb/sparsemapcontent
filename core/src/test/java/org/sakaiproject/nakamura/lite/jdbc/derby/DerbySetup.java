@@ -17,13 +17,13 @@
  */
 package org.sakaiproject.nakamura.lite.jdbc.derby;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
-
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.lite.DummyStorageCacheManager;
 import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClientPool;
-import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceImpl;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceFactroyImpl;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 
 public class DerbySetup {
 
@@ -32,7 +32,7 @@ public class DerbySetup {
     private synchronized static JDBCStorageClientPool createClientPool(Configuration configuration, String location) {
         try {
             JDBCStorageClientPool connectionPool = new JDBCStorageClientPool();
-            connectionPool.statsService = new StatsServiceImpl();
+            connectionPool.statsServiceFactroy = new StatsServiceFactroyImpl();
             connectionPool.storageManagerCache = new DummyStorageCacheManager();
             Builder<String, Object> configBuilder = ImmutableMap.builder();
             if ( location == null ) {

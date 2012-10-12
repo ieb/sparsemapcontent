@@ -46,6 +46,7 @@ import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.lite.storage.spi.AbstractClientConnectionPool;
 import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +79,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
     public static final String PASSWORD = "password";
 
     @Reference
-    public StatsService statsService;
+    public StatsServiceFactory statsServiceFactroy;
 
     /**
      * Clients should provide an implementation of NamedCacheManager in
@@ -107,7 +108,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
         public Object makeObject() throws Exception {
             try {
                 return checkSchema(new JDBCStorageClient(JDBCStorageClientPool.this, properties, getSqlConfig(), getIndexColumns(),
-                        getIndexColumnsTypes(), getIndexColumnsNames(), true, statsService));
+                        getIndexColumnsTypes(), getIndexColumnsNames(), true, statsServiceFactroy.openSession()));
             } catch (Exception e) {
                 e.printStackTrace();
                 throw e;
@@ -202,7 +203,7 @@ public class JDBCStorageClientPool extends AbstractClientConnectionPool {
         try {
             // dont use the pool, we dont want this client to be in the pool.
             client = new JDBCStorageClient(this, properties, getSqlConfig(), getIndexColumns(), getIndexColumnsTypes(),
-                    getIndexColumnsNames(), false, statsService);
+                    getIndexColumnsNames(), false, statsServiceFactroy.openSession());
             client = checkSchema(client);
             if (client == null) {
                 LOGGER.warn("Failed to check Schema, no connection");

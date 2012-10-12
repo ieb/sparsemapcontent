@@ -17,8 +17,8 @@
  */
 package org.sakaiproject.nakamura.lite;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
+import java.io.IOException;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -36,12 +36,12 @@ import org.sakaiproject.nakamura.lite.storage.mem.MemoryStorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.spi.content.BlockContentHelper;
-import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceImpl;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceFactroyImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.Map;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 public class RepositoryImplTest {
 
@@ -77,7 +77,7 @@ public class RepositoryImplTest {
     public void testStart() throws ClientPoolException, StorageClientException,
             AccessDeniedException {
         RepositoryImpl repository = new RepositoryImpl();
-        repository.stats = new StatsServiceImpl();
+        repository.stats = new StatsServiceFactroyImpl();
         repository.configuration = configuration;
         repository.clientPool = clientPool;
         repository.storeListener = new LoggingStorageListener();

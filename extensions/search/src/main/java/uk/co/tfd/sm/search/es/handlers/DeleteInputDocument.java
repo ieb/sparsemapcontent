@@ -18,10 +18,12 @@ public class DeleteInputDocument implements InputDocument {
 	private static final Entry<String, Object>[] EMPTY_ENTRY = new Entry[0];
 	private String path;
 	private String indexName;
+	private String stringValue;
 
 	public DeleteInputDocument(String indexName, String path) {
 		this.indexName = indexName;
 		this.path = path;
+		stringValue = indexName+": Delete "+path;
 	}
 
 	@Override
@@ -74,6 +76,11 @@ public class DeleteInputDocument implements InputDocument {
 
 	@Override
 	public void removeField(String fieldName) {
+	}
+	
+	@Override
+	public String toString() {
+		return stringValue;
 	}
 
 }

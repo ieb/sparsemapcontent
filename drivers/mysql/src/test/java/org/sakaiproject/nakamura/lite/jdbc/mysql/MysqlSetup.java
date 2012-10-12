@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableMap.Builder;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.lite.DummyStorageCacheManager;
 import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClientPool;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceFactroyImpl;
 import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceImpl;
 
 public class MysqlSetup {
@@ -32,7 +33,7 @@ public class MysqlSetup {
     public synchronized static JDBCStorageClientPool createClientPool(Configuration configuration) {
         try {
             JDBCStorageClientPool connectionPool = new JDBCStorageClientPool();
-            connectionPool.statsService = new StatsServiceImpl();
+            connectionPool.statsServiceFactroy = new StatsServiceFactroyImpl();
             connectionPool.storageManagerCache = new DummyStorageCacheManager();
             Builder<String, Object> b = ImmutableMap.builder();
             b.put(JDBCStorageClientPool.CONNECTION_URL,"jdbc:mysql://127.0.0.1:3306/sakai22?useUnicode=true&amp;characterEncoding=UTF-8");

@@ -7,7 +7,6 @@ import junit.framework.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -20,7 +19,7 @@ import org.sakaiproject.nakamura.lite.authorizable.AuthorizableActivator;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
-import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceImpl;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceFactroyImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +32,7 @@ public abstract class AbstractLockManagerImplTest {
     private ConfigurationImpl configuration;
     private StorageClientPool clientPool;
     private StorageClient client;
-    private StatsService statsService = new StatsServiceImpl();
+    private StatsService statsService = new StatsServiceFactroyImpl().openSession();
 
     @Before
     public void before() throws StorageClientException, AccessDeniedException, ClientPoolException,

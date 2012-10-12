@@ -58,7 +58,7 @@ import org.sakaiproject.nakamura.lite.authorizable.AuthorizableManagerImpl;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClient;
 import org.sakaiproject.nakamura.lite.storage.spi.StorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsService;
-import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceImpl;
+import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceFactroyImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +75,7 @@ public abstract class AbstractAccessControlManagerImplTest {
     private ConfigurationImpl configuration;
     private StorageClientPool clientPool;
     private PrincipalValidatorResolver principalValidatorResolver = new PrincipalValidatorResolverImpl();
-    private StatsService statsService = new StatsServiceImpl();
+    private StatsService statsService = new StatsServiceFactroyImpl().openSession();
 
     @Before
     public void before() throws StorageClientException, AccessDeniedException, ClientPoolException, ClassNotFoundException,

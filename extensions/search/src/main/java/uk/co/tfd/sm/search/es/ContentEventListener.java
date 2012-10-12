@@ -216,6 +216,7 @@ public class ContentEventListener implements EventHandler, TopicIndexer {
 					Collection<InputDocument> documents = indexingHandler
 							.getDocuments(repositoryRession, event);
 					for (InputDocument in : documents) {
+						LOGGER.info("Indexing {} ", in);
 						if (in.isDelete()) {
 							bulk.add(client.prepareDelete(in.getIndexName(),
 									in.getDocumentType(), in.getDocumentId()));
