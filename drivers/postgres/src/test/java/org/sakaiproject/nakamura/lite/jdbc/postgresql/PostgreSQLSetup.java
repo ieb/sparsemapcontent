@@ -24,7 +24,6 @@ import org.sakaiproject.nakamura.api.lite.Configuration;
 import org.sakaiproject.nakamura.lite.DummyStorageCacheManager;
 import org.sakaiproject.nakamura.lite.storage.jdbc.JDBCStorageClientPool;
 import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceFactroyImpl;
-import org.sakaiproject.nakamura.lite.storage.spi.monitor.StatsServiceImpl;
 
 public class PostgreSQLSetup {
 

@@ -1,6 +1,7 @@
 # Sparse Map 
 
 
+
 # What is SparseMap ?
 
 Sparse Map is a content repository supporting shallow wide hierachies of content typical of 
@@ -30,6 +31,12 @@ aspects related to social media will be added over time.
 * Single Instance content body store.
 * Support for resmon based monitoring.
 
+# CI Builds
+
+Continuous Integration builds are running at Travis CI with a fill test build against PostgreSQL and Derby. Once I have
+re-written the Cassandra driver that will be added.
+
+[![Build Status](https://travis-ci.org/ieb/sparsemapcontent.png)](https://travis-ci.org/ieb/sparsemapcontent)
 
 # Building
 
