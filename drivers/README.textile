@@ -10,8 +10,3 @@ derby/, mysql/, postgres/, oracle/
 cassandra/
    The bundle contains an implemetnation of the Cassandra SPI implementation and the necessary depedencies to connect to an existing Cassandra cluster.
 
-mongo/
-   The bundle contains an implemetnation of the MongoDB SPI implementation and the necessary depedencies to connect to an existing MongoDB cluster.
-
-hbase/
-   The bundle contains an implemetnation of the HBase SPI implementation and the necessary depedencies to connect to an existing HBase cluster.

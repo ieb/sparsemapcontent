@@ -48,8 +48,6 @@
             <id>build-unsupported-drivers</id>
             <modules>
               <module>cassandra</module>
-              <module>hbase</module>
-              <module>mongo</module>
             </modules>
           </profile>
         </profiles>
