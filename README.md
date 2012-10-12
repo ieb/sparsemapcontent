@@ -1,5 +1,4 @@
-# Sparse Map 
-
+# Sparse Map [![Build Status](https://travis-ci.org/ieb/sparsemapcontent.png)](https://travis-ci.org/ieb/sparsemapcontent)
 
 
 # What is SparseMap ?
