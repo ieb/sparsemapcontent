@@ -1,2 +1,0 @@
-request-proxy-endpoint = http://api.flickr.com/services/rest/?method=flickr.photos.getInfo&api_key=${config.flickr_api_key}&photo_id=${photoId}&format=json&nojsoncallback=1
-request-proxy-method = GET
